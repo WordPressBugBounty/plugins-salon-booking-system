@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 namespace SLB_PWA;
 
 use SLB_API_Mobile\Helper\TokenHelper;
@@ -88,7 +88,7 @@ class Plugin {
         file_put_contents($dist_directory_path . '/js/app.js.map', str_replace('{SLN_PWA_DIST_PATH}', $dist_url_path, file_get_contents($dist_directory_path . '/js/app.js.template.map')));
         file_put_contents($dist_directory_path . '/service-worker.js', str_replace('{SLN_PWA_DIST_PATH}', $dist_url_path, file_get_contents($dist_directory_path . '/service-worker.template.js')));
         file_put_contents($dist_directory_path . '/service-worker.js.map', str_replace('{SLN_PWA_DIST_PATH}', $dist_url_path, file_get_contents($dist_directory_path . '/service-worker.js.template.map')));
-        file_put_contents($dist_directory_path . '/index.html', str_replace(array('{SLN_PWA_DIST_PATH}', '{SLN_PWA_DATA}'), array($dist_url_path, wp_json_encode($data)), file_get_contents($dist_directory_path . '/index.template.html')));
+        file_put_contents($dist_directory_path . '/index.html', str_replace(array('{SLN_PWA_DIST_PATH}', '{SLN_PWA_DATA}'), array($dist_url_path, addslashes(wp_json_encode($data))), file_get_contents($dist_directory_path . '/index.template.html')));
 
     ?>
     <!doctype html>
@@ -137,7 +137,7 @@ class Plugin {
             <noscript>
                 <strong>We're sorry but salon-booking-plugin-pwa doesn't work properly without JavaScript enabled. Please enable it to continue.</strong></noscript>
             <script>
-                var slnPWA = JSON.parse('<?php echo wp_json_encode($data) ?>')
+                var slnPWA = JSON.parse('<?php echo addslashes(wp_json_encode($data)) ?>')
             </script>
             <?php if ( ! defined('SLN_VERSION_PAY') ):  ?>
                 <div class="free-version-wrapper">

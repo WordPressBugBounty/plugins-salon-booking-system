@@ -40,7 +40,7 @@ class SLB_Discount_Admin_DiscountsHistoryList extends WP_Posts_List_Table {
 	public function column_default( $post, $column_name ) {
 		if ($column_name === 'booking_customer') {
 			$booking = SLN_Plugin::getInstance()->createBooking($post);
-			echo $booking->getDisplayName();
+			echo esc_html($booking->getDisplayName());
 		}
 		elseif ($column_name === 'booking_amount' || $column_name === 'booking_discount') {
 			$booking  = SLN_Plugin::getInstance()->createBooking($post);
@@ -55,7 +55,7 @@ class SLB_Discount_Admin_DiscountsHistoryList extends WP_Posts_List_Table {
 			else {
 				$value = $dAmount;
 			}
-			echo SLN_Plugin::getInstance()->format()->money($value, false);
+			echo esc_html(SLN_Plugin::getInstance()->format()->money($value, false));
 		}
 		else {
 			parent::column_default($post, $column_name);

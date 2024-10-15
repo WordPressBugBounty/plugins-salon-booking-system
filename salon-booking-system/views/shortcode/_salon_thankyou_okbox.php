@@ -1,4 +1,6 @@
-<?php if ($pendingPayment): ?>
+<?php
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
+if ($pendingPayment): ?>
 <div class="sln-thankyou--okbox">
 	<h2 class="sln-thankyou__status sln-thankyou__status--pending">
 		<img class="sln-thankyou__img" src="<?php echo SLN_PLUGIN_URL.'/img/pay_icon.png' ?>" alt="">

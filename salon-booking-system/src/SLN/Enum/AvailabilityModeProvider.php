@@ -44,7 +44,7 @@ class SLN_Enum_AvailabilityModeProvider  extends SLN_Enum_AbstractEnum
     public static function getServiceName($key)
     {
         if (!isset(self::$classes[$key])) {
-            throw new Exception(sprintf('provider "%s" not found', $key));
+            throw new Exception(sprintf('provider "%s" not found', esc_html($key)));
         }
 
         return self::$classes[$key];

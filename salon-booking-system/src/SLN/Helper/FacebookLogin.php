@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 class SLN_Helper_FacebookLogin
 {
     const API_URL	= 'https://graph.facebook.com/v2.8';

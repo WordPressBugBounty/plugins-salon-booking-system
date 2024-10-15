@@ -3,7 +3,7 @@
 /*
 Plugin Name: Salon Booking Wordpress Plugin - Free Version
 Description: Let your customers book you services through your website. Perfect for hairdressing salons, barber shops and beauty centers.
-Version: 10.9.4
+Version: 10.9.6
 Plugin URI: http://salonbookingsystem.com/
 Author: Salon Booking System
 Author URI: http://salonbookingsystem.com/
@@ -43,7 +43,7 @@ if ( defined( 'SLN_PLUGIN_BASENAME' ) ) {
 define('SLN_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('SLN_PLUGIN_DIR', untrailingslashit(dirname(__FILE__)));
 define('SLN_PLUGIN_URL', untrailingslashit(plugins_url('', __FILE__)));
-define('SLN_VERSION', '10.9.4');
+define('SLN_VERSION', '10.9.6');
 define('SLN_STORE_URL', 'https://salonbookingsystem.com');
 define('SLN_AUTHOR', 'Salon Booking');
 define('SLN_UPLOADS_DIR', wp_upload_dir()['basedir'] . '/sln_uploads/');
@@ -122,7 +122,16 @@ $sln_autoload = function($className) {
 
 $my_update_notice = function() {
 	$info = __('-', 'salon-booking-system');
-	echo '<span class="spam">' . strip_tags($info, '<br><a><b><i><span>') . '</span>';
+    echo '<span class="spam">' . wp_kses($info, array(
+            'br' => array(),
+            'a' => array(
+                'href' => array(),
+                'title' => array()
+            ),
+            'b' => array(),
+            'i' => array(),
+            'span' => array()
+        )) . '</span>';
 };
 
 if (is_admin()) {
@@ -130,7 +139,9 @@ if (is_admin()) {
 }
 
 add_action("in_plugin_update_message-" . plugin_basename(__FILE__), function ($plugin_data, $response) {
-	echo '<span style="background-color: #d54e21; padding: 10px; color: #f9f9f9; margin-top: 10px; display: block"><strong>' . __('Attention: this is a major release, please make sure to clear your browser cache after the plugin update.', 'salon-booking-system') . '</strong></span>';
+    echo '<span style="background-color: #d54e21; padding: 10px; color: #f9f9f9; margin-top: 10px; display: block"><strong>';
+    esc_html_e('Attention: this is a major release, please make sure to clear your browser cache after the plugin update.', 'salon-booking-system');
+    echo '</strong></span>';
 }, 10, 2);
 
 add_action('plugins_loaded', function () {

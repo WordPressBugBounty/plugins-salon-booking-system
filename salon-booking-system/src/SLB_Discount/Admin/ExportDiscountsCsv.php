@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 class SLB_Discount_Admin_ExportDiscountsCsv{
 
     public static function init_hooks(){

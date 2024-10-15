@@ -49,7 +49,7 @@
         <?php endif; ?>
         <footer class="sln-account__card__footer sln-account__card__actions sln-account__booking__actions">
             <?php if($data['table_data']['mode'] == 'new'): 
-                    if($plugin->getSettings()->get('cancellation_enabled')): ?>
+                    if($plugin->getSettings()->get('cancellation_enabled') && ($booking->getStartsAt()->getTimestamp() - time()) > $data['seconds_before_cancellation']): ?>
                         <div class="sln-btn sln-btn--emphasis sln-btn--medium sln-btn--borderonly sln-cancel-booking--button sln-account__btn--cancel">
                             <button onclick="sln_myAccount.cancelBooking(<?php echo $item['id']; ?>);" data-message="<?php esc_html_e('Booking cancelled', 'salon-booking-system');?>"><?php esc_html_e('Cancel', 'salon-booking-system');?></button>
                         </div>
@@ -61,7 +61,7 @@
                             <a href="<?php echo $booking->getPayUrl(); ?>"><?php echo esc_html__('Pay', 'salon-booking-system') . ' '. $plugin->format()->moneyFormatted($price_to_pay); ?></a>
                         </div>
                     <?php endif; ?>
-                    <?php if(!$plugin->getSettings()->get('rescheduling_disabled') && ($booking->getStartsAt()->getTimestamp() - time()) >= ($plugin->getSettings()->get('display_before_rescheduling') * 24 * 3600) && in_array($item['status_code'], array(SLN_Enum_BookingStatus::CONFIRMED, SLN_Enum_BookingStatus::PAY_LATER, SLN_Enum_BookingStatus::PAID,))):
+                    <?php if(!$plugin->getSettings()->get('rescheduling_disabled') && ($booking->getStartsAt()->getTimestamp() - time()) >= ($plugin->getSettings()->get('days_before_rescheduling') * 24 * 3600) && in_array($item['status_code'], array(SLN_Enum_BookingStatus::CONFIRMED, SLN_Enum_BookingStatus::PAY_LATER, SLN_Enum_BookingStatus::PAID,))):
                         $date = $plugin->getSettings()->isDisplaySlotsCustomerTimezone() && $data['customer_timezone']
                             ? $booking->getStartsAt()->setTimezone(new DateTimezone($data['customer_timezone']))
                             : $booking->getStartsAt(); ?> 

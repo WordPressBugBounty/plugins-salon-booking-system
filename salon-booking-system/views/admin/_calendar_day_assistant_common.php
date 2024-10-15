@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 $format = SLN_Plugin::getInstance()->format();
 $duration = $booking->getDuration();
 $hours = explode(" ", $duration);

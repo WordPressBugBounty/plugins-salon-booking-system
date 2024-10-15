@@ -16,8 +16,8 @@ $index = 0;
 		foreach ($items as $i) {
 			?>
 				<li class="nav-item sln-inpage_navbaritem <?php if ($index == 0) {echo 'active';}?>">
-		      		<a class="nav-link nav-link1 sln-inpage_navbarlink" href="<?php echo $i[0]; ?>">
-		      			<span><?php echo $i[1]; ?></span>
+		      		<a class="nav-link nav-link1 sln-inpage_navbarlink" href="<?php echo esc_html($i[0]); ?>">
+		      			<span><?php echo esc_html($i[1]); ?></span>
 		      		</a>
 		    	</li>
 			<?php

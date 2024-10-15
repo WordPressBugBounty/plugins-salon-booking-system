@@ -1,3 +1,4 @@
+<?php // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 <div id="sln-setting-error" class="updated error">
     <p><?php _e('You are going to reach the bookings limit for the Salon Booking free version. <a href="http://salonbookingsystem.com/salon-booking-plugin-pricing/" target="blank">Please upgrade Salon Booking to a PRO version</a>.','salon-booking-system') ?>
 

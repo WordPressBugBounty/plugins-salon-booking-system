@@ -213,11 +213,16 @@ class SLN_Shortcode_Salon
 
         $bb = $this->plugin->getBookingBuilder();
 
-        foreach ($bb->getServices() as $service) {
-            if ($service->isAttendantsEnabled()) {
-                return true;
+        if (!empty($bb->getServices())){
+            foreach ($bb->getServices() as $service) {
+                if ($service->isAttendantsEnabled()) {
+                    return true;
+                }
             }
+        } else {
+            return true;
         }
+
 
         return false;
     }

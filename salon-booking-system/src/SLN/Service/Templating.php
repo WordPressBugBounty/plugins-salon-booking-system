@@ -34,7 +34,7 @@ class SLN_Service_Templating
         $file = $this->getViewFileName($view);
         $file = apply_filters("sln.templating.getViewFile", $file, $view);
         if ( ! $file) {
-            throw new SLN_Exception(sprintf('view "%s" not found ', $view));
+            throw new SLN_Exception(sprintf('view "%s" not found ', esc_html($view)));
         }
 
         return $file;

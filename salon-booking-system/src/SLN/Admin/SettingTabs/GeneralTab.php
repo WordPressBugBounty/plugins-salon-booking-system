@@ -87,7 +87,7 @@ class SLN_Admin_SettingTabs_GeneralTab extends SLN_Admin_SettingTabs_AbstractTab
 
 			$imageSize = 'sln_gen_logo';
 			if (!has_image_size($imageSize)) {
-				add_image_size($imageSize, 160, 70);
+				add_image_size($imageSize, 240, 135);
 			}
 			$attId = media_handle_upload('gen_logo', 0);
 

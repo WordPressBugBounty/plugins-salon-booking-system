@@ -86,7 +86,7 @@ abstract class SLN_PostType_Abstract
 	$post = get_post($id);
 
 	if (!$post) {
-	    wp_die(esc_html__('Copy creation failed, could not find original:', 'salon-booking-system') . ' ' . htmlspecialchars($id));
+	    wp_die(esc_html__('Copy creation failed, could not find original:', 'salon-booking-system') . ' ' . esc_html(htmlspecialchars($id)));
 	}
 
 	if(!($post->post_type === SLN_Plugin::POST_TYPE_ATTENDANT && current_user_can('edit_' . SLN_Plugin::POST_TYPE_ATTENDANT . 's')

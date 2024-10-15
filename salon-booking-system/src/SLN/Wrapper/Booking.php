@@ -36,11 +36,11 @@ class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
 
     function getToPayAmount($format = true, $include_fee = true)
     {
-        $ret = $this->getDeposit() > 0 ? $this->getDeposit() : $this->getAmount();
+        $ret = $this->getAmount();
 
-	if ( $include_fee ) {
-	    $ret += SLN_Helper_TransactionFee::getFee($ret);
-	}
+	    if ( $include_fee ) {
+	        $ret += SLN_Helper_TransactionFee::getFee($ret);
+	    }
 
         return $format ? number_format($ret, 2) : $ret;
     }

@@ -66,16 +66,16 @@ class SLN_Third_GoogleCalendarImport
 
         $params = $showDeletedParams;
 
-	$now	 = new SLN_DateTime();
-	$timeMin = $now->sub(new DateInterval('P2M'))->format(DateTime::RFC3339);
+	    $now	 = new SLN_DateTime();
+	    $timeMin = $now->sub(new DateInterval('P2M'))->format(DateTime::RFC3339);
 
-	$showDeletedParams['timeMin'] = $timeMin;
+	    $showDeletedParams['timeMin'] = $timeMin;
 
         if (!empty($syncToken)) {
             $params['syncToken'] = $syncToken;
         } else {
-	    $params['timeMin'] = $timeMin;
-	}
+	        $params['timeMin'] = $timeMin;
+	    }
 
         $nextPageToken = null;
 
@@ -98,7 +98,7 @@ class SLN_Third_GoogleCalendarImport
                     $params
                 );
             } catch (Google_Service_Exception $e) {
-		$params = $showDeletedParams;
+		        $params = $showDeletedParams;
                 $gCalendarEvents = $gScope->get_google_service()->events->listEvents($gScope->google_client_calendar, $params);
             }
 
@@ -196,12 +196,55 @@ class SLN_Third_GoogleCalendarImport
                 $booking->setStatus(SLN_Enum_BookingStatus::CANCELED);
 
                 $this->printMsg(sprintf("Booking for this event set status to Cancelled '%s'", $bookingId));
+            } else {
+                $localStartTime = new \DateTime($booking->getStartsAt());
+                $googleStartTime = new \DateTime($gEvent->getStart()->getDateTime());
+
+                $localUpdated = new \DateTime(get_post_modified_time('Y-m-d H:i:s', false, $booking->getId()));
+                $googleUpdated = new \DateTime($gEvent->getUpdated());
+                $googleUpdated->setTimezone(SLN_TimeFunc::getWpTimezone());
+
+                $localUpdatedFormatted = $localUpdated->format('Y-m-d H:i:s');
+                $googleUpdatedFormatted = $googleUpdated->format('Y-m-d H:i:s');
+
+                if($localStartTime != $googleStartTime &&  $googleUpdatedFormatted  > $localUpdatedFormatted){
+
+                    if($booking->getStatus() == SLN_Enum_BookingStatus::PENDING_PAYMENT && SLN_Plugin::getInstance()->getSettings()->get('google_calendar_publish_pending_payment')) {
+                        $this->updateBookingFromGoogleCalendarEvent($gEvent, $booking);
+                    } else if($booking->getStatus() == SLN_Enum_BookingStatus::PAID) {
+                        $this->updateBookingFromGoogleCalendarEvent($gEvent, $booking);
+                    }
+
+                    $this->printMsg(sprintf("Booking update id: '%s'", $booking->getId()));
+                }
+
             }
 
             $this->printMsg(sprintf("Booking for this event already exist '%s'", $bookingId));
         }
 
         $this->printMsg(sprintf("End processing event '%s'", $gEvent->getId()));
+    }
+
+
+    /**
+     * @param Google_Service_Calendar_Event $gEvent
+     * @param SLN_Wrapper_Booking $booking
+     * @return bool
+     */
+    private function updateBookingFromGoogleCalendarEvent($gEvent, $booking)
+    {
+        $googleStartTime = new \DateTime($gEvent->getStart()->getDateTime());
+
+        wp_update_post(array(
+            'ID' => $booking->getId(),
+            'meta_input'  => array(
+                '_sln_booking_date'      => $googleStartTime->format('Y-m-d'),
+                '_sln_booking_time'      => $googleStartTime->format('H:i'),
+            ),
+        ));
+
+        return true;
     }
 
     /**
@@ -239,11 +282,11 @@ class SLN_Third_GoogleCalendarImport
             ),
         );
 
-	remove_action('save_post', 'synch_a_booking', 12);
+	    remove_action('save_post', 'synch_a_booking', 12);
 
-	$postId  = wp_insert_post($postArr);
+	    $postId  = wp_insert_post($postArr);
 
-	add_action('save_post', 'synch_a_booking', 12, 2);
+	    add_action('save_post', 'synch_a_booking', 12, 2);
 
         if ($postId instanceof WP_Error) {
             throw new ErrorException($postId->get_error_message(), self::EXCEPTION_CODE_FOR_INVALID_CALENDAR_EVENT);

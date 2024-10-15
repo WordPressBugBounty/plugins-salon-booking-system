@@ -365,7 +365,7 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
         $services = array();
         $services_ids = array_map('intval',$data['service']);
         if($services_ids)
-        foreach ($services_ids as $serviceId) {
+        foreach ($services_ids as $key => $serviceId) {
             if($serviceId == 0){
                 continue;
             }
@@ -373,7 +373,7 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
             $breakDuration = SLN_Func::convertToHoursMins($data['break_duration'][$serviceId]);
 
             if(isset($data['attendants'])){
-                $attendant = $data['attendants'][$serviceId];
+                $attendant = $data['attendants'][$key];
             }elseif(isset($data['attendant'])){
                 $attendant = $data['attendant'];
             }
@@ -382,13 +382,13 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
             if($attendant == 0 && $this->getPlugin()->getSettings()->isAttendantsEnabled() && $service->isAttendantsEnabled()){
                 continue;
             }
-            $services[$serviceId] = array(
+            $services[] = array(
                 'service' => $serviceId,
                 'attendant' => $attendant,
                 'price' => $data['price'][$serviceId],
                 'duration' => $duration,
                 'break_duration' => $breakDuration,
-                'resource' => isset($data['services_resources'][$serviceId]) ? $data['services_resources'][$serviceId] : '',
+                'resource' => isset($data['services_resources'][$key]) ? $data['services_resources'][$key] : '',
             );
         }
         return $services;

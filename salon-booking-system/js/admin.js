@@ -863,6 +863,20 @@ function sln_changeImportMatching() {
     sln_validImportMatching();
 }
 
+function show_btn_save() {
+    const button = document.querySelector('button[data-action="save-edited-booking"]');
+    if (button) {
+        button.classList.remove('sln-btn-disabled');
+    }
+}
+
+function close_btn_save() {
+    const button = document.querySelector('button[data-action="save-edited-booking"]');
+    if (button) {
+        button.classList.add('sln-btn-disabled');
+    }
+}
+
 function sln_validImportMatching() {
     var $modal = jQuery("#import-matching-modal");
 

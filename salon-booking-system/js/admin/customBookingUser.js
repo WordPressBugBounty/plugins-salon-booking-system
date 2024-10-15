@@ -22,6 +22,34 @@ jQuery(function($) {
         );
     });
 
+    var tmpform = $('#detailsWrapper').get(0);
+
+    if(tmpform){
+        tmpform.addEventListener('input', CheckhandleInput);
+        tmpform.addEventListener('change', CheckhandleInput);
+    }
+
+    $(document).on('select2:select', function (e) {
+        setTimeout(() => {
+            CheckhandleInput(e);
+        }, "2000");
+
+    });
+
+    function CheckhandleInput(event) {
+        try {
+            var validateBooking = sln_validateBooking_dym();
+        } catch (e) {
+            console.log(e);
+        }
+
+        if(validateBooking){
+            window.parent.show_btn_save();
+        } else {
+            window.parent.close_btn_save();
+        }
+    }
+
     $("#_sln_booking_discounts_").on("select2:select", function(evt) {
         var element = evt.params.data.element;
         var $element = $(element);
@@ -258,6 +286,61 @@ function sln_validateBooking() {
             hasErrors = true;
         }
     });
+    return !hasErrors;
+}
+
+function sln_validateBooking_dym() {
+    var $ = jQuery;
+    $(".sln-invalid").removeClass("sln-invalid");
+    $(".sln-error").remove();
+    var hasErrors = false;
+
+    var toValidate = ['select[data-selection="service-selected"]'];
+    sln_customer_fields =
+        sln_customer_fields !== undefined
+            ? sln_customer_fields
+            : jQuery("#salon-step-date")
+                .attr("data-customer_fields")
+                .split(",");
+    var fields = $("#salon-step-date")
+        .attr("data-required_user_fields")
+        .split(",");
+    $.each(fields, function(k, val) {
+        if (val !== "")
+            toValidate.push(
+                (sln_customer_fields.indexOf(val) !== -1
+                    ? "#_sln_"
+                    : "#_sln_booking_") + val
+            );
+    });
+
+    $.each(toValidate, function(k, val) {
+        if (val == "#_sln_booking_email" || val == "#_sln_email") {
+        } else if (val == 'select[data-selection="service-selected"]') {
+            if (!$(".sln-booking-service-line").length) {
+
+                hasErrors = true;
+            }
+        } else if ($(val).attr("type") === "checkbox") {
+            if (!$(val).is(":checked")) {
+                hasErrors = true;
+            }
+        } else if ($(val).prop("tagName") === "SELECT") {
+            if (!$(val).find("option:selected").length) {
+
+                hasErrors = true;
+            }
+        } else if (!$(val).val()) {
+
+            hasErrors = true;
+        }
+    });
+
+    var alertElement = $('#sln-alert-noservices');
+    if (alertElement.css('display') !== 'none') {
+        hasErrors = true;
+    }
+
     return !hasErrors;
 }
 
@@ -857,7 +940,7 @@ function sln_processServices($, services) {
     if (!services) return;
     $('.select2-selection__rendered').removeClass('danger');
     $.each(services, function(index, value) {
-        var serviceItem = $("#_sln_booking_service_" + index);
+        var serviceItem = $("[name='_sln_booking[service][" + index + "]']");;
         if (value.status == -1) {
             if(value.attendantErrorsCount){
                 serviceItem.closest('.sln-select').next().find('.select2-selection__rendered').addClass('danger');
@@ -925,27 +1008,28 @@ function sln_changeServices($, selected){
         $(selected).closest('.sln-row').find('.time').html('')
     }
     let s_id = $(selected).val();
+    let at_id = Math.floor(Math.random() * 500);
     let is_exist = 0;
     $(selected).closest('#sln_booking_services').find('select[data-selection="service-selected"]').each(function(index, element){
         if($(element).val() == s_id){
             is_exist += 1;
         }
     });
-    if(is_exist == 2){
-        // selected
-        setTimeout(function(){
-            $(selected).data('select2').open();
-        }, 1);
-
-        let attendant_select = $(selected).closest('.sln-row').find('select[data-selection="attendant-selected"]:not(.hide)');
-        attendant_select.data('service', 0);
-        attendant_select.find('option').not('option[value="0"]').remove()
-
-        let resource_select = $(selected).closest('.sln-row').find('select[data-selection="resource-selected"]:not(.hide)');
-        resource_select.data('service', 0);
-        resource_select.find('option').not('option[value="0"]').remove()
-        return false;
-    }
+    // if(is_exist == 2){
+    //     // selected
+    //     setTimeout(function(){
+    //         $(selected).data('select2').open();
+    //     }, 1);
+    //
+    //     let attendant_select = $(selected).closest('.sln-row').find('select[data-selection="attendant-selected"]:not(.hide)');
+    //     attendant_select.data('service', 0);
+    //     attendant_select.find('option').not('option[value="0"]').remove()
+    //
+    //     let resource_select = $(selected).closest('.sln-row').find('select[data-selection="resource-selected"]:not(.hide)');
+    //     resource_select.data('service', 0);
+    //     resource_select.find('option').not('option[value="0"]').remove()
+    //     return false;
+    // }
 
     $(selected).find("select2-selection__rendered").html(function(){
         return "<span>" + $(selected).text().replace(/\, /g, "</span><span>") + " </span>";
@@ -953,14 +1037,14 @@ function sln_changeServices($, selected){
     let attendant_select = $(selected).closest('.sln-row').find('select[data-selection="attendant-selected"]:not(.hide)');
     attendant_select.find('option').remove();
     attendant_select.data('service', s_id);
-    attendant_select.attr('name', '_sln_booking[attendants][' + s_id + ']' + (service_data.isMultipleAttendants ? '[]': ''));
+    attendant_select.attr('name', '_sln_booking[attendants][' + at_id + ']' + (service_data.isMultipleAttendants ? '[]': ''));
     let html = !service_data.isMultipleAttendants ? '<option value="' + 0 + '">' + attendantsData[0] + "</option>" : '';
     attendant_select.append(html);
 
     let resource_select = $(selected).closest('.sln-row').find('select[data-selection="resource-selected"]:not(.hide)');
     resource_select.find('option').remove();
     resource_select.data('service', s_id);
-    resource_select.attr('name', '_sln_booking[services_resources][' + s_id + ']');
+    resource_select.attr('name', '_sln_booking[services_resources][' + at_id + ']');
     let resource_html = '<option value="' + 0 + '">' + resourcesData[0] + "</option>";
     resource_select.append(resource_html);
     $('form input[name="_sln_booking_service_select"]').remove()
@@ -969,7 +1053,7 @@ function sln_changeServices($, selected){
     sln_checkResources_on_preselection($);
     let inputs = $(selected).parent();
     inputs.find('input').remove();
-    inputs.append('<input type="hidden" name="_sln_booking[service]['+ s_id +']" id="_sln_booking_service_'+ s_id +'" value="'+ s_id +'" class="sln-input sln-input--text">'+
+    inputs.append('<input type="hidden" name="_sln_booking[service]['+ at_id +']" id="_sln_booking_service_'+ s_id +'" value="'+ s_id +'" class="sln-input sln-input--text">'+
     '<input type="hidden" name="_sln_booking[price]['+ s_id +']" id="_sln_booking_price_'+ s_id +'" value="'+ service_data.price +'" class="sln-input sln-input--text">'+
     '<input type="hidden" name="_sln_booking[duration]['+ s_id +']" id="_sln_booking_duration_'+ s_id +'" value="'+ service_data.duration +'" class="sln-input sln-input--text">'+
     '<input type="hidden" name="_sln_booking[break_duration]['+ s_id +']" id="_sln_booking_break_duration_'+ s_id +'" value="'+ service_data.break_duration +'" class="sln-input sln-input--text"></input>'

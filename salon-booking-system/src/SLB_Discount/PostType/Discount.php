@@ -74,11 +74,11 @@ class SLB_Discount_PostType_Discount extends SLN_PostType_Abstract
         switch ($column) {
             case 'discount_type':
                 $type = SLB_Discount_Enum_DiscountType::getLabel($obj->getDiscountType());
-                echo $type;
+                echo esc_html($type);
                 break;
             case 'discount_amount':
                 $amount = $obj->getAmountString();
-                echo $amount;
+                echo esc_html($amount);
                 break;
             case 'active':
                 $now = new SLN_DateTime(current_time('mysql'));
@@ -88,10 +88,10 @@ class SLB_Discount_PostType_Discount extends SLN_PostType_Abstract
                 else {
                     $status = __('No', 'salon-booking-system');
                 }
-                echo $status;
+                echo esc_html($status);
                 break;
             case 'discount_usages':
-                echo $obj->getTotalUsagesNumber();
+                echo esc_html($obj->getTotalUsagesNumber());
                 break;
         }
     }

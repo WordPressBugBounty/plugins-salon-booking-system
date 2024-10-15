@@ -1,4 +1,6 @@
-<?php $isMulti = $plugin->getSettings()->isMultipleAttendantsEnabled(); ?>
+<?php
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
+$isMulti = $plugin->getSettings()->isMultipleAttendantsEnabled(); ?>
 <label for="<?php echo $elemId ?>" class="sln-list__item <?php if ($isMulti) { echo 'sln-list--multiple__item'; } ?> sln-attendant">
     <?php if ($thumb): ?>
         <div class="sln-list__item__thumb">

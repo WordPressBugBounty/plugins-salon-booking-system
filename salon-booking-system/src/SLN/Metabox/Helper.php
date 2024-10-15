@@ -8,7 +8,7 @@ class SLN_Metabox_Helper
             $meta_value = get_post_meta($post_id, $meta_key, true);
             if ($new_meta_value && $new_meta_value != $meta_value) {
                 update_post_meta($post_id, $meta_key, $new_meta_value);
-            } elseif (empty($new_meta_value) && $meta_value) {
+            } elseif (empty($new_meta_value) && empty($meta_value)) {
                 delete_post_meta($post_id, $meta_key, $meta_value);
             }
         }

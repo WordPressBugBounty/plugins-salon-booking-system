@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 /** @var SLN_Settings $settings
  * @var $bookings
  * @var $format

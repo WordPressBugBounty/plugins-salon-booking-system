@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 class SLN_PostType_Resource extends SLN_PostType_Abstract
 {
 

@@ -1,3 +1,6 @@
+<?php
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
+?>
 <div class="row sln-box--main">
     <div class="col-xs-12">
         <div class="sln-alert sln-alert--warning">

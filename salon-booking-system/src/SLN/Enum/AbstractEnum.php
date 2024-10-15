@@ -14,6 +14,6 @@ class SLN_Enum_AbstractEnum{
 	}
 
 	public function __get($property){
-		throw new Exception("Call $property in ".static::class);
+		throw new Exception("Call " . esc_html($property) ." in ".static::class);
 	}
 }

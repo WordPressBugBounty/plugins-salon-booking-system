@@ -1066,10 +1066,11 @@ function synch_a_booking(SLN_Wrapper_Booking $booking, $sync = false) {
         }
     }
 
-    update_post_meta($booking->getId(), '_sln_calendar_attendants_events_id', $events);
 
-    do_action('sln.google_calendar.synch_a_booking', $booking, $statusForPublish);
 
+    if (SLN_Plugin::getInstance()->getSettings()->get('google_calendar_publish_pending_payment') || $booking->getStatus() == SLN_Enum_BookingStatus::PAID) {
+        do_action('sln.google_calendar.synch_a_booking', $booking, $statusForPublish);
+    }
     $GLOBALS['sln_googlescope']->google_client_calendar = $main_calendar;
 }
 

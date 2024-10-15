@@ -42,7 +42,7 @@ class Time
 	if($str == '23:59') return 24*60;
 
         if ( ! strpos($str, ':')) {
-            throw new \Exception('bad time value'.$str);
+            throw new \Exception('bad time value'.esc_html($str));
         }
 
         return (strtok($str, ':') * 60) + strtok(':');

@@ -82,7 +82,7 @@ class SLN_Func
             }
             $ret = (new SLN_DateTime($val))->format('Y-m-d');
             if ($ret == '1970-01-01')
-                throw new Exception(sprintf('wrong date %s', $val));
+                throw new Exception(sprintf('wrong date %s', esc_html($val)));
             return $ret;
         } elseif ($filter == 'bool') {
             return boolval($val);

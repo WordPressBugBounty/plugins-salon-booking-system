@@ -5,7 +5,7 @@ $plugin = SLN_Plugin::getInstance();
 <section class="sln-datashortcode sln-datashortcode--services">	
 	<div class="sln-datalist <?php 
 	if(isset($data['styled'])) echo 'sln-datalist--styled '; 
-	if(isset($data['columns'])) echo 'sln-datalist--'.$data['columns'].'cols '; 	
+	if(isset($data['columns'])) echo 'sln-datalist--'.esc_html($data['columns']).'cols ';
 	?>">
 	<?php 
 	$display = $data['display'];
@@ -17,16 +17,16 @@ $plugin = SLN_Plugin::getInstance();
 	?>
 		<div class="sln-datalist__item">
 			<?php if(!$display || in_array('name',$display)){ ?>
-			<h3 class="sln-datalist__item__name"><?php echo $service->getName() ?></h3>
+			<h3 class="sln-datalist__item__name"><?php echo esc_html($service->getName()) ?></h3>
 			<?php } ?>
 			<?php if(!$display || in_array('image',$display)){ ?>
 			<div class="sln-datalist__item__image">
-				<?php echo $thumb ?>
+				<?php echo $thumb; ?>
 			</div>
 			<?php } ?>
 			<?php if(!$display || in_array('description',$display)){ ?>
 			<p class="sln-datalist__item__description">
-				<?php echo $service->getContent() ?>
+				<?php echo $service->getContent(); ?>
 			</p>
 			<?php } ?>
 			<div class="sln-datalist__item__info">
@@ -53,7 +53,7 @@ $plugin = SLN_Plugin::getInstance();
 					$data['booking_url']
 				);
 				?>
-				<a href="<?php 	echo $booking_link ?>" class="sln-datalist__item__cta"><?php esc_html_e('Book now','salon-booking-system'); ?></a>
+				<a href="<?php 	echo esc_html($booking_link) ?>" class="sln-datalist__item__cta"><?php esc_html_e('Book now','salon-booking-system'); ?></a>
 			</div>
 		</div>
 	<?php } ?>			

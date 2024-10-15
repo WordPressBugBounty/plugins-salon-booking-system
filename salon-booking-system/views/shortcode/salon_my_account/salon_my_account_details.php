@@ -5,17 +5,17 @@
 	echo esc_html__('Welcome back ', 'salon-booking-system') . '<strong>' . $data['user_name'] . '</strong>';
 	?>
 </h3>
-    <div class="sln-account__logout">
-        <div style="margin-top: 0.2rem;">
-            <a href="<?php echo wp_logout_url(home_url()); ?>"></a>
-        </div>
-    </div>
 <?php if ($data['customer_fidelity_score_enabled']): ?>
 	<span class="sln-account__score">
 	    <?php echo $data['customer_fidelity_score'] ?>
 	    <span class="sr-only"><?php esc_html_e('Current Score', 'salon-booking-system') ?></span>
 	</span>
 <?php endif ?>
+    <div class="sln-account__logout">
+        <div style="margin-top: 0.4rem;">
+            <a href="<?php echo wp_logout_url(home_url()); ?>"></a>
+        </div>
+    </div>
 </div>
 <!-- Nav tabs -->
 <div class="sln-account__nav__wrapper">
@@ -36,6 +36,15 @@
 		<?php if ($data['cancelled']): ?>
 			<p class="hint"><?php esc_html_e('The booking has been cancelled', 'salon-booking-system');?></p>
 		<?php endif?>
+
+
+        <div class="sln-account__tabpanel__actions sln-account-new-res">
+            <div class="sln-btn sln-btn--emphasis sln-btn--medium sln-btn--fullwidth" style="margin-top: 2.5rem">
+                <a href="<?php echo $data['booking_url'] ?>"><?php esc_html_e('New reservation', 'salon-booking-system')?></a>
+            </div>
+            <div style="margin-bottom: 0.5rem"><?php esc_html_e('Click here to start a new appointment.', 'salon-booking-system')?></div>
+        </div>
+
 		<?php if (!empty($data['new']['items'])): ?>
 			<?php
 $data['table_data'] = $data['new'];
@@ -90,11 +99,7 @@ unset($data['table_data']);
 		<?php endif;?>	
   </div>
 </div>
-<div class="sln-account__tabpanel__actions">
-	<div class="sln-btn sln-btn--emphasis sln-btn--medium sln-btn--fullwidth">
-		<a href="<?php echo $data['booking_url'] ?>"><?php esc_html_e('Make a new reservation', 'salon-booking-system')?></a>
-	</div>
-</div>
+
 </div>
 	<?php do_action('sln.my_account.content', array_merge($data['history']['items'], $data['new']['items'])); ?>
     <?php if (class_exists('SalonPackages\Addon') && slnpackages_is_pro_version_salon()) { ?>

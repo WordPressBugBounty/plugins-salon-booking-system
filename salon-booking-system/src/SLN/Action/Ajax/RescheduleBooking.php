@@ -33,7 +33,7 @@ class SLN_Action_Ajax_RescheduleBooking extends SLN_Action_Ajax_Abstract {
         }
         $curr_booking_date = get_post_meta($id, '_'. SLN_Plugin::POST_TYPE_BOOKING .'_date', true) . ' '. get_post_meta($id, '_'. SLN_Plugin::POST_TYPE_BOOKING. '_time', true);
         $curr_booking_date = new DateTime($curr_booking_date);
-        $curr_booking_date->modify($this->plugin->getSettings()->get('display_before_rescheduling'). ' days');
+        $curr_booking_date->modify($this->plugin->getSettings()->get('days_before_rescheduling'). ' days');
         if($curr_booking_date->getTimestamp() - time() < 0){
         	return wp_die(
         		'<p>' . esc_html__('Sory, you not allowed reshedule old booking.'). '</p>',

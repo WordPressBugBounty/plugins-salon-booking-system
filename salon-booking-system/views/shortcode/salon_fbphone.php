@@ -4,7 +4,7 @@ $bb = $plugin->getBookingBuilder();
 $current     = $step->getShortcode()->getCurrentStep();
 $ajaxEnabled = $plugin->getSettings()->isAjaxEnabled();
  ?>
-    <form method="post" action="<?php echo $formAction ?>" role="form" id="salon-step-details">
+    <form method="post" action="<?php echo esc_html($formAction) ?>" role="form" id="salon-step-details">
         <h2 class="salon-step-title"> <?php esc_html_e('Please, insert your phone number.', 'salon-booking-system') ?> </h2>
 
                 <div class="row">
@@ -14,7 +14,7 @@ $ajaxEnabled = $plugin->getSettings()->isAjaxEnabled();
 		<label for="login_phone"><?php echo esc_html__(sprintf('%s', $label),'salon-booking-system'); ?></label>
                 <?php if (($prefix = $plugin->getSettings()->get('sms_prefix'))): ?>
                     <div class="input-group sln-input-group">
-                        <span class="input-group-addon sln-input--addon"><?php echo $prefix ?></span>
+                        <span class="input-group-addon sln-input--addon"><?php echo esc_html($prefix) ?></span>
                 <?php endif?>
                 <?php
 

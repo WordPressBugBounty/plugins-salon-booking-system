@@ -11,8 +11,8 @@ final class SLN_Wrapper_Booking_Services {
 	 */
 	public function __construct( $data ) {
 		if(!empty($data)){
-			foreach ($data as $item) {
-				$this->items[] = new SLN_Wrapper_Booking_Service($item);
+			foreach ($data as $key =>$item) {
+				$this->items[$key] = new SLN_Wrapper_Booking_Service($item);
 			}
 		}
 	}
@@ -165,7 +165,7 @@ final class SLN_Wrapper_Booking_Services {
 
             $count = isset($serviceCount[$service->getId()]) ? $serviceCount[$service->getId()] : 1;
 
-			$services[] = array(
+			$services[$i] = array(
 				'service'	=> $sId,
 				'attendant'	=> $atId,
 				'start_date'	=> $parallelExec ? $startsAt->format('Y-m-d') : $startsAtClone->format('Y-m-d'),
@@ -184,7 +184,7 @@ final class SLN_Wrapper_Booking_Services {
 				$startsAtClone->modify('+'.$minutes.' minutes');
 			}
 		}
-		usort($services, array('SLN_Repository_ServiceRepository', 'serviceCmp'));
+		//usort($services, array('SLN_Repository_ServiceRepository', 'serviceCmp'));
 		$ret = new SLN_Wrapper_Booking_Services($services);
 
 		return $ret;

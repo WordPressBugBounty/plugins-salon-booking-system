@@ -41,7 +41,7 @@ class SLN_Helper_CalendarEvent implements ArrayAccess{
 
 	public function offsetGet($offset){
 		if(!$this->offsetExists($offset)){
-			throw new ValueError('Unexpected index of array '. $offset);
+			throw new ValueError('Unexpected index of array '. esc_html($offset));
 		}
 		return $this->$offset;
 	}

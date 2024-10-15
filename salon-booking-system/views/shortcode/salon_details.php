@@ -22,12 +22,12 @@ include '_additional_errors.php';
 ?>
 <?php if (!is_user_logged_in()): ?>
     <?php if (!$plugin->getSettings()->get('enabled_force_guest_checkout')): ?>
-        <form method="post" action="<?php echo $formAction ?>" role="form" enctype="multipart/form-data" id="salon-step-details">
+        <form method="post" action="<?php echo esc_html($formAction) ?>" role="form" enctype="multipart/form-data" id="salon-step-details">
             <?php 
             include '_salon_detail_login.php'; ?>
         </form>
     <?php endif; ?>
-    <form method="post" action="<?php echo $formAction ?>" role="form" enctype="multipart/form-data" id="salon-step-details-new">
+    <form method="post" action="<?php echo esc_html($formAction) ?>" role="form" enctype="multipart/form-data" id="salon-step-details-new">
         <div class="row">
             <?php if($plugin->getSettings()->get('enabled_force_guest_checkout')): ?>
                 <?php SLN_Form::fieldCheckbox(
@@ -49,11 +49,11 @@ include '_additional_errors.php';
                             $bb->get('no_user_account'),
                             array()
                         ) ?>
-                        <label for="<?php echo SLN_Form::makeID('sln[no_user_account]') ?>"></label>
+                        <label for="<?php echo esc_html(SLN_Form::makeID('sln[no_user_account]')) ?>"></label>
                     </div>
                 </div>
                 <div class="col-xs-12 col-md-11">
-                    <label for="<?php echo SLN_Form::makeID('sln[no_user_account]') ?>"><h2 class="salon-step-title"><?php esc_html_e('checkout as a guest', 'salon-booking-system') ?>, <?php _e('no account will be created', 'salon-booking-system') ?></h2></label>
+                    <label for="<?php echo esc_html(SLN_Form::makeID('sln[no_user_account]')) ?>"><h2 class="salon-step-title"><?php esc_html_e('checkout as a guest', 'salon-booking-system') ?>, <?php _e('no account will be created', 'salon-booking-system') ?></h2></label>
                 </div>
             <?php else: ?>
             <div class="col-xs-12">
@@ -97,7 +97,7 @@ include '_additional_errors.php';
     </form>
 <?php else: ?>
 
-    <form method="post" action="<?php echo $formAction ?>" role="form" enctype="multipart/form-data">
+    <form method="post" action="<?php echo esc_html($formAction) ?>" role="form" enctype="multipart/form-data">
         <?php
         $fields = SLN_Enum_CheckoutFields::forDetailsStep()->filter('booking_hidden',false);
         foreach($fields as $field) { //remove excessive quotes escaping

@@ -364,6 +364,9 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
 
     $timeDiff = $end->diff($start);
     $lines = ($timeDiff->h*60 + $timeDiff->i) / $interval;
+    if ($start->format('H:i') === '00:00' && $end->format('H:i') === '00:00'){
+        $lines = (24 * 60) / $interval;
+    }
     $by_hour = array();
 
     foreach($this->bookings as $booking){

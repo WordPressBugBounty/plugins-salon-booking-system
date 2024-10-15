@@ -66,9 +66,9 @@ a[x-apple-data-detectors] {
               </td>
              </tr>
              <tr>
-              <td align="left" style="padding:0;Margin:0;padding-top:20px;padding-left:20px;padding-right:20px">
+              <td align="left" style="padding:0;Margin:0;padding-top:20px;padding-left:20px;padding-right:20px;padding-bottom: 8px;">
                 <?php $logo = $plugin->getSettings()->get('gen_logo'); ?>
-                <img class="adapt-img" src="<?php echo ($logo ? wp_get_attachment_image_url($logo, 'sln_gen_logo') : apply_filters('sln_default_email_logo', SLN_PLUGIN_URL . '/img/email/logo.png')); ?>" <?php echo ($logo ? '' : 'width="145" height="37"') ?> alt="img" style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic">
+                <img class="adapt-img" src="<?php echo ($logo ? wp_get_attachment_image_url($logo, 'sln_gen_logo') : apply_filters('sln_default_email_logo', SLN_PLUGIN_URL . '/img/email/logo.png')); ?>" <?php echo ($logo ? '' : 'width="145" height="37"') ?> alt="img" style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;max-width: 100%;width: auto;height: auto;">
               </td>
              </tr>
            </table></td>

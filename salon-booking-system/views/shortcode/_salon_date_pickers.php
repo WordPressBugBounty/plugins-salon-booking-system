@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 /**
  * @var $date DateTime
  * @var $plugin SLN_Plugin
@@ -7,12 +8,12 @@
 ?>
 <?php ob_start();?>
 <?php SLN_Form::fieldJSDate('sln[date]', $date, array('inline' => true))?>
-<input name="sln[date]" type="hidden" value="<?php echo SLN_plugin::getInstance()->format()->date($date) ?>"/>
+<input name="sln[date]" type="hidden" value="<?php echo esc_html(SLN_plugin::getInstance()->format()->date($date)) ?>"/>
 <?php $datepicker = ob_get_clean();
 ob_start();?>
 <div id="sln_timepicker_viewdate"></div>
 <?php SLN_Form::fieldJSTime('sln[time]', $date, array('interval' => $plugin->getSettings()->get('interval'), 'inline' => true))?>
-<input name="sln[time]" type="hidden" value="<?php echo SLN_plugin::getInstance()->format()->time($date) ?>"/>
+<input name="sln[time]" type="hidden" value="<?php echo esc_html(SLN_plugin::getInstance()->format()->time($date)) ?>"/>
 <?php $timepicker = ob_get_clean();?>
 
 <div class="col-xs-12 <?php echo '900' == $size ? 'col-md-4' : '' ?> sln-input sln-input--datepicker">

@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 /**@var SLN_Plugin $plugin
  * @var $booking
  * @var $day

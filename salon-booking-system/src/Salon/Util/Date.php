@@ -18,7 +18,7 @@ class Date {
 		} elseif($date instanceof self) {
 			$date = $date->dateTime;
 		}else{
-			throw new \Exception('bad object for date '.get_class($date));
+			throw new \Exception('bad object for date '.esc_html(get_class($date)));
 		}
 		$this->dateTime = $date;
 		$this->dateTime->setTime( 0, 0 );

@@ -2,7 +2,7 @@
 <div class="row sln-box--main--flattop">
     <div class="col-xs-12">
         <?php foreach ($additional_errors as $error): ?>
-            <div class="sln-alert sln-alert--general sln-alert--problem"><?php echo $error ?></div>
+            <div class="sln-alert sln-alert--general sln-alert--problem"><?php echo esc_html($error); ?></div>
         <?php endforeach ?>
     </div>
 </div>

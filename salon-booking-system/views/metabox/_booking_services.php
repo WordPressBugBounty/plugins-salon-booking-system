@@ -187,10 +187,19 @@ $bookingServices = $booking->getBookingServices()->getItems();
 $lineItem = ob_get_clean();
 $lineItem = preg_replace("/\r\n|\n/", ' ', $lineItem);
 ?>
-       
+
+<?php
+$at_id = 0;
+$arr_ids = array();
+?>
 
 <?php foreach ($bookingServices as $bookingService): ?>
-                <?php
+<?php
+$at_id = rand(1, 1000);
+while (in_array($at_id, $arr_ids)) {
+    $at_id = rand(1, 1000);
+}
+$arr_ids[] = $at_id;
 $serviceName = $bookingService->getService()->getName();
 $serviceId = $bookingService->getService()->getId();
 
@@ -238,10 +247,10 @@ $servicesData[$serviceId] = array_merge(isset($servicesData[$serviceId]) ? $serv
 		'no_id' => true,
 	),
 	true
-)
+);
 ?>
                 <?php SLN_Form::fieldText(
-	'_sln_booking[service][' . $serviceId . ']',
+	'_sln_booking[service][' . $at_id . ']',
 	$serviceId,
 	array('type' => 'hidden')
 )
@@ -277,7 +286,7 @@ $servicesData[$serviceId] = array_merge(isset($servicesData[$serviceId]) ? $serv
                         ($resource ? $resource->getId() : ''),
                         array(
                             'attrs' => array(
-                                'data-service'  => $serviceId,
+                                'data-service'  => $at_id,
                                 'data-resource' => '',
                                 'data-selection' => 'resource-selected'
                             ),
@@ -305,7 +314,7 @@ $servicesData[$serviceId] = array_merge(isset($servicesData[$serviceId]) ? $serv
                         }
                     }
                     SLN_Form::fieldSelect(
-                        '_sln_booking[attendants][' . $serviceId . ']' . (is_array($attendant) ? '[]' : ''),
+                        '_sln_booking[attendants][' . $at_id . ']' . (is_array($attendant) ? '[]' : ''),
                         ($attendant ? $attendantItem : array('')),
                         ($attendant ? array_keys($attendantItem) : ''),
                         array('attrs' => array('data-service' => $serviceId, 'data-attendant' => '', 'data-selection' => 'attendant-selected') + $multipleAttr,

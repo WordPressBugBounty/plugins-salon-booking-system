@@ -16,7 +16,7 @@ $wrapperClass = $isMultipleAttSelection ? 'sln-attendants-wrapper sln-attendants
 $additional_errors = !empty($additional_errors)? $additional_errors : $step->getAddtitionalErrors();
 $errors = !empty($errors) ? $errors : $step->getErrors();
 ?>
-<form id="salon-step-attendant" method="post" action="<?php echo $formAction ?>" role="form">
+<form id="salon-step-attendant" method="post" action="<?php echo esc_html($formAction); ?>" role="form">
     <?php
     include '_errors.php';
     include '_additional_errors.php';
@@ -27,7 +27,7 @@ $errors = !empty($errors) ? $errors : $step->getErrors();
                <div class="sln-box--fixed_height"><?php include $includeName; ?></div>
             </div> <!-- The row closed inside _form_actions.php -->
     <?php else: ?>
-        <div class="row sln-box--main <?php echo $wrapperClass; ?> sln-box--fixed_height">
+        <div class="row sln-box--main <?php echo esc_html($wrapperClass); ?> sln-box--fixed_height">
             <div class="col-xs-12"><?php include $includeName; ?></div>
         </div>
     <?php endif ?>

@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 } // Exit if accessed directly

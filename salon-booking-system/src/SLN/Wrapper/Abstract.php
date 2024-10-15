@@ -99,9 +99,10 @@ abstract class SLN_Wrapper_Abstract
     {
         $object = $this->isMultilingual()  ? $this->translationObject : $this->object;
         if ($object) {
-            if(strpos($post->post_title, '&lt') || strpos($post->post_title, '&gt')){ // fix XSS when js on attribute 'onerror' or similar on page attendant
-                $post->post_title = str_replace('&lt', '&amp;lt', $post->post_title);
-                $post->post_title = str_replace('&gt', '&amp;gt', $post->post_title);
+            if (strpos($object->post_title, '&lt') !== false || strpos($object->post_title, '&gt') !== false) {
+                // fix XSS when js on attribute 'onerror' or similar on page attendant
+                $object->post_title = str_replace('&lt', '&amp;lt', $object->post_title);
+                $object->post_title = str_replace('&gt', '&amp;gt', $object->post_title);
             }
             return esc_html($object->post_title);
         }

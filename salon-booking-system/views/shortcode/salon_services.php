@@ -9,7 +9,7 @@ if ($plugin->getSettings()->isDisabled()) {
 	$message = $plugin->getSettings()->getDisabledMessage();
 	?>
 	<div class="sln-alert sln-alert--paddingleft sln-alert--problem">
-		<?php echo empty($message) ? esc_html__('On-line booking is disabled', 'salon-booking-system') : $message ?>
+		<?php echo empty($message) ? esc_html__('On-line booking is disabled', 'salon-booking-system') : esc_html($message) ?>
 	</div>
 	<?php
 } else {
@@ -21,7 +21,7 @@ if ($plugin->getSettings()->isDisabled()) {
 	$additional_errors = !empty($additional_errors)? $additional_errors : $step->getAddtitionalErrors();
 	$errors = !empty($errors) ? $errors : $step->getErrors();
 	?>
-	<form id="salon-step-services" method="post" action="<?php echo $formAction ?>" role="form">
+	<form id="salon-step-services" method="post" action="<?php echo esc_html($formAction) ?>" role="form">
 	<?php
 	include '_errors.php';
 	include '_additional_errors.php';
@@ -37,7 +37,7 @@ if ($plugin->getSettings()->isDisabled()) {
 		</div>
 	<?php } // IF SIZE 600 AND 400 // END ?>
 	<?php include "_form_actions.php" ?>
-        <input type="hidden" name="sln[customer_timezone]" value="<?php echo $bb->get('customer_timezone') ?>">
+        <input type="hidden" name="sln[customer_timezone]" value="<?php echo esc_html($bb->get('customer_timezone')) ?>">
 	</form>
 	<?php
 }

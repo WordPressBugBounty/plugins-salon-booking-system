@@ -362,6 +362,17 @@ class SLN_Helper_Availability
 
     public function validateBookingService(SLN_Wrapper_Booking_Service $bookingService, $isLastService = false)
     {
+        if($bookingService->getCountServices() > 1){
+            return $this->validateService(
+                $bookingService->getService(),
+                $bookingService->getStartsAt(),
+                $bookingService->getTotalDuration(),
+                $bookingService->getBreakStartsAt(),
+                $bookingService->getBreakEndsAt(),
+                $isLastService,
+                $bookingService->getCountServices(),
+            );
+        }
         return $this->validateService(
             $bookingService->getService(),
             $bookingService->getStartsAt(),
@@ -398,10 +409,17 @@ class SLN_Helper_Availability
     }
 
 
-    public function validateService(SLN_Wrapper_ServiceInterface $service, DateTimeInterface $date = null, DateTimeInterface $duration = null, DateTimeInterface $breakStartsAt = null, DateTimeInterface $breakEndsAt = null, $isLastService = false)
+    public function validateService(SLN_Wrapper_ServiceInterface $service, DateTimeInterface $date = null, DateTimeInterface $duration = null, DateTimeInterface $breakStartsAt = null, DateTimeInterface $breakEndsAt = null, $isLastService = false, $count = 1)
     {
         $date = empty($date) ? $this->date : $date;
-        $duration = empty($duration) ? $service->getTotalDuration() : $duration;
+        $totalDuration = $service->getTotalDuration();
+        if($count > 1) {
+            $currentMinutes = (int)$totalDuration->format('i');
+            $newMinutes = $currentMinutes * $count - $currentMinutes;
+            $totalDuration->modify("+{$newMinutes} minutes");
+        }
+
+        $duration = empty($totalDuration) ? $duration : $totalDuration;
 
         $noBreak = $this->getDayBookings()->isIgnoreServiceBreaks() || $breakStartsAt == $breakEndsAt || !$breakStartsAt || !$breakEndsAt;
 
@@ -863,8 +881,8 @@ class SLN_Helper_Availability
                         sprintf(
                             // translators: s%1$ will be replaced by attendant name, %2$s will be replaced by service name
                             esc_html__('Attendant %1$s isn\'t available for %2$s service', 'salon-booking-system'),
-                            $bookingService->getAttendant()->getName(),
-                            $service->getName()
+                            esc_html($bookingService->getAttendant()->getName()),
+                            esc_html($service->getName())
                         )
                     );
                 }

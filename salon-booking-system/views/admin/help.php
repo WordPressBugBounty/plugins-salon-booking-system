@@ -29,7 +29,7 @@
 		color: "#0277bd",
 		display: {
 			text: "Do you need help?",
-			iconImage: '<?php echo SLN_PLUGIN_URL . "/img/logo_help_button.png" ?>',
+			iconImage: '<?php echo esc_html(SLN_PLUGIN_URL) . "/img/logo_help_button.png" ?>',
 		},
 	});
 </script>

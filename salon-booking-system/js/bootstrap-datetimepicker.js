@@ -801,9 +801,7 @@
 				.empty()
 				.append(html.join(""));
 
-			if(!$('#sln-salon-my-account').length) {
-				this.fillTime(dates, year, month, dayMonth, hours, minutes);
-			}
+			this.fillTime(dates, year, month, dayMonth, hours, minutes);
 
 			var currentYear = this.date.getUTCFullYear();
 			var months = this.picker
@@ -1804,9 +1802,7 @@
 				dayMonth = d.getUTCDate(),
 				hours = d.getUTCHours(),
 				minutes = d.getUTCMinutes();
-			if(!$('#sln-salon-my-account').length) {
-				this.fillTime(dates, year, month, dayMonth, hours, minutes);
-			}
+			this.fillTime(dates, year, month, dayMonth, hours, minutes);
 		},
 
 		parseDate: function(date, format, language, type) {

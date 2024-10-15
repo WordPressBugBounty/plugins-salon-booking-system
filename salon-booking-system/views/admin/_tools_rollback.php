@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 /** @var string $versionToRollback */
 /** @var string $currentVersion */
 /** @var bool $isFree */

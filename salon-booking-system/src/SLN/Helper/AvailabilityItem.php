@@ -162,6 +162,10 @@ class SLN_Helper_AvailabilityItem
     public function isValidSpecificDates(Date $date, SLN_Wrapper_ServiceInterface $service=null) {
         $specificDates = isset($this->data['specific_dates']) ? explode(',', $this->data['specific_dates']) : array();
 
+        if(class_exists('SalonMultishop\Wrapper\ShopService') && $service instanceof SalonMultishop\Wrapper\ShopService) {
+            return in_array($date->getDateTime()->format('Y-m-d'), $specificDates);
+        }
+
         return in_array($date->getDateTime()->format('Y-m-d'), $specificDates)
             && (
                 empty($service)

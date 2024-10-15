@@ -6,16 +6,16 @@
                 <div class="search-result-content" id="card_prenotazione">
                     <div class="prima riga">
                         <div class="blocco">
-                            <p class="card_value" style="font-weight: 650"><?php echo $booking['id']; ?></p>
+                            <p class="card_value" style="font-weight: 650"><?php echo esc_html($booking['id']); ?></p>
                         </div>
                         <div class="blocco">
-                            <p class="card_value card_customer_name"><?php echo $booking['customer']; ?></p>
+                            <p class="card_value card_customer_name"><?php echo esc_html($booking['customer']); ?></p>
                         </div>
                         <div class="blocco card_data">
-                            <p class="card_value" style="color: #0e0e0e; font-size: 15px; font-weight: 520"><?php echo $booking['time']; ?></p>
+                            <p class="card_value" style="color: #0e0e0e; font-size: 15px; font-weight: 520"><?php echo esc_html($booking['time']); ?></p>
                         </div>
                         <div class="blocco" style="margin-left: auto; margin-right: 1rem">
-                            <p class="bottone main"><a href="#" data-bookingid='<?php echo $booking['id']; ?>' class="event sln-details-search"><?php esc_html_e('Details', 'salon-booking-system'); ?></a></p>
+                            <p class="bottone main"><a href="#" data-bookingid='<?php echo esc_html($booking['id']); ?>' class="event sln-details-search"><?php esc_html_e('Details', 'salon-booking-system'); ?></a></p>
                         </div>
                     </div>
                 </div>

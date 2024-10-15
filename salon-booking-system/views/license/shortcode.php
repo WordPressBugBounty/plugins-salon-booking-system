@@ -17,7 +17,7 @@
             <?php if ( current_user_can( 'manage_options' ) ) { ?>
                 <p><?php echo esc_html__('Please enter your plugin license on administration panel') ?></p>
             <?php } else { ?> 
-                <p><?php echo empty($message) ? esc_html__('On-line booking is disabled', 'salon-booking-system') : $message ?></p>
+                <p><?php echo empty($message) ? esc_html__('On-line booking is disabled', 'salon-booking-system') : esc_html($message) ?></p>
             <?php } ?>
         </div>
     </div>

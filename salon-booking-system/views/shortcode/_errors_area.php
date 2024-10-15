@@ -4,7 +4,7 @@
             <span class="errors-area" data-class="sln-alert sln-alert-medium sln-alert--problem">
                 <div class="sln-alert sln-alert-medium sln-alert--problem sln-service-error">
                     <?php foreach ($errors as $error): ?>
-                        <p><?php echo $error ?></p>
+                        <p><?php echo esc_html($error) ?></p>
                     <?php endforeach ?>
                 </div>
             </span>
@@ -17,7 +17,7 @@
                     <span class="errors-area" data-class="sln-alert sln-alert-medium sln-alert--problem">
                         <div class="sln-alert sln-alert-medium sln-alert--problem sln-service-error">
                             <?php foreach ($errors as $error): ?>
-                                <p><?php echo $error ?></p>
+                                <p><?php echo esc_html($error) ?></p>
                             <?php endforeach ?>
                         </div>
                     </span>

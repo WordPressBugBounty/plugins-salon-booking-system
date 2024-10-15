@@ -1140,6 +1140,11 @@ if (!String.prototype.formatNum) {
 				.off("hide.bs.modal")
 				.on("hide.bs.modal", onHideModal)
 				.modal();
+
+			const button = document.querySelector('button[data-action="save-edited-booking"]');
+			if (button) {
+				button.classList.add('sln-btn-disabled');
+			}
 		}
 
 		function onShowModal() {
@@ -1196,12 +1201,7 @@ if (!String.prototype.formatNum) {
 		function onClickSaveEditedBooking() {
 			var $editor = $(".booking-editor");
 			calendar._new_post_id = $editor.contents().find('#post_ID').val();
-			setTimeout(function(){
-				$editor
-					.off("load.hide_modal")
-					.on("load.hide_modal", onLoadAfterSubmit);
-				$("#sln-booking-editor-modal").modal("hide");
-			}, 2000);
+
 			//$editor
 			//	.off("load.dismiss_spinner")
 			//	.on("load.dismiss_spinner", cancelLoadingSpinner);
@@ -1213,6 +1213,13 @@ if (!String.prototype.formatNum) {
 			}
 
 			if (validateBooking()) {
+				setTimeout(function(){
+					$editor
+						.off("load.hide_modal")
+						.on("load.hide_modal", onLoadAfterSubmit);
+					$("#sln-booking-editor-modal").modal("hide");
+				}, 2000);
+
 				if(!$editor.contents().find('#save-post').attr('disabled')){
 					launchLoadingSpinnerSaving();
 				}else{

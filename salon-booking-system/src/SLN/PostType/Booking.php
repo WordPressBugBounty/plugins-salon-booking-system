@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 class SLN_PostType_Booking extends SLN_PostType_Abstract
 {
 
@@ -414,7 +414,7 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
 
                         $sms_remind = $obj->getMeta('sms_remind');
 
-                        if (!empty($sms_remind) && $sms_remind) {
+                        if (!empty($sms_remind)) {
                             $sms_remind_utc_time = $obj->getMeta('sms_remind_utc_time');
 
                             if ($sms_remind_utc_time) {
@@ -439,13 +439,18 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
                                 $datetime = $obj->getStartsAt()->modify('-' . str_replace('+', '', $interval));
 	                            $now = new SLN_DateTime();
 	                            // don't show if time of remind was passed, and we have no info
-	                            
-                                $title = sprintf(
-                                    // translators: %s will be replaced by the datetime
-                                    __('Sms will be sent at %s', 'salon-booking-system'),
-                                    $this->getPlugin()->format()->date($datetime) . '/' . $this->getPlugin()->format()->time($datetime)
-                                );
-                                $class = 'sln-booking-reminder-await';
+                                if ($now > $datetime) {
+                                    $title = __('Sms failed', 'salon-booking-system') . ': ' . 'time has passed';
+                                    $class = 'sln-booking-reminder-error';
+                                } else {
+                                    $title = sprintf(
+                                        // translators: %s will be replaced by the datetime
+                                        __('Sms will be sent at %s', 'salon-booking-system'),
+                                        $this->getPlugin()->format()->date($datetime) . '/' . $this->getPlugin()->format()->time($datetime)
+                                    );
+                                    $class = 'sln-booking-reminder-await';
+                                }
+
                             } else {
                                 $title = __('Sms failed', 'salon-booking-system') . ' ' . $remind_error;
                                 $class = 'sln-booking-reminder-error';
@@ -739,6 +744,10 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
                         'value' => $username_parts[1],
                     );
                 }
+            }
+
+            if(has_filter('sln_booking_meta_multi_param')) {
+                $meta_queries = apply_filters('sln_booking_meta_multi_param', $meta_queries);
             }
 
             if (!empty($meta_queries)) {

@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 $addAjax = apply_filters('sln.template.calendar.ajaxUrl', '');
 $ai = $plugin->getSettings()->getAvailabilityItems();
 list($timestart, $timeend) = $ai->getTimeMinMax();

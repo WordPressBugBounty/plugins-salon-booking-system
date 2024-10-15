@@ -137,7 +137,7 @@ class SLN_Action_Ajax_CheckServices extends SLN_Action_Ajax_Abstract
         $this->ah->setDate($date, $this->plugin->createBooking(intval($bookingID)));
 
         $data = array();
-        foreach ($checkServicesList as $sId) {
+        foreach ($checkServicesList as $key => $sId) {
 
             if(0 == $sId){
                 continue;
@@ -145,7 +145,7 @@ class SLN_Action_Ajax_CheckServices extends SLN_Action_Ajax_Abstract
 
 	        $attendant = isset($bookingData['attendants'][$sId]) ? $bookingData['attendants'][$sId] : null;
 
-            $data[$sId] = array(
+            $data[$key] = array(
                 'service'        => $sId,
                 'attendant'      => sanitize_text_field(wp_unslash($attendant)),
                 'price'          => isset($bookingData['price'][$sId]) ? sanitize_text_field(wp_unslash($bookingData['price'][$sId])) : 0,
@@ -167,7 +167,7 @@ class SLN_Action_Ajax_CheckServices extends SLN_Action_Ajax_Abstract
 	    // $isServicesCountPrimaryServices = $settings->get('is_services_count_primary_services');
 
         $firstSelectedAttendant = null;
-        foreach ($bookingServices->getItems() as $bookingService) {
+        foreach ($bookingServices->getItems() as $key => $bookingService) {
             $serviceErrors   = array();
             $attendantErrors = array();
 
@@ -267,7 +267,7 @@ class SLN_Action_Ajax_CheckServices extends SLN_Action_Ajax_Abstract
                 $errors[] = $serviceErrors[0];
             }
 
-            $ret[$bookingService->getService()->getId()] = array(
+            $ret[$key] = array(
                 'status'               => empty($errors) ? self::STATUS_CHECKED : self::STATUS_ERROR,
                 'errors'               => $errors,
                 'serviceErrorCount'    => is_array($serviceErrors) ? count($serviceErrors) : count(array_filter(array($serviceErrors))),

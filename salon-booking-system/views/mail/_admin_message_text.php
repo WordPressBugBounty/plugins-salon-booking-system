@@ -6,6 +6,6 @@
 	    $_text = apply_filters('sln.new_booking.notifications.email.body.title', '', $booking);
 	    $_text = $_text ? esc_html_e($_text) : esc_html_e(' at ', 'salon-booking-system') . $plugin->getSettings()->getSalonName();
 	?>
-	<?php echo $_text ?>,
+	<?php echo esc_html($_text) ?>,
 	<?php esc_html_e('please take note of the following booking details', 'salon-booking-system') ?>.
 </p>

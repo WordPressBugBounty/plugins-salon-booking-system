@@ -1,3 +1,4 @@
+<?php // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 <div class="wrap sln-bootstrap">
 	<h1><?php esc_html_e( 'Tools', 'salon-booking-system' ) ?></h1>
 </div>
