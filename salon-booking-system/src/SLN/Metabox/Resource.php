@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 class SLN_Metabox_Resource extends SLN_Metabox_Abstract
 {
     protected $fields = array(

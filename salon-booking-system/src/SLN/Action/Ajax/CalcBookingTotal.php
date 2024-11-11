@@ -87,14 +87,14 @@ class SLN_Action_Ajax_CalcBookingTotal extends SLN_Action_Ajax_Abstract
         $services     = array();
         $services_ids = array_map('intval',$data['service'] ?? []);
 
-	foreach ($services_ids as $serviceId) {
+	foreach ($services_ids as $key => $serviceId) {
         if(0 == $serviceId){
             continue;
         }
 	    $duration      = SLN_Func::convertToHoursMins($data['duration'][$serviceId]);
             $breakDuration = SLN_Func::convertToHoursMins($data['break_duration'][$serviceId]);
 
-            $attendant = isset($data['attendants']) ? $data['attendants'][$serviceId] : (isset($data['attendant']) ? $data['attendant'] : null);
+            $attendant = isset($data['attendants']) ? $data['attendants'][$key] : (isset($data['attendant']) ? $data['attendant'] : null);
             $service = $this->plugin->getInstance()->createService($serviceId);
             $service = apply_filters('sln.booking_services.buildService', $service);
             if(0 == $attendant && $this->plugin->getSettings()->isAttendantsEnabled() && $service->isAttendantsEnabled()){

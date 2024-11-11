@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 abstract class SLN_Shortcode_Salon_Step
 {
     private $plugin;

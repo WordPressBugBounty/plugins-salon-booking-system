@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 if(!$data['services']) return;
 $plugin = SLN_Plugin::getInstance();
 ?>

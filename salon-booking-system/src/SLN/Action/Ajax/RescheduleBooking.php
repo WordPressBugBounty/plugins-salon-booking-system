@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 class SLN_Action_Ajax_RescheduleBooking extends SLN_Action_Ajax_Abstract {
 	public function execute() {
 

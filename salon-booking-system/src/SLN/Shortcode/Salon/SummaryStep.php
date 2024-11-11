@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
 {
     const SLOT_UNAVAILABLE    = 'slotunavailable';

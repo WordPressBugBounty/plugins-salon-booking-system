@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: salon-booking-system\n"
 "Report-Msgid-Bugs-To: WPChef <your_email@email.com>\n"
-"POT-Creation-Date: 2024-10-07 10:56+0200\n"
+"POT-Creation-Date: 2024-10-22 08:49+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: \n"
 "Language-Team: WPChef <your_email@email.com>\n"
@@ -825,7 +825,7 @@ msgid "Expiration"
 msgstr ""
 
 #: views/discount/shortcode/_salon_my_account_content.php:56 views/metabox/service.php:19
-#: views/metabox/service.php:375 views/shortcode/salon_booking_services.php:41
+#: views/metabox/service.php:375 views/shortcode/salon_booking_services.php:42
 #: views/shortcode/salon_my_account/_salon_my_account_details_table.php:12
 #: views/shortcode/salon_my_account/_salon_my_account_details_table_rows.php:37 views/sms/remind.php:61
 msgid "Price"
@@ -846,7 +846,7 @@ msgid "Hide reservations"
 msgstr ""
 
 #: views/discount/shortcode/_salon_my_account_content.php:84 views/shortcode/salon_assistant.php:49
-#: views/shortcode/salon_booking_services.php:56
+#: views/shortcode/salon_booking_services.php:57
 msgid "Book now"
 msgstr ""
 
@@ -1256,53 +1256,53 @@ msgstr ""
 msgid "Total services duration exceeded, change or remove one!"
 msgstr ""
 
-#: views/metabox/_booking_services.php:93 views/metabox/_booking_services.php:217
+#: views/metabox/_booking_services.php:93 views/metabox/_booking_services.php:226
 msgid "Start at"
 msgstr ""
 
-#: views/metabox/_booking_services.php:97 views/metabox/_booking_services.php:221
+#: views/metabox/_booking_services.php:97 views/metabox/_booking_services.php:230
 msgid "End at"
 msgstr ""
 
-#: views/metabox/_booking_services.php:103 views/metabox/_booking_services.php:227
+#: views/metabox/_booking_services.php:103 views/metabox/_booking_services.php:236
 msgid "Service"
 msgstr ""
 
-#: views/metabox/_booking_services.php:147 views/metabox/_booking_services.php:270
+#: views/metabox/_booking_services.php:147 views/metabox/_booking_services.php:279
 msgid "Resource"
 msgstr ""
 
-#: views/metabox/_booking_services.php:148 views/metabox/_booking_services.php:271
+#: views/metabox/_booking_services.php:148 views/metabox/_booking_services.php:280
 msgid "No resources"
 msgstr ""
 
-#: views/metabox/_booking_services.php:167 views/metabox/_booking_services.php:293
+#: views/metabox/_booking_services.php:167 views/metabox/_booking_services.php:302
 msgid "Attendant"
 msgstr ""
 
-#: views/metabox/_booking_services.php:168 views/metabox/_booking_services.php:294
+#: views/metabox/_booking_services.php:168 views/metabox/_booking_services.php:303
 msgid "more assistant"
 msgstr ""
 
-#: views/metabox/_booking_services.php:169 views/metabox/_booking_services.php:295 views/metabox/service.php:111
+#: views/metabox/_booking_services.php:169 views/metabox/_booking_services.php:304 views/metabox/service.php:111
 #: views/metabox/service.php:112
 msgid "No assistant required"
 msgstr ""
 
-#: views/metabox/_booking_services.php:181 views/metabox/_booking_services.php:319
+#: views/metabox/_booking_services.php:181 views/metabox/_booking_services.php:328
 msgid "Service addded"
 msgstr ""
 
-#: views/metabox/_booking_services.php:182 views/metabox/_booking_services.php:320
+#: views/metabox/_booking_services.php:182 views/metabox/_booking_services.php:329
 #: views/settings/_holiday_row.php:263
 msgid "Remove"
 msgstr ""
 
-#: views/metabox/_booking_services.php:336
+#: views/metabox/_booking_services.php:345
 msgid "Add a service"
 msgstr ""
 
-#: views/metabox/_booking_services.php:342
+#: views/metabox/_booking_services.php:351
 msgid "Select an assistant"
 msgstr ""
 
@@ -1466,7 +1466,7 @@ msgstr ""
 msgid "Show more details"
 msgstr ""
 
-#: views/metabox/booking.php:308 views/metabox/service.php:27 views/shortcode/salon_booking_services.php:35
+#: views/metabox/booking.php:308 views/metabox/service.php:27 views/shortcode/salon_booking_services.php:36
 msgid "Duration"
 msgstr ""
 
@@ -3243,7 +3243,7 @@ msgstr ""
 msgid "Disable all Google fonts according to the standard GDPR."
 msgstr ""
 
-#: views/shortcode/_attendants.php:99 views/shortcode/_m_attendants.php:79
+#: views/shortcode/_attendants.php:102 views/shortcode/_m_attendants.php:79
 msgid "No assistants available for the selected time/slot - please choose another one"
 msgstr ""
 
@@ -3481,19 +3481,19 @@ msgstr ""
 msgid "Skills"
 msgstr ""
 
-#: views/shortcode/salon_details.php:56
+#: views/shortcode/salon_details.php:57
 msgid "checkout as a guest"
 msgstr ""
 
-#: views/shortcode/salon_details.php:56
+#: views/shortcode/salon_details.php:57
 msgid "no account will be created"
 msgstr ""
 
-#: views/shortcode/salon_details.php:60
+#: views/shortcode/salon_details.php:61
 msgid "Checkout as a guest"
 msgstr ""
 
-#: views/shortcode/salon_details.php:60
+#: views/shortcode/salon_details.php:61
 msgid "An account will be automatically created"
 msgstr ""
 

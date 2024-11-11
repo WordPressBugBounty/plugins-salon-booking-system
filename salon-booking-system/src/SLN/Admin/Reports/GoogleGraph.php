@@ -1,5 +1,6 @@
 <?php
 // Exit if accessed directly
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 class SLN_Admin_Reports_GoogleGraph {

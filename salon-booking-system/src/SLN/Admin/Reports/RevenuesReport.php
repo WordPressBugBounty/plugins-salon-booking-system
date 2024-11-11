@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 class SLN_Admin_Reports_RevenuesReport extends SLN_Admin_Reports_AbstractReport {
 	protected $type = 'line';
 

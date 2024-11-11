@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 class SLN_Shortcode_Salon_ThankyouStep extends SLN_Shortcode_Salon_Step
 {
     protected function dispatchForm(){

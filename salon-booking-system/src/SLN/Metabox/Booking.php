@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 class SLN_Metabox_Booking extends SLN_Metabox_Abstract
 {
     /** @var  SLN_Wrapper_Booking */

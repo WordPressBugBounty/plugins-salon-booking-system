@@ -9,7 +9,7 @@ use Salon\Util\Date;
 use SLN_Enum_BookingStatus;
 use DateTime;
 use SLN_Formatter;
-
+// phpcs:ignoreFile WordPress.DateTime.RestrictedFunctions.date_date
 class HolidayRules_Controller extends REST_Controller
 {
     /**

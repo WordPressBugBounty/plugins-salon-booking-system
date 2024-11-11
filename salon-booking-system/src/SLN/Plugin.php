@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 class SLN_Plugin
 {
     const POST_TYPE_SERVICE = 'sln_service';

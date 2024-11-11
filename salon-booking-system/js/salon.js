@@ -943,8 +943,21 @@ function sln_loadStep($, data) {
     $.ajax(request_arr);
 }
 
-function sln_updateDatepickerTimepickerSlots($, intervals) {
+function sln_updateDatepickerTimepickerSlots($, intervals, bookingId) {
     $("[data-ymd]").addClass("disabled");
+    let element = $(`#sln-booking-id-resch-${bookingId}`);
+    //for active timeslot to stay
+    if (!element.length) {
+        var datetimepicker = $(".sln_timepicker div").data("datetimepicker");
+    } else {
+        var datetimepicker = element.find(".sln_timepicker div").data("datetimepicker");
+    }
+    var DtHours = datetimepicker.viewDate.getUTCHours();
+    DtHours = DtHours >= 10 ? DtHours : "0" + DtHours;
+    var DtMinutes = datetimepicker.viewDate.getUTCMinutes();
+    DtMinutes = DtMinutes >= 10 ? DtMinutes : "0" + DtMinutes;
+    var DtTime = DtHours + ":" + DtMinutes;
+
     $.each(intervals.dates, function(key, value) {
         $('.day[data-ymd="' + value + '"]').removeClass("disabled");
     });
@@ -957,6 +970,8 @@ function sln_updateDatepickerTimepickerSlots($, intervals) {
     $.each(intervals.times, function(key, value) {
         $('.minute[data-ymd="' + value + '"]').removeClass("disabled");
     });
+    $('.minute').removeClass('active');
+    $('.minute[data-ymd="' + DtTime + '"]').addClass('active');
 }
 
 function sln_updateDebugDate( $, debugLog ){
@@ -986,7 +1001,7 @@ function sln_stepDate($) {
     var isValid;
     var items = { intervals: $("#salon-step-date").data("intervals"), debugDate: $('#salon-step-date').data('debug'), booking_id: $("#salon-step-date").data("booking_id") };
     var updateFunc = function() {
-        sln_updateDatepickerTimepickerSlots($, items.intervals);
+        sln_updateDatepickerTimepickerSlots($, items.intervals, items.bookint_id);
         sln_updateDebugDate( $, items.debugDate );
     };
     var debounce = function(fn, delay) {
@@ -1594,11 +1609,9 @@ function sln_initTimepickers($, data) {
                     $("body").trigger("sln_date");
                 })
                 .on("changeMinute", function() {
-                    setTimeout(function() {
-                        sln_renderAvailableTimeslots($, data, true);
+                        sln_updateDatepickerTimepickerSlots($, data.intervals, data.bookint_id);
 
-                        $("body").trigger("sln_date");
-                    }, 5);
+                        // $("body").trigger("sln_date");
                 })
                 .on("hide", function() {
                     if ($(this).is(":focus"));
@@ -1625,27 +1638,19 @@ function sln_initTimepickers($, data) {
                     hours = '00';
                 }
 
-                let updateHourAndMin;
-
-                function addition(hoursOrMin) {
-                    updateHourAndMin =
-                        hoursOrMin.length < 2
-                            ? (hoursOrMin = `${0}${hoursOrMin}`)
-                            : hoursOrMin;
-
-                    return updateHourAndMin;
-                }
-
                 if (time.endsWith('pm')) {
                     hours = parseInt(hours, 10) + 12;
                 }
 
-                return `${addition(hours)}:${addition(minutes)}`;
+                return `${String(hours).padStart(2, 0)}:${String(minutes).padStart(2, 0)}`;
             }
 
             var suggestedTime = convertTo24HrsFormat(data.intervals.suggestedTime);
             var hours = parseInt(suggestedTime, 10) || 0;
             var datetimepicker = $(this).data("datetimepicker");
+            datetimepicker.fillTime = function(dates, years, month, dayMonth, hours, minutes){
+                sln_updateDatepickerTimepickerSlots($, data.intervals, data.bookingId);
+            }
             datetimepicker.viewDate.setUTCHours(hours);
             var minutes =
                 parseInt(
@@ -2021,6 +2026,12 @@ function sln_salonBookingCalendarInit() {
 
             method: "POST",
             dataType: "json",
+            converters:{
+                'text json': function(data){
+                    data = data.replaceAll('\\ /', '\\/');
+                    return JSON.parse(data);
+                },
+            },
             success: function(data) {
                 if (data.success) {
                     jQuery(
@@ -2177,7 +2188,7 @@ function sln_renderAvailableTimeslots($, data, changeMinute = false) {
 
                 var timeHTML = '<span data-ymd="' +
                     timeSlot +
-                    '" class="minute' + (timeSlot === DtTime ? " active" : "") +
+                    '" class="minute' + (timeSlot === DtTime ? " active" : "") + ($span.text().endsWith('pm') ? " hour_pm" : "") + // see botstrap-datetimepicker target.is('.minute')
                     '">' +
                     $.fn.datetimepicker.DPGlobal.formatDate(
                         date,
@@ -2202,7 +2213,7 @@ function sln_renderAvailableTimeslots($, data, changeMinute = false) {
                 '<span data-ymd="' +
                 value +
                 '" class="minute disabled' +
-                (value === DtTime ? " active" : "") +
+                (value === DtTime ? " active" : "") + (hours > 12 ? " hour_pm" : "") +
                 '">' +
                 $.fn.datetimepicker.DPGlobal.formatDate(
                     date,

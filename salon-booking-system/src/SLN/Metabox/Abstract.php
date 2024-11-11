@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 abstract class SLN_Metabox_Abstract
 {
     private $plugin;

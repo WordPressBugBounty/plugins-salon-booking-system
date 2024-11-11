@@ -63,7 +63,7 @@ function sln_applyDiscountCode() {
             var alertBox;
             if (data.success) {
                 $("#sln_discount_value").html(data.discount);
-                $('.sln-summary-row.sln-summary-row--discount').toggleClass('hide', data.discount.startsWith('0'));
+                $('.sln-summary-row.sln-summary-row--discount').removeClass('hide');
                 $(".sln-total-price").html(data.total);
                 alertBox = $(
                     '<div class="sln-alert sln-alert--paddingleft sln-alert--success"></div>'
@@ -74,7 +74,7 @@ function sln_applyDiscountCode() {
                 }
             } else {
                 $("#sln_discount_value").html(0);
-                $('.sln-summary-row.sln-summary-row--discount').toggleClass('hide', data.discount.startsWith('0'));
+                $('.sln-summary-row.sln-summary-row--discount').addClass('hide');
                 $(".sln-total-price").html(data.total);
                 if(data.button != undefined){
                     $('.sln-btn.sln-btn--fullwidth.sln-btn--nextstep').html(data.button);

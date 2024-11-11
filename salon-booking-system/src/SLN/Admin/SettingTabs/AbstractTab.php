@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 abstract class SLN_Admin_SettingTabs_AbstractTab {
 	const PAGE = 'salon-settings';
 

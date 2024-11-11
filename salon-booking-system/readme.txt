@@ -4,7 +4,7 @@ Tags: booking, reservations, scheduling, appointment, booking calendar, online r
 Requires at least: 4.1
 Tested up to: 6.6
 Requires PHP: 7.4.8
-Stable tag: 10.9.6
+Stable tag: 10.9.8
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -394,6 +394,17 @@ FREE version doesn't have the online payments options, no mobile app access, no 
 
 
 == Changelog ==
+
+03.11.2024 - 10.9.7
+
+* Fixed issue with time picker on front-end booking form
+* Minor fixes
+
+
+30.10.2024
+
+* Fixed issue with Add to Home screen of Web App
+* Fixed issue with deposit 
 
 10.10.2024
 

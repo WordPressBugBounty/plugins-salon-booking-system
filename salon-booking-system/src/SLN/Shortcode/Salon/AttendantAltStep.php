@@ -69,8 +69,13 @@ class SLN_Shortcode_Salon_AttendantAltStep extends SLN_Shortcode_Salon_Attendant
             }
 
             if (empty($selected[$service->getId()]) || (isset($_POST['attendant_auto']) && $_POST['attendant_auto'] !== true)) {
-                $index = mt_rand(0, count($availAttsForEachService[$service->getId()]) - 1);
-                $attId = $availAttsForEachService[$service->getId()][$index];
+                $errors = 1;
+                while (!empty($errors)) {
+                    $index = mt_rand(0, count($availAttsForEachService[$service->getId()]) - 1);
+                    $attId = $availAttsForEachService[$service->getId()][$index];
+                    $attendant = apply_filters('sln.booking_services.buildAttendant', new SLN_Wrapper_Attendant($attId));
+                    $errors = SLN_Shortcode_Salon_AttendantHelper::validateItem($bookingServices->getItems(), $ah, $attendant);
+                }
                 $selected[$service->getId()] = $attId;
                 if($service->isMultipleAttendantsForServiceEnabled()){
                     $attId = array($attId);

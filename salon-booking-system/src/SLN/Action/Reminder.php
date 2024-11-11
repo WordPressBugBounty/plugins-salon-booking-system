@@ -68,11 +68,19 @@ class SLN_Action_Reminder
     private function sendSms($booking){
         $sms = $this->plugin->sms();
         $sms->clearError();
-        $sms->send(
-            $booking->getPhone(),
-            $this->plugin->loadView('sms/remind', compact('booking')),
-	        $booking->getMeta('sms_prefix')
-        );
+        if(!empty($booking->getPhone())){
+            $sms->send(
+                $booking->getPhone(),
+                $this->plugin->loadView('sms/remind', compact('booking')),
+                $booking->getMeta('sms_prefix')
+            );
+        } elseif(!empty($this->plugin->getSettings()->get('sms_new_number'))) {
+            $sms->send(
+                $this->plugin->getSettings()->get('sms_new_number'),
+                $this->plugin->loadView('sms/remind', compact('booking')),
+                $booking->getMeta('sms_prefix')
+            );
+        }
         if($sms->hasError()){
             throw new Exception($sms->getError());
         }

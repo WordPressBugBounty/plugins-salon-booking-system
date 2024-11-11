@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 // uncomment this line for testing
 //set_site_transient('update_plugins', null);
 

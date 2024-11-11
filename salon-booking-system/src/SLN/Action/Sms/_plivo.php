@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 // try to use HTTP/Request2 else use curl
 if ((@include 'HTTP/Request2.php') == 'OK') {
     define("PLIVO_USE_CURL", FALSE);

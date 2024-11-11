@@ -117,8 +117,18 @@ class SLN_Shortcode_SalonCalendar {
             else {
                 $rows = array();
                 foreach($b->getBookingServices()->getItems() as $bookingService) {
-                    if ($bookingService->getAttendant() && ( !$assistantsIDs || in_array($bookingService->getAttendant()->getId(), $assistantsIDs) )) {
-                        $rows[$bookingService->getAttendant()->getId()][] = $bookingService->getService()->getName();
+                    if ($bookingService->getAttendant()) {
+                    	if(is_array($bookingService->getAttendant())){
+                    		foreach($bookingService->getAttendant() as $att){
+                    			if(!$assistantsIDs || in_array($att->getId(), $assistantsIDs)){
+                    				$rows[$att->getId()][] = $bookingService->getService()->getName();
+                    			}
+                    		}
+                    	}else{
+                    		if(!$assistantsIDs || in_array($bookingService->getAttendant()->getId(), $assistantsIDs)){
+                    			$rows[$bookingService->getAttendant()->getId()][] = $bookingService->getService()->getName();
+                    		}
+                    	}
                     }
                 }
 

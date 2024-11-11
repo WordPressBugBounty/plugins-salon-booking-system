@@ -37,7 +37,7 @@ $prepaid_services = get_user_meta($user_id, '_sln_prepaid_services', true);
 $packages_credits = [];
 foreach ($bb->getServices() as $service) {
     $service_id = $service->getId();
-    $prepaid_service = $prepaid_services[$service_id];
+    $prepaid_service = isset($prepaid_services[$service_id]) ? $prepaid_services[$service_id] : 0;
     if ($prepaid_service > 0) {
         $packages_credits[] = $service->getTitle();
         $bb->setMeta('amount', $bb->getMeta('amount') - $service->getPrice());

@@ -18,6 +18,6 @@
       <key name="new_booking_message"/>
       <key name="booking_update_message"/>
       <key name="feedback_message"/>
-    <key name="checkout_fields"><key name="firstname"><key name="label"/></key><key name="lastname"><key name="label"/></key><key name="email"><key name="label"/></key><key name="phone"><key name="label"/></key><key name="address"><key name="label"/></key><key name="carica_file"><key name="label"/></key></key></key>
+    <key name="checkout_fields"><key name="firstname"><key name="label"/></key><key name="lastname"><key name="label"/></key><key name="email"><key name="label"/></key><key name="phone"><key name="label"/></key><key name="address"><key name="label"/></key><key name="carica_file"><key name="label"/></key><key name="privacy"><key name="label"/></key><key name="campo_di_testo"><key name="label"/></key><key name="checkbox_ultima"><key name="label"/></key><key name="input"><key name="label"/></key><key name="campo_di_testo_bis"><key name="label"/></key><key name="input_b"><key name="label"/></key></key></key>
   </admin-texts>
 </wpml-config>

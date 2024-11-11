@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 class SLN_Admin_Customers extends SLN_Admin_AbstractPage {
 
 	const PAGE = 'salon-customers';

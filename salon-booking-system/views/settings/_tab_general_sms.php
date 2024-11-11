@@ -54,7 +54,7 @@ echo SLN_Enum_SmsProvider::getService($k, $plugin)->renderSettingsFields(array('
 		    </div>
 		    <div class="row">
 			<div class="col-xs-12 col-sm-6 form-group sln-input--simple">
-			    <?php $helper->row_input_text('sms_prefix', __('Country code', 'salon-booking-system'));?>
+			    <?php $helper->row_input_text('sms_prefix', __('Country code', 'salon-booking-system'), array('attrs' => array('readonly' => 'readonly')));?>
 			</div>
 			<div class="col-xs-12 col-sm-6 form-group sln-input--simple">
 			    <?php $helper->row_input_text('sms_from', __('Sender\'s number', 'salon-booking-system'));?>

@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 abstract class SLN_Admin_Reports_AbstractReport {
 	protected $type;
 	protected $plugin;

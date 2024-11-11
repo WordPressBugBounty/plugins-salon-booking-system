@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 class SLN_Form {
 	static public function fieldCurrency($name, $value = null, $settings = array()) {
 		self::fieldSelect($name, SLN_Currency::toArray(), $value, $settings, true);

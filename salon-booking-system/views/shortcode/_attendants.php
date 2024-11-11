@@ -25,6 +25,7 @@ foreach ($services as $k => $service) {
 }
 
 $isChooseAttendantForMeDisabled = $plugin->getSettings()->isChooseAttendantForMeDisabled();
+$serviceVariablePriceEnabled = false;
 $services_price = array();
 foreach($services as $service){
     foreach($attendants as $attendant){
@@ -33,11 +34,13 @@ foreach($services as $service){
         if (!isset($services_price[$attendantId])) {
             $services_price[$attendantId] = 0;
         }
+        $serviceVariablePriceEnabled |= $service->getVariablePriceEnabled();
+        $service_price = $service->getVariablePriceEnabled() ? $service->getVariablePrice($attendantId) : $service->getPrice();
 
-        $services_price[$attendantId] += floatval($service->getVariablePrice($attendantId)) * intval($bb->getCountService($service->getId()));
+        $services_price[$attendantId] += floatval($service_price) * intval($bb->getCountService($service->getId()));
     }
 }
-if($service->getVariablePriceEnabled()){
+if($serviceVariablePriceEnabled){
     $sort_func = function($att1, $att2)use($services_price){
         $price1 = $services_price[$att1->getId()];
         $price2 = $services_price[$att2->getId()];

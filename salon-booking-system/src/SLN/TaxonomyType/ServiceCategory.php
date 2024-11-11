@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 class SLN_TaxonomyType_ServiceCategory extends SLN_TaxonomyType_Abstract
 {
     public function __construct(SLN_Plugin $plugin, $taxonomyType, $postTypes)

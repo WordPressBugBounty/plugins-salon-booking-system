@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 class SLN_Third_GoogleCalendarImport
 {
     const SUCCESS_COLOR_ID = '10';

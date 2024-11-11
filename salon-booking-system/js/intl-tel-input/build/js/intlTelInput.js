@@ -517,7 +517,7 @@
                         // only intercept this event if we're opening the dropdown
                         // else let it bubble up to the top ("click-off-to-close" listener)
                         // we cannot just stopPropagation as it may be needed to close another instance
-                        if (_this4.countryList.classList.contains("iti__hide") && !_this4.telInput.disabled && !_this4.telInput.readOnly) {
+                        if (_this4.countryList.classList.contains("iti__hide") && !_this4.telInput.disabled) {
                             _this4._showDropdown();
                         }
                     };
