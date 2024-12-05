@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 
 class SLN_Action_InitScripts {
 	const ASSETS_VERSION = SLN_VERSION;

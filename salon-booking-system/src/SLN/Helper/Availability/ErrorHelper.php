@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 class SLN_Helper_Availability_ErrorHelper
 {
     public static function doLimitParallelBookings(DateTime $time)

@@ -3,6 +3,7 @@
     /*
     bunch of html to include if there is a thumb to show.
     */
+    // phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
     if ($x == 'thumb'): ?>
 	<div class="sln-list__item__thumb">
 		<img loading="lazy" decoding="async" width="150" height="150" src="http://salon.local/wp-content/uploads/2022/04/shave-150x150.jpg" class="attachment-thumbnail size-thumbnail wp-post-image" alt="" srcset="http://salon.local/wp-content/uploads/2022/04/shave-150x150.jpg 150w, http://salon.local/wp-content/uploads/2022/04/shave-298x300.jpg 298w, http://salon.local/wp-content/uploads/2022/04/shave.jpg 500w" sizes="(max-width: 150px) 100vw, 150px">

@@ -1935,6 +1935,8 @@ a.sln-btn,
   font-size: 1.2em;
   content: "keyboard_arrow_up";
   opacity: 0.5;
+}
+#sln-salon .sln-panel .sln-panel-heading .sln-btn::after, #sln-salon.sln-loginform:not(.sln-customcolors) .sln-panel .sln-panel-heading #loginform #wp-submit::after, #sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-panel .sln-panel-heading #wp-submit::after {
   -webkit-transition: opacity 200ms, transform 250ms;
   -moz-transition: opacity 200ms, transform 250ms;
   -o-transition: opacity 200ms, transform 250ms;
@@ -1970,6 +1972,8 @@ a.sln-btn,
   left: 0;
   background-color: currentColor;
   opacity: 0;
+}
+#sln-salon .sln-panel .sln-panel-heading.collapsed::after {
   -webkit-transition: opacity 150ms;
   -moz-transition: opacity 150ms;
   -o-transition: opacity 150ms;
@@ -2692,6 +2696,9 @@ a.sln-btn,
   margin: 20px 0 10px 0;
   border-style: solid;
   border-width: 1px;
+}
+#sln-salon .datetimepicker.sln-datetimepicker .sln-datetimepicker-close,
+#sln-salon #sln-salon-my-account .datetimepicker.sln-datetimepicker .sln-datetimepicker-close {
   -webkit-transition: background-color 200ms, color 250ms;
   -moz-transition: background-color 200ms, color 250ms;
   -o-transition: background-color 200ms, color 250ms;
@@ -2977,6 +2984,11 @@ a.sln-btn,
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   border-radius: 50%;
+}
+#sln-salon .sln_datepicker:after,
+#sln-salon .sln_timepicker:after,
+#sln-salon #sln-salon-my-account .sln_datepicker:after,
+#sln-salon #sln-salon-my-account .sln_timepicker:after {
   -webkit-transition: color 250ms;
   -moz-transition: color 250ms;
   -o-transition: color 250ms;
@@ -3311,7 +3323,7 @@ a.sln-btn,
 #sln-salon #sln-salon-my-account .sln-input--datepicker #_sln_booking_time.is_scrollable {
   overflow-y: auto;
   padding-right: 0.1em;
-  scrollbar-color: rgba(173, 173, 173, 0.4) transparent;
+  scrollbar-color: rgba(239, 244, 247, 0.4) transparent;
   scrollbar-width: thin;
 }
 @media only screen and (max-width: 767px) {
@@ -3607,11 +3619,13 @@ a.sln-btn,
   display: inline-block;
   text-align: center;
   text-transform: none !important;
+  z-index: 200;
+}
+.sln-icon:after {
   -webkit-transition: background-color 200ms, color 300ms;
   -moz-transition: background-color 200ms, color 300ms;
   -o-transition: background-color 200ms, color 300ms;
   transition: background-color 200ms, color 300ms;
-  z-index: 200;
 }
 
 .sln-icon--checked--square:after {
@@ -5027,7 +5041,7 @@ a.sln-btn,
 }
 .sln-switch.collapsed::before,
 #sln-salon .sln-switch.collapsed::before {
-  background-color: rgb(173, 173, 173);
+  background-color: rgb(239, 244, 247);
 }
 .sln-switch.collapsed::after,
 #sln-salon .sln-switch.collapsed::after {
@@ -5037,7 +5051,7 @@ a.sln-btn,
 
 .collapsed .sln-switch::before,
 #sln-salon .collapsed .sln-switch::before {
-  background-color: rgb(173, 173, 173);
+  background-color: rgb(239, 244, 247);
 }
 .collapsed .sln-switch::after,
 #sln-salon .collapsed .sln-switch::after {
@@ -5392,12 +5406,21 @@ a.sln-btn,
   text-align: center;
   border: none;
   cursor: pointer;
+  text-decoration: none;
+  position: relative;
+}
+.sln-btn, #sln-salon.sln-loginform:not(.sln-customcolors) #loginform #wp-submit,
+.sln-bootstrap .sln-btn,
+a.sln-btn,
+.sln-bootstrap a.sln-btn,
+#sln-salon .sln-btn,
+#sln-salon .sln-bootstrap .sln-btn,
+#sln-salon a.sln-btn,
+#sln-salon .sln-bootstrap a.sln-btn {
   -webkit-transition: all 250ms;
   -moz-transition: all 250ms;
   -o-transition: all 250ms;
   transition: all 250ms;
-  text-decoration: none;
-  position: relative;
 }
 .sln-btn input, #sln-salon.sln-loginform:not(.sln-customcolors) #loginform #wp-submit input,
 .sln-btn button,
@@ -5436,6 +5459,33 @@ a.sln-btn a,
   border: none;
   background-color: transparent;
   cursor: pointer;
+}
+.sln-btn input, #sln-salon.sln-loginform:not(.sln-customcolors) #loginform #wp-submit input,
+.sln-btn button,
+#sln-salon.sln-loginform:not(.sln-customcolors) #loginform #wp-submit button,
+.sln-btn a,
+#sln-salon.sln-loginform:not(.sln-customcolors) #loginform #wp-submit a,
+.sln-bootstrap .sln-btn input,
+.sln-bootstrap .sln-btn button,
+.sln-bootstrap .sln-btn a,
+a.sln-btn input,
+a.sln-btn button,
+a.sln-btn a,
+.sln-bootstrap a.sln-btn input,
+.sln-bootstrap a.sln-btn button,
+.sln-bootstrap a.sln-btn a,
+#sln-salon .sln-btn input,
+#sln-salon .sln-btn button,
+#sln-salon .sln-btn a,
+#sln-salon .sln-bootstrap .sln-btn input,
+#sln-salon .sln-bootstrap .sln-btn button,
+#sln-salon .sln-bootstrap .sln-btn a,
+#sln-salon a.sln-btn input,
+#sln-salon a.sln-btn button,
+#sln-salon a.sln-btn a,
+#sln-salon .sln-bootstrap a.sln-btn input,
+#sln-salon .sln-bootstrap a.sln-btn button,
+#sln-salon .sln-bootstrap a.sln-btn a {
   -webkit-transition: background-color 200ms, color 250ms;
   -moz-transition: background-color 200ms, color 250ms;
   -o-transition: background-color 200ms, color 250ms;
@@ -6005,11 +6055,13 @@ a.sln-btn.sln-btn--borderonly,
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-transform: none;
+  z-index: 100;
+}
+.sln-btn--icon:after {
   -webkit-transition: background-color 200ms;
   -moz-transition: background-color 200ms;
   -o-transition: background-color 200ms;
   transition: background-color 200ms;
-  z-index: 100;
 }
 @media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
   .sln-btn--icon:after {
@@ -6138,6 +6190,9 @@ a.sln-btn.sln-btn--borderonly,
   text-transform: none;
   padding-left: 2.7222222222rem;
   text-align: left;
+}
+.sln-btn--fb,
+#sln-salon .sln-btn--fb {
   -webkit-transition: padding-left 200ms;
   -moz-transition: padding-left 200ms;
   -o-transition: padding-left 200ms;
@@ -6154,6 +6209,9 @@ a.sln-btn.sln-btn--borderonly,
   -ms-transform: translateY(-50%);
   transform: translateY(-50%);
   fill: #0277bd;
+}
+.sln-btn--fb svg,
+#sln-salon .sln-btn--fb svg {
   -webkit-transition: fill 200ms, left 200ms;
   -moz-transition: fill 200ms, left 200ms;
   -o-transition: fill 200ms, left 200ms;
@@ -6412,12 +6470,12 @@ a.sln-btn.sln-btn--borderonly,
   border-right: 2px solid transparent;
   border-bottom: 2px solid currentColor;
   border-left: 2px solid currentColor;
-  border-radius: 50%;
-  border-radius: 9999px;
   border-top-left-radius: 50%;
   border-top-right-radius: 50%;
   border-bottom-left-radius: 50%;
   border-bottom-right-radius: 50%;
+  border-radius: 50%;
+  border-radius: 9999px;
   transform-origin: 50% 50%;
   -webkit-animation: wait 750ms infinite linear;
   animation: wait 750ms infinite linear;
@@ -6692,12 +6750,12 @@ a.sln-btn.sln-btn--borderonly,
   line-height: 1.9em;
   font-weight: bold;
   text-align: center;
-  border-radius: 50%;
-  border-radius: 9999px;
   border-top-left-radius: 50%;
   border-top-right-radius: 50%;
   border-bottom-left-radius: 50%;
   border-bottom-right-radius: 50%;
+  border-radius: 50%;
+  border-radius: 9999px;
   font-family: Arial;
 }
 .sln-stepper .step .step-label {
@@ -6887,9 +6945,11 @@ body.modal-open {
   display: grid;
   grid-template: 3em auto/1fr;
   flex: 1;
-  text-align: center;
   padding: 0.5em;
+  border: none;
+  background-color: transparent;
   font-size: 0.875em;
+  text-align: center;
   color: rgb(83, 106, 119);
   text-decoration: none;
   transition: all 250ms;
@@ -7098,7 +7158,7 @@ body.modal-open {
 #sln-salon #sln-salon-my-account .sln-account__card .sln-account__card__footer,
 .sln-bootstrap #sln-salon-my-account .sln-account__card .sln-account__card__footer {
   padding: 1em 1.125em 1.25em 1.125em;
-  border-top: 1px solid rgba(173, 173, 173, 0.5);
+  border-top: 1px solid rgba(239, 244, 247, 0.5);
 }
 #sln-salon-my-account .sln-account__card + .sln-account__card,
 #sln-salon #sln-salon-my-account .sln-account__card + .sln-account__card,
@@ -7298,7 +7358,7 @@ body.modal-open {
 #sln-salon #sln-salon-my-account .sln-account__reschedule,
 .sln-bootstrap #sln-salon-my-account .sln-account__reschedule {
   padding: 0.5em;
-  border: 1px solid rgba(173, 173, 173, 0.5);
+  border: 1px solid rgba(239, 244, 247, 0.5);
   border-radius: 0.375em;
   position: relative;
 }
@@ -7705,11 +7765,13 @@ body.modal-open {
 #sln-salon .sln-content__tabs__nav {
   display: flex;
   margin-top: 0;
+  margin-bottom: 1.5rem;
   padding-left: 0;
   list-style: none;
   border-bottom: 1px solid rgb(136, 136, 136);
 }
-#sln-salon .sln-content__tabs__nav__item {
+#sln-salon .sln-content__tabs__nav__item,
+#sln-salon .nav-tabs .sln-content__tabs__nav__item {
   flex-grow: 1;
   border-bottom: 3px solid transparent;
   margin-bottom: -2px;
@@ -7717,28 +7779,59 @@ body.modal-open {
   color: rgb(83, 106, 119);
   transition: all 500ms;
 }
-#sln-salon .sln-content__tabs__nav__item a {
-  display: inline-block;
+#sln-salon .sln-content__tabs__nav__item.active,
+#sln-salon .nav-tabs .sln-content__tabs__nav__item.active {
+  border: none;
+}
+#sln-salon .sln-content__tabs__nav__item a,
+#sln-salon .nav-tabs .sln-content__tabs__nav__item a {
+  display: block;
   padding: 0.25em 1em;
   cursor: pointer;
+  border: none;
   color: rgb(83, 106, 119);
 }
-#sln-salon .sln-content__tabs__nav__item.active {
-  border-bottom-color: rgb(9, 120, 189);
+@media (hover: hover) {
+  #sln-salon .sln-content__tabs__nav__item a:hover,
+  #sln-salon .nav-tabs .sln-content__tabs__nav__item a:hover {
+    border: none;
+    background-color: transparent;
+  }
 }
-#sln-salon .sln-content__tabs__nav__item.active a {
+#sln-salon .sln-content__tabs__nav__item.current, #sln-salon .sln-content__tabs__nav__item.current.active,
+#sln-salon .nav-tabs .sln-content__tabs__nav__item.current,
+#sln-salon .nav-tabs .sln-content__tabs__nav__item.current.active {
+  border-bottom-color: rgb(9, 120, 189);
+  border-bottom: 3px solid rgb(9, 120, 189);
+}
+#sln-salon .sln-content__tabs__nav__item.current a, #sln-salon .sln-content__tabs__nav__item.current.active a,
+#sln-salon .nav-tabs .sln-content__tabs__nav__item.current a,
+#sln-salon .nav-tabs .sln-content__tabs__nav__item.current.active a {
+  border: none;
   color: rgb(9, 120, 189);
 }
+#sln-salon .sln-content__tabs__nav__item.current a:focus, #sln-salon .sln-content__tabs__nav__item.current a:hover, #sln-salon .sln-content__tabs__nav__item.current.active a:focus, #sln-salon .sln-content__tabs__nav__item.current.active a:hover,
+#sln-salon .nav-tabs .sln-content__tabs__nav__item.current a:focus,
+#sln-salon .nav-tabs .sln-content__tabs__nav__item.current a:hover,
+#sln-salon .nav-tabs .sln-content__tabs__nav__item.current.active a:focus,
+#sln-salon .nav-tabs .sln-content__tabs__nav__item.current.active a:hover {
+  background-color: transparent;
+  border: none;
+}
 @media (hover: hover) {
-  #sln-salon .sln-content__tabs__nav__item.active:hover {
+  #sln-salon .sln-content__tabs__nav__item.current:hover, #sln-salon .sln-content__tabs__nav__item.current.active:hover,
+  #sln-salon .nav-tabs .sln-content__tabs__nav__item.current:hover,
+  #sln-salon .nav-tabs .sln-content__tabs__nav__item.current.active:hover {
     border-bottom-color: rgb(9, 120, 189);
   }
 }
 @media (hover: hover) {
-  #sln-salon .sln-content__tabs__nav__item:hover {
+  #sln-salon .sln-content__tabs__nav__item:hover,
+  #sln-salon .nav-tabs .sln-content__tabs__nav__item:hover {
     border-bottom-color: rgb(136, 136, 136);
   }
-  #sln-salon .sln-content__tabs__nav__item a:hover {
+  #sln-salon .sln-content__tabs__nav__item a:hover,
+  #sln-salon .nav-tabs .sln-content__tabs__nav__item a:hover {
     text-decoration: none;
   }
 }
@@ -8436,6 +8529,9 @@ a.sln-btn,
   font-weight: 600;
   border-bottom: 1px solid;
   border-bottom-color: transparent;
+}
+.sln-topbar a,
+#sln-salon .sln-topbar a {
   -webkit-transition: border-bottom-color 250ms;
   -moz-transition: border-bottom-color 250ms;
   -o-transition: border-bottom-color 250ms;
@@ -9097,13 +9193,16 @@ estetique.booklapp.it
   z-index: 0;
   opacity: 0;
   pointer-events: none;
+  -webkit-transform: scale(0.95, 0.95);
+  -ms-transform: scale(0.95, 0.95);
+  transform: scale(0.95, 0.95);
+}
+.sln-list .sln-list__item .sln-list__item__fkbkg,
+#sln-salon .sln-list .sln-list__item .sln-list__item__fkbkg {
   -webkit-transition: opacity 200ms, transform 200ms;
   -moz-transition: opacity 200ms, transform 200ms;
   -o-transition: opacity 200ms, transform 200ms;
   transition: opacity 200ms, transform 200ms;
-  -webkit-transform: scale(0.95, 0.95);
-  -ms-transform: scale(0.95, 0.95);
-  transform: scale(0.95, 0.95);
 }
 .sln-list .sln-list__item:hover .sln-list__item__fkbkg,
 #sln-salon .sln-list .sln-list__item:hover .sln-list__item__fkbkg {
@@ -9295,7 +9394,7 @@ estetique.booklapp.it
   align-items: center;
   gap: 0.5em;
   padding: 0.6em 0;
-  border-bottom: 1px dashed rgba(173, 173, 173, 0.5);
+  border-bottom: 1px dashed rgba(239, 244, 247, 0.5);
   font-size: 1.125em;
 }
 .sln-list .sln-list__item.sln-package .sln-package__service__count,
@@ -11160,12 +11259,12 @@ estetique.booklapp.it
 }
 .sln-attendant .sln-attendant-thumb img,
 #sln-salon .sln-attendant .sln-attendant-thumb img {
-  border-radius: 50%;
-  border-radius: 9999px;
   border-top-left-radius: 50%;
   border-top-right-radius: 50%;
   border-bottom-left-radius: 50%;
   border-bottom-right-radius: 50%;
+  border-radius: 50%;
+  border-radius: 9999px;
   margin-top: 1.5em;
   margin-bottom: 1.5em;
 }
@@ -11193,13 +11292,16 @@ estetique.booklapp.it
   z-index: 0;
   opacity: 0;
   pointer-events: none;
+  -webkit-transform: scale(0.95, 0.95);
+  -ms-transform: scale(0.95, 0.95);
+  transform: scale(0.95, 0.95);
+}
+.sln-attendant .sln-service__fkbkg,
+#sln-salon .sln-attendant .sln-service__fkbkg {
   -webkit-transition: opacity 200ms, transform 200ms;
   -moz-transition: opacity 200ms, transform 200ms;
   -o-transition: opacity 200ms, transform 200ms;
   transition: opacity 200ms, transform 200ms;
-  -webkit-transform: scale(0.95, 0.95);
-  -ms-transform: scale(0.95, 0.95);
-  transform: scale(0.95, 0.95);
 }
 .sln-attendant:hover::before,
 #sln-salon .sln-attendant:hover::before {
@@ -11239,12 +11341,12 @@ estetique.booklapp.it
   margin-top: 1em;
 }
 #sln-salon.sln-salon--s .sln-attendant-thumb img {
-  border-radius: 50%;
-  border-radius: 9999px;
   border-top-left-radius: 50%;
   border-top-right-radius: 50%;
   border-bottom-left-radius: 50%;
   border-bottom-right-radius: 50%;
+  border-radius: 50%;
+  border-radius: 9999px;
   margin-top: 1.5em;
   margin-bottom: 1.5em;
 }
@@ -11726,7 +11828,7 @@ estetique.booklapp.it
   content: "\f251";
 }
 #sln-salon .sln-thankyou__content .sln-thankyou__status.sln-thankyou__status--ok {
-  color: rgb(57, 149, 24);
+  color: rgb(13, 181, 13);
 }
 #sln-salon .sln-thankyou__content .sln-thankyou__status.sln-thankyou__status--attention {
   color: rgb(217, 96, 19);
@@ -11915,7 +12017,7 @@ estetique.booklapp.it
     overflow-x: hidden;
     position: relative;
     width: 100%;
-    scrollbar-color: rgba(173, 173, 173, 0.4) transparent;
+    scrollbar-color: rgba(239, 244, 247, 0.4) transparent;
     scrollbar-width: thin;
   }
   .sln-box--fixed_height.row,
@@ -11929,7 +12031,7 @@ estetique.booklapp.it
   .sln-box--main.sln-box--fixed_height.sln-box--scrollable,
   #sln-salon .sln-box--fixed_height.sln-box--scrollable,
   #sln-salon .sln-box--main.sln-box--fixed_height.sln-box--scrollable {
-    scrollbar-color: rgba(173, 173, 173, 0.4) transparent;
+    scrollbar-color: rgba(239, 244, 247, 0.4) transparent;
     scrollbar-width: thin;
   }
 }
@@ -12235,7 +12337,7 @@ a.sln-btn,
 body:not(.sln-salon-page) .select2-container.select2-container--sln .select2-search--dropdown .select2-search__field, body:not(.sln-salon-page) .select2-container.select2-container--sln .select2-dropdown, body:not(.sln-salon-page) .select2-container.select2-container--sln .select2-selection--single,
 body:not(.sln-salon-page) .select2-container.select2-container--sln .select2-selection--multiple {
   font-family: "Open Sans", sans-serif;
-  font-size: 0.875rem;
+  font-size: 1.125rem;
   line-height: 1.8em;
   font-weight: normal;
 }
@@ -12244,13 +12346,13 @@ body:not(.sln-salon-page) .select2-container.select2-container--sln .select2-sel
   color: rgb(0, 53, 83);
 }
 
-body.post-type-sln_booking:not(.sln-salon-page) .select2-container.select2-container--sln .select2-dropdown .select2-search__field:focus, body.post-type-sln_booking:not(.sln-salon-page) .select2-container.select2-container--sln .select2-dropdown .select2-search__field:hover, #sln-salon--admin #sln_booking-details .select2-container.select2-container--sln .select2-selection--single:hover .select2-selection__rendered,
-#sln-salon--admin #sln_booking-details .select2-container.select2-container--sln .select2-selection--single:focus .select2-selection__rendered,
-#sln-salon--admin #sln_booking-details .select2-container.select2-container--sln .select2-selection--multiple:hover .select2-selection__rendered,
-#sln-salon--admin #sln_booking-details .select2-container.select2-container--sln .select2-selection--multiple:focus .select2-selection__rendered,
-#sln-salon--admin #sln_booking-details .select2-container.select2-container--sln.select2-container--open .select2-selection--single .select2-selection__rendered,
-#sln-salon--admin #sln_booking-details .select2-container.select2-container--sln.select2-container--open .select2-selection--multiple .select2-selection__rendered, .wp-admin.salon_page_salon-settings .select2-container.select2-container--sln .select2-search--dropdown .select2-search__field:hover, .wp-admin.salon_page_salon-settings .select2-container.select2-container--sln .select2-search--dropdown .select2-search__field:focus {
-  color: #0277bd;
+body.post-type-sln_booking:not(.sln-salon-page) .select2-container.select2-container--sln .select2-dropdown .select2-search__field:focus, body.post-type-sln_booking:not(.sln-salon-page) .select2-container.select2-container--sln .select2-dropdown .select2-search__field:hover, #sln-salon--admin .select2-container.select2-container--sln .select2-selection--single:hover .select2-selection__rendered,
+#sln-salon--admin .select2-container.select2-container--sln .select2-selection--single:focus .select2-selection__rendered,
+#sln-salon--admin .select2-container.select2-container--sln .select2-selection--multiple:hover .select2-selection__rendered,
+#sln-salon--admin .select2-container.select2-container--sln .select2-selection--multiple:focus .select2-selection__rendered,
+#sln-salon--admin .select2-container.select2-container--sln.select2-container--open .select2-selection--single .select2-selection__rendered,
+#sln-salon--admin .select2-container.select2-container--sln.select2-container--open .select2-selection--multiple .select2-selection__rendered, .wp-admin.salon_page_salon-settings .select2-container.select2-container--sln .select2-search--dropdown .select2-search__field:hover, .wp-admin.salon_page_salon-settings .select2-container.select2-container--sln .select2-search--dropdown .select2-search__field:focus {
+  color: rgb(2, 119, 189);
 }
 
 body.post-type-sln_booking:not(.sln-salon-page) .select2-container.select2-container--sln .select2-results__option::after, .wp-admin.salon_page_salon-settings .select2-container.select2-container--sln .select2-results__option::after, body:not(.sln-salon-page) .select2-container.select2-container--sln .select2-selection--single .select2-selection__arrow:before {
@@ -12526,7 +12628,7 @@ body:not(.sln-salon-page) .select2-container.select2-container--sln.select2-cont
   color: #fff;
 }
 body:not(.sln-salon-page) .select2-container.select2-container--sln .select2-selection--single .select2-selection__rendered {
-  color: rgb(0, 53, 83);
+  color: rgb(83, 106, 119);
   line-height: 3.3333333333rem;
 }
 body:not(.sln-salon-page) .select2-container.select2-container--sln .select2-selection--single .select2-selection__rendered .select2-selection__placeholder {
@@ -12610,7 +12712,7 @@ body:not(.sln-salon-page) .select2-container.select2-container--sln .select2-sea
   border: 0.1666666667rem solid rgba(2, 119, 189, 0.5);
 }
 body:not(.sln-salon-page) .select2-container.select2-container--sln .select2-search--dropdown .select2-search__field:focus, body:not(.sln-salon-page) .select2-container.select2-container--sln .select2-search--dropdown .select2-search__field:hover {
-  outline: 2px solid #0277bd;
+  outline: 2px solid rgb(2, 119, 189);
   background-color: rgb(0, 53, 83);
   color: #fff;
 }
@@ -12650,7 +12752,7 @@ body:not(.sln-salon-page) .select2-container.select2-container--sln .select2-sel
 }
 body:not(.sln-salon-page) .select2-container.select2-container--sln .select2-selection--multiple .select2-selection__choice {
   float: left;
-  background-color: #0277bd;
+  background-color: rgb(2, 119, 189);
   border: none;
   color: #fff;
   padding: 0 2.7777777778rem 0 1.1111111111rem;
@@ -12736,7 +12838,7 @@ body:not(.sln-salon-page) .select2-container.select2-container--sln .select2-res
 }
 #sln-salon--admin .select2-container.select2-container--sln .select2-selection--single .select2-selection__rendered,
 .sln-calendar--wrapper .select2-container.select2-container--sln .select2-selection--single .select2-selection__rendered {
-  line-height: 3.33rem;
+  line-height: 3.2rem;
 }
 #sln-salon--admin .select2-container.select2-container--sln .select2-selection--single .select2-selection__rendered,
 .sln-calendar--wrapper .select2-container.select2-container--sln .select2-selection--single .select2-selection__rendered {
@@ -12844,8 +12946,8 @@ body:not(.sln-salon-page) .select2-container.select2-container--sln .select2-res
 .wp-admin.salon_page_salon-settings .select2-container.select2-container--sln .select2-search--dropdown .select2-search__field:hover, .wp-admin.salon_page_salon-settings .select2-container.select2-container--sln .select2-search--dropdown .select2-search__field:focus {
   background-color: rgb(241, 247, 251);
   outline: none;
-  color: #0277bd;
-  border-color: #0277bd;
+  color: rgb(2, 119, 189);
+  border-color: rgb(2, 119, 189);
   border-color: #0091ea;
   -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(102, 175, 233, 0.6);
   box-shadow: inset 0 1px 1px rgba(2, 119, 189, 0.06), 0 0 8px rgba(2, 119, 189, 0.1);
@@ -12856,113 +12958,100 @@ body:not(.sln-salon-page) .select2-container.select2-container--sln .select2-res
 
 /* ADMIN DROPDOWN // END */
 /* ADMIN BOOKING DETAILS */
-#sln-salon--admin #sln_booking-details {
+#sln-salon--admin {
   /* ADMIN BOOKING DETAILS // END */
 }
-#sln-salon--admin #sln_booking-details .select2-selection--single,
-#sln-salon--admin #sln_booking-details .select2-selection--multiple {
+#sln-salon--admin .select2-selection--single,
+#sln-salon--admin .select2-selection--multiple {
   background-color: transparent;
   border: 1px solid rgb(199, 223, 243);
+  border-radius: 5px;
 }
-#sln-salon--admin #sln_booking-details #sln-update-user-field + .select2-container--sln .select2-selection--single,
-#sln-salon--admin #sln_booking-details #sln-update-user-field + .select2-container--sln .select2-selection--multiple {
-  font-size: 1rem;
+#sln-salon--admin #sln-update-user-field + .select2-container--sln .select2-selection--single,
+#sln-salon--admin #sln-update-user-field + .select2-container--sln .select2-selection--multiple {
+  font-size: 1.125rem;
   font-weight: normal;
 }
-#sln-salon--admin #sln_booking-details #sln-update-user-field + .select2-container--sln .select2-selection--single .select2-selection__rendered,
-#sln-salon--admin #sln_booking-details #sln-update-user-field + .select2-container--sln .select2-selection--multiple .select2-selection__rendered {
+#sln-salon--admin #sln-update-user-field + .select2-container--sln .select2-selection--single .select2-selection__rendered,
+#sln-salon--admin #sln-update-user-field + .select2-container--sln .select2-selection--multiple .select2-selection__rendered {
   font-weight: normal;
 }
-#sln-salon--admin #sln_booking-details .select2-container.select2-container--sln .select2-selection--single:hover .select2-selection__rendered,
-#sln-salon--admin #sln_booking-details .select2-container.select2-container--sln .select2-selection--single:focus .select2-selection__rendered,
-#sln-salon--admin #sln_booking-details .select2-container.select2-container--sln .select2-selection--multiple:hover .select2-selection__rendered,
-#sln-salon--admin #sln_booking-details .select2-container.select2-container--sln .select2-selection--multiple:focus .select2-selection__rendered,
-#sln-salon--admin #sln_booking-details .select2-container.select2-container--sln.select2-container--open .select2-selection--single .select2-selection__rendered,
-#sln-salon--admin #sln_booking-details .select2-container.select2-container--sln.select2-container--open .select2-selection--multiple .select2-selection__rendered {
+#sln-salon--admin .select2-container.select2-container--sln .select2-selection--single:hover .select2-selection__rendered,
+#sln-salon--admin .select2-container.select2-container--sln .select2-selection--single:focus .select2-selection__rendered,
+#sln-salon--admin .select2-container.select2-container--sln .select2-selection--multiple:hover .select2-selection__rendered,
+#sln-salon--admin .select2-container.select2-container--sln .select2-selection--multiple:focus .select2-selection__rendered,
+#sln-salon--admin .select2-container.select2-container--sln.select2-container--open .select2-selection--single .select2-selection__rendered,
+#sln-salon--admin .select2-container.select2-container--sln.select2-container--open .select2-selection--multiple .select2-selection__rendered {
   background-color: rgb(241, 247, 251);
   outline: none;
-  color: #0277bd;
-  border-color: #0277bd;
+  border-radius: 5px;
+  border-color: rgb(2, 119, 189);
   border-color: #0091ea;
   -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(102, 175, 233, 0.6);
   box-shadow: inset 0 1px 1px rgba(2, 119, 189, 0.06), 0 0 8px rgba(2, 119, 189, 0.1);
 }
-#sln-salon--admin #sln_booking-details .select2-container.select2-container--sln .select2-selection--single:hover .select2-selection__rendered + .select2-selection__arrow::before,
-#sln-salon--admin #sln_booking-details .select2-container.select2-container--sln .select2-selection--single:focus .select2-selection__rendered + .select2-selection__arrow::before,
-#sln-salon--admin #sln_booking-details .select2-container.select2-container--sln .select2-selection--multiple:hover .select2-selection__rendered + .select2-selection__arrow::before,
-#sln-salon--admin #sln_booking-details .select2-container.select2-container--sln .select2-selection--multiple:focus .select2-selection__rendered + .select2-selection__arrow::before,
-#sln-salon--admin #sln_booking-details .select2-container.select2-container--sln.select2-container--open .select2-selection--single .select2-selection__rendered + .select2-selection__arrow::before,
-#sln-salon--admin #sln_booking-details .select2-container.select2-container--sln.select2-container--open .select2-selection--multiple .select2-selection__rendered + .select2-selection__arrow::before {
+#sln-salon--admin .select2-container.select2-container--sln .select2-selection--single:hover .select2-selection__rendered + .select2-selection__arrow::before,
+#sln-salon--admin .select2-container.select2-container--sln .select2-selection--single:focus .select2-selection__rendered + .select2-selection__arrow::before,
+#sln-salon--admin .select2-container.select2-container--sln .select2-selection--multiple:hover .select2-selection__rendered + .select2-selection__arrow::before,
+#sln-salon--admin .select2-container.select2-container--sln .select2-selection--multiple:focus .select2-selection__rendered + .select2-selection__arrow::before,
+#sln-salon--admin .select2-container.select2-container--sln.select2-container--open .select2-selection--single .select2-selection__rendered + .select2-selection__arrow::before,
+#sln-salon--admin .select2-container.select2-container--sln.select2-container--open .select2-selection--multiple .select2-selection__rendered + .select2-selection__arrow::before {
   color: rgb(0, 53, 83);
 }
-#sln-salon--admin #sln_booking-details .select2-container.select2-container--sln .select2-selection--single {
+#sln-salon--admin .select2-container.select2-container--sln .select2-selection--single {
   height: 3.33rem;
   line-height: 3.33rem;
 }
-#sln-salon--admin #sln_booking-details .select2-container.select2-container--sln .select2-selection--single .select2-selection__rendered {
-  line-height: 3.33rem;
+#sln-salon--admin .select2-container.select2-container--sln .select2-selection--single .select2-selection__rendered {
+  line-height: 3.2rem;
   padding-left: 1rem;
   padding-right: 1rem;
 }
-#sln-salon--admin #sln_booking-details .select2-container.select2-container--sln .select2-selection--multiple {
+#sln-salon--admin .select2-container.select2-container--sln .select2-selection--multiple {
   min-height: 3.33rem;
 }
-#sln-salon--admin #sln_booking-details .select2-container.select2-container--sln .select2-selection__rendered {
-  font-weight: bold;
-}
-#sln-salon--admin #sln_booking-details .select2-container.select2-container--sln .select2-selection__rendered span + span {
+#sln-salon--admin .select2-container.select2-container--sln .select2-selection__rendered span + span {
   font-weight: normal;
 }
-#sln-salon--admin #sln_booking-details .select2-container.select2-container--sln .select2-selection__rendered span:first-child {
+#sln-salon--admin .select2-container.select2-container--sln .select2-selection__rendered span:first-child {
   padding-right: 1rem;
 }
-#sln-salon--admin #sln_booking-details .select2-container.select2-container--sln:hover .select2-selection__rendered, #sln-salon--admin #sln_booking-details .select2-container.select2-container--sln:focus .select2-selection__rendered {
-  line-height: 3.33rem;
+#sln-salon--admin .select2-container.select2-container--sln:hover .select2-selection__rendered, #sln-salon--admin .select2-container.select2-container--sln:focus .select2-selection__rendered {
+  line-height: 3.2rem;
 }
-#sln-salon--admin #sln_booking-details .select2-container.select2-container--sln:hover ul.select2-selection__rendered, #sln-salon--admin #sln_booking-details .select2-container.select2-container--sln:focus ul.select2-selection__rendered {
+#sln-salon--admin .select2-container.select2-container--sln:hover ul.select2-selection__rendered, #sln-salon--admin .select2-container.select2-container--sln:focus ul.select2-selection__rendered {
   line-height: 1.25rem;
 }
-#sln-salon--admin #sln_booking-details .select2-container.select2-container--sln.select2-container--open .select2-selection--single,
-#sln-salon--admin #sln_booking-details .select2-container.select2-container--sln.select2-container--open .select2-selection--multiple {
+#sln-salon--admin .select2-container.select2-container--sln.select2-container--open .select2-selection--single,
+#sln-salon--admin .select2-container.select2-container--sln.select2-container--open .select2-selection--multiple {
   border: 1px solid rgb(0, 66, 88);
 }
-#sln-salon--admin #sln_booking-details .select2-container.select2-container--sln.select2-container--open .select2-selection--single .select2-selection__rendered,
-#sln-salon--admin #sln_booking-details .select2-container.select2-container--sln.select2-container--open .select2-selection--multiple .select2-selection__rendered {
+#sln-salon--admin .select2-container.select2-container--sln.select2-container--open .select2-selection--single .select2-selection__rendered,
+#sln-salon--admin .select2-container.select2-container--sln.select2-container--open .select2-selection--multiple .select2-selection__rendered {
   background-color: #fff;
   line-height: 3.33rem;
 }
 @media only screen and (min-width: 992px) {
-  #sln-salon--admin #sln_booking-details .select2-container.select2-container--sln .select2-selection--single {
-    height: 2.5rem;
-    line-height: 2.5rem;
-  }
-  #sln-salon--admin #sln_booking-details .select2-container.select2-container--sln .select2-selection--single .select2-selection__rendered {
-    line-height: 2.3333333333rem;
-  }
-  #sln-salon--admin #sln_booking-details .select2-container.select2-container--sln .select2-selection--single .select2-selection__rendered {
+  #sln-salon--admin .select2-container.select2-container--sln .select2-selection--single .select2-selection__rendered {
     padding-left: 1em;
     padding-right: 1.4em;
   }
-  #sln-salon--admin #sln_booking-details .select2-container.select2-container--sln .select2-selection--multiple {
+  #sln-salon--admin .select2-container.select2-container--sln .select2-selection--multiple {
     min-height: 2.5rem;
   }
-  #sln-salon--admin #sln_booking-details .select2-container.select2-container--sln .select2-selection--multiple .select2-selection__rendered {
+  #sln-salon--admin .select2-container.select2-container--sln .select2-selection--multiple .select2-selection__rendered {
     padding: 0.5rem 0.5555555556rem 0.2222222222rem 0.5555555556rem;
   }
-  #sln-salon--admin #sln_booking-details .select2-container.select2-container--sln:hover .select2-selection__rendered, #sln-salon--admin #sln_booking-details .select2-container.select2-container--sln:focus .select2-selection__rendered {
-    line-height: 2.3333333333rem;
-  }
-  #sln-salon--admin #sln_booking-details .select2-container.select2-container--sln:hover ul.select2-selection__rendered, #sln-salon--admin #sln_booking-details .select2-container.select2-container--sln:focus ul.select2-selection__rendered {
+  #sln-salon--admin .select2-container.select2-container--sln:hover ul.select2-selection__rendered, #sln-salon--admin .select2-container.select2-container--sln:focus ul.select2-selection__rendered {
     line-height: 1.25rem;
   }
-  #sln-salon--admin #sln_booking-details .select2-container.select2-container--sln.select2-container--open .select2-selection--single,
-  #sln-salon--admin #sln_booking-details .select2-container.select2-container--sln.select2-container--open .select2-selection--multiple {
+  #sln-salon--admin .select2-container.select2-container--sln.select2-container--open .select2-selection--single,
+  #sln-salon--admin .select2-container.select2-container--sln.select2-container--open .select2-selection--multiple {
     border: 1px solid rgb(0, 66, 88);
   }
-  #sln-salon--admin #sln_booking-details .select2-container.select2-container--sln.select2-container--open .select2-selection--single .select2-selection__rendered,
-  #sln-salon--admin #sln_booking-details .select2-container.select2-container--sln.select2-container--open .select2-selection--multiple .select2-selection__rendered {
+  #sln-salon--admin .select2-container.select2-container--sln.select2-container--open .select2-selection--single .select2-selection__rendered,
+  #sln-salon--admin .select2-container.select2-container--sln.select2-container--open .select2-selection--multiple .select2-selection__rendered {
     background-color: #fff;
-    line-height: 2.3333333333rem;
   }
 }
 
@@ -12995,8 +13084,8 @@ body.post-type-sln_booking:not(.sln-salon-page) .select2-container.select2-conta
 body.post-type-sln_booking:not(.sln-salon-page) .select2-container.select2-container--sln .select2-dropdown .select2-search__field:focus, body.post-type-sln_booking:not(.sln-salon-page) .select2-container.select2-container--sln .select2-dropdown .select2-search__field:hover {
   background-color: rgb(241, 247, 251);
   outline: none;
-  color: #0277bd;
-  border-color: #0277bd;
+  color: rgb(2, 119, 189);
+  border-color: rgb(2, 119, 189);
   border-color: #0091ea;
   -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(102, 175, 233, 0.6);
   box-shadow: inset 0 1px 1px rgba(2, 119, 189, 0.06), 0 0 8px rgba(2, 119, 189, 0.1);
@@ -13447,7 +13536,7 @@ body:not(.sln-salon-page)
 }
 
 .sln-account-new-res {
-  background-color: #F8F8F8;
+  background-color: #f8f8f8;
   border-radius: 10px;
   gap: 1em !important;
   margin-top: 1rem;
@@ -13489,3 +13578,5 @@ body:not(.sln-salon-page)
     max-width: calc(400px - 2em);
   }
 }
+
+/*# sourceMappingURL=salon.css.map */

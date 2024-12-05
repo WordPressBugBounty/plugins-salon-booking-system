@@ -1,3 +1,6 @@
+<?php
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
+?>
 <div class="wrap sln-bootstrap" id="sln-salon--admin">
 	<h1><?php esc_html_e('Customers', 'salon-booking-system') ?>
 		<?php /** @var string $new_link */ ?>

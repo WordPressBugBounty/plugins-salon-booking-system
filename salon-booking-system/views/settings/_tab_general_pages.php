@@ -2,6 +2,7 @@
 /**
  * @var $helper SLN_Admin_Settings
  */
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 ?>
 <div id="sln-salon_booking_system_required_pages" class="sln-box sln-box--main sln-box--haspanel">
     <h2 class="sln-box-title sln-box__paneltitle"><?php esc_html_e('Salon Booking System required pages', 'salon-booking-system');?></h2>

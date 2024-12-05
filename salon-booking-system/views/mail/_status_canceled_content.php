@@ -1,3 +1,6 @@
+<?php
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
+?>
 <?php if(empty($forAdmin)): ?>
     <tr>
         <td align="left" valign="top" style="font-size:18px;line-height:20px;color:#4d4d4d;font-weight:bold;font-family: 'Avenir-Medium',sans-serif,arial;padding: 0 0 0 8px;">

@@ -1,3 +1,6 @@
+<?php
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
+?>
 <button
     <?php if($plugin->getSettings()->isAjaxEnabled()): ?>
         data-salon-data="<?php echo "sln_step_page=summary&submit_summary=next" ?>" data-salon-toggle="next"

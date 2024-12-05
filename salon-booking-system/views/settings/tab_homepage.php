@@ -1,4 +1,6 @@
-
+<?php
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
+?>
    <div class="sln-box sln-box--main">
     <h2 class="sln-box-title">Reset Settings</h2>
     <div class="row">

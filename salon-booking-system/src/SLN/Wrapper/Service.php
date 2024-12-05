@@ -265,7 +265,7 @@ class SLN_Wrapper_Service extends SLN_Wrapper_Abstract implements SLN_Wrapper_Se
         if($this->isMultipleAttendantsForServiceEnabled()){
             return $this->getPrice();
         }
-        $price = isset($prices[$id]) ? $prices[$id] : '';
+        $price = isset($prices[$id]) && !empty($prices[$id]) ? $prices[$id] : $this->getPrice();
         return $price;
     }
 

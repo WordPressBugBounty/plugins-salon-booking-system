@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
     $nb_message = $plugin->getSettings()->get('new_booking_message');
 
     $nb_message = str_replace(

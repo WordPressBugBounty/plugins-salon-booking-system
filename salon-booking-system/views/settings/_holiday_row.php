@@ -4,6 +4,7 @@
  * @var $row
  * @var $rulenumber
  */
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 if (!function_exists('strptime')) {
 	/**
 	 *

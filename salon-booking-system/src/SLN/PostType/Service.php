@@ -101,13 +101,13 @@ class SLN_PostType_Service extends SLN_PostType_Abstract
 
     public function ajax()
     {
-        if (isset($_POST['method'])) {
+        if (isset($_POST['method']) && current_user_can('edit_sln_services')) {
             $method = 'ajax_'.sanitize_text_field(wp_unslash($_POST['method']));
             if (method_exists($this, $method)) {
                 $this->$method();
             }
         }
-        die();
+        die;
     }
 
     public function ajax_save_position()

@@ -363,7 +363,7 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
     private function processServicesSubmission($data)
     {
         $services = array();
-        $services_ids = array_map('intval',$data['service']);
+        $services_ids = array_map('intval',$data['services']);
         if($services_ids)
         foreach ($services_ids as $key => $serviceId) {
             if($serviceId == 0){
@@ -373,7 +373,7 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
             $breakDuration = SLN_Func::convertToHoursMins($data['break_duration'][$serviceId]);
 
             if(isset($data['attendants'])){
-                $attendant = $data['attendants'][$key];
+                $attendant = $data['attendants'][$serviceId];
             }elseif(isset($data['attendant'])){
                 $attendant = $data['attendant'];
             }
@@ -388,7 +388,7 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
                 'price' => $data['price'][$serviceId],
                 'duration' => $duration,
                 'break_duration' => $breakDuration,
-                'resource' => isset($data['services_resources'][$key]) ? $data['services_resources'][$key] : '',
+                'resource' => isset($data['services_resources'][$serviceId]) ? $data['services_resources'][$serviceId] : '',
             );
         }
         return $services;

@@ -1,5 +1,7 @@
 <!-- algolplus -->
-<?php $cce = !$plugin->getSettings()->isCustomColorsEnabled();?>
+<?php
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
+$cce = !$plugin->getSettings()->isCustomColorsEnabled();?>
 <div id="sln-salon" class="sln-bootstrap sln-salon--m <?php if (!$cce) {
 	echo ' sln-customcolors';
 }?>">

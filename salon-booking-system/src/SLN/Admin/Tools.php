@@ -190,7 +190,7 @@ class SLN_Admin_Tools extends SLN_Admin_AbstractPage
                 $format->datetime($booking->getPostDate()),
                 implode(', ', $servicesAr),
                 $booking->getAttendantsString(),
-                array_values($booking->getCountServices()),
+                implode('; ', array_values($booking->getCountServices())),
                 $total,
                 SLN_Enum_BookingStatus::getLabel($booking->getStatus()),
             );

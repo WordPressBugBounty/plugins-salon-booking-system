@@ -3,6 +3,7 @@
 	<div class="row">
 		<?php
 		if ( ! function_exists( 'cal_days_in_month' ) ) {
+            // phpcs:ignoreFile WordPress.Security.NonceVerification.Recommended
 			// Fallback in case the calendar extension is not loaded in PHP
 			// Only supports Gregorian calendar
 			function cal_days_in_month( $calendar, $month, $year ) {

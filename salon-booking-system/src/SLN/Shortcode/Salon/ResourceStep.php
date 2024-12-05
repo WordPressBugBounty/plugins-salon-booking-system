@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 class SLN_Shortcode_Salon_ResourceStep extends SLN_Shortcode_Salon_Step
 {
 

@@ -1,3 +1,6 @@
+<?php
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
+?>
 <div id="sln-salon" class="sln-bootstrap">
     <div>
         <h1><?php esc_html_e('Book an appointment', 'salon-booking-system') ?>

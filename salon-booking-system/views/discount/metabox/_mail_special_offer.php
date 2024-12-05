@@ -1,3 +1,6 @@
+<?php
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
+?>
 <table class="es-left" cellspacing="0" cellpadding="0" align="left" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;float:left">
   <tr>
   <td class="es-m-p20b" align="left" style="padding:0;Margin:0;width:270px">

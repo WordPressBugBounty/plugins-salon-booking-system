@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 
 class SLN_Admin_Reports_TopCustomersReport extends SLN_Admin_Reports_AbstractReport {
 

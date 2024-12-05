@@ -104,7 +104,7 @@ class SLN_PostType_Attendant extends SLN_PostType_Abstract {
 	}
 
 	public function ajax() {
-		if (isset($_POST['method'])) {
+		if (isset($_POST['method']) && current_user_can('edit_sln_attendants')) {
 			$method = 'ajax_' . sanitize_text_field(wp_unslash($_POST['method']));
 			if (method_exists($this, $method)) {
 				$this->$method();

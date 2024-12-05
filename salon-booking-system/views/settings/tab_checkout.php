@@ -102,7 +102,7 @@ sum(
                             <div class="sln_<?php echo esc_attr($key); ?>_type_cell"><?php echo SLN_Enum_CheckoutFields::$field_type[$field['type']]; ?></div>
                         </div>
                         <div class="visible-lg col-xs-3 col-md-1 sln-checkout-fields--cell">
-                            <div class="sln-checkbox">
+                            <div class="sln-checkbox sln-checkbox--checkonly">
                                 <input name="salon_settings[checkout_fields][<?php echo esc_attr($key) ?>][required]" type="hidden" value="<?php echo $is_required_by_default && $field["required"] ? $field["required"] : 0 ?>" />
                                 <?php SLN_Form::fieldCheckbox("salon_settings[checkout_fields][{$key}][required]", $field['required'], $is_required_by_default ? $disable : [])?>
                                 <label class="sln-checkout-fields--row--label"
@@ -110,28 +110,28 @@ sum(
                             </div>
                         </div>
                         <div class="visible-lg col-xs-3 col-md-1 sln-checkout-fields--cell">
-                            <div class="sln-checkbox">
+                            <div class="sln-checkbox sln-checkbox--checkonly">
                                 <input name="salon_settings[checkout_fields][<?php echo esc_attr($key) ?>][customer_profile]" type="hidden" value="<?php echo $is_default && $field["customer_profile"] ? $field["customer_profile"] : 0 ?>" />
                                 <?php SLN_Form::fieldCheckbox("salon_settings[checkout_fields][{$key}][customer_profile]", $field['customer_profile'], $is_default ? $disable : [])?>
                                 <label class="sln-checkout-fields--row--label"
                                        for="salon_settings_checkout_fields_<?php echo esc_attr($key) ?>_customer_profile"></div>
                         </div>
                         <div class="visible-lg col-xs-3 col-md-1 sln-checkout-fields--cell">
-                            <div class="sln-checkbox">
+                            <div class="sln-checkbox sln-checkbox--checkonly">
                                 <input name="salon_settings[checkout_fields][<?php echo esc_attr($key) ?>][hidden]" type="hidden" value="<?php echo $is_required_by_default && $field["hidden"] ? $field["hidden"] : 0 ?>" />
                                 <?php SLN_Form::fieldCheckbox("salon_settings[checkout_fields][{$key}][hidden]", $field['hidden'], $is_required_by_default ? $disable : [])?>
                                 <label class="sln-checkout-fields--row--label"
                                        for="salon_settings_checkout_fields_<?php echo esc_attr($key) ?>_hidden"></div>
                         </div>
                         <div class="visible-lg col-xs-3 col-md-1 sln-checkout-fields--cell">
-                            <div class="sln-checkbox">
+                            <div class="sln-checkbox sln-checkbox--checkonly">
                                     <input name="salon_settings[checkout_fields][<?php echo esc_attr($key) ?>][booking_hidden]" type="hidden" value="<?php echo $is_required_by_default && $field["booking_hidden"] ? $field["booking_hidden"] : 0 ?>" />
                                 <?php SLN_Form::fieldCheckbox("salon_settings[checkout_fields][{$key}][booking_hidden]", $field['booking_hidden'], $is_required_by_default ? $disable : [])?>
                                 <label class="sln-checkout-fields--row--label"
                                        for="salon_settings_checkout_fields_<?php echo esc_attr($key) ?>_booking_hidden"></div>
                         </div>
                         <div class="visible-lg col-xs-3 col-md-1 sln-checkout-fields--cell">
-                            <div class="sln-checkbox">
+                            <div class="sln-checkbox sln-checkbox--checkonly">
                                     <input name="salon_settings[checkout_fields][<?php echo esc_attr($key) ?>][export_csv]" type="hidden" value="<?php echo $is_required_by_default && $field["export_csv"] ? $field["export_csv"] : 0 ?>" />
                                 <?php SLN_Form::fieldCheckbox("salon_settings[checkout_fields][{$key}][export_csv]", $field['export_csv'])?>
                                 <label class="sln-checkout-fields--row--label"
@@ -199,10 +199,8 @@ foreach (['label', 'type', 'width', 'options', 'additional', 'default_value', 'f
                             </div>
                         </div>
                         <div class="visible-lg col-md-2 sln-field-editor-button-col">
-                            <div class="sln-btn sln-btn--main sln-btn--big">
-                                <button class="btn field-editor-button" type="button">Add Field</button>
-                            </div>
-                        </div>
+                            <!-- <div class="sln-btn sln-btn--main sln-btn--big"></div> -->
+                            <button class="sln-btn sln-btn--main--tonal sln-btn--big sln-btn--icon sln-icon--file field-editor-button" type="button"><?php esc_html_e('Add Field', 'salon-booking-system')?></button>
                     </div>
                     <div class="row hidden-lg">
                         <div class="col-xs-6">
@@ -419,7 +417,7 @@ foreach (['label', 'type', 'width', 'options', 'additional', 'default_value', 'f
                     <div class="sln-checkbox <?php echo !defined("SLN_VERSION_PAY") ? 'sln-customer-fidelity-score-disabled' : '' ?>">
                         <span class="sln-booking-pro-feature-tooltip">
                             <a href="https://www.salonbookingsystem.com/homepage/plugin-pricing/?utm_source=default_status&utm_medium=free-edition-back-end&utm_campaign=unlock_feature&utm_id=GOPRO" target="_blank">
-                                <?php echo esc_html__('Switch to PRO to unlock this feature', 'salon-booking-system') ?>
+                                <?php esc_html_e('Switch to PRO to unlock this feature', 'salon-booking-system') ?>
                             </a>
                         </span>
                         <div class="sln-customer-fidelity-score--checkbox">
@@ -427,6 +425,30 @@ foreach (['label', 'type', 'width', 'options', 'additional', 'default_value', 'f
                             <div class="sln-box-maininfo">
                                 <p class="sln-box-info">
                                    <?php esc_html_e('Customers will collect a score based on their bookings value and their retention.', 'salon-booking-system')?>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xs-12 col-sm-6">
+        <div id="sln-disable_summary_skip_countdown" class="sln-box sln-box--main sln-box--main--small">
+            <h2 class="sln-box-title"><?php esc_html_e('Disable countdown on booking completion', 'salon-booking-system')?></h2>
+            <div class="row">
+                <div class="col-xs-12 ">
+                    <div class="sln-checkbox <?php echo !defined("SLN_VERSION_PAY") ? 'sln-customer-fidelity-score-disabled' : '' ?>">
+                        <span class="sln-booking-pro-feature-tooltip">
+                            <a href="https://www.salonbookingsystem.com/homepage/plugin-pricing/?utm_source=default_status&utm_medium=free-edition-back-end&utm_campaign=unlock_feature&utm_id=GOPRO" target="_blank">
+                                <?php esc_html_e('Switch to PRO to unlock this feature', 'salon-booking-system') ?>
+                            </a>
+                        </span>
+                        <div class="sln-customer-fidelity-score--checkbox">
+                            <?php $this->row_input_checkbox('disable_summary_skip_countdown', __('Disable', 'salon-booking-system'));?>
+                            <div class="sln-box-maininfo">
+                                <p class="sln-box-info">
+                                   <?php esc_html_e('After the summing up step, skip the countdown to go to the "Thank You" page.', 'salon-booking-system')?>
                                 </p>
                             </div>
                         </div>

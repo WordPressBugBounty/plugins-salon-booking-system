@@ -1,0 +1,21 @@
+{
+  "dependencies": {
+    "dotenv": "^4.0.0",
+    "gulp-less": "^3.5.0",
+    "gulp-livereload": "^3.8.1",
+    "gulp-minify-css": "^1.2.4",
+    "gulp-sass": "^3.2.1",
+    "gulp-sourcemaps": "^2.6.5",
+    "gulp-transifex": "git+https://github.com/Kilbourne/gulp-transifex.git",
+    "gulp-util": "^3.0.8",
+    "gulp-watch": "^4.3.11",
+    "run-sequence": "^2.2.1"
+  },
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-potomo": "^1.1.0",
+    "gulp-rename": "^1.4.0",
+    "gulp-rtlcss": "^1.3.0",
+    "gulp-wp-pot": "^2.3.4"
+  }
+}

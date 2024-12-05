@@ -27,7 +27,7 @@ $bookingMyAccountPageId = $plugin->getSettings()->getBookingmyaccountPageId();
             echo '<div class="sln-topbar"><h6>';
             if (is_user_logged_in()){
                 $current_user = wp_get_current_user();
-                echo __( sprintf('Hi %s!', $current_user->display_name, 'salon-booking-system' )) . ' <a href="' . get_permalink($bookingMyAccountPageId) . '">' . __('Go to your account', 'salon-booking-system') . '</a>';
+                echo __('Hi', 'salon-booking-system'), ' ', $current_user->display_name . ' <a href="' . get_permalink($bookingMyAccountPageId) . '">' . __('Go to your account', 'salon-booking-system') . '</a>';
             } else {
                 echo __('Already a customer?', 'salon-booking-system') . ' <a href="' . get_permalink($bookingMyAccountPageId) . '">' . __('Log-in', 'salon-booking-system') . '</a>';
             }

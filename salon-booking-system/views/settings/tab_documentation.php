@@ -15,14 +15,14 @@ sum(
                 <?php esc_html_e('Here some useful resouces to understand how this plugin works:', 'salon-booking-system');?>
             </h2>
         </div>
-        <div class="col-xs-12 col-sm-4  sln-box__megabtn_wrapper">
-            <a href="https://salonbookingsystem.helpscoutdocs.com/" class="sln-btn sln-btn--borderonly sln-btn--mega sln-btn--icon sln-icon--docs" target="blank"><?php esc_html_e('Documentation', 'salon-booking-system')?></a>
+        <div class="col-xs-12 col-sm-3  sln-box__megabtn_wrapper">
+            <a href="https://salonbookingsystem.helpscoutdocs.com/" class="sln-btn sln-btn--main--tonal sln-btn--bigger sln-btn--icon sln-icon--docs" target="blank"><?php esc_html_e('Documentation', 'salon-booking-system')?></a>
         </div>
-        <div class="col-xs-12 col-sm-4  sln-box__megabtn_wrapper">
-            <a href="http://salonbookingsystem.com/category/video-tutorials/" class="sln-btn sln-btn--borderonly sln-btn--mega sln-btn--icon sln-icon--play" target="blank"><?php esc_html_e('Video tutorials', 'salon-booking-system')?></a>
+        <div class="col-xs-12 col-sm-3  sln-box__megabtn_wrapper">
+            <a href="http://salonbookingsystem.com/category/video-tutorials/" class="sln-btn sln-btn--main--tonal sln-btn--bigger sln-btn--icon sln-icon--play" target="blank"><?php esc_html_e('Video tutorials', 'salon-booking-system')?></a>
         </div>
-        <div class="col-xs-12 col-sm-4  sln-box__megabtn_wrapper">
-            <a href="https://salonbookingsystem.helpscoutdocs.com/article/94-how-to-debug-issues" class="sln-btn sln-btn--borderonly sln-btn--mega sln-btn--icon sln-icon--lightbulb" target="blank"><?php esc_html_e('Tips and suggestions', 'salon-booking-system')?></a>
+        <div class="col-xs-12 col-sm-3  sln-box__megabtn_wrapper">
+            <a href="https://salonbookingsystem.helpscoutdocs.com/article/94-how-to-debug-issues" class="sln-btn sln-btn--main--tonal sln-btn--bigger sln-btn--icon sln-icon--lightbulb" target="blank"><?php esc_html_e('Tips and suggestions', 'salon-booking-system')?></a>
         </div>
     </div>
 </div>
@@ -33,7 +33,7 @@ sum(
             <h3 class="sln-box-title--sec ">
                 <?php esc_html_e('Are you experiencing an issue with our plugin? Follow this guide first:', 'salon-booking-system');?>
             </h3>
-            <a href="https://www.salonbookingsystem.com/how-to-debug-salon-booking-plugin/" class="sln-btn sln-btn--borderonly sln-btn--mega sln-btn--icon sln-icon--medkit" target="blank">
+            <a href="https://www.salonbookingsystem.com/how-to-debug-salon-booking-plugin/" class="sln-btn sln-btn--main--tonal sln-btn--bigger sln-btn--icon sln-icon--medkit" target="blank">
                     <?php esc_html_e('Troubleshoot', 'salon-booking-system')?>
                 </a>
         </div>
@@ -58,7 +58,7 @@ sum(
             <h3 class="sln-box-title--sec">
                 <strong><?php esc_html_e('Rate us!', 'salon-booking-system');?></strong><br />
                 <?php esc_html_e('Are you satisfied with Salon Booking System? Consider to leave a 5 stars rating on wordpress.org', 'salon-booking-system');?></h3>
-            <a href="https://wordpress.org/support/view/plugin-reviews/salon-booking-system?filter=5" class="sln-btn sln-btn--borderonly sln-btn--mega sln-btn--icon  sln-icon--star" target="blank"><?php esc_html_e('Let\'s rate', 'salon-booking-system')?></a>
+            <a href="https://wordpress.org/support/view/plugin-reviews/salon-booking-system?filter=5" class="sln-btn sln-btn--main--tonal sln-btn--bigger sln-btn--icon  sln-icon--star" target="blank"><?php esc_html_e('Let\'s rate', 'salon-booking-system')?></a>
         </div>
     </div>
     <?php if( current_user_can( 'administrator') ): ?>

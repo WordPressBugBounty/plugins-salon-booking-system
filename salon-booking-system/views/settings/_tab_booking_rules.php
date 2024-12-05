@@ -18,12 +18,12 @@ SLN_Action_InitScripts::enqueueCustomSliderRange();
 <div id="sln-online_booking_available_days" class="sln-box sln-box--main sln-booking-rules  sln-box--haspanel">
         <h2 class="sln-box-title sln-box__paneltitle"><?php echo esc_attr($label); ?>
             <span class="block"><?php echo $block ?></span></h2>
-             <div class="collapse sln-box__panelcollapse">
+			<div class="collapse sln-box__panelcollapse">
 	<div class="row">
     <div class="sln-booking-rules-wrapper">
 	<?php $n = 0;?>
         <?php foreach ($availabilities as $row): $n++;?>
-									            <?php echo $plugin->loadView(
+		<?php echo $plugin->loadView(
 		'settings/_availability_row',
 		array(
 			'prefix' => $base . "[$n]",
@@ -32,14 +32,14 @@ SLN_Action_InitScripts::enqueueCustomSliderRange();
 			'show_specific_dates' => isset($show_specific_dates) ? $show_specific_dates : false,
 		)
 	); ?>
-									        <?php endforeach?>
+	<?php endforeach?>
     </div>
     <div class="col-xs-12 sln-box__actions">
         <button data-collection="addnew"
-                class="sln-btn sln-btn--main sln-btn--big sln-btn--icon sln-icon--file"><?php esc_html_e(
+                class="sln-btn sln-btn--main--tonal sln-btn--big sln-btn--icon sln-icon--file"><?php esc_html_e(
 	'Add new booking rule',
 	'salon-booking-system'
-)?>
+)?>troll
         </button>
     </div>
     <div data-collection="prototype" data-count="<?php echo count($availabilities) ?>">

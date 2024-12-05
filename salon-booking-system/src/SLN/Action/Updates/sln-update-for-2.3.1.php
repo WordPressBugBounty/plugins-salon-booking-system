@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile WordPress.DateTime.RestrictedFunctions.date_date
 
 // START UPDATE HOLIDAYS RULES
 $holidays = SLN_Plugin::getInstance()->getSettings()->get('holidays');

@@ -7,6 +7,7 @@
     }
     $stepstotal = count($steps);
     ?>
+    </h1>
     <div class="sln-progbar__text">
         <?php
         esc_html_e('Step', 'salon-booking-system');

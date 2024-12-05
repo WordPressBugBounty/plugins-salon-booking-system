@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 class SLN_Privacy_Exporters{
 	public static function customer_data_exporter( $email_address, $page ) {
 		$user           = get_user_by( 'email', $email_address ); // Check if user has an ID in the DB to load stored personal data.

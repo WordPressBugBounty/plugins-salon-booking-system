@@ -1,4 +1,5 @@
 <?php // algolplus
+// phpcs:ignoreFile WordPress.Security.NonceVerification.Missing
 
 class SLN_Shortcode_SalonMyAccount_Details
 {

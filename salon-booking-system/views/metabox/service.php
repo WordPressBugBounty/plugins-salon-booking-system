@@ -101,8 +101,10 @@ SLN_Form::fieldSelect(
         <?php SLN_Form::fieldNumeric($helper->getFieldName($postType, 'exec_order'), $service->getExecOrder(), array('min' => 1, 'max' => 10, 'attrs' => array()))?>
     </div>
     <div class="col-xs-12 col-sm-6 form-group sln-box-maininfo align-top">
-        <p class="sln-input-help"><?php esc_html_e('Use a number to give this service an order of execution compared to the other services.', 'salon-booking-system');?></p>
-        <p class="sln-input-help"><?php esc_html_e('Consider that this option will affect the availability of your staff members that you have associated with this service.', 'salon-booking-system');?></p>
+        <div class="sln-input-help">
+            <p><?php esc_html_e('Use a number to give this service an order of execution compared to the other services.', 'salon-booking-system');?></p>
+            <p><?php esc_html_e('Consider that this option will affect the availability of your staff members that you have associated with this service.', 'salon-booking-system');?></p>
+        </div>
     </div>
 </div>
 <div class="row">

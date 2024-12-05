@@ -1,3 +1,6 @@
+<?php
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
+?>
 <div class="row sln-box--main sln-box--fixed_height">
     <div class="col-xs-12">
         <div class="sln-thankyou__content sln-list">

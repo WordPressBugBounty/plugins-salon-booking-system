@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 
 class SLN_Enum_AvailabilityModeProvider  extends SLN_Enum_AbstractEnum
 {

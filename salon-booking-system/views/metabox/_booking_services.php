@@ -64,11 +64,6 @@ $bookingServices = $booking->getBookingServices()->getItems();
 ?>
     <div id="sln_booking_services" class="form-group sln_meta_field row">
         <div class="col-xs-12">
-                <?php if ($isMultipleAttendants || $isAttendants ): ?>
-                <h4 class="sln-box-title--nu--sec"><?php esc_html_e('Services & Attendants', 'salon-booking-system');?></h4>
-                <?php else: ?>
-                <h4 class="sln-box-title--nu--sec"><?php esc_html_e('Services', 'salon-booking-system');?></h4>
-                <?php endif;?>
                 <div class="sln-booking-services-alerts">
                     <span id="sln-alert-noservices"
                       class="sln-alert sln-alert--warning sln-alert--inline <?php echo $bookingServices ? 'hide' : '' ?>"><?php echo esc_html__('No services addded yet', 'salon-booking-system') ?></span>
@@ -102,7 +97,7 @@ $bookingServices = $booking->getBookingServices()->getItems();
                 <div class="sln-booking-service--itemselection sln-select">
                 <h5 class="sln-booking-service-line__label"><?php esc_html_e('Service', 'salon-booking-system')?></h5>
                 <?php SLN_Form::fieldSelect(
-	'_sln_booking[services][__service_id__]',
+	'_sln_booking[services][]',
 	$allServicesSelectionArray,
 	'__service_id__',
 	array(
@@ -250,7 +245,7 @@ $servicesData[$serviceId] = array_merge(isset($servicesData[$serviceId]) ? $serv
 );
 ?>
                 <?php SLN_Form::fieldText(
-	'_sln_booking[service][' . $at_id . ']',
+	'_sln_booking[service][' . $serviceId . ']',
 	$serviceId,
 	array('type' => 'hidden')
 )
@@ -314,7 +309,7 @@ $servicesData[$serviceId] = array_merge(isset($servicesData[$serviceId]) ? $serv
                         }
                     }
                     SLN_Form::fieldSelect(
-                        '_sln_booking[attendants][' . $at_id . ']' . (is_array($attendant) ? '[]' : ''),
+                        '_sln_booking[attendants][' . $serviceId . ']' . (is_array($attendant) ? '[]' : ''),
                         ($attendant ? $attendantItem : array('')),
                         ($attendant ? array_keys($attendantItem) : ''),
                         array('attrs' => array('data-service' => $serviceId, 'data-attendant' => '', 'data-selection' => 'attendant-selected') + $multipleAttr,
@@ -335,24 +330,21 @@ $servicesData[$serviceId] = array_merge(isset($servicesData[$serviceId]) ? $serv
 
         <div class="col-xs-12 sln-booking-service-action">
         </div>
-        <div class="row">
-             <?php if ($isMultipleAttendants): ?>
-                <div class="col-xs-12 col-sm-5 col-sm-offset-2 col-md-offset-2 sln-booking-service-action__btns">
-            <?php else: ?>
-                <div class="col-xs-12 col-sm-5 col-lg-6 sln-booking-service-action__btns">
-            <?php endif;?>
-                <button id="sln-addservice" data-collection="addnewserviceline" class="sln-btn sln-btn--big sln-btn--icon sln-btn--icon--left--alt sln-icon--plus sln-btn--nu--highemph">
-                    <?php esc_html_e('Add a service', 'salon-booking-system')?>
-                </button>
+            <div class="row">
+                 <?php if ($isMultipleAttendants): ?>
+                    <div class="col-xs-12 col-sm-5 col-sm-offset-2 col-md-offset-2 sln-booking-service-action__btns">
+                <?php else: ?>
+                    <div class="col-xs-12 col-sm-5 col-lg-6 sln-booking-service-action__btns">
+                <?php endif;?>
+                    <button id="sln-addservice" data-collection="addnewserviceline" class="sln-btn sln-btn--big sln-btn--icon sln-btn--icon--left--alt sln-icon--plus sln-btn--nu--highemph">
+                        <?php esc_html_e('Add a service', 'salon-booking-system')?>
+                    </button>
+                </div>
+                <script>
+                    var servicesData = '<?php echo addslashes(wp_json_encode($servicesData)); ?>';
+                    var attendantsData = '<?php echo addslashes(wp_json_encode(array(0 => __('Select an assistant', 'salon-booking-system')) + $attendantsData)); ?>';
+                    var lineItem = '<?php echo addslashes($lineItem); ?>';
+                    var resourcesData = '<?php echo addslashes(wp_json_encode($resourcesData)); ?>';
+                </script>
             </div>
         </div>
-        <script>
-            var servicesData = '<?php echo addslashes(wp_json_encode($servicesData)); ?>';
-            var attendantsData = '<?php echo addslashes(wp_json_encode(array(0 => __('Select an assistant', 'salon-booking-system')) + $attendantsData)); ?>';
-            var lineItem = '<?php echo addslashes($lineItem); ?>';
-            var resourcesData = '<?php echo addslashes(wp_json_encode($resourcesData)); ?>';
-        </script>
-
-            </div>
-        </div>
-

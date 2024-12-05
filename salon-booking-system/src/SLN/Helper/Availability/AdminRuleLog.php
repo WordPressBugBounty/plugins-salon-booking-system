@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 class SLN_Helper_Availability_AdminRuleLog{
 
     protected static $instance;

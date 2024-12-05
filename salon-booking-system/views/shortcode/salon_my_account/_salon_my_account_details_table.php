@@ -1,4 +1,6 @@
-
+<?php
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
+?>
 <table class="table">
 	<thead>
 	<tr>

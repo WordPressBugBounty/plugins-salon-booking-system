@@ -78,7 +78,7 @@ $this->row_input_email(
                     <div class="preview-logo-img">
                         <img src="<?php echo wp_get_attachment_image_url($this->getOpt('gen_logo'), 'sln_gen_logo'); ?>">
                     </div>
-                    <button type="button" class="sln-btn sln-btn--light sln-btn--medium sln-btn--icon sln-icon--trash" data-action="delete-logo" data-target-remove="logo"
+                    <button type="button" class="sln-btn sln-btn--main--tonal sln-btn--medium sln-btn--icon sln-icon--trash" data-action="delete-logo" data-target-remove="logo"
                             data-target-reset="salon_settings_gen_logo" data-target-show="select_logo"><?php esc_html_e('Remove this image', 'salon-booking-system');?></button>
                 </div>
             <?php endif?>
@@ -150,11 +150,9 @@ $this->row_input_email(
 	true
 ) ?>
         </div>
-        <div class="col-xs-6 col-sm-6 col-md-4 form-group sln-checkbox sln-display-slots-customers-timezone">
-            <?php $attrs = !defined("SLN_VERSION_PAY") ? array('disabled' => 'disabled') : array() ?>
-            <div class="<?php echo !defined("SLN_VERSION_PAY") ? 'sln-disabled' : '' ?>">
-                <?php $this->row_input_checkbox('display_slots_customer_timezone', __("Display slots using customer's time-zone", 'salon-booking-system'), array('attrs' => $attrs));?>
-            </div>
+        <?php $attrs = !defined("SLN_VERSION_PAY") ? array('disabled' => 'disabled') : array() ?>
+        <div class="col-xs-6 col-sm-6 col-md-4 form-group sln-checkbox sln-display-slots-customers-timezone <?php echo !defined("SLN_VERSION_PAY") ? 'sln-disabled' : '' ?>">
+            <?php $this->row_input_checkbox('display_slots_customer_timezone', __("Display slots using customer's time-zone", 'salon-booking-system'), array('attrs' => $attrs));?>
             <?php if (!defined("SLN_VERSION_PAY")): ?>
                 <div class="sln-disabled-free-version">
                     <?php esc_html_e('Available on PRO version', 'salon-booking-system') ?>
@@ -171,22 +169,22 @@ $this->row_input_email(
         <div class="col-xs-12 col-sm-6 col-md-4">
             <div class="sln-switch">
                 <?php $this->row_input_checkbox('attendant_enabled', __('Enable assistant selection', 'salon-booking-system'));?>
-            </div>
-            <div class="sln-box-maininfo">
-                <p class="sln-box-info">
-                <?php esc_html_e('Let your customers choose their favourite staff member.', 'salon-booking-system')?>
-                </p>
+                <div class="sln-box-maininfo">
+                    <p class="sln-box-info">
+                    <?php esc_html_e('Let your customers choose their favourite staff member.', 'salon-booking-system')?>
+                    </p>
+                </div>
             </div>
         </div>
         <div class="col-xs-12 col-sm-6 col-md-4 only-from-backend-attendant-enable-checkbox <?php echo $this->getOpt('attendant_enabled') ? '' : 'hide' ?>">
             <div class="sln-checkbox">
                 <?php $this->row_input_checkbox('only_from_backend_attendant_enabled', __('Only from back-end', 'salon-booking-system'));?>
-            </div>
-            <div class="sln-box-maininfo">
-                <p class="sln-box-info">
-                    <?php esc_html_e('If enabled the assistant selection step will be hidden on front-end.', 'salon-booking-system')?>
-                    <?php esc_html_e('Assistants will be assigned automatically by the system.', 'salon-booking-system')?>
-                </p>
+                <div class="sln-box-maininfo">
+                    <p class="sln-box-info">
+                        <?php esc_html_e('If enabled the assistant selection step will be hidden on front-end.', 'salon-booking-system')?>
+                        <?php esc_html_e('Assistants will be assigned automatically by the system.', 'salon-booking-system')?>
+                    </p>
+                </div>
             </div>
         </div>
         <div class="col-xs-12 col-sm-6 col-md-4 assistant-selections-options <?php echo $this->getOpt('attendant_enabled') ? '' : 'hide' ?>">
@@ -200,41 +198,41 @@ $this->row_input_email(
         <div class="col-xs-12 col-sm-6 col-md-4 from-group">
             <div class="sln-checkbox">
                 <?php $this->row_input_checkbox('skip_attendants_enabled', __('Skip assistant selection step', 'salon-booking-system')); ?>
-            </div>
-            <div class="sln-box-maininfo">
-                <p class="sln-box-info">
-                    <?php esc_html_e('Skip assistant selection step, if only one is available', 'salon-booking-system'); ?>
-                </p>
+                <div class="sln-box-maininfo">
+                    <p class="sln-box-info">
+                        <?php esc_html_e('Skip assistant selection step, if only one is available', 'salon-booking-system'); ?>
+                    </p>
+                </div>
             </div>
         </div>
         <div class="col-xs-12 col-sm-6 col-md-4 form-group">
             <div class="sln-checkbox">
                 <?php $this->row_input_checkbox('choose_attendant_for_me_disabled', __('Disable "Choose an assistant for me"', 'salon-booking-system'));?>
-            </div>
-            <div class="sln-box-maininfo">
-                <p class="sln-box-info">
-                    <?php esc_html_e('When checked the option "Choose an assistant for me" will be removed on front-end Assistants selection step.', 'salon-booking-system')?>
-                </p>
+                <div class="sln-box-maininfo">
+                    <p class="sln-box-info">
+                        <?php esc_html_e('When checked the option "Choose an assistant for me" will be removed on front-end Assistants selection step.', 'salon-booking-system')?>
+                    </p>
+                </div>
             </div>
         </div>
         <div class="col-xs-12 col-sm-6 col-md-4 form-group">
             <div class="sln-checkbox">
                 <?php $this->row_input_checkbox('m_attendant_enabled', __('Enable multiple assistants selection', 'salon-booking-system'));?>
-            </div>
-            <div class="sln-box-maininfo">
-                <p class="sln-box-info">
-                    <?php esc_html_e('Users can select more than one assistants for their booked services. Please set with care the "execution order" inside your services section.', 'salon-booking-system')?>
-                </p>
+                <div class="sln-box-maininfo">
+                    <p class="sln-box-info">
+                        <?php esc_html_e('Users can select more than one assistants for their booked services. Please set with care the "execution order" inside your services section.', 'salon-booking-system')?>
+                    </p>
+                </div>
             </div>
         </div>
         <div class="col-xs-12 col-sm-6 col-md-4 form-group">
             <div class="sln-checkbox">
                 <?php $this->row_input_checkbox('attendant_email', __('Enable assistant email on new bookings', 'salon-booking-system'));?>
-            </div>
-            <div class="sln-box-maininfo">
-                <p class="sln-box-info">
-                    <?php esc_html_e('Assistants will receive an e-mail when selected for a new booking.', 'salon-booking-system')?>
-                </p>
+                <div class="sln-box-maininfo">
+                    <p class="sln-box-info">
+                        <?php esc_html_e('Assistants will receive an e-mail when selected for a new booking.', 'salon-booking-system')?>
+                    </p>
+                </div>
             </div>
         </div>
         <!-- .row // END -->
@@ -243,7 +241,7 @@ $this->row_input_email(
     <div class="row sln-box__footer sln-box__actions">
         <div class="col-xs-12 col-sm-6 form-group">
             <a href="<?php echo get_admin_url() . 'edit.php?post_type=sln_attendant'; ?> "
-               class="sln-btn sln-btn--main sln-btn--big sln-btn--icon sln-icon--assistants"><?php esc_html_e('Manage staff', 'salon-booking-system')?></a>
+               class="sln-btn sln-btn--main--tonal sln-btn--big sln-btn--icon sln-icon--assistants"><?php esc_html_e('Manage staff', 'salon-booking-system')?></a>
             <div class="sln-box-maininfo align-top">
                 <p class="sln-box-info">
                     <?php esc_html_e('If you need to add or manage your staff members.', 'salon-booking-system', 'salon-booking-system')?>

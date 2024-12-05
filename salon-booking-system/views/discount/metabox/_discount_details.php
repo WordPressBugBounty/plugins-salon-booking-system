@@ -7,6 +7,7 @@
  * @var string $postType
  *
  */
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 $helper->showNonce($postType);
 $isShopEnabled = false;
 $isShopEnabled = apply_filters('sln_is_shops_enabled',$isShopEnabled);

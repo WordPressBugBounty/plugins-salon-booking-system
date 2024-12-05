@@ -18,6 +18,12 @@ class SLN_Shortcode_Salon_ThankyouStep extends SLN_Shortcode_Salon_Step
 
     public function render(){
         $plugin = $this->getPlugin();
+        if($plugin->getSettings()->get('disable_summary_skip_countdown')){
+            if($this->isAjax()){
+                wp_send_json(array('redirect' => $this->getThankyou())); die;
+            }
+            wp_redirect($this->getThankyou());die;
+        }
         return $this->getPlugin()->loadView('shortcode/salon_' . $this->getStep(), $this->getViewData());
     }
 

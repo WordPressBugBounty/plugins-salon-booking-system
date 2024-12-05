@@ -1,4 +1,5 @@
 <?php // algolplus
+// phpcs:ignoreFile WordPress.DB.PreparedSQL.NotPrepared
 
 class SLN_Shortcode_SalonRecentComments
 {

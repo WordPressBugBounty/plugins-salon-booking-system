@@ -549,11 +549,13 @@ jQuery(function ($) {
             success: function(response) {
                 self.closest('.sln-set-default-booking-status--block-labels').data('defaultStatus', status);
                 var done_label = self.closest('.sln-set-default-booking-status--block-labels').find('.sln-set-default-booking-status--label-done');
+                $("#sln-booking__status__label").attr("data-default_status", status);
                 done_label.removeClass('hide');
                 setTimeout(function () {
                     done_label.addClass('hide');
                 }, 3000);
                 $('#_sln_booking_status').trigger('change');
+                self.closest('.sln-set-default-booking-status--block-labels').addClass("selected_is_default");
                 self.closest('.sln-set-default-booking-status--block-labels').find('.sln-set-default-booking-status--alert-loading').addClass('hide');
             },
         });
@@ -594,7 +596,13 @@ jQuery(function ($) {
     if ($(".sln-select--multiple--search").length) {
     sln_select2MultiSearch();
     }
+    if (window.location !== window.parent.location) {
+        $('#detailsWrapper').addClass('isInIframe');
+    }
 });
+//function pageInIframe() {
+//  return (window.location !== window.parent.location);
+//}
 
 var sln_importRows;
 function sln_initImporter($item, mode) {

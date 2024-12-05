@@ -3,6 +3,7 @@
  * @var $plugin SLN_Plugin
  * @var $helper SLN_Admin_Settings
  */
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 ?>
 
     <div id="sln-booking_steps_order" class="sln-box sln-box--main sln-box--haspanel">

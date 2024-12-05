@@ -4,7 +4,7 @@ Tags: booking, reservations, scheduling, appointment, booking calendar, online r
 Requires at least: 4.1
 Tested up to: 6.6
 Requires PHP: 7.4.8
-Stable tag: 10.9.8
+Stable tag: 10.10
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -394,6 +394,14 @@ FREE version doesn't have the online payments options, no mobile app access, no 
 
 
 == Changelog ==
+
+05.12.2024
+
+* Improved UI on back-end booking creation
+* Added "Discounts details" inside booking export to CSV 
+* Fixed vulnerability issue
+* Fixed minor issues
+* Fixed WPML missing text strings
 
 03.11.2024 - 10.9.7
 

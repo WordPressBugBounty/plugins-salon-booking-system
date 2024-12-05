@@ -13,6 +13,7 @@ sum(
 	array('#sln-ajax_steps', __('Ajax steps', 'salon-booking-system')),
 	array('#sln-disable_bootstrap_assets', __('Bootstrap assets', 'salon-booking-system'))
 );
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 ?>
     <div id="sln-booking_form_layout" class="sln-box sln-box--main sln-box--haspanel sln-box--haspanel--open">
         <h2 class="sln-box-title sln-box__paneltitle sln-box__paneltitle--open">

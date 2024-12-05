@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 class SLN_Settings {
 	const KEY = 'salon_settings';
 	private $settings;

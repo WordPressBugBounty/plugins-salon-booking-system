@@ -1,4 +1,5 @@
 <?php // algolplus
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 
 class SLN_Action_Ajax_SetCustomText extends SLN_Action_Ajax_Abstract
 {

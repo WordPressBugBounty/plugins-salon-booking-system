@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile WordPress.Security.NonceVerification.Missing
 
 class SLN_Action_Ajax_CheckResources extends SLN_Action_Ajax_Abstract{
 	const STATUS_ERROR = -1;

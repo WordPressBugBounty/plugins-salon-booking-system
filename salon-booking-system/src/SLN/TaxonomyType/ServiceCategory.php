@@ -116,7 +116,7 @@ class SLN_TaxonomyType_ServiceCategory extends SLN_TaxonomyType_Abstract
     public function set_the_terms_in_order($terms, $id, $taxonomy)
     {
 
-        if ($taxonomy[0] == SLN_Plugin::TAXONOMY_SERVICE_CATEGORY && get_option(SLN_Plugin::CATEGORY_ORDER, '""')) {
+        if ($taxonomy[0] == SLN_Plugin::TAXONOMY_SERVICE_CATEGORY && get_option(SLN_Plugin::CATEGORY_ORDER)) {
             $order = get_option(SLN_Plugin::CATEGORY_ORDER, '""');
             return "FIELD(t.term_id, $order)";
         }

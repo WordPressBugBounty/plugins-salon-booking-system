@@ -1,4 +1,6 @@
 <?php
+// phpcs:ignoreFile WordPress.DB.PreparedSQL.NotPrepared
+// phpcs:ignoreFile WordPress.Security.NonceVerification.Recommended
 
 if (!class_exists('WP_Users_List_Table')) {
 	_get_list_table('WP_Users_List_Table');

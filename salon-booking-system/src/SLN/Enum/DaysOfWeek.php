@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 class SLN_Enum_DaysOfWeek extends SLN_Enum_AbstractEnum
 {
     const SUNDAY    = 0;

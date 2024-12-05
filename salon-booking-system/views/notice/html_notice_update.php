@@ -1,3 +1,6 @@
+<?php
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
+?>
 <div id="sln-setting-success" class="updated settings-success success">
 	<p>
 		<strong><?php esc_html_e('Salon Data Update Required','salon-booking-system') ?></strong> -

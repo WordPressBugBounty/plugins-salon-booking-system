@@ -13,6 +13,7 @@ class SLN_Admin_SettingTabs_CheckoutTab extends SLN_Admin_SettingTabs_AbstractTa
 		'checkout_fields',
 		'gen_timetable',
 		'last_step_note',
+		'disable_summary_skip_countdown',
 		//'enable_skip_summary_step',
 	);
 

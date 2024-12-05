@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 abstract class SLN_PostType_Abstract
 {
     private $postType;
@@ -149,6 +149,7 @@ abstract class SLN_PostType_Abstract
 	if($new_post_id !== 0 && !is_wp_error($new_post_id)) {
 
 	    $post_meta_keys = get_post_custom_keys($post->ID);
+	    $post_meta_keys = apply_filters('sln.post_type.duplicate_post_create_duplicate.meta_keys', $post_meta_keys, $post);
 
 	    $meta_blacklist   = array();
 	    $meta_blacklist[] = '_edit_lock'; // edit lock

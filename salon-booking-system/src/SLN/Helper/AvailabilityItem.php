@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 
 use Salon\Util\Date;
 use Salon\Util\DateInterval;

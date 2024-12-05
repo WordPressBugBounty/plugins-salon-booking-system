@@ -1,3 +1,6 @@
+<?php
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
+?>
 <?php if(is_array($bookings) && count($bookings)): ?>
     <ul class="unstyled list-unstyled event-list">
 		<?php foreach($bookings as $booking): ?>

@@ -1,3 +1,6 @@
+<?php
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
+?>
 <?php if ($discountText != ''): ?>
 	<tr>
 		<td align="left" style="padding:0;Margin:0;padding-top:5px;padding-left:25px;padding-right:25px">

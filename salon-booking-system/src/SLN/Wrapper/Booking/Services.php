@@ -12,7 +12,7 @@ final class SLN_Wrapper_Booking_Services {
 	public function __construct( $data ) {
 		if(!empty($data)){
 			foreach ($data as $key =>$item) {
-				$this->items[$key] = new SLN_Wrapper_Booking_Service($item);
+				$this->items[] = new SLN_Wrapper_Booking_Service($item);
 			}
 		}
 	}

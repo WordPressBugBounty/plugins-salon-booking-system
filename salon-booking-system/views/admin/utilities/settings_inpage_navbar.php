@@ -1,4 +1,6 @@
 <?php
+// phpcs:ignoreFile WordPress.Security.NonceVerification.Recommended
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 function sum(...$items) {
 	?>
 	<div class="sln-inpage_navbar_wrapper <?php if (!$items) {echo " sln-inpage_navbar_wrapper--fk";}?>">

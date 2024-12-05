@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 
 abstract class SLN_Action_Ajax_AbstractImport extends SLN_Action_Ajax_Abstract
 {

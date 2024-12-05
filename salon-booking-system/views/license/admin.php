@@ -1,3 +1,6 @@
+<?php
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
+?>
 <div id="sln-setting-error" class="updated error">
     <h3><?php esc_html_e('Salon booking plugin needs a valid license','salon-booking-system') ?></h3>
 

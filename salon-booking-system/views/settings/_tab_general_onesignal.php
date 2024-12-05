@@ -3,6 +3,7 @@
  * @var $plugin SLN_Plugin
  * @var $helper SLN_Admin_Settings
  */
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 ?>
 <div class="sln-box--sub row">
     <div class="col-xs-12">
@@ -21,12 +22,10 @@
             </div>
             <div class="col-xs-12">
                 <div class="sln-checkbox">
-                <?php $helper->row_input_checkbox(
-	'onesignal_new',
-	__('Send Onesignal notification on new bookings', 'salon-booking-system')
-);?>            </div>
+                <?php $helper->row_input_checkbox('onesignal_new', __('Send Onesignal notification on new bookings', 'salon-booking-system'));?>            
                 <div class="sln-box-maininfo">
                     <p class="sln-box-info"><?php esc_html_e('Onesignal notification will be sent to a staff member', 'salon-booking-system');?></p>
+                </div>
                 </div>
             </div>
         </div>

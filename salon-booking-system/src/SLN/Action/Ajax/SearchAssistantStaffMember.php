@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 
 class SLN_Action_Ajax_SearchAssistantStaffMember extends SLN_Action_Ajax_Abstract
 {

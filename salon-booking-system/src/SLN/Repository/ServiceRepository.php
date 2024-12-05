@@ -221,26 +221,34 @@ class SLN_Repository_ServiceRepository extends SLN_Repository_AbstractWrapperRep
     public static function groupServicesByCategory($services)
     {
         global $wpdb;
+        add_filter('get_terms_orderby', function($terms, $id, $taxonomy)
+            {
 
-	$ret = array(0 => array('term' => false, 'services' => array()));
+                if ($taxonomy[0] == SLN_Plugin::TAXONOMY_SERVICE_CATEGORY && get_option(SLN_Plugin::CATEGORY_ORDER)) {
+                    $order = get_option(SLN_Plugin::CATEGORY_ORDER, '""');
+                    return "FIELD(t.term_id, $order)";
+                }
 
-	add_filter('get_terms_orderby', function ($terms, $id, $taxonomy) {
-	    if ($taxonomy[0] == SLN_Plugin::TAXONOMY_SERVICE_CATEGORY && get_option(SLN_Plugin::CATEGORY_ORDER, '""')) {
-		$order = get_option(SLN_Plugin::CATEGORY_ORDER, '""');
-		return "FIELD(t.term_id, $order)";
-	    }
-	    return $terms;
-	}, 10, 4);
+                return $terms;
+            }
+        , 10, 4);
+        $order = array();
+        foreach(get_terms(array('taxonomy' => SLN_Plugin::TAXONOMY_SERVICE_CATEGORY)) as $order_pos => $term){
+            $order[$term->term_id] = $order_pos + 1;
+        }
+
+        $ret = array(0 => array('term' => false, 'services' => array()));
 
         foreach ($services as $s) {
             $post_terms = wp_get_object_terms($s->getId(), SLN_Plugin::TAXONOMY_SERVICE_CATEGORY);
+
 
             if ( ! empty($post_terms)) {
                 foreach ($post_terms as $post_term) {
                     $post_term_obj = new SLN_Wrapper_ServiceCategory($post_term);
                     if ($post_term_obj->getId() == $post_term_obj->getId()) {
-                        $ret[$post_term->term_id]['term']       = $post_term_obj;
-                        $ret[$post_term->term_id]['services'][] = $s;
+                        $ret[$order[$post_term->term_id]]['term']       = $post_term_obj;
+                        $ret[$order[$post_term->term_id]]['services'][] = $s;
                     }
                 }
             } else {
@@ -253,7 +261,7 @@ class SLN_Repository_ServiceRepository extends SLN_Repository_AbstractWrapperRep
                 $data['services'] = array();
             }
         }
-
+        ksort($ret);
         return $ret;
     }
 }

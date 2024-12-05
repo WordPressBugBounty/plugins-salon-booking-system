@@ -1,6 +1,6 @@
 "use strict";
 
-Number.prototype.formatMoney = function(c, d, t) {
+Number.prototype.formatMoney = function (c, d, t) {
     var n = this,
         c = isNaN((c = Math.abs(c))) ? 2 : c,
         d = d == undefined ? "." : d,
@@ -21,14 +21,14 @@ Number.prototype.formatMoney = function(c, d, t) {
     );
 };
 
-jQuery(function($) {
+jQuery(function ($) {
     sln_init($);
     if (salon.has_stockholm_transition == "yes") {
         $("body").on(
             "click",
             'a[target!="_blank"]:not(.no_ajax):not(.no_link)',
-            function() {
-                setTimeout(function() {
+            function () {
+                setTimeout(function () {
                     sln_init(jQuery);
                 }, 2000);
             }
@@ -38,103 +38,143 @@ jQuery(function($) {
 
 function sln_init($) {
     if ($("#salon-step-services").length || $("#salon-step-secondary").length) {
-        let request_args = window.location.search.split('&');
-        if(! request_args.find(val => val.startsWith('submit_services') || val.startsWith('?submit_services'))
-            && ! request_args.find(val => val.startsWith('save_selected'))
-            && $("#salon-step-services").length
-            && !$('.sln-icon--back').length){
-            $('#salon-step-services input[type="checkbox"]').removeAttr('checked');
-            if(!$('.sln-checkbox.is-checked').length){
-                $('#sln-step-submit').parent().addClass('sln-btn--disabled');
+        let request_args = window.location.search.split("&");
+        if (
+            !request_args.find(
+                (val) =>
+                    val.startsWith("submit_services") ||
+                    val.startsWith("?submit_services")
+            ) &&
+            !request_args.find((val) => val.startsWith("save_selected")) &&
+            $("#salon-step-services").length &&
+            !$(".sln-icon--back").length
+        ) {
+            $('#salon-step-services input[type="checkbox"]').removeAttr(
+                "checked"
+            );
+            if (!$(".sln-checkbox.is-checked").length) {
+                $("#sln-step-submit").parent().addClass("sln-btn--disabled");
             }
         }
-        if($("#salon-step-services").length){
-            $('.sln-service-variable-duration--counter--minus').addClass('sln-service-variable-duration--counter--button--disabled');
+        if (
+            request_args.find((val) => val.startsWith("save_selected")) ||
+            request_args.find(
+                (val) =>
+                    val.startsWith("submit_services") ||
+                    val.startsWith("?submit_services")
+            )
+        ) {
+            $(document).scrollTop($("#sln-salon").offset().top);
+            $("#salon-step-services .sln-box--fixed_height").scrollTop(
+                $(
+                    '#salon-step-services input[type="checkbox"][checked="checked"]'
+                ).offset().top -
+                    $('#salon-step-services input[type="checkbox"]')
+                        .first()
+                        .offset().top -
+                    100
+            );
         }
-        request_args = request_args.filter(item =>  !item.startsWith('save_selected'))
-        window.history.replaceState({}, document.title, window.location.pathname + request_args.join('&'))
+        if ($("#salon-step-services").length) {
+            $(".sln-service-variable-duration--counter--minus").addClass(
+                "sln-service-variable-duration--counter--button--disabled"
+            );
+        }
+        request_args = request_args.filter(
+            (item) => !item.startsWith("save_selected")
+        );
+        window.history.replaceState(
+            {},
+            document.title,
+            window.location.pathname + request_args.join("&")
+        );
         sln_serviceTotal($);
     }
-    let discount_request_arg = window.location.search.replace('?', '').split('&').find(val => val.startsWith('discount_id'));
-    if(discount_request_arg !== undefined){
-        jQuery.ajax(
-            {
-                url: salon.ajax_url,
-                data: {
-                    action: 'salon_discount',
-                    method: 'ApplyDiscountIdOnStart',
-                    discount_id: discount_request_arg.split('=')[1]
-                },
-                method: 'POST',
-                dataType: 'json',
-                success: function(data){console.log(data)}
-            }
-        );
+    let discount_request_arg = window.location.search
+        .replace("?", "")
+        .split("&")
+        .find((val) => val.startsWith("discount_id"));
+    if (discount_request_arg !== undefined) {
+        jQuery.ajax({
+            url: salon.ajax_url,
+            data: {
+                action: "salon_discount",
+                method: "ApplyDiscountIdOnStart",
+                discount_id: discount_request_arg.split("=")[1],
+            },
+            method: "POST",
+            dataType: "json",
+            success: function (data) {
+                console.log(data);
+            },
+        });
     }
-    if(typeof sln_select !== undefined && typeof sln_select == 'function'){
+    if (typeof sln_select !== undefined && typeof sln_select == "function") {
         sln_select($);
     }
-    if($('#salon-step-attendant').length){
+    if ($("#salon-step-attendant").length) {
         sln_attendantTotal($);
         // sln_stepAttendant($);
     }
-    
+
     function box_fixed_height() {
         if ($(".sln-box--fixed_height").length) {
-            $(".sln-box--fixed_height").each(function() {
+            $(".sln-box--fixed_height").each(function () {
                 var el = $(this);
                 var iHeight = el.height();
                 var iScrollHeight = el.prop("scrollHeight");
                 var diff = iScrollHeight - iHeight;
                 if (diff > 1) {
-                    el.addClass('sln-box--scrollable');
+                    el.addClass("sln-box--scrollable");
                 } else {
-                    el.removeClass('sln-box--scrollable');
+                    el.removeClass("sln-box--scrollable");
                 }
             });
         }
-            $(".sln-box--fixed_height--").css("position", "absolute").css("opacity", "0");
-            function sln_timeScroll() {
-                var dateTable = $(".datetimepicker-days"),
-                    timeTable = $(".sln-box--fixed_height--"),
-                    //originalHeight = timeTable.outerHeight(true),
-                    originalHeight = timeTable.prop("scrollHeight"),
-                    otherHeight = $(".datetimepicker-days").outerHeight(true),
-                    timeTableHeight =
-                        otherHeight -
-                        $("#sln_timepicker_viewdate").outerHeight(true) -
-                        30;
-                if (originalHeight > timeTableHeight) {
-                    timeTable
-                        .css("max-height", timeTableHeight)
-                        .addClass("is_scrollable")
-                        .css("position", "relative")
-                        .css("opacity", "1");
-                } else {
-                    timeTable.css("position", "relative").css("opacity", "1");
-                }
+        $(".sln-box--fixed_height--")
+            .css("position", "absolute")
+            .css("opacity", "0");
+        function sln_timeScroll() {
+            var dateTable = $(".datetimepicker-days"),
+                timeTable = $(".sln-box--fixed_height--"),
+                //originalHeight = timeTable.outerHeight(true),
+                originalHeight = timeTable.prop("scrollHeight"),
+                otherHeight = $(".datetimepicker-days").outerHeight(true),
+                timeTableHeight =
+                    otherHeight -
+                    $("#sln_timepicker_viewdate").outerHeight(true) -
+                    30;
+            if (originalHeight > timeTableHeight) {
+                timeTable
+                    .css("max-height", timeTableHeight)
+                    .addClass("is_scrollable")
+                    .css("position", "relative")
+                    .css("opacity", "1");
+            } else {
+                timeTable.css("position", "relative").css("opacity", "1");
             }
-            $(window).bind("load", function() {
-                setTimeout(function() {
-                    sln_timeScroll();
-                }, 200);
-            });
-            $(window).resize(function() {
-                setTimeout(function() {
-                    sln_timeScroll();
-                }, 200);
-            });
-            $(document).ajaxComplete(function(event, request, settings) {
-                setTimeout(function() {
-                    sln_timeScroll();
-                }, 200);
-            });
-            setTimeout(function() {
+        }
+        $(window).bind("load", function () {
+            setTimeout(function () {
                 sln_timeScroll();
             }, 200);
+        });
+        $(window).resize(function () {
+            setTimeout(function () {
+                sln_timeScroll();
+            }, 200);
+        });
+        $(document).ajaxComplete(function (event, request, settings) {
+            setTimeout(function () {
+                sln_timeScroll();
+            }, 200);
+        });
+        setTimeout(function () {
+            sln_timeScroll();
+        }, 200);
     }
     box_fixed_height();
-    $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+    $('a[data-toggle="tab"]').on("shown.bs.tab", function (e) {
         // e.target // newly activated tab
         // e.relatedTarget // previous active tab
         box_fixed_height();
@@ -147,41 +187,57 @@ function sln_init($) {
             var window_width = $(window).width();
             var offset_left = box.offset().left;
             var offset_right = window_width - box_width - offset_left;
-            var margin_left = (offset_left + 0)  * -1;
-            var margin_right = (offset_right + 0)  * -1;
-            var box_nu_width = window_width + " !important" ;
+            var margin_left = (offset_left + 0) * -1;
+            var margin_right = (offset_right + 0) * -1;
+            var box_nu_width = window_width + " !important";
 
             //console.log(box_width + ' - ' + window_width + ' - ' + offset_left);
             //box.css( "margin-right", margin_right ).css( "max-width", "unset" ).css( "width", box_nu_width );
-            //box.attr("style", "margin-left:" + margin_left + "px !important");             
+            //box.attr("style", "margin-left:" + margin_left + "px !important");
             //if(box.css('margin-right') == "0px") {
-                
-            if(!box.attr('style')) {
-                box.attr("style", "width:" + window_width +  "px; margin-right:" + margin_right + "px !important; margin-left:" + margin_left + "px !important;");
+
+            if (!box.attr("style")) {
+                box.attr(
+                    "style",
+                    "width:" +
+                        window_width +
+                        "px; margin-right:" +
+                        margin_right +
+                        "px !important; margin-left:" +
+                        margin_left +
+                        "px !important;"
+                );
             }
             var newStyle = box.attr("style");
             box.addClass("fadedIn");
-            setTimeout(function(){
-            }, 1000);
+            setTimeout(function () {}, 1000);
             if ($("#sln-box__bottombar").length) {
                 var bar = $("#sln-box__bottombar");
                 var bar_width = bar.width();
                 var bar_offset_left = bar.offset().left;
-                var bar_offset_right = window_width - bar_width - bar_offset_left;
+                var bar_offset_right =
+                    window_width - bar_width - bar_offset_left;
                 var bar_margin_left = (bar_offset_left + 0) * -1;
                 var bar_margin_right = (bar_offset_right + 0) * -1;
                 //bar.css( "margin-left", bar_margin_left ).css( "margin-right", bar_margin_right ).css( "max-width", "unset" );
                 //$("#sln-box__bottombar.col-xs-12").css( "width", window_width );
-                const aboutUsObserver = new IntersectionObserver((entries, observer) => {
-                    entries.forEach(entry => {
-                        if(entry.isIntersecting) {
-                            $("#sln-box__bottombar").addClass("sln-box__bottombar--notsticky");
-                            //$("#sln-box__bottombar").toggleClass("underlined");
-                        } else {
-                            $("#sln-box__bottombar").removeClass("sln-box__bottombar--notsticky");
-                        }
-                    });
-                }, {});
+                const aboutUsObserver = new IntersectionObserver(
+                    (entries, observer) => {
+                        entries.forEach((entry) => {
+                            if (entry.isIntersecting) {
+                                $("#sln-box__bottombar").addClass(
+                                    "sln-box__bottombar--notsticky"
+                                );
+                                //$("#sln-box__bottombar").toggleClass("underlined");
+                            } else {
+                                $("#sln-box__bottombar").removeClass(
+                                    "sln-box__bottombar--notsticky"
+                                );
+                            }
+                        });
+                    },
+                    {}
+                );
                 aboutUsObserver.observe($("#sln-salon__follower")[0]);
             }
         }
@@ -195,43 +251,48 @@ function sln_init($) {
     });
     function attendants_hor_scroll() {
         //const slider = document.querySelector('.sln-list__horscroller__in');
-        const sliders = document.querySelectorAll('.sln-list__horscroller__in');
+        const sliders = document.querySelectorAll(".sln-list__horscroller__in");
         let isDown = false;
         let startX;
         let scrollLeft;
         for (const slider of sliders) {
-            slider.addEventListener('mousedown', (e) => {
-              isDown = true;
-              slider.classList.add('active');
-              startX = e.pageX - slider.offsetLeft;
-              scrollLeft = slider.scrollLeft;
+            slider.addEventListener("mousedown", (e) => {
+                isDown = true;
+                slider.classList.add("active");
+                startX = e.pageX - slider.offsetLeft;
+                scrollLeft = slider.scrollLeft;
             });
-            slider.addEventListener('mouseleave', () => {
-              isDown = false;
-              slider.classList.remove('active');
+            slider.addEventListener("mouseleave", () => {
+                isDown = false;
+                slider.classList.remove("active");
             });
-            slider.addEventListener('mouseup', () => {
-              isDown = false;
-              slider.classList.remove('active');
+            slider.addEventListener("mouseup", () => {
+                isDown = false;
+                slider.classList.remove("active");
             });
-            slider.addEventListener('mousemove', (e) => {
-              if(!isDown) return;
-              e.preventDefault();
-              const x = e.pageX - slider.offsetLeft;
-              const walk = (x - startX) * 3; //scroll-fast
-              slider.scrollLeft = scrollLeft - walk;
-              //console.log(walk);
+            slider.addEventListener("mousemove", (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - slider.offsetLeft;
+                const walk = (x - startX) * 3; //scroll-fast
+                slider.scrollLeft = scrollLeft - walk;
+                //console.log(walk);
             });
         }
-
-
     }
     attendants_hor_scroll();
     function step_description() {
-        $("#sln-salon .sln-list__item .sln-list__item__description.sln-list__item__description__toggle").each(function() {
-            $(this).on( "click", function(e) {
-                $(this).closest(".sln-list__item").toggleClass("sln-list__item--moredesc");
-                $(this).closest(".sln-list__item").find(".sln-list__item__errors").toggleClass("sln-list__item__errors--pushed");
+        $(
+            "#sln-salon .sln-list__item .sln-list__item__description.sln-list__item__description__toggle"
+        ).each(function () {
+            $(this).on("click", function (e) {
+                $(this)
+                    .closest(".sln-list__item")
+                    .toggleClass("sln-list__item--moredesc");
+                $(this)
+                    .closest(".sln-list__item")
+                    .find(".sln-list__item__errors")
+                    .toggleClass("sln-list__item__errors--pushed");
                 e.preventDefault();
                 e.stopPropagation();
             });
@@ -243,7 +304,7 @@ function sln_init($) {
         sln_stepDate($);
     } else {
         if ($("#salon-step-details").length) {
-            $("a.tec-link").on("click", function(e) {
+            $("a.tec-link").on("click", function (e) {
                 e.preventDefault();
                 var href = $(this).attr("href");
                 var locHref = window.location.href;
@@ -266,9 +327,9 @@ function sln_init($) {
             } else {
                 jQuery("[data-salon-click=fb_login]")
                     .off("click")
-                    .on("click", function() {
+                    .on("click", function () {
                         FB.login(
-                            function() {
+                            function () {
                                 sln_facebookLogin();
                             },
                             { scope: "email" }
@@ -278,179 +339,219 @@ function sln_init($) {
                     });
             }
         }
-        $('#sln-salon-booking [data-salon-toggle="next"]').on("click", function(e) {
-            var form = $(this).closest("form");
-            $(
-                "#sln-salon input.sln-invalid,#sln-salon textarea.sln-invalid,#sln-salon select.sln-invalid"
-            ).removeClass("sln-invalid");
+        $('#sln-salon-booking [data-salon-toggle="next"]').on(
+            "click",
+            function (e) {
+                var form = $(this).closest("form");
+                $(
+                    "#sln-salon input.sln-invalid,#sln-salon textarea.sln-invalid,#sln-salon select.sln-invalid"
+                ).removeClass("sln-invalid");
 
-            if ($(form).has(".sln-file").length > 0) {
-                if ($('.sln-file input[type="file"]').data("required")) {
-                    let filesAmount = $(form).find(".sln-file .sln-file__list li input").length;
+                if ($(form).has(".sln-file").length > 0) {
+                    if ($('.sln-file input[type="file"]').data("required")) {
+                        let filesAmount = $(form).find(
+                            ".sln-file .sln-file__list li input"
+                        ).length;
 
-                    if (filesAmount > 0) {
-                        $('.sln-file input[type="file"]').removeAttr("required");
+                        if (filesAmount > 0) {
+                            $('.sln-file input[type="file"]').removeAttr(
+                                "required"
+                            );
+                        } else {
+                            $('.sln-file input[type="file"]').attr("required");
+                        }
+                    }
+                }
+                if (form[0].checkValidity()) {
+                    let form_data = null;
+                    if (form.attr("enctype") == "multipart/form-data") {
+                        form_data = new FormData(form[0]);
+                        let sln_data = $(this).data("salon-data").split("&");
+                        for (let i = 0; i < sln_data.length; i++) {
+                            form_data.append(
+                                sln_data[i].split("=")[0],
+                                sln_data[i].split("=")[1]
+                            );
+                        }
                     } else {
-                        $('.sln-file input[type="file"]').attr("required");
+                        form_data =
+                            form.serialize() + "&" + $(this).data("salon-data");
                     }
+
+                    sln_loadStep($, form_data);
+                } else {
+                    $(
+                        "#sln-salon input:invalid,#sln-salon textarea:invalid,#sln-salon select:invalid"
+                    )
+                        .addClass("sln-invalid")
+                        .attr("placeholder", salon.checkout_field_placeholder);
+
+                    $(
+                        "#sln-salon input:invalid,#sln-salon textarea:invalid,#sln-salon select:invalid"
+                    )
+                        .parent()
+                        .addClass("sln-invalid-p")
+                        .attr("data-invtext", salon.checkout_field_placeholder);
                 }
+                chooseAsistentForMe = undefined;
+                return false;
             }
-            if (form[0].checkValidity()) {
-                let form_data = null;
-                if(form.attr('enctype') == 'multipart/form-data'){
-                    form_data = new FormData(form[0]);
-                    let sln_data = $(this).data('salon-data').split('&');
-                    for(let i = 0; i < sln_data.length; i++){
-                        form_data.append(sln_data[i].split('=')[0], sln_data[i].split('=')[1]);
-                    }
-                }else{
-                    form_data = form.serialize() + "&" + $(this).data("salon-data")
-                }
-                
-                sln_loadStep(
-                    $,
-                    form_data
+        );
+
+        if ($(".sln-file__content").length) {
+            const dropInputParents =
+                document.querySelectorAll(".sln-file__content");
+            dropInputParents.forEach((dropInputParent) => {
+                window.addEventListener(
+                    "dragenter",
+                    function (e) {
+                        //if (e.target.id != dropzoneId) {
+                        if (
+                            !e.target.classList.contains("sln-input--file__act")
+                        ) {
+                            e.preventDefault();
+                            e.dataTransfer.effectAllowed = "none";
+                            e.dataTransfer.dropEffect = "none";
+                        }
+                        dropInputParent.classList.add(
+                            "sln-file__content--draghover"
+                        );
+                        //console.log('dragenter');
+                    },
+                    false
                 );
-            } else {
-                $(
-                    "#sln-salon input:invalid,#sln-salon textarea:invalid,#sln-salon select:invalid"
-                )
-                    .addClass("sln-invalid")
-                    .attr("placeholder", salon.checkout_field_placeholder);
 
-                $(
-                    "#sln-salon input:invalid,#sln-salon textarea:invalid,#sln-salon select:invalid"
-                )
-                    .parent()
-                    .addClass("sln-invalid-p")
-                    .attr("data-invtext", salon.checkout_field_placeholder);
-            }
-            chooseAsistentForMe = undefined;
-            return false;
-        });
-
-            if($('.sln-file__content').length){
-                const dropInputParents = document.querySelectorAll(".sln-file__content");
-                dropInputParents.forEach(dropInputParent => {
-                    window.addEventListener("dragenter", function(e) {
-                    //if (e.target.id != dropzoneId) {
-                    if (!e.target.classList.contains('sln-input--file__act')) {
+                window.addEventListener("dragover", function (e) {
+                    if (!e.target.classList.contains("sln-file__act")) {
                         e.preventDefault();
                         e.dataTransfer.effectAllowed = "none";
                         e.dataTransfer.dropEffect = "none";
-                      }
-                      dropInputParent.classList.add("sln-file__content--draghover");
-                      //console.log('dragenter');
-                    }, false);
-
-                    window.addEventListener("dragover", function(e) {
-                      if (!e.target.classList.contains('sln-file__act')) {
-                        e.preventDefault();
-                        e.dataTransfer.effectAllowed = "none";
-                        e.dataTransfer.dropEffect = "none";
-                      }
-                      dropInputParent.classList.add("sln-file__content--draghover");
-                      //console.log('dragover');
-                    });
-
-                    window.addEventListener("dragleave", function(e) {
-                      if (!e.target.classList.contains('sln-file__act')) {
-                        e.preventDefault();
-                        e.dataTransfer.effectAllowed = "none";
-                        e.dataTransfer.dropEffect = "none";
-                      }
-                      dropInputParent.classList.remove("sln-file__content--draghover");
-                      //console.log('drop');
-                    });
-
-                    window.addEventListener("drop", function(e) {
-                      if (!e.target.classList.contains('sln-file__act')) {
-                        e.preventDefault();
-                        e.dataTransfer.effectAllowed = "none";
-                        e.dataTransfer.dropEffect = "none";
-                      }
-                      dropInputParent.classList.remove("sln-file__content--draghover");
-                      //console.log('drop');
-                    });
-
-                    dropInputParent.addEventListener("dragenter", function(e) {
-                      this.classList.add("sln-file__content--draghover--fine");
-                      //console.log('dragover');
-                    });
-                    dropInputParent.addEventListener("dragover", function(e) {
-                      this.classList.add("sln-file__content--draghover--fine");
-                      //console.log('dragover');
-                    });
-                    dropInputParent.addEventListener("dragleave", function(e) {
-                      this.classList.remove("sln-file__content--draghover--fine");
-                      //console.log('dragover');
-                    });
-                    dropInputParent.addEventListener("drop", function(e) {
-                      this.classList.remove("sln-file__content--draghover--fine");
-                      //console.log('dragover');
-                    });
-                // dropInputParents.forEach END
+                    }
+                    dropInputParent.classList.add(
+                        "sln-file__content--draghover"
+                    );
+                    //console.log('dragover');
                 });
-            }
+
+                window.addEventListener("dragleave", function (e) {
+                    if (!e.target.classList.contains("sln-file__act")) {
+                        e.preventDefault();
+                        e.dataTransfer.effectAllowed = "none";
+                        e.dataTransfer.dropEffect = "none";
+                    }
+                    dropInputParent.classList.remove(
+                        "sln-file__content--draghover"
+                    );
+                    //console.log('drop');
+                });
+
+                window.addEventListener("drop", function (e) {
+                    if (!e.target.classList.contains("sln-file__act")) {
+                        e.preventDefault();
+                        e.dataTransfer.effectAllowed = "none";
+                        e.dataTransfer.dropEffect = "none";
+                    }
+                    dropInputParent.classList.remove(
+                        "sln-file__content--draghover"
+                    );
+                    //console.log('drop');
+                });
+
+                dropInputParent.addEventListener("dragenter", function (e) {
+                    this.classList.add("sln-file__content--draghover--fine");
+                    //console.log('dragover');
+                });
+                dropInputParent.addEventListener("dragover", function (e) {
+                    this.classList.add("sln-file__content--draghover--fine");
+                    //console.log('dragover');
+                });
+                dropInputParent.addEventListener("dragleave", function (e) {
+                    this.classList.remove("sln-file__content--draghover--fine");
+                    //console.log('dragover');
+                });
+                dropInputParent.addEventListener("drop", function (e) {
+                    this.classList.remove("sln-file__content--draghover--fine");
+                    //console.log('dragover');
+                });
+                // dropInputParents.forEach END
+            });
+        }
     }
-    if($('#sln-go-to-thankyou').length){
+    if ($("#sln-go-to-thankyou").length) {
         let countdown = 15;
-        $('.sln-go-to-thankyou-number').text(countdown);
-        setInterval(function(){
-            $('.sln-go-to-thankyou-number').text(--countdown);
+        $(".sln-go-to-thankyou-number").text(countdown);
+        setInterval(function () {
+            $(".sln-go-to-thankyou-number").text(--countdown);
         }, 1000);
-        setTimeout(function(){
-            window.location.replace($('#sln-go-to-thankyou').attr('href'));
+        setTimeout(function () {
+            window.location.replace($("#sln-go-to-thankyou").attr("href"));
         }, countdown * 1000);
     }
-    $('#sln-salon-booking [data-salon-toggle="direct"]').on("click", function(e) {
-        e.preventDefault();
-        var form = $(this).closest("form");
-        sln_loadStep($, form.serialize() + "&" + $(this).data("salon-data"));
-        chooseAsistentForMe = '0';
-        return false;
-    });
+    $('#sln-salon-booking [data-salon-toggle="direct"]').on(
+        "click",
+        function (e) {
+            e.preventDefault();
+            var form = $(this).closest("form");
+            sln_loadStep(
+                $,
+                form.serialize() + "&" + $(this).data("salon-data")
+            );
+            chooseAsistentForMe = "0";
+            return false;
+        }
+    );
 
-    $('.sln-file input[type=file]').on('change', function(e){
-        let file_list = $(this).parent().find('.sln-file__list');
+    $(".sln-file input[type=file]").on("change", function (e) {
+        let file_list = $(this).parent().find(".sln-file__list");
         //if(!file_list.children().length){
         //    $(this).parent().find('label:last-child').text(' ').addClass('sln-input-file--select')
         //}
-        $('.sln-file__errors').remove();
-        $('.sln-file__progressbar__wrapper').remove();
+        $(".sln-file__errors").remove();
+        $(".sln-file__progressbar__wrapper").remove();
 
         var formData = new FormData();
-        formData.append('action', 'salon')
-        formData.append('method', 'UploadFile')
-        formData.append('security', salon.ajax_nonce)
-        formData.append('file', this.files[0])
+        formData.append("action", "salon");
+        formData.append("method", "UploadFile");
+        formData.append("security", salon.ajax_nonce);
+        formData.append("file", this.files[0]);
 
         let file_name = this.files[0].name;
         this.files = undefined;
-        this.value = ''
+        this.value = "";
 
-        var self = this
-        file_list.append($('<li class="sln-file__progressbar__wrapper"><div class="sln-file__progressbar"><div class="sln-file__progressbar__value"></div></div><div class="sln-file__progressbar__percentage"></div></li>'));
+        var self = this;
+        file_list.append(
+            $(
+                '<li class="sln-file__progressbar__wrapper"><div class="sln-file__progressbar"><div class="sln-file__progressbar__value"></div></div><div class="sln-file__progressbar__percentage"></div></li>'
+            )
+        );
 
         $.ajax({
-            xhr: function() {
+            xhr: function () {
                 var xhr = new window.XMLHttpRequest();
 
-                xhr.upload.addEventListener("progress", function(evt) {
-                    if (evt.lengthComputable) {
-                      var percentComplete = evt.loaded / evt.total;
-                      percentComplete = parseInt(percentComplete * 100);
-                      //console.log(percentComplete);
+                xhr.upload.addEventListener(
+                    "progress",
+                    function (evt) {
+                        if (evt.lengthComputable) {
+                            var percentComplete = evt.loaded / evt.total;
+                            percentComplete = parseInt(percentComplete * 100);
+                            //console.log(percentComplete);
 
-                      $('.sln-file__progressbar__value').css('width', percentComplete + '%');
-                      $('.sln-file__progressbar__percentage').text(percentComplete + '%');
+                            $(".sln-file__progressbar__value").css(
+                                "width",
+                                percentComplete + "%"
+                            );
+                            $(".sln-file__progressbar__percentage").text(
+                                percentComplete + "%"
+                            );
 
-                      if (percentComplete === 100) {
-
-                      }
-
-                    }
-                  }, false);
+                            if (percentComplete === 100) {
+                            }
+                        }
+                    },
+                    false
+                );
 
                 return xhr;
             },
@@ -460,122 +561,163 @@ function sln_init($) {
             contentType: false,
             processData: false,
             dataType: "json",
-            success: function(result) {
-                $('.sln-file__progressbar__wrapper').remove();
+            success: function (result) {
+                $(".sln-file__progressbar__wrapper").remove();
                 if (result.success) {
-                    let input_file = '<input type="hidden" name="'+ $(self).attr('name') +'" value="'+ result.file +'">';
-                    file_list.append($('<li><i class="sr-only">delete</i><span class="sln-file__name">' + file_name +  '</span><span class="sln-file__remove"></span></li>').append(input_file));
-                    file_list.children().last().find('.sln-file__remove').on('click', function(e){
-                        e.stopPropagation();
-                        var self = this
-                        $.post(salon.ajax_url, {action: 'salon', method: 'RemoveUploadedFile', security: salon.ajax_nonce, file: result.file}, function () {
-                            $(self).closest('li').remove();
-                        })
-                    });
+                    let input_file =
+                        '<input type="hidden" name="' +
+                        $(self).attr("name") +
+                        '" value="' +
+                        result.file +
+                        '">';
+                    file_list.append(
+                        $(
+                            '<li><i class="sr-only">delete</i><span class="sln-file__name">' +
+                                file_name +
+                                '</span><span class="sln-file__remove"></span></li>'
+                        ).append(input_file)
+                    );
+                    file_list
+                        .children()
+                        .last()
+                        .find(".sln-file__remove")
+                        .on("click", function (e) {
+                            e.stopPropagation();
+                            var self = this;
+                            $.post(
+                                salon.ajax_url,
+                                {
+                                    action: "salon",
+                                    method: "RemoveUploadedFile",
+                                    security: salon.ajax_nonce,
+                                    file: result.file,
+                                },
+                                function () {
+                                    $(self).closest("li").remove();
+                                }
+                            );
+                        });
                 } else {
-                    file_list.append($('<li class="sln-file__errors">' + result.errors.join(',') +  '</li>'));
+                    file_list.append(
+                        $(
+                            '<li class="sln-file__errors">' +
+                                result.errors.join(",") +
+                                "</li>"
+                        )
+                    );
                 }
-            }
+            },
         });
-
     });
 
     // CHECKBOXES
-    $("#sln-salon input:checkbox").each(function() {
-        $(this).on("change", function() {
+    $("#sln-salon input:checkbox").each(function () {
+        $(this).on("change", function () {
             if ($(this).is(":checked")) {
-                $(this)
-                    .parent()
-                    .addClass("is-checked");
+                $(this).parent().addClass("is-checked");
             } else {
-                $(this)
-                    .parent()
-                    .removeClass("is-checked");
+                $(this).parent().removeClass("is-checked");
             }
-            if(!$('.sln-checkbox.is-checked').length && $("#salon-step-services").length){
-                $('#sln-step-submit').parent().addClass('sln-btn--disabled');
-            }else{
-                $('#sln-step-submit').parent().removeClass('sln-btn--disabled');
+            if (
+                !$(".sln-checkbox.is-checked").length &&
+                $("#salon-step-services").length
+            ) {
+                $("#sln-step-submit").parent().addClass("sln-btn--disabled");
+            } else {
+                $("#sln-step-submit").parent().removeClass("sln-btn--disabled");
             }
         });
     });
     // RADIOBOXES
-    $("#sln-salon input:radio").each(function() {
-        $(this).on("click", function() {
+    $("#sln-salon input:radio").each(function () {
+        $(this).on("click", function () {
             var name = jQuery(this).attr("name");
-            jQuery(".is-checked").each(function() {
-                if (
-                    jQuery(this)
-                        .find("input")
-                        .attr("name") == name
-                ) {
+            jQuery(".is-checked").each(function () {
+                if (jQuery(this).find("input").attr("name") == name) {
                     $(this).removeClass("is-checked");
                 }
             });
-            $(this)
-                .parent()
-                .toggleClass("is-checked");
+            $(this).parent().toggleClass("is-checked");
         });
     });
 
-    $('.sln-icon-sort').on('click', function(){
+    $(".sln-icon-sort").on("click", function () {
         let sorted_attendants = [];
         let $this = $(this);
-        $this.addClass('active');
-        if($this.hasClass('sln-icon-sort--down')){
-            $this.closest('.row').find('.sln-icon-sort--up').removeClass('active');
-            $this.closest('.sln-attendant-list').find('label').each(function(ind, attendant){
-                if($(attendant).find('input').val() == 0 || $(attendant).find('input').val() == undefined){
-                    return true;
-                }
-                if($(attendant).hasClass('DEC') || !$(attendant).hasClass('INC')){
-                    return false;
-                }
-                $(attendant).addClass('DEC').removeClass('INC');
-                sorted_attendants.push($(attendant).clone());
-                $(attendant).remove();
-            });
-        }
-        if($this.hasClass('sln-icon-sort--up')){
-            $this.closest('.row').find('.sln-icon-sort--down').removeClass('active');
-            $this.closest('.sln-attendant-list').find('label').each(function(ind, attendant){
-                if($(attendant).find('input').val() == 0 || $(attendant).find('input').val() == undefined){
-                    return true;
-                }
-                if($(attendant).hasClass('INC')){
-                    return false;
-                }
-                $(attendant).addClass('INC').removeClass('DEC');
-                sorted_attendants.push($(attendant).clone());
-                $(attendant).remove();
-            });
-        }
-        if(sorted_attendants.length){
-            sorted_attendants = sorted_attendants.reverse();
-            sorted_attendants.forEach(function(el){
-                $this.closest('.sln-attendant-list').append(el);
-                $(el).on("change", function() {
-                    evalTot();
-                }).on("click", function() {
-                    var name = jQuery(this).attr("name");
-                    jQuery(".is-checked").each(function() {
-                        if (
-                            jQuery(this)
-                                .find("input")
-                                .attr("name") == name
-                        ) {
-                            $(this).removeClass("is-checked");
-                        }
-                    });
-                    $(this)
-                        .parent()
-                        .toggleClass("is-checked");
+        $this.addClass("active");
+        if ($this.hasClass("sln-icon-sort--down")) {
+            $this
+                .closest(".row")
+                .find(".sln-icon-sort--up")
+                .removeClass("active");
+            $this
+                .closest(".sln-attendant-list")
+                .find("label")
+                .each(function (ind, attendant) {
+                    if (
+                        $(attendant).find("input").val() == 0 ||
+                        $(attendant).find("input").val() == undefined
+                    ) {
+                        return true;
+                    }
+                    if (
+                        $(attendant).hasClass("DEC") ||
+                        !$(attendant).hasClass("INC")
+                    ) {
+                        return false;
+                    }
+                    $(attendant).addClass("DEC").removeClass("INC");
+                    sorted_attendants.push($(attendant).clone());
+                    $(attendant).remove();
                 });
+        }
+        if ($this.hasClass("sln-icon-sort--up")) {
+            $this
+                .closest(".row")
+                .find(".sln-icon-sort--down")
+                .removeClass("active");
+            $this
+                .closest(".sln-attendant-list")
+                .find("label")
+                .each(function (ind, attendant) {
+                    if (
+                        $(attendant).find("input").val() == 0 ||
+                        $(attendant).find("input").val() == undefined
+                    ) {
+                        return true;
+                    }
+                    if ($(attendant).hasClass("INC")) {
+                        return false;
+                    }
+                    $(attendant).addClass("INC").removeClass("DEC");
+                    sorted_attendants.push($(attendant).clone());
+                    $(attendant).remove();
+                });
+        }
+        if (sorted_attendants.length) {
+            sorted_attendants = sorted_attendants.reverse();
+            sorted_attendants.forEach(function (el) {
+                $this.closest(".sln-attendant-list").append(el);
+                $(el)
+                    .on("change", function () {
+                        evalTot();
+                    })
+                    .on("click", function () {
+                        var name = jQuery(this).attr("name");
+                        jQuery(".is-checked").each(function () {
+                            if (
+                                jQuery(this).find("input").attr("name") == name
+                            ) {
+                                $(this).removeClass("is-checked");
+                            }
+                        });
+                        $(this).parent().toggleClass("is-checked");
+                    });
             });
         }
     });
 
-    $(".sln-edit-text").on("change", function() {
+    $(".sln-edit-text").on("change", function () {
         var data =
             "key=" +
             $(this).attr("id") +
@@ -588,8 +730,8 @@ function sln_init($) {
             data: data,
             method: "POST",
             dataType: "json",
-            success: function(data) {},
-            error: function(data) {
+            success: function (data) {},
+            error: function (data) {
                 alert("error");
                 //console.log(data);
             },
@@ -597,7 +739,7 @@ function sln_init($) {
         return false;
     });
 
-    $("div.editable").on("click", function() {
+    $("div.editable").on("click", function () {
         var self = $(this);
         self.addClass("focus");
         var text = self.find(".text");
@@ -605,7 +747,7 @@ function sln_init($) {
         input.val(text.text().trim()).trigger("focus");
     });
 
-    $("div.editable .input input").on("blur", function() {
+    $("div.editable .input input").on("blur", function () {
         var self = $(this);
         var div = self.closest(".editable");
         div.removeClass("focus");
@@ -614,7 +756,7 @@ function sln_init($) {
     });
 
     $("#sln_no_user_account")
-        .on("change", function() {
+        .on("change", function () {
             if ($(this).is(":checked")) {
                 $("#sln_password")
                     .attr("disabled", "disabled")
@@ -625,9 +767,7 @@ function sln_init($) {
                     .parent()
                     .css("display", "none");
                 $(".sln-customer-fields").hide();
-                $(this)
-                    .closest("form")
-                    .addClass("sln-guest-checkout-form");
+                $(this).closest("form").addClass("sln-guest-checkout-form");
             } else {
                 $("#sln_password")
                     .attr("disabled", false)
@@ -638,9 +778,7 @@ function sln_init($) {
                     .parent()
                     .css("display", "block");
                 $(".sln-customer-fields").show();
-                $(this)
-                    .closest("form")
-                    .removeClass("sln-guest-checkout-form");
+                $(this).closest("form").removeClass("sln-guest-checkout-form");
             }
         })
         .trigger("change");
@@ -652,13 +790,13 @@ function sln_init($) {
     }
     sln_salonBookingCalendarInit();
 
-    $(".sln-help-button").on("click", function() {
+    $(".sln-help-button").on("click", function () {
         window.Beacon("toggle");
         return false;
     });
 
-    setTimeout(function() {
-        $(".sln-service-list .sln-panel-heading").each(function() {
+    setTimeout(function () {
+        $(".sln-service-list .sln-panel-heading").each(function () {
             $(this).replaceWith($(this).clone());
         });
     }, 0);
@@ -669,7 +807,7 @@ function sln_init($) {
         function getCountryCodeByDialCode(dialCode) {
             var countryData = window.intlTelInputGlobals.getCountryData();
             var countryCode = "";
-            countryData.forEach(function(data) {
+            countryData.forEach(function (data) {
                 if (data.dialCode == dialCode) {
                     countryCode = data.iso2;
                 }
@@ -686,107 +824,193 @@ function sln_init($) {
             nationalMode: false,
         });
 
-        input.addEventListener('keydown', function(event){
-            if(/[^0-9]/.test(event.key) && !/(Backspace)|(Enter)|(Tab)|(ArrowLeft)|(ArrowRight)|(Delete)/.test(event.key)){
+        input.addEventListener("keydown", function (event) {
+            if (
+                /[^0-9]/.test(event.key) &&
+                !/(Backspace)|(Enter)|(Tab)|(ArrowLeft)|(ArrowRight)|(Delete)/.test(
+                    event.key
+                )
+            ) {
                 event.preventDefault();
             }
         });
 
-        input.addEventListener("countrychange", function() {
+        input.addEventListener("countrychange", function () {
             if (iti.getSelectedCountryData().dialCode) {
                 $("#sln_sms_prefix").val(
                     "+" + iti.getSelectedCountryData().dialCode
                 );
             }
         });
-        input.addEventListener("blur", function() {
+        input.addEventListener("blur", function () {
             if (iti.getSelectedCountryData().dialCode) {
-                $(input).val($(input).val().replace("+" + iti.getSelectedCountryData().dialCode, ""));
+                $(input).val(
+                    $(input)
+                        .val()
+                        .replace(
+                            "+" + iti.getSelectedCountryData().dialCode,
+                            ""
+                        )
+                );
             }
         });
     }
 
     sln_google_maps_places_api_callback();
 
-    $('input[name="sln[customer_timezone]"]').val(new window.Intl.DateTimeFormat().resolvedOptions().timeZone);
+    $('input[name="sln[customer_timezone]"]').val(
+        new window.Intl.DateTimeFormat().resolvedOptions().timeZone
+    );
 
-    $('.sln-service-variable-duration--counter--plus').on('click', function () {
+    $(".sln-service-variable-duration--counter--plus").on("click", function () {
+        var checkbox = $(this)
+            .closest(".sln-service")
+            .find('input[type="checkbox"][name*="sln[services]"]');
 
-        var checkbox = $(this).closest('.sln-service').find('input[type="checkbox"][name*="sln[services]"]');
-
-        if ($(this).hasClass('sln-service-variable-duration--counter--button--disabled')  || checkbox.prop('disabled')) {
+        if (
+            $(this).hasClass(
+                "sln-service-variable-duration--counter--button--disabled"
+            ) ||
+            checkbox.prop("disabled")
+        ) {
             return false;
         }
 
-        var counter = $(this).closest('.sln-service-variable-duration--counter').find('.sln-service-variable-duration--counter--value');
+        var counter = $(this)
+            .closest(".sln-service-variable-duration--counter")
+            .find(".sln-service-variable-duration--counter--value");
 
         counter.html(+counter.text().trim() + 1);
 
         if (+counter.text().trim() > 0) {
-            $(this).closest('.sln-service-variable-duration--counter').find('.sln-service-variable-duration--counter--minus').removeClass('sln-service-variable-duration--counter--button--disabled');
-            $(this).closest('.sln-steps-info.sln-service-info').find('.sln-steps-check .sln-checkbox input').trigger('change');
+            $(this)
+                .closest(".sln-service-variable-duration--counter")
+                .find(".sln-service-variable-duration--counter--minus")
+                .removeClass(
+                    "sln-service-variable-duration--counter--button--disabled"
+                );
+            $(this)
+                .closest(".sln-steps-info.sln-service-info")
+                .find(".sln-steps-check .sln-checkbox input")
+                .trigger("change");
         }
 
-        if (!checkbox.prop('checked')) {
-            checkbox.prop('checked', true)
+        if (!checkbox.prop("checked")) {
+            checkbox.prop("checked", true);
             checkServices();
         }
 
-        $(this).closest('.sln-service-variable-duration--counter').find('.sln-service-count-input').val(+counter.text().trim())
-
-        evalTot()
-
-        if (+counter.text().trim() >= +$(this).closest('.sln-service-variable-duration').data('unitsPerSession')) {
-            $(this).closest('.sln-service-variable-duration--counter').find('.sln-service-variable-duration--counter--plus').addClass('sln-service-variable-duration--counter--button--disabled');
-        }
-
-        return false;
-    })
-
-    $('.sln-service-variable-duration--counter--minus').on('click', function () {
-
-        var checkbox = $(this).closest('.sln-service').find('input[type="checkbox"][name*="sln[services]"]');
-
-        if ($(this).hasClass('sln-service-variable-duration--counter--button--disabled') || checkbox.prop('disabled')) {
-            return false;
-        }
-
-        var counter = $(this).closest('.sln-service-variable-duration--counter').find('.sln-service-variable-duration--counter--value');
-
-        counter.html(+counter.text().trim() - 1);
-
-        if (+counter.text().trim() < 1) {
-            $(this).addClass('sln-service-variable-duration--counter--button--disabled');
-            let input = $(this).closest('.sln-steps-info.sln-service-info').find('.sln-steps-check .sln-checkbox input');
-            input.parent().removeClass('is-checked');
-            input.removeAttr('checked').trigger('change');
-        }
-        
-        checkServices();
-
-        $(this).closest('.sln-service-variable-duration--counter').find('.sln-service-count-input').val(+counter.text().trim())
-
-        if (+counter.text().trim() < +$(this).closest('.sln-service-variable-duration').data('unitsPerSession')) {
-            $(this).closest('.sln-service-variable-duration--counter').find('.sln-service-variable-duration--counter--plus').removeClass('sln-service-variable-duration--counter--button--disabled');
-        }
+        $(this)
+            .closest(".sln-service-variable-duration--counter")
+            .find(".sln-service-count-input")
+            .val(+counter.text().trim());
 
         evalTot();
 
-        return false;
-    })
+        if (
+            +counter.text().trim() >=
+            +$(this)
+                .closest(".sln-service-variable-duration")
+                .data("unitsPerSession")
+        ) {
+            $(this)
+                .closest(".sln-service-variable-duration--counter")
+                .find(".sln-service-variable-duration--counter--plus")
+                .addClass(
+                    "sln-service-variable-duration--counter--button--disabled"
+                );
+        }
 
-    $('.sln-service-variable-duration--counter--value').each(function () {
-        $(this).html($(this).closest('.sln-service-variable-duration--counter').find('.sln-service-count-input').val())
-        $(this).closest('.sln-service-variable-duration--counter').find('.sln-service-variable-duration--counter--minus').toggleClass('sln-service-variable-duration--counter--button--disabled', +$(this).text().trim() < 1)
-    })
+        return false;
+    });
+
+    $(".sln-service-variable-duration--counter--minus").on(
+        "click",
+        function () {
+            var checkbox = $(this)
+                .closest(".sln-service")
+                .find('input[type="checkbox"][name*="sln[services]"]');
+
+            if (
+                $(this).hasClass(
+                    "sln-service-variable-duration--counter--button--disabled"
+                ) ||
+                checkbox.prop("disabled")
+            ) {
+                return false;
+            }
+
+            var counter = $(this)
+                .closest(".sln-service-variable-duration--counter")
+                .find(".sln-service-variable-duration--counter--value");
+
+            counter.html(+counter.text().trim() - 1);
+
+            if (+counter.text().trim() < 1) {
+                $(this).addClass(
+                    "sln-service-variable-duration--counter--button--disabled"
+                );
+                let input = $(this)
+                    .closest(".sln-steps-info.sln-service-info")
+                    .find(".sln-steps-check .sln-checkbox input");
+                input.parent().removeClass("is-checked");
+                input.removeAttr("checked").trigger("change");
+            }
+
+            checkServices();
+
+            $(this)
+                .closest(".sln-service-variable-duration--counter")
+                .find(".sln-service-count-input")
+                .val(+counter.text().trim());
+
+            if (
+                +counter.text().trim() <
+                +$(this)
+                    .closest(".sln-service-variable-duration")
+                    .data("unitsPerSession")
+            ) {
+                $(this)
+                    .closest(".sln-service-variable-duration--counter")
+                    .find(".sln-service-variable-duration--counter--plus")
+                    .removeClass(
+                        "sln-service-variable-duration--counter--button--disabled"
+                    );
+            }
+
+            evalTot();
+
+            return false;
+        }
+    );
+
+    $(".sln-service-variable-duration--counter--value").each(function () {
+        $(this).html(
+            $(this)
+                .closest(".sln-service-variable-duration--counter")
+                .find(".sln-service-count-input")
+                .val()
+        );
+        $(this)
+            .closest(".sln-service-variable-duration--counter")
+            .find(".sln-service-variable-duration--counter--minus")
+            .toggleClass(
+                "sln-service-variable-duration--counter--button--disabled",
+                +$(this).text().trim() < 1
+            );
+    });
 
     var $checkboxes = $('.sln-service-list input[type="checkbox"]');
     var $totalbox = $("#services-total");
     evalTot();
     function evalTot() {
         var tot = 0;
-        $checkboxes.each(function() {
-            var count = $(this).closest('.sln-service').find('.sln-service-count-input').val() || 1;
+        $checkboxes.each(function () {
+            var count =
+                $(this)
+                    .closest(".sln-service")
+                    .find(".sln-service-count-input")
+                    .val() || 1;
             if ($(this).is(":checked")) {
                 tot += $(this).data("price") * count;
             }
@@ -803,30 +1027,47 @@ function sln_init($) {
                 ($totalbox.data("symbol-right") !== "" ? " " : "") +
                 $totalbox.data("symbol-right")
         );
-        $checkboxes.each(function() {
-            var count = $(this).closest('.sln-service').find('.sln-service-count-input').val() || 1;
-            var tot     = $(this).data("price") * count;
-            var decimals = parseFloat(tot) === parseFloat(parseInt(tot)) ? 0 : 2;
-            $(this).closest('.sln-service').find('.sln-service-price-value').text(
-                $totalbox.data("symbol-left") +
-                ($totalbox.data("symbol-left") !== "" ? " " : "") +
-                tot.formatMoney(
-                    decimals,
-                    $totalbox.data("symbol-decimal"),
-                    $totalbox.data("symbol-thousand")
-                ) +
-                ($totalbox.data("symbol-right") !== "" ? " " : "") +
-                $totalbox.data("symbol-right")
-            );
+        $checkboxes.each(function () {
+            var count =
+                $(this)
+                    .closest(".sln-service")
+                    .find(".sln-service-count-input")
+                    .val() || 1;
+            var tot = $(this).data("price") * count;
+            var decimals =
+                parseFloat(tot) === parseFloat(parseInt(tot)) ? 0 : 2;
+            $(this)
+                .closest(".sln-service")
+                .find(".sln-service-price-value")
+                .text(
+                    $totalbox.data("symbol-left") +
+                        ($totalbox.data("symbol-left") !== "" ? " " : "") +
+                        tot.formatMoney(
+                            decimals,
+                            $totalbox.data("symbol-decimal"),
+                            $totalbox.data("symbol-thousand")
+                        ) +
+                        ($totalbox.data("symbol-right") !== "" ? " " : "") +
+                        $totalbox.data("symbol-right")
+                );
         });
-        $checkboxes.each(function() {
-            var count = $(this).closest('.sln-service').find('.sln-service-count-input').val() || 1;
-            var tot     = $(this).data("duration") * count;
-            var hours  = parseInt(tot / 60);
+        $checkboxes.each(function () {
+            var count =
+                $(this)
+                    .closest(".sln-service")
+                    .find(".sln-service-count-input")
+                    .val() || 1;
+            var tot = $(this).data("duration") * count;
+            var hours = parseInt(tot / 60);
             var minutes = tot % 60;
-            $(this).closest('.sln-service').find('.sln-service-duration').text(
-                (hours < 10 ? '0' + hours : hours) + ":" + (minutes < 10 ? '0' + minutes : minutes)
-            );
+            $(this)
+                .closest(".sln-service")
+                .find(".sln-service-duration")
+                .text(
+                    (hours < 10 ? "0" + hours : hours) +
+                        ":" +
+                        (minutes < 10 ? "0" + minutes : minutes)
+                );
         });
     }
 
@@ -853,18 +1094,18 @@ function sln_init($) {
             data: data,
             method: "POST",
             dataType: "json",
-            success: function(data) {
+            success: function (data) {
                 if (!data.success) {
                     var alertBox = $(
                         '<div class="sln-alert sln-alert--problem sln-service-error"></div>'
                     );
-                    $.each(data.errors, function() {
+                    $.each(data.errors, function () {
                         alertBox.append("<p>").html(this);
                     });
                 } else {
                     $(".sln-alert.sln-service-error").remove();
                     if (data.services)
-                        $.each(data.services, function(index, value) {
+                        $.each(data.services, function (index, value) {
                             var checkbox = $("#sln_services_" + index);
                             var errorsArea = $("#sln_services_" + index)
                                 .closest(".sln-service")
@@ -900,43 +1141,43 @@ function sln_init($) {
 function sln_loadStep($, data) {
     var loadingMessage =
         '<div class="sln-loader-wrapper"><div class="sln-loader">Loading...</div></div>';
-        let request_arr = {
-            url: salon.ajax_url,
-            method: "POST",
-            dataType: "json",
-            success: function(data) {
-                if (typeof data.redirect != "undefined") {
-                    window.location.href = data.redirect;
-                } else {
-                    $("#sln-salon-booking").replaceWith(data.content);
-                    salon.ajax_nonce = data.nonce;
-                    $("html, body").animate(
-                        {
-                            scrollTop: $("#sln-salon-booking").offset().top,
-                        },
-                        700
-                    );
-                    sln_init($);
-                    $("div#sln-notifications")
-                        .html("")
-                        .removeClass("sln-notifications--active");
-                }
-            },
-            error: function(data) {
-                alert("error");
-                //console.log(data);
-            },
-        };
-    if(data instanceof FormData){
-        data.append('action', 'salon');
-        data.append('method', 'salonStep');
-        data.append('security', salon.ajax_nonce);
-        request_arr['processData'] = false;
-        request_arr['contentType'] = false;
-    }else{
+    let request_arr = {
+        url: salon.ajax_url,
+        method: "POST",
+        dataType: "json",
+        success: function (data) {
+            if (typeof data.redirect != "undefined") {
+                window.location.href = data.redirect;
+            } else {
+                $("#sln-salon-booking").replaceWith(data.content);
+                salon.ajax_nonce = data.nonce;
+                $("html, body").animate(
+                    {
+                        scrollTop: $("#sln-salon-booking").offset().top,
+                    },
+                    700
+                );
+                sln_init($);
+                $("div#sln-notifications")
+                    .html("")
+                    .removeClass("sln-notifications--active");
+            }
+        },
+        error: function (data) {
+            alert("error");
+            //console.log(data);
+        },
+    };
+    if (data instanceof FormData) {
+        data.append("action", "salon");
+        data.append("method", "salonStep");
+        data.append("security", salon.ajax_nonce);
+        request_arr["processData"] = false;
+        request_arr["contentType"] = false;
+    } else {
         data += "&action=salon&method=salonStep&security=" + salon.ajax_nonce;
     }
-    request_arr['data'] = data;
+    request_arr["data"] = data;
     $("#sln-notifications")
         .html(loadingMessage)
         .addClass("sln-notifications--active");
@@ -950,7 +1191,9 @@ function sln_updateDatepickerTimepickerSlots($, intervals, bookingId) {
     if (!element.length) {
         var datetimepicker = $(".sln_timepicker div").data("datetimepicker");
     } else {
-        var datetimepicker = element.find(".sln_timepicker div").data("datetimepicker");
+        var datetimepicker = element
+            .find(".sln_timepicker div")
+            .data("datetimepicker");
     }
     var DtHours = datetimepicker.viewDate.getUTCHours();
     DtHours = DtHours >= 10 ? DtHours : "0" + DtHours;
@@ -958,40 +1201,44 @@ function sln_updateDatepickerTimepickerSlots($, intervals, bookingId) {
     DtMinutes = DtMinutes >= 10 ? DtMinutes : "0" + DtMinutes;
     var DtTime = DtHours + ":" + DtMinutes;
 
-    $.each(intervals.dates, function(key, value) {
+    $.each(intervals.dates, function (key, value) {
         $('.day[data-ymd="' + value + '"]').removeClass("disabled");
     });
     $(".day[data-ymd]").removeClass("full");
-    $.each(intervals.fullDays, function(key, value) {
+    $.each(intervals.fullDays, function (key, value) {
         //console.log(value);
         $('.day[data-ymd="' + value + '"]').addClass("disabled full");
     });
 
-    $.each(intervals.times, function(key, value) {
+    $.each(intervals.times, function (key, value) {
         $('.minute[data-ymd="' + value + '"]').removeClass("disabled");
     });
-    $('.minute').removeClass('active');
-    $('.minute[data-ymd="' + DtTime + '"]').addClass('active');
+    $(".minute").removeClass("active");
+    $('.minute[data-ymd="' + DtTime + '"]').addClass("active");
 }
 
-function sln_updateDebugDate( $, debugLog ){
-    $('.day').removeAttr( 'title');
-    if( debugLog ){
-        function show_debug_day_info(){
-            $( $( this ).find( '.sln-debug-day-info') ).show(0);
+function sln_updateDebugDate($, debugLog) {
+    $(".day").removeAttr("title");
+    if (debugLog) {
+        function show_debug_day_info() {
+            $($(this).find(".sln-debug-day-info")).show(0);
         }
-        function hide_debug_day_info(){
-            $( $( this ).find( '.sln-debug-day-info' ) ).hide(0);
+        function hide_debug_day_info() {
+            $($(this).find(".sln-debug-day-info")).hide(0);
         }
-        $('.day').hover( show_debug_day_info, hide_debug_day_info );
-        $( '.day' ).append( '<div class="sln-debug-day-info">The day out of the booking time range</div>');
-        $( '.sln-debug-day-info' ).hide(0);
-        $.each( debugLog, function(key, value) {
-            if( value == 'free' ){
-                $( '.day[data-ymd="' + key + '"] .sln-debug-day-info' ).remove();
+        $(".day").hover(show_debug_day_info, hide_debug_day_info);
+        $(".day").append(
+            '<div class="sln-debug-day-info">The day out of the booking time range</div>'
+        );
+        $(".sln-debug-day-info").hide(0);
+        $.each(debugLog, function (key, value) {
+            if (value == "free") {
+                $('.day[data-ymd="' + key + '"] .sln-debug-day-info').remove();
                 return;
             }
-            $('.day[data-ymd="' + key + '"] .sln-debug-day-info').html( value ).hide(0);
+            $('.day[data-ymd="' + key + '"] .sln-debug-day-info')
+                .html(value)
+                .hide(0);
         });
         // $( '.sln-debug-day-info' ).hide(0);
     }
@@ -999,86 +1246,108 @@ function sln_updateDebugDate( $, debugLog ){
 
 function sln_stepDate($) {
     var isValid;
-    var items = { intervals: $("#salon-step-date").data("intervals"), debugDate: $('#salon-step-date').data('debug'), booking_id: $("#salon-step-date").data("booking_id") };
-    var updateFunc = function() {
-        sln_updateDatepickerTimepickerSlots($, items.intervals, items.bookint_id);
-        sln_updateDebugDate( $, items.debugDate );
+    var items = {
+        intervals: $("#salon-step-date").data("intervals"),
+        debugDate: $("#salon-step-date").data("debug"),
+        booking_id: $("#salon-step-date").data("booking_id"),
     };
-    var debounce = function(fn, delay) {
+    var updateFunc = function () {
+        sln_updateDatepickerTimepickerSlots(
+            $,
+            items.intervals,
+            items.booking_id
+        );
+        sln_updateDebugDate($, items.debugDate);
+    };
+    var debounce = function (fn, delay) {
         var inDebounce;
-        return function() {
+        return function () {
             var context = this;
             var args = arguments;
             clearTimeout(inDebounce);
-            inDebounce = setTimeout(function() {
+            inDebounce = setTimeout(function () {
                 return fn.apply(context, args);
             }, delay);
         };
     };
 
-    $( document ).ready(function(){
+    $(document).ready(function () {
         var oldMousePosition = [0, false];
-        $( '#sln-debug-sticky-panel .sln-debug-move' ).mousedown(function(e){
+        $("#sln-debug-sticky-panel .sln-debug-move").mousedown(function (e) {
             oldMousePosition[0] = e.clientY;
             oldMousePosition[1] = true;
         });
-        $( 'body' ).mousemove( function(e){
-            if( true === oldMousePosition[1] ){
-                var heightElem = $( '#sln-debug-div' ).height();
-                $( '#sln-debug-div' ).animate({height: heightElem + oldMousePosition[0] - e.clientY,}, 0);
+        $("body").mousemove(function (e) {
+            if (true === oldMousePosition[1]) {
+                var heightElem = $("#sln-debug-div").height();
+                $("#sln-debug-div").animate(
+                    { height: heightElem + oldMousePosition[0] - e.clientY },
+                    0
+                );
                 oldMousePosition[0] = e.clientY;
             }
         });
-        $( 'body' ).mouseup( function(e){
+        $("body").mouseup(function (e) {
             oldMousePosition[1] = false;
         });
 
-        $( '#sln-debug-sticky-panel #disable-debug-table' ).click(function(){
-            if( confirm( 'Debug table will be disable.' ) ){
-                $( "input[name='sln[debug]']").val(0);
-                $( '#sln-debug-div' ).hide();
-                validate( this, false );
+        $("#sln-debug-sticky-panel #disable-debug-table").click(function () {
+            if (confirm("Debug table will be disable.")) {
+                $("input[name='sln[debug]']").val(0);
+                $("#sln-debug-div").hide();
+                validate(this, false);
                 delete items.debugDate;
             }
         });
         var oldOpenDebugPopup = null;
-        $( '#sln-debug-table' ).each( function( iter, elem ){
-            elem = $( elem );
-            $( elem.find( '.sln-debug-time' ) ).click(function(e){
-                if( oldOpenDebugPopup ){
+        $("#sln-debug-table").each(function (iter, elem) {
+            elem = $(elem);
+            $(elem.find(".sln-debug-time")).click(function (e) {
+                if (oldOpenDebugPopup) {
                     oldOpenDebugPopup.hide();
                     oldOpenDebugPopup = null;
                 }
-                $( window ).click( function( closeEvent){
-                    if( e.timeStamp != closeEvent.timeStamp ){
-                        oldOpenDebugPopup.hide()
-                        $( window ).off('click')
+                $(window).click(function (closeEvent) {
+                    if (e.timeStamp != closeEvent.timeStamp) {
+                        oldOpenDebugPopup.hide();
+                        $(window).off("click");
                     }
-                } );
-                var popup = oldOpenDebugPopup = $( $( this ).parent().find( '.sln-debug-popup' ) );
-                var mousePosition = [e.clientX, $(this).position().top + $( '#sln-debug-div' ).scrollTop()];
-                if( mousePosition[0] + popup.width() > $( window ).width() ){
-                    mousePosition[0] -= popup.width() - ($( window ).width() - mousePosition[0]);
+                });
+                var popup = (oldOpenDebugPopup = $(
+                    $(this).parent().find(".sln-debug-popup")
+                ));
+                var mousePosition = [
+                    e.clientX,
+                    $(this).position().top + $("#sln-debug-div").scrollTop(),
+                ];
+                if (mousePosition[0] + popup.width() > $(window).width()) {
+                    mousePosition[0] -=
+                        popup.width() - ($(window).width() - mousePosition[0]);
                 }
-                popup.show().css( {'top': mousePosition[1], 'left': mousePosition[0]} );
+                popup
+                    .show()
+                    .css({ top: mousePosition[1], left: mousePosition[0] });
             });
 
-            $( '.sln-debug-popup' ).hide();
-        } );
+            $(".sln-debug-popup").hide();
+        });
     });
     var func = debounce(updateFunc, 200);
     func();
     $("body").on("sln_date", func);
-    $("body").on("sln_date", function() {
-        setTimeout(function() {
-            $(".datetimepicker-days table tr td.day").on("click", function() {
+    $("body").on("sln_date", function () {
+        setTimeout(function () {
+            $(".datetimepicker-days table tr td.day").on("click", function () {
                 if ($(this).hasClass("disabled")) {
                     return;
                 }
                 var datetimepicker = $(".sln_datepicker div").data(
                     "datetimepicker"
                 );
-                datetimepicker = (datetimepicker === undefined) ? $('.sln_datepicker input').data('datetimepicker') : datetimepicker;
+                datetimepicker =
+                    datetimepicker === undefined
+                        ? $(".sln_datepicker input").data("datetimepicker")
+                        : datetimepicker;
 
                 var date = $(this).attr("data-ymd");
 
@@ -1106,7 +1375,10 @@ function sln_stepDate($) {
                     }
                 );
                 $("input[name='sln[date]']").val(formattedDate);
-                dateString = dateString + ' |' + $('#sln_timepicker_viewdate').text().split('|')[1];
+                dateString =
+                    dateString +
+                    " |" +
+                    $("#sln_timepicker_viewdate").text().split("|")[1];
                 $("#sln_timepicker_viewdate").text(dateString);
             });
         });
@@ -1123,42 +1395,44 @@ function sln_stepDate($) {
         $("#sln-notifications")
             .addClass("sln-notifications--active")
             .append(validatingMessage);
-        $( "#sln-debug-notifications" ).addClass("sln-notifications--active" ).html( validatingMessage );
-        $( "#sln-debug-div" ).css( 'overflow-y', 'hidden').scrollTop(0);
+        $("#sln-debug-notifications")
+            .addClass("sln-notifications--active")
+            .html(validatingMessage);
+        $("#sln-debug-div").css("overflow-y", "hidden").scrollTop(0);
         $("#sln-salon").addClass("sln-salon--loading");
         $.ajax({
             url: salon.ajax_url,
             data: data,
             method: "POST",
             dataType: "json",
-            success: function(data) {
+            success: function (data) {
                 $(".sln-alert").remove();
                 if (!data.success) {
                     var alertBox = $(
                         '<div class="sln-alert sln-alert--problem"></div>'
                     );
-                    $(data.errors).each(function() {
+                    $(data.errors).each(function () {
                         alertBox.append("<p>").html(this);
                     });
-                    $("#sln-notifications")
-                        .html("")
-                        .append(alertBox);
-                    $( "#sln-debug-notifications").html("").append( alertBox );
+                    $("#sln-notifications").html("").append(alertBox);
+                    $("#sln-debug-notifications").html("").append(alertBox);
                     isValid = false;
                 } else {
                     $("#sln-step-submit").attr("disabled", false);
                     $("#sln-notifications")
                         .html("")
                         .removeClass("sln-notifications--active");
-                    $( "#sln-debug-notifications" ).html("").removeClass( "sln-notifications--active" );
-                    $( "#sln-debug-div" ).css( 'overflow-y', 'scroll' );
+                    $("#sln-debug-notifications")
+                        .html("")
+                        .removeClass("sln-notifications--active");
+                    $("#sln-debug-div").css("overflow-y", "scroll");
                     $("#sln-salon").removeClass("sln-salon--loading");
                     isValid = true;
                     if (autosubmit) submit();
                 }
                 bindIntervals(data.intervals);
-                if ( data.debug ){
-                    bindDebugTimeLog( data.debug.times );
+                if (data.debug) {
+                    bindDebugTimeLog(data.debug.times);
                 }
                 var timeValue = Object.values(data.intervals.times)[0] || "";
                 var hours = parseInt(timeValue, 10) || 0;
@@ -1179,8 +1453,8 @@ function sln_stepDate($) {
         });
     }
 
-    $('#close-debug-table').click(function(){
-        $( '#sln-debug-div' ).hide();
+    $("#close-debug-table").click(function () {
+        $("#sln-debug-div").hide();
     });
 
     function bindIntervals(intervals) {
@@ -1199,29 +1473,39 @@ function sln_stepDate($) {
         }
     }
 
-    function bindDebugTimeLog( debugLog ){
-        $( '.sln-debug-time-slote').each( function( iter, element ){
-            var time = $( $( element).find('.sln-debug-time p' ) ).text();
-            var timeSlot = $( element );
-            $( timeSlot.find('.sln-debug-time p' ) ).attr( 'title', '');
-            $( timeSlot.find( '.sln-debug-time' ) ).removeClass( 'sln-debug--failed' );
-            $( timeSlot.find( '.sln-debug-popup' ) ).html('');
-            var firstFaild = '';
-            for( const [ruleName, ruleValue] of Object.entries( debugLog[time] ) ){
-                if( false === ruleValue ){
-                    if( '' === firstFaild ){
+    function bindDebugTimeLog(debugLog) {
+        $(".sln-debug-time-slote").each(function (iter, element) {
+            var time = $($(element).find(".sln-debug-time p")).text();
+            var timeSlot = $(element);
+            $(timeSlot.find(".sln-debug-time p")).attr("title", "");
+            $(timeSlot.find(".sln-debug-time")).removeClass(
+                "sln-debug--failed"
+            );
+            $(timeSlot.find(".sln-debug-popup")).html("");
+            var firstFaild = "";
+            for (const [ruleName, ruleValue] of Object.entries(
+                debugLog[time]
+            )) {
+                if (false === ruleValue) {
+                    if ("" === firstFaild) {
                         firstFaild = ruleName;
                     }
-                    $( '<p>' + ruleName + '</p>' ).appendTo( timeSlot.find( '.sln-debug-popup' ) ).addClass( 'sln-debug--failed' );
-                } else{
-                    $( '<p>' + ruleName + '</p>' ).appendTo( timeSlot.find( '.sln-debug-popup' ) );
+                    $("<p>" + ruleName + "</p>")
+                        .appendTo(timeSlot.find(".sln-debug-popup"))
+                        .addClass("sln-debug--failed");
+                } else {
+                    $("<p>" + ruleName + "</p>").appendTo(
+                        timeSlot.find(".sln-debug-popup")
+                    );
                 }
             }
-            if( '' !== firstFaild ){
-                $( timeSlot.find( '.sln-debug-time p' ) ).attr( 'title', firstFaild );
-                $( timeSlot.find( '.sln-debug-time' ) ).addClass( 'sln-debug--failed' );
+            if ("" !== firstFaild) {
+                $(timeSlot.find(".sln-debug-time p")).attr("title", firstFaild);
+                $(timeSlot.find(".sln-debug-time")).addClass(
+                    "sln-debug--failed"
+                );
             }
-        })
+        });
     }
 
     if (!Object.keys(items.intervals.dates).length) {
@@ -1237,7 +1521,9 @@ function sln_stepDate($) {
     }
 
     function submit() {
-        if ($("#sln-salon-booking #sln-step-submit").data("salon-toggle").length)
+        if (
+            $("#sln-salon-booking #sln-step-submit").data("salon-toggle").length
+        )
             sln_loadStep(
                 $,
                 $("#salon-step-date").serialize() +
@@ -1247,10 +1533,10 @@ function sln_stepDate($) {
         else $("#sln-step-submit").trigger("click");
     }
 
-    $(".sln_datepicker div").on("changeDay", function() {
+    $(".sln_datepicker div").on("changeDay", function () {
         validate(this, false);
     });
-    $("#salon-step-date").on("submit", function() {
+    $("#salon-step-date").on("submit", function () {
         if (!isValid) {
             validate(this, true);
         } else {
@@ -1281,12 +1567,10 @@ function sln_stepDate($) {
         }
     }
     dateStepResize();
-    $(window).resize(function() {
+    $(window).resize(function () {
         dateStepResize();
     });
-    $("#sln_time")
-        .css("position", "absolute")
-        .css("opacity", "0");
+    $("#sln_time").css("position", "absolute").css("opacity", "0");
     function sln_timeScroll() {
         var dateTable = $(".datetimepicker-days"),
             timeTable = $("#sln_time"),
@@ -1307,35 +1591,40 @@ function sln_stepDate($) {
             timeTable.css("position", "relative").css("opacity", "1");
         }
     }
-    $(window).bind("load", function() {
-        setTimeout(function() {
+    $(window).bind("load", function () {
+        setTimeout(function () {
             sln_timeScroll();
         }, 200);
     });
-    $(window).resize(function() {
-        setTimeout(function() {
+    $(window).resize(function () {
+        setTimeout(function () {
             sln_timeScroll();
         }, 200);
     });
-    $(document).ajaxComplete(function(event, request, settings) {
-        setTimeout(function() {
+    $(document).ajaxComplete(function (event, request, settings) {
+        setTimeout(function () {
             sln_timeScroll();
         }, 200);
     });
-    setTimeout(function() {
+    setTimeout(function () {
         sln_timeScroll();
     }, 200);
     //$("#sln_timepicker_viewdate").on("click", function() {
     //    sln_timeScroll();
     //});
-    if($('.cloned-data').length){
-        $('#save-post').attr('disabled', 'disabled');
+    if ($(".cloned-data").length) {
+        $("#save-post").attr("disabled", "disabled");
     }
     sln_initDatepickers($, items);
     sln_initTimepickers($, items);
 
-    if (!$('input[name="sln[customer_timezone]"]').val() && $('input[name="sln[customer_timezone]"]').length) {
-        $('input[name="sln[customer_timezone]"]').val(new window.Intl.DateTimeFormat().resolvedOptions().timeZone);
+    if (
+        !$('input[name="sln[customer_timezone]"]').val() &&
+        $('input[name="sln[customer_timezone]"]').length
+    ) {
+        $('input[name="sln[customer_timezone]"]').val(
+            new window.Intl.DateTimeFormat().resolvedOptions().timeZone
+        );
         validate($(".sln_datepicker div"), false);
     }
 }
@@ -1345,8 +1634,12 @@ function sln_serviceTotal($) {
     var $totalbox = $("#services-total");
     function evalTot() {
         var tot = 0;
-        $checkboxes.each(function() {
-            var count = $(this).closest('.sln-service').find('.sln-service-count-input').val() || 1;
+        $checkboxes.each(function () {
+            var count =
+                $(this)
+                    .closest(".sln-service")
+                    .find(".sln-service-count-input")
+                    .val() || 1;
             if ($(this).is(":checked")) {
                 tot += $(this).data("price") * count;
             }
@@ -1388,18 +1681,18 @@ function sln_serviceTotal($) {
             data: data,
             method: "POST",
             dataType: "json",
-            success: function(data) {
+            success: function (data) {
                 if (!data.success) {
                     var alertBox = $(
                         '<div class="sln-alert sln-alert--problem sln-service-error"></div>'
                     );
-                    $.each(data.errors, function() {
+                    $.each(data.errors, function () {
                         alertBox.append("<p>").html(this);
                     });
                 } else {
                     $(".sln-alert.sln-service-error").remove();
                     if (data.services)
-                        $.each(data.services, function(index, value) {
+                        $.each(data.services, function (index, value) {
                             var checkbox = $("#sln_services_" + index);
                             var errorsArea = $("#sln_services_" + index)
                                 .closest(".sln-service")
@@ -1432,30 +1725,37 @@ function sln_serviceTotal($) {
         });
     }
 
-    $checkboxes.on("click", function() {
+    $checkboxes.on("click", function () {
         checkServices($);
     });
     checkServices($);
     evalTot();
 }
 
-var chooseAsistentForMe
-function sln_stepAttendant($){
-    if(chooseAsistentForMe != undefined){
+var chooseAsistentForMe;
+function sln_stepAttendant($) {
+    if (chooseAsistentForMe != undefined) {
         return;
     }
-    chooseAsistentForMe = $('#sln_attendant_0').length;
-    if(1+chooseAsistentForMe == $('input[name="sln[attendant]"]').length - $('.sln-alert.sln-alert--problem.sln-service-error').length){
-        $('#sln-salon-booking input[name="sln[attendant]"]').each(function(){
-            if(0 != $(this).val()){
-                $(this).trigger('click');
+    chooseAsistentForMe = $("#sln_attendant_0").length;
+    if (
+        1 + chooseAsistentForMe ==
+        $('input[name="sln[attendant]"]').length -
+            $(".sln-alert.sln-alert--problem.sln-service-error").length
+    ) {
+        $('#sln-salon-booking input[name="sln[attendant]"]').each(function () {
+            if (0 != $(this).val()) {
+                $(this).trigger("click");
                 var form = $(this).closest("form");
-                $("#sln-salon input.sln-invalid,#sln-salon textarea.sln-invalid,#sln-salon select.sln-invalid"
+                $(
+                    "#sln-salon input.sln-invalid,#sln-salon textarea.sln-invalid,#sln-salon select.sln-invalid"
                 ).removeClass("sln-invalid");
                 if (form[0].checkValidity()) {
                     sln_loadStep(
                         $,
-                        form.serialize() + "&" + $('#sln-step-submit').data("salon-data")
+                        form.serialize() +
+                            "&" +
+                            $("#sln-step-submit").data("salon-data")
                     );
                 } else {
                     $(
@@ -1477,15 +1777,20 @@ function sln_stepAttendant($){
 }
 
 function sln_attendantTotal($) {
-    var $checkboxes = $('input[name*="sln[attendants]"], input[name*="sln[attendant]"]');
+    var $checkboxes = $(
+        'input[name*="sln[attendants]"], input[name*="sln[attendant]"]'
+    );
     var $totalbox = $("#services-total");
     function evalTot() {
         var tot = 0;
-        $checkboxes.each(function() {
+        $checkboxes.each(function () {
             if ($(this).is(":checked")) {
-                $(this).closest('.sln-attendant').find('.sln-list__item__price').each(function () {
-                    tot += $(this).data('price');
-                });
+                $(this)
+                    .closest(".sln-attendant")
+                    .find(".sln-list__item__price")
+                    .each(function () {
+                        tot += $(this).data("price");
+                    });
             }
         });
         var decimals = parseFloat(tot) === parseFloat(parseInt(tot)) ? 0 : 2;
@@ -1502,14 +1807,14 @@ function sln_attendantTotal($) {
         );
     }
 
-    $checkboxes.on("change", function() {
+    $checkboxes.on("change", function () {
         evalTot();
     });
     evalTot();
 }
 
 function sln_initDatepickers($, data) {
-    $(".sln_datepicker div").each(function() {
+    $(".sln_datepicker div").each(function () {
         $(this).attr("readonly", "readonly");
         if ($(this).hasClass("started")) {
             return;
@@ -1524,13 +1829,13 @@ function sln_initDatepickers($, data) {
                     maxView: 4,
                     language: $(this).data("locale"),
                 })
-                .on("changeMonth", function() {
+                .on("changeMonth", function () {
                     $("body").trigger("sln_date");
                 })
-                .on("changeYear", function() {
+                .on("changeYear", function () {
                     $("body").trigger("sln_date");
                 })
-                .on("hide", function() {
+                .on("hide", function () {
                     if ($(this).is(":focus"));
                     $(this).trigger("blur");
                 });
@@ -1557,14 +1862,16 @@ function sln_initDatepickers($, data) {
                     timeZone: "UTC",
                 }
             );
-            $("#sln_timepicker_viewdate").text(dateString + ' | ' + data.intervals.suggestedTime);
+            $("#sln_timepicker_viewdate").text(
+                dateString + " | " + data.intervals.suggestedTime
+            );
 
             $("input[name='sln[date]']").val(data.intervals.suggestedDate);
         }
     });
     var elementExists = document.getElementById("sln-salon");
     if (elementExists) {
-        setTimeout(function() {
+        setTimeout(function () {
             $(".datetimepicker.sln-datetimepicker").wrap(
                 "<div class='sln-salon-bs-wrap'></div>"
             );
@@ -1572,11 +1879,14 @@ function sln_initDatepickers($, data) {
     }
 
     if (document.dir === "rtl") {
-        swapNodes($('.datetimepicker-days .table-condensed .prev'), $('.datetimepicker-days .table-condensed .next'));
+        swapNodes(
+            $(".datetimepicker-days .table-condensed .prev"),
+            $(".datetimepicker-days .table-condensed .next")
+        );
     }
 
     function swapNodes(a, b) {
-        var aNext = $('<div>').insertAfter(a);
+        var aNext = $("<div>").insertAfter(a);
         a.insertAfter(b);
         b.insertBefore(aNext);
         // remove marker div
@@ -1585,7 +1895,7 @@ function sln_initDatepickers($, data) {
 }
 
 function sln_initTimepickers($, data) {
-    $(".sln_timepicker div").each(function() {
+    $(".sln_timepicker div").each(function () {
         $(this).attr("readonly", "readonly");
         if ($(this).hasClass("started")) {
             return;
@@ -1600,20 +1910,24 @@ function sln_initTimepickers($, data) {
                     startView: 0,
                     showMeridian: $(this).data("meridian") ? true : false,
                 })
-                .on("show", function() {
+                .on("show", function () {
                     $("body").trigger("sln_date");
                 })
-                .on("place", function() {
+                .on("place", function () {
                     sln_renderAvailableTimeslots($, data);
 
                     $("body").trigger("sln_date");
                 })
-                .on("changeMinute", function() {
-                        sln_updateDatepickerTimepickerSlots($, data.intervals, data.bookint_id);
+                .on("changeMinute", function () {
+                    sln_updateDatepickerTimepickerSlots(
+                        $,
+                        data.intervals,
+                        data.bookint_id
+                    );
 
-                        // $("body").trigger("sln_date");
+                    // $("body").trigger("sln_date");
                 })
-                .on("hide", function() {
+                .on("hide", function () {
                     if ($(this).is(":focus"));
                     $(this).blur();
                 })
@@ -1632,25 +1946,40 @@ function sln_initTimepickers($, data) {
             function convertTo24HrsFormat(time) {
                 const slicedTime = time.split(/(pm|am)/gm)[0];
 
-                let [hours, minutes] = slicedTime.split(':');
+                let [hours, minutes] = slicedTime.split(":");
 
-                if (hours === '12') {
-                    hours = '00';
+                if (hours === "12") {
+                    hours = "00";
                 }
 
-                if (time.endsWith('pm')) {
+                if (time.endsWith("pm")) {
                     hours = parseInt(hours, 10) + 12;
                 }
 
-                return `${String(hours).padStart(2, 0)}:${String(minutes).padStart(2, 0)}`;
+                return `${String(hours).padStart(2, 0)}:${String(
+                    minutes
+                ).padStart(2, 0)}`;
             }
 
-            var suggestedTime = convertTo24HrsFormat(data.intervals.suggestedTime);
+            var suggestedTime = convertTo24HrsFormat(
+                data.intervals.suggestedTime
+            );
             var hours = parseInt(suggestedTime, 10) || 0;
             var datetimepicker = $(this).data("datetimepicker");
-            datetimepicker.fillTime = function(dates, years, month, dayMonth, hours, minutes){
-                sln_updateDatepickerTimepickerSlots($, data.intervals, data.bookingId);
-            }
+            datetimepicker.fillTime = function (
+                dates,
+                years,
+                month,
+                dayMonth,
+                hours,
+                minutes
+            ) {
+                sln_updateDatepickerTimepickerSlots(
+                    $,
+                    data.intervals,
+                    data.bookingId
+                );
+            };
             datetimepicker.viewDate.setUTCHours(hours);
             var minutes =
                 parseInt(
@@ -1675,7 +2004,7 @@ function sln_initTimepickers($, data) {
  * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
  * ======================================================================== */
 
-+(function($) {
++(function ($) {
     "use strict";
 
     // CSS TRANSITION SUPPORT (Shoutout: http://www.modernizr.com/)
@@ -1701,20 +2030,20 @@ function sln_initTimepickers($, data) {
     }
 
     // http://blog.alexmaccaw.com/css-transitions
-    $.fn.emulateTransitionEnd = function(duration) {
+    $.fn.emulateTransitionEnd = function (duration) {
         var called = false;
         var $el = this;
-        $(this).one("bsTransitionEnd", function() {
+        $(this).one("bsTransitionEnd", function () {
             called = true;
         });
-        var callback = function() {
+        var callback = function () {
             if (!called) $($el).trigger($.support.transition.end);
         };
         setTimeout(callback, duration);
         return this;
     };
 
-    $(function() {
+    $(function () {
         $.support.transition = transitionEnd();
 
         if (!$.support.transition) return;
@@ -1722,7 +2051,7 @@ function sln_initTimepickers($, data) {
         $.event.special.bsTransitionEnd = {
             bindType: $.support.transition.end,
             delegateType: $.support.transition.end,
-            handle: function(e) {
+            handle: function (e) {
                 if ($(e.target).is(this))
                     return e.handleObj.handler.apply(this, arguments);
             },
@@ -1738,13 +2067,13 @@ function sln_initTimepickers($, data) {
  * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
  * ======================================================================== */
 
-+(function($) {
++(function ($) {
     "use strict";
 
     // COLLAPSE PUBLIC CLASS DEFINITION
     // ================================
 
-    var Collapse = function(element, options) {
+    var Collapse = function (element, options) {
         this.$element = $(element);
         this.options = $.extend({}, Collapse.DEFAULTS, options);
         this.transitioning = null;
@@ -1759,12 +2088,12 @@ function sln_initTimepickers($, data) {
         toggle: true,
     };
 
-    Collapse.prototype.dimension = function() {
+    Collapse.prototype.dimension = function () {
         var hasWidth = this.$element.hasClass("width");
         return hasWidth ? "width" : "height";
     };
 
-    Collapse.prototype.show = function() {
+    Collapse.prototype.show = function () {
         if (this.transitioning || this.$element.hasClass("in")) return;
 
         var startEvent = $.Event("show.bs.collapse");
@@ -1789,7 +2118,7 @@ function sln_initTimepickers($, data) {
 
         this.transitioning = 1;
 
-        var complete = function() {
+        var complete = function () {
             this.$element
                 .removeClass("collapsing")
                 .addClass("collapse in")
@@ -1808,7 +2137,7 @@ function sln_initTimepickers($, data) {
             [dimension](this.$element[0][scrollSize]);
     };
 
-    Collapse.prototype.hide = function() {
+    Collapse.prototype.hide = function () {
         if (this.transitioning || !this.$element.hasClass("in")) return;
 
         var startEvent = $.Event("hide.bs.collapse");
@@ -1826,7 +2155,7 @@ function sln_initTimepickers($, data) {
 
         this.transitioning = 1;
 
-        var complete = function() {
+        var complete = function () {
             this.transitioning = 0;
             this.$element
                 .trigger("hidden.bs.collapse")
@@ -1841,7 +2170,7 @@ function sln_initTimepickers($, data) {
             .emulateTransitionEnd(350);
     };
 
-    Collapse.prototype.toggle = function() {
+    Collapse.prototype.toggle = function () {
         this[this.$element.hasClass("in") ? "hide" : "show"]();
     };
 
@@ -1849,7 +2178,7 @@ function sln_initTimepickers($, data) {
     // ==========================
 
     function Plugin(option) {
-        return this.each(function() {
+        return this.each(function () {
             var $this = $(this);
             var data = $this.data("bs.collapse");
             var options = $.extend(
@@ -1874,7 +2203,7 @@ function sln_initTimepickers($, data) {
     // COLLAPSE NO CONFLICT
     // ====================
 
-    $.fn.collapse.noConflict = function() {
+    $.fn.collapse.noConflict = function () {
         $.fn.collapse = old;
         return this;
     };
@@ -1885,7 +2214,7 @@ function sln_initTimepickers($, data) {
     $(document).on(
         "click.bs.collapse.data-api",
         '[data-toggle="collapse"]',
-        function(e) {
+        function (e) {
             var href;
             var $this = $(this);
             var target =
@@ -1919,8 +2248,31 @@ function sln_initTimepickers($, data) {
     );
 })(jQuery);
 
++(function ($) {
+    function sln_tabsFrontEnd() {
+        $(".sln-content__tabs__nav__item a, .sln-account__nav__item a").each(
+            function () {
+                $(this).click(function (e) {
+                    e.preventDefault();
+                    $(this).tab("show");
+                    $(".sln-content__tabs__nav__item").removeClass("current");
+                    $(this).parent().addClass("current");
+                });
+            }
+        );
+    }
+    if ($(".sln-content__tabs__nav").length) {
+        sln_tabsFrontEnd();
+    }
+    setTimeout(function () {
+        if ($(".sln-account__nav").length) {
+            sln_tabsFrontEnd();
+        }
+    }, 500);
+})(jQuery);
+
 function sln_facebookInit() {
-    window.fbAsyncInit = function() {
+    window.fbAsyncInit = function () {
         FB.init({
             appId: salon.fb_app_id,
             cookie: true,
@@ -1931,9 +2283,9 @@ function sln_facebookInit() {
 
         jQuery("[data-salon-click=fb_login]")
             .off("click")
-            .on("click", function() {
+            .on("click", function () {
                 FB.login(
-                    function() {
+                    function () {
                         sln_facebookLogin();
                     },
                     { scope: "email" }
@@ -1943,7 +2295,7 @@ function sln_facebookInit() {
             });
     };
 
-    (function(d, s, id) {
+    (function (d, s, id) {
         var js,
             fjs = d.getElementsByTagName(s)[0];
         if (d.getElementById(id)) {
@@ -1989,7 +2341,7 @@ function sln_facebookLogin() {
         },
         method: "POST",
         dataType: "json",
-        success: function(response) {
+        success: function (response) {
             if (response.success) {
                 location.reload();
             } else {
@@ -1997,7 +2349,7 @@ function sln_facebookLogin() {
                 //console.log(response);
             }
         },
-        error: function(data) {
+        error: function (data) {
             alert("error");
             //console.log(data);
         },
@@ -2010,7 +2362,7 @@ function sln_salonBookingCalendarInit() {
     }
     sln_salonBookingCalendarInitTooltip();
 
-    setInterval(function() {
+    setInterval(function () {
         jQuery.ajax({
             url: salon.ajax_url,
             data: {
@@ -2026,13 +2378,13 @@ function sln_salonBookingCalendarInit() {
 
             method: "POST",
             dataType: "json",
-            converters:{
-                'text json': function(data){
-                    data = data.replaceAll('\\ /', '\\/');
+            converters: {
+                "text json": function (data) {
+                    data = data.replaceAll("\\ /", "\\/");
                     return JSON.parse(data);
                 },
             },
-            success: function(data) {
+            success: function (data) {
                 if (data.success) {
                     jQuery(
                         "#sln-salon-booking-calendar-shortcode > .wrapper"
@@ -2044,7 +2396,7 @@ function sln_salonBookingCalendarInit() {
                     // TODO: display errors
                 }
             },
-            error: function(data) {
+            error: function (data) {
                 alert("error");
                 //console.log(data);
             },
@@ -2057,7 +2409,7 @@ function sln_salonBookingCalendarInitTooltip() {
 }
 
 function sln_createRatings(readOnly, view) {
-    jQuery("[name=sln-rating]").each(function() {
+    jQuery("[name=sln-rating]").each(function () {
         if (jQuery(this).val()) {
             sln_createRaty(jQuery(this), readOnly, view);
         }
@@ -2099,19 +2451,18 @@ function convertTo24Hour(time) {
         let [_, hours, minutes, period] = time.match(regex12Hour);
 
         hours = parseInt(hours, 10);
-        if (period.toLowerCase() === 'pm' && hours !== 12) {
+        if (period.toLowerCase() === "pm" && hours !== 12) {
             hours += 12;
         }
 
-        if (period.toLowerCase() === 'am' && hours === 12) {
+        if (period.toLowerCase() === "am" && hours === 12) {
             hours = 0;
         }
 
-        return `${hours.toString().padStart(2, '0')}:${minutes}`;
+        return `${hours.toString().padStart(2, "0")}:${minutes}`;
     }
 
     const regex24Hour = /^([01]\d|2[0-3]):([0-5]\d)$/;
-
 
     if (regex24Hour.test(time)) {
         return time;
@@ -2125,12 +2476,12 @@ function sln_renderAvailableTimeslots($, data, changeMinute = false) {
     let tableCells;
 
     if (!element.length) {
-        if($("#sln_timepicker_viewdate").length){
+        if ($("#sln_timepicker_viewdate").length) {
             tableCells = $(".datetimepicker-minutes table tr td");
         } else {
             return;
         }
-    }else {
+    } else {
         tableCells = element.find(".datetimepicker-minutes table tr td");
     }
 
@@ -2138,15 +2489,20 @@ function sln_renderAvailableTimeslots($, data, changeMinute = false) {
         tableCells.html("");
     } else {
         var tmpdatetimepicker = tableCells.html();
-        var validatingMessage = '<div class="sln-loader">' + salon.txt_validating + '</div>';
-        tableCells.addClass('sln-notifications--active').html(validatingMessage);
+        var validatingMessage =
+            '<div class="sln-loader">' + salon.txt_validating + "</div>";
+        tableCells
+            .addClass("sln-notifications--active")
+            .html(validatingMessage);
     }
 
     //for active timeslot to stay
     if (!element.length) {
         var datetimepicker = $(".sln_timepicker div").data("datetimepicker");
     } else {
-        var datetimepicker = element.find(".sln_timepicker div").data("datetimepicker");
+        var datetimepicker = element
+            .find(".sln_timepicker div")
+            .data("datetimepicker");
     }
 
     var DtHours = datetimepicker.viewDate.getUTCHours();
@@ -2161,34 +2517,42 @@ function sln_renderAvailableTimeslots($, data, changeMinute = false) {
 
     date.setUTCHours(hours);
     date.setUTCMinutes(minutes);
-    let dateString = $('#sln_timepicker_viewdate').text().split('|')[0] + ' | ' + $.fn.datetimepicker.DPGlobal.formatDate(
-        date,
-        datetimepicker.format,
-        datetimepicker.language,
-        datetimepicker.formatType
-    );
+    let dateString =
+        $("#sln_timepicker_viewdate").text().split("|")[0] +
+        " | " +
+        $.fn.datetimepicker.DPGlobal.formatDate(
+            date,
+            datetimepicker.format,
+            datetimepicker.language,
+            datetimepicker.formatType
+        );
     $("#sln_timepicker_viewdate").text(dateString);
 
     var html = [];
 
     if (changeMinute) {
-        tableCells.removeClass('sln-notifications--active').html('');
+        tableCells.removeClass("sln-notifications--active").html("");
         tableCells.html(tmpdatetimepicker);
 
-        tableCells.find('span').each(function () {
+        tableCells.find("span").each(function () {
             var $span = $(this);
             var timeSlot = convertTo24Hour($span.text().trim());
 
             if (data.intervals.workTimes[timeSlot]) {
                 hours = parseInt(timeSlot, 10) || 0;
-                minutes = parseInt(timeSlot.substr(timeSlot.indexOf(":") + 1), 10) || 0;
+                minutes =
+                    parseInt(timeSlot.substr(timeSlot.indexOf(":") + 1), 10) ||
+                    0;
 
                 date.setUTCHours(hours);
                 date.setUTCMinutes(minutes);
 
-                var timeHTML = '<span data-ymd="' +
+                var timeHTML =
+                    '<span data-ymd="' +
                     timeSlot +
-                    '" class="minute' + (timeSlot === DtTime ? " active" : "") + ($span.text().endsWith('pm') ? " hour_pm" : "") + // see botstrap-datetimepicker target.is('.minute')
+                    '" class="minute' +
+                    (timeSlot === DtTime ? " active" : "") +
+                    ($span.text().endsWith("pm") ? " hour_pm" : "") + // see botstrap-datetimepicker target.is('.minute')
                     '">' +
                     $.fn.datetimepicker.DPGlobal.formatDate(
                         date,
@@ -2202,7 +2566,7 @@ function sln_renderAvailableTimeslots($, data, changeMinute = false) {
             }
         });
     } else {
-        $.each(data.intervals.workTimes, function(value) {
+        $.each(data.intervals.workTimes, function (value) {
             hours = parseInt(value, 10) || 0;
             minutes = parseInt(value.substr(value.indexOf(":") + 1), 10) || 0;
 
@@ -2211,32 +2575,37 @@ function sln_renderAvailableTimeslots($, data, changeMinute = false) {
 
             html.push(
                 '<span data-ymd="' +
-                value +
-                '" class="minute disabled' +
-                (value === DtTime ? " active" : "") + (hours > 12 ? " hour_pm" : "") +
-                '">' +
-                $.fn.datetimepicker.DPGlobal.formatDate(
-                    date,
-                    datetimepicker.format,
-                    datetimepicker.language,
-                    datetimepicker.formatType
-                ) +
-                "</span>"
+                    value +
+                    '" class="minute disabled' +
+                    (value === DtTime ? " active" : "") +
+                    (hours > 12 ? " hour_pm" : "") +
+                    '">' +
+                    $.fn.datetimepicker.DPGlobal.formatDate(
+                        date,
+                        datetimepicker.format,
+                        datetimepicker.language,
+                        datetimepicker.formatType
+                    ) +
+                    "</span>"
             );
         });
 
         tableCells.html(html.join(""));
     }
 
-    $(".datetimepicker-minutes table tr td .minute").on("click", function() {
+    $(".datetimepicker-minutes table tr td .minute").on("click", function () {
         let bookingId = data.booking_id;
         let elementId = `#sln-booking-id-resch-${bookingId}`;
         let element = $(elementId);
 
         if (!element.length) {
-            var datetimepicker = $(".sln_timepicker div").data("datetimepicker");
+            var datetimepicker = $(".sln_timepicker div").data(
+                "datetimepicker"
+            );
         } else {
-            var datetimepicker = element.find(".sln_timepicker div").data("datetimepicker");
+            var datetimepicker = element
+                .find(".sln_timepicker div")
+                .data("datetimepicker");
         }
 
         var time = $(this).attr("data-ymd");
@@ -2244,37 +2613,38 @@ function sln_renderAvailableTimeslots($, data, changeMinute = false) {
         var hours = parseInt(time, 10) || 0;
         var minutes = parseInt(time.substr(time.indexOf(":") + 1), 10) || 0;
 
-        datetimepicker.element.on('changeDate', function() {
+        datetimepicker.element.on("changeDate", function () {
             datetimepicker.viewDate.setUTCHours(hours);
             datetimepicker.viewDate.setUTCMinutes(minutes);
         });
-        let dateString = $('#sln_timepicker_viewdate').text().split('|')[0] + ' | ' + time;
+        let dateString =
+            $("#sln_timepicker_viewdate").text().split("|")[0] + " | " + time;
         $("#sln_timepicker_viewdate").text(dateString);
 
-        $('#sln-booking-cloned-notice').hide();
+        $("#sln-booking-cloned-notice").hide();
         $("input[name='sln[time]']").val(time);
         //for reschedule timepicker
         $("input[name='_sln_booking_time']").val(time);
     });
 
     setTimeout(() => {
-        $(".datetimepicker-days table tr th.next").on("click", function() {
+        $(".datetimepicker-days table tr th.next").on("click", function () {
             $("body").trigger("sln_date");
         });
-        $(".datetimepicker-days table tr th.prev").on("click", function() {
+        $(".datetimepicker-days table tr th.prev").on("click", function () {
             $("body").trigger("sln_date");
         });
     }, 0);
 }
-jQuery(function($) {
-    $(function() {
+jQuery(function ($) {
+    $(function () {
         if ($(".sln-customcolors").length) {
             $("body").addClass("sln-salon-page-customcolors");
         }
     });
 });
 // DIVI THEME ACCORDION FIX SNIPPET
-jQuery(function($) {
+jQuery(function ($) {
     if ($("body.theme-Divi").length || $("body.et_divi_theme").length) {
         $(".sln-panel-heading").off("click");
     }
@@ -2296,14 +2666,15 @@ function sln_applyTipsAmount() {
         data: data,
         method: "POST",
         dataType: "json",
-        success: function(data) {
-            $("#sln_tips_status")
-                .find(".sln-alert")
-                .remove();
+        success: function (data) {
+            $("#sln_tips_status").find(".sln-alert").remove();
             var alertBox;
             if (data.success) {
                 $("#sln_tips_value").html(data.tips);
-                $('.sln-summary-row.sln-summary-row--tips').toggleClass('hide', data.tips.startsWith('0'));
+                $(".sln-summary-row.sln-summary-row--tips").toggleClass(
+                    "hide",
+                    data.tips.startsWith("0")
+                );
                 $(".sln-total-price").html(data.total);
 
                 alertBox = $(
@@ -2314,14 +2685,12 @@ function sln_applyTipsAmount() {
                     '<div class="sln-alert sln-alert--paddingleft sln-alert--problem"></div>'
                 );
             }
-            $(data.errors).each(function() {
+            $(data.errors).each(function () {
                 alertBox.append("<p>").html(this);
             });
-            $("#sln_tips_status")
-                .html("")
-                .append(alertBox);
+            $("#sln_tips_status").html("").append(alertBox);
         },
-        error: function(data) {
+        error: function (data) {
             alert("error");
             //console.log(data);
         },
@@ -2357,23 +2726,23 @@ function sln_google_maps_places_api_callback() {
     }
 }
 
-jQuery(function($) {
+jQuery(function ($) {
     function sln_rememberTab() {
         $.ajax({
             url: salon.ajax_url,
-            method: 'POST',
-            dataType: 'json',
+            method: "POST",
+            dataType: "json",
             data: {
-                action: 'salon',
-                method: 'rememberTab',
+                action: "salon",
+                method: "rememberTab",
                 security: salon.ajax_nonce,
-                tab: $(this).data('tab'),
+                tab: $(this).data("tab"),
             },
             error: function (error) {
-                console.log('cannot remember tab');
+                console.log("cannot remember tab");
             },
         });
     }
 
-    $('.sln-content__tabs__nav__item a').on('click', sln_rememberTab);
+    $(".sln-content__tabs__nav__item a").on("click", sln_rememberTab);
 });

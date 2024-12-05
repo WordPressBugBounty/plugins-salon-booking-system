@@ -20,13 +20,25 @@
 <!-- Nav tabs -->
 <div class="sln-account__nav__wrapper">
 	<nav id="sln-account__nav" class="sln-account__nav__inner">
-		<ul class="sln-account__nav" role="tablist">
-			<li class="sln-account__nav__item sln-account__nav__appointments active" role="presentation"><a data-target="#sln-account__appointments__content" aria-controls="sln-account__appointments__content" role="tab" data-toggle="tab"><span><?php esc_html_e('Appointments', 'salon-booking-system')?></span></a></li>
+		<ul class="nav nav-tabs sln-account__nav" role="tablist">
+			<li class="sln-account__nav__item sln-account__nav__appointments active" role="presentation">
+				<a href="#sln-account__appointments__content" data-target="#sln-account__appointments__content" aria-controls="sln-account__appointments__content" role="tab" data-toggle="tab">
+					<span><?php esc_html_e('Appointments', 'salon-booking-system')?></span>
+				</a>
+			</li>
 			<?php do_action('sln.my_account.nav'); ?>
             <?php if (class_exists('SalonPackages\Addon') && slnpackages_is_pro_version_salon()) { ?>
-                <li class="sln-account__nav__item sln-account__nav__packages" role="presentation"><a data-target="#sln-account__packages__content" aria-controls="sln-account__packages__content" role="tab" data-toggle="tab"><span><?php esc_html_e('Packages', 'sln-package')?></span></a></li>
+                <li class="sln-account__nav__item sln-account__nav__packages" role="presentation">
+					<a href="#sln-account__packages__content" data-target="#sln-account__packages__content" aria-controls="sln-account__packages__content" role="tab" data-toggle="tab">
+						<span><?php esc_html_e('Packages', 'sln-package')?></span>
+					</a>
+				</li>
             <?php } ?>
-            <li class="sln-account__nav__item sln-account__nav__profile" role="presentation"><a data-target="#sln-account__profile__content" aria-controls="sln-account__profile__content" role="tab" data-toggle="tab"><span><?php esc_html_e('Profile', 'salon-booking-system')?></span></a></li>
+            <li class="sln-account__nav__item sln-account__nav__profile" role="presentation">
+				<a href="#sln-account__profile__content" data-target="#sln-account__profile__content" aria-controls="sln-account__profile__content" role="tab" data-toggle="tab">
+					<span><?php esc_html_e('Profile', 'salon-booking-system')?></span>
+				</a>
+			</li>
 		</ul>
 	</nav>
 </div>

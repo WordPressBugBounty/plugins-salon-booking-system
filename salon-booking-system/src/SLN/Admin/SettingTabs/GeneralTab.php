@@ -1,4 +1,6 @@
 <?php
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
+
 class SLN_Admin_SettingTabs_GeneralTab extends SLN_Admin_SettingTabs_AbstractTab
 {
 	protected $fields = array(

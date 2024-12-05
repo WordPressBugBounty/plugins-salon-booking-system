@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 class SLN_Privacy_Erasers{
 	public static function customer_data_eraser( $email_address, $page ) {
 		$response = array(

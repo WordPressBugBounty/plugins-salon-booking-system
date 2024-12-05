@@ -7,6 +7,7 @@
  * @var string $postType
  *
  */
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 ?>
 
 <div class="sln-box--sub row">

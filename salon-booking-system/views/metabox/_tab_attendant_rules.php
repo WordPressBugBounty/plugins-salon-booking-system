@@ -37,7 +37,7 @@ SLN_Action_InitScripts::enqueueCustomSliderRange();
     </div>
     <div class="col-xs-12 sln-box__actions">
         <button data-collection="addnew"
-                class="sln-btn sln-btn--main sln-btn--big sln-btn--icon sln-icon--file"><?php esc_html_e(
+                class="sln-btn sln-btn--main--tonal sln-btn--big sln-btn--icon sln-icon--file"><?php esc_html_e(
 	'Add new booking rule',
 	'salon-booking-system'
 )?>

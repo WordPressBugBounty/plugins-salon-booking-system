@@ -22,14 +22,15 @@ $currentTab = $_SESSION['currentTab'] ?? 'services';
                     ['name' => 'packages', 'shortcode' => '[salon_packages/]'],
                 ];
                 ?>
-                <ul class="sln-content__tabs__nav" role="tablist">
+                <ul class="nav nav-tabs sln-content__tabs__nav">
                     <?php foreach ($tabs as $tab): ?>
-                        <li class="sln-content__tabs__nav__item<?php echo $tab['name'] === $currentTab ? ' active' : '' ?>" role="presentation">
-                            <a data-target="#sln-salon__content--<?php echo $tab['name'] ?>"
+                        <li class="sln-content__tabs__nav__item <?php echo $tab['name'] === $currentTab ? ' current' : '' ?>">
+                            <a href="#sln-salon__content--<?php echo $tab['name'] ?>" data-target="#sln-salon__content--<?php echo $tab['name'] ?>"
                                aria-controls="sln-salon__content--<?php echo $tab['name'] ?>"
                                data-tab="<?php echo $tab['name'] ?>"
                                role="tab"
                                data-toggle="tab"
+                               class="<?php echo $tab['name'] === $currentTab ? ' active' : '' ?>"
                             >
                                 <?php esc_html_e(ucfirst(sprintf('%s', $tab['name'])), 'salon-booking-system'); ?>
                             </a>
@@ -38,12 +39,32 @@ $currentTab = $_SESSION['currentTab'] ?? 'services';
                 </ul>
                 <div class="tab-content sln-salon__tab-content">
                     <?php foreach ($tabs as $tab): ?>
-                        <div id="sln-salon__content--<?php echo $tab['name'] ?>" role="tabpanel"
+                        <div id="sln-salon__content--<?php echo $tab['name'] ?>" 
+
                              class="tab-pane sln-content__tab sln-content__tab--<?php echo $tab['name'] ?> sln-salon__content--<?php echo $tab['name'] ?><?php echo $tab['name'] === $currentTab ? ' active' : '' ?>">
                             <?php echo do_shortcode($tab['shortcode']) ?>
                         </div>
                     <?php endforeach; ?>
                 </div>
+                <script>
+                //jQuery(document).ready(function(){
+                //  jQuery(".sln-content__tabs__nav__item--- a").click(function(e){
+                //    e.preventDefault();
+                //    console.log("poll");
+                //     jQuery(this).tab('show');
+                //  });
+                  
+                 // jQuery(".sln-content__tabs__nav__item a").each(function () {
+                 //   jQuery(this).click(function(e){
+                 //       e.preventDefault();
+                 //       console.log("poll");
+                 //       jQuery(this).tab('show');
+                 //       jQuery(".sln-content__tabs__nav__item").removeClass('current');
+                  //      jQuery(this).parent().addClass('current');
+                  //  });
+                  //});
+                //});
+                </script>
             <?php else: ?>
                 <?php echo do_shortcode('[salon_booking/]') ?>
             <?php endif; ?>

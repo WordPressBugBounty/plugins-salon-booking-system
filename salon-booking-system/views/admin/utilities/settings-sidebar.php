@@ -1,7 +1,10 @@
+<?php
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
+?>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <div class="sln-admin-sidebar <?php if (!defined("SLN_VERSION_PAY") || !SLN_VERSION_PAY) {echo " sln-admin-sidebar--free";}?>">
 	<div class="sln-update-settings__wrapper">
-		<div class="sln-btn sln-btn--main sln-btn--big sln-btn--icon sln-icon--save sln-update-settings">
+		<div class="sln-btn sln-btn--main sln-btn--big sln-btn--fullwidth sln-btn--icon sln-icon--save sln-update-settings">
 			<input type="submit" name="submit" id="submit" class="" value="Update Settings">
 		</div>
 	</div>

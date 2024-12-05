@@ -1,4 +1,6 @@
 <?php
+// phpcs:ignoreFile WordPress.DB.PreparedSQL.NotPrepared
+// phpcs:ignoreFile WordPress.Security.NonceVerification.Recommended
 
 class SLN_Action_Init
 {

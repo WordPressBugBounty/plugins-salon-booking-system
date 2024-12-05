@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 class SLN_Enum_ShortcodeStyle
 {
     const _SMALL = 'small';

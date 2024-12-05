@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile WordPress.Security.NonceVerification.Recommended
 
 class SLN_Shortcode_Salon_ServicesStep extends SLN_Shortcode_Salon_Step
 {

@@ -949,6 +949,7 @@
 }
 #sln-salon.sln-customcolors .sln-list .sln-list__item .sln-list__item__content .sln-list__item__name,
 #sln-salon.sln-customcolors .sln-list .sln-list__item .sln-list__item__content .sln-list__item__price,
+#sln-salon.sln-customcolors .sln-list .sln-list__item .sln-list__item__content .sln-list__item__price strong,
 #sln-salon.sln-customcolors .sln-list .sln-list__item .sln-list__item__content .sln-list__item__price__note,
 #sln-salon.sln-customcolors .sln-list .sln-list__item .sln-list__item__content--add .sln-list__item__name,
 #sln-salon.sln-customcolors .sln-list .sln-list__item .sln-list__item__content--add .sln-list__item__price,
@@ -1245,26 +1246,32 @@
   color: {color-text-a};
   border-bottom-color: {color-text-a};
 }
-#sln-salon.sln-customcolors .sln-content__tabs__nav__item {
+#sln-salon.sln-customcolors .sln-content__tabs__nav__item,
+#sln-salon.sln-customcolors .nav-tabs .sln-content__tabs__nav__item {
   border-bottom: 3px solid transparent;
   color: {color-text-a};
 }
-#sln-salon.sln-customcolors .sln-content__tabs__nav__item a {
+#sln-salon.sln-customcolors .sln-content__tabs__nav__item a,
+#sln-salon.sln-customcolors .nav-tabs .sln-content__tabs__nav__item a {
   color: {color-text-a};
 }
-#sln-salon.sln-customcolors .sln-content__tabs__nav__item.active {
+#sln-salon.sln-customcolors .sln-content__tabs__nav__item.current,
+#sln-salon.sln-customcolors .nav-tabs .sln-content__tabs__nav__item.current {
   border-bottom-color: {color-main-a};
 }
-#sln-salon.sln-customcolors .sln-content__tabs__nav__item.active a {
+#sln-salon.sln-customcolors .sln-content__tabs__nav__item.current a,
+#sln-salon.sln-customcolors .nav-tabs .sln-content__tabs__nav__item.current a {
   color: {color-main-a};
 }
 @media (hover: hover) {
-  #sln-salon.sln-customcolors .sln-content__tabs__nav__item.active:hover {
+  #sln-salon.sln-customcolors .sln-content__tabs__nav__item.current:hover,
+  #sln-salon.sln-customcolors .nav-tabs .sln-content__tabs__nav__item.current:hover {
     border-bottom-color: {color-main-b};
   }
 }
 @media (hover: hover) {
-  #sln-salon.sln-customcolors .sln-content__tabs__nav__item:hover {
+  #sln-salon.sln-customcolors .sln-content__tabs__nav__item:hover,
+  #sln-salon.sln-customcolors .nav-tabs .sln-content__tabs__nav__item:hover {
     border-bottom-color: {color-main-b};
   }
 }

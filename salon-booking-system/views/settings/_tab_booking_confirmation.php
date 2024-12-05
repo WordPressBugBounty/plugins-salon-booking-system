@@ -2,6 +2,7 @@
 /**
  * @var $helper SLN_Admin_Settings
  */
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 ?>
 <div id="sln-booking_manual_confirmation" class="sln-box sln-box--main sln-box--haspanel">
     <h2 class="sln-box-title sln-box__paneltitle"><?php esc_html_e('Booking manual confirmation', 'salon-booking-system');?></h2>

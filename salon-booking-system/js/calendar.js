@@ -1448,13 +1448,13 @@ if (!String.prototype.formatNum) {
 		$(document).off('click', '.sln-dtn-danger-tooltip').on("click", ".sln-dtn-danger-tooltip", function(event) {
 				event.preventDefault();
 				var url = $(event.target).attr("href");
-				$.get(url);
+				$.get(url).done(function(){
+					$(event.target)
+						.closest(".event-item")
+						.trigger("mouseleave");
 
-				$(event.target)
-					.closest(".event-item")
-					.trigger("mouseleave");
-
-				calendar.view();
+					calendar.view();
+				});
 			});
 
 		$(document).off('click', '.sln-btn-duplicate').on('click', ".sln-btn-duplicate", function(event){

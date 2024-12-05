@@ -1,5 +1,5 @@
  <?php
-
+    // phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
     $additional_fields = SLN_Enum_CheckoutFields::forBooking();
 
     $_additional_fields = array();

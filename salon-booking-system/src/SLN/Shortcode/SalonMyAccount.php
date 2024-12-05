@@ -1,5 +1,5 @@
 <?php // algolplus
-
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 class SLN_Shortcode_SalonMyAccount
 {
     const NAME = 'salon_booking_my_account';

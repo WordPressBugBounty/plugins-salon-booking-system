@@ -248,38 +248,39 @@ class SLB_Discount_Plugin {
 		    $discount        = $dRepo->create($discountId);
 		    $discountValues  = $discount->applyDiscountToBookingServices($bookingServices, true, $bookingAttendants);
 		    foreach($items as $sId => $atId) {
-			if($first){
-			    $service = new SLN_Wrapper_Service($sId);
-                $service = apply_filters('sln.booking_services.buildService', $service);
-				if(!$service->getVariablePriceEnabled()){
-				    $price = $service->getPrice();
-				}else{
-					$price = $service->getVariablePrice(isset($atId['attendant']) ? $atId['attendant'] : $atId);
-				}
-			} else {
-				if(isset($items[$sId]['price'])){
-					$price = $items[$sId]['price'];
-				}else{
-					$service = $bookingservices->findByService($sId);
+		    	$price = 0;
+				if($first){
+				    $service = new SLN_Wrapper_Service($sId);
+	                $service = apply_filters('sln.booking_services.buildService', $service);
 					if(!$service->getVariablePriceEnabled()){
-						$price = $service->getPrice();
+					    $price = $service->getPrice();
 					}else{
-						$price = $service->getVariablePrice(isset($attId['attendant']) ? $atId['attendant'] : $atId);
+						$price = $service->getVariablePrice(isset($atId['attendant']) ? $atId['attendant'] : $atId);
 					}
+				} else {
+					if(isset($items[$sId]['price'])){
+						$price = $items[$sId]['price'];
+					}else{
+						$service = $bookingservices->findByService($sId);
+						if(!$service->getVariablePriceEnabled()){
+							$price = $service->getPrice();
+						}else{
+							$price = $service->getVariablePrice(isset($attId['attendant']) ? $atId['attendant'] : $atId);
+						}
+					}
+				    $price = isset($items[$sId]['price']) ? $items[$sId]['price'] : $bookingServices->findByService($sId)->getPrice();
 				}
-			    $price = isset($items[$sId]['price']) ? $items[$sId]['price'] : $bookingServices->findByService($sId)->getPrice();
-			}
 
-			if( is_array( $atId ) ){
-				$items[$sId] = array_merge($atId,array(
-					'price' => $price - $discountValues[$sId]
-				));
-			} else{
-				$items[$sId] = array( 'service' => $sId,
-										  'attendant' => $atId,
-										  'price' => $price );
-			}
-			$bookingServices->findByService($sId)->setPrice($items[$sId]['price']);
+				if( is_array( $atId ) ){
+					$items[$sId] = array_merge($atId,array(
+						'price' => $price - $discountValues[$sId]
+					));
+				} else{
+					$items[$sId] = array( 'service' => $sId,
+											  'attendant' => $atId,
+											  'price' => $price );
+				}
+				$bookingServices->findByService($sId)->setPrice($items[$sId]['price']);
 		    }
 		    $first = false;
 		}
@@ -303,6 +304,9 @@ class SLB_Discount_Plugin {
 		}
 		$discounts = array_map(array($this, 'createDiscount'), $discounts);
 		$dRepo = $this->plugin->getRepository(SLB_Discount_Plugin::POST_TYPE_DISCOUNT);
+        if(!empty(array_intersect($old_discounts, $discounts))){
+            $old_discounts = array();
+        }
 		$discounts_to_decrement = array_diff($old_discounts, $discounts);
 		$discounts_to_increment = array_diff($discounts, $old_discounts);
 		if(empty($discounts_to_decrement) && empty($discounts_to_increment)){
@@ -522,7 +526,7 @@ class SLB_Discount_Plugin {
 	}
 
 	public function hook_history_nav(){
-		echo '<li class="sln-account__nav__item sln-account__nav__discounts" role="presentation"><a data-target="#sln-account__discount__content" aria-controls="sln-account__discount__content" role="tab" data-toggle="tab"><span>'. esc_html__('Discounts', 'salon-booking-system').'</span></a></li>';
+		echo '<li class="sln-account__nav__item sln-account__nav__discounts" role="presentation"><a href="#sln-account__discount__content" data-target="#sln-account__discount__content" aria-controls="sln-account__discount__content" role="tab" data-toggle="tab"><span>'. esc_html__('Discounts', 'salon-booking-system').'</span></a></li>';
 	}
 
 	public function hook_history_content($booking_history){

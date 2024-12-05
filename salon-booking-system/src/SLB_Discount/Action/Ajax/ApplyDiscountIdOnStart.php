@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 
 class SLB_Discount_Action_Ajax_ApplyDiscountIdOnStart extends SLN_Action_Ajax_Abstract{
 

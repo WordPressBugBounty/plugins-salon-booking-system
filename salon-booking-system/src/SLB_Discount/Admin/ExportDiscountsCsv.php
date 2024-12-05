@@ -5,6 +5,8 @@ class SLB_Discount_Admin_ExportDiscountsCsv{
     public static function init_hooks(){
         add_action('sln.tools.export_button', array('SLB_Discount_Admin_ExportDiscountsCsv','hook_tools_export_button'));
         add_action('sln.tools.export_csv', array('SLB_Discount_Admin_ExportDiscountsCsv', 'hook_export'));
+        add_filter('sln_tools_export_headers', array('SLB_Discount_Admin_ExportDiscountsCsv', 'filterBookingExportHeaders'));
+        add_filter('sln_tools_export_booking_values', array('SLB_Discount_Admin_ExportDiscountsCsv', 'filterBookingExportValues'), 10, 2);
     }
 
     public static function hook_export($data){
@@ -110,6 +112,29 @@ class SLB_Discount_Admin_ExportDiscountsCsv{
 		</div>
 		<?php
 	}
+
+    public static function filterBookingExportHeaders($headers){
+        $headers[] = __('DISCOUNT NAME', 'salon-booking-system');
+        $headers[] = __('DISCOUNT AMOUNT', 'salon-booking-system');
+        return $headers;
+    }
+
+    public static function filterBookingExportValues($booking_values, $booking){
+        $discount_names = array();
+        $discount_amounts = array();
+        foreach(SLB_Discount_Helper_Booking::getBookingDiscounts($booking) as $discount){
+            $discount_names[] = $discount->getName();
+            if ($discount->getAmountType() === 'fixed') {
+                $discount_amounts[] = $discount->getAmount();
+            }
+            else {
+                $discount_amounts[] = round(($booking->getAmount()/100)*$discount->getAmount(), 2);
+            }
+        }
+        $booking_values[] = implode(', ', $discount_names);
+        $booking_values[] = implode(', ', $discount_amounts);
+        return $booking_values;
+    }
 }
 
 ?>

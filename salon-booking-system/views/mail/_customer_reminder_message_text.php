@@ -1,5 +1,8 @@
 
-<?php $_remind_message = $plugin->getSettings()->get('booking_update_message'); ?>
+<?php
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
+$_remind_message = $plugin->getSettings()->get('booking_update_message');
+?>
 
 <?php if ($_remind_message): ?>
 

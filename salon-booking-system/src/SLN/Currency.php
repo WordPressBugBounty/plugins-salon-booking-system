@@ -25,6 +25,8 @@ class SLN_Currency
         'CZK' => array('name' => 'Czech Koruna', 'symbol' => 'Kč', 'ASCII' => ''),
         'CHF' => array('name' => 'Swiss Franc', 'symbol' => 'CHF', 'ASCII' => ''),
         'CFA' => array('name' => 'West African CFA franc', 'symbol' => 'CFA', 'ASCII' => ''),
+        'XOF' => array('name' => 'West Africa which XOF', 'symbol' => 'XOF', 'ASCII' => ''),
+        'XAF' => array('name' => 'Central Africa with XAF', 'symbol' => 'XAF', 'ASCII' => ''),
         'COP' => array('name' => 'Colombian peso', 'symbol' => '$', 'ASCII' => ''),
         'DKK' => array('name' => 'Danish Krone', 'symbol' => 'kr ', 'ASCII' => ''),
         'DOP' => array('name' => 'Dominican peso', 'symbol' => 'RD$', 'ASCII' => ''),

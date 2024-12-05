@@ -105,8 +105,9 @@ $bookingDateTime = empty($forAdmin) && $plugin->getSettings()->isDisplaySlotsCus
 					} ?></p>
 				</td>
 			</tr>
-		<?php endif ?>
-	<?php endforeach; ?>
+		<?php endif;
+		do_action('sln.mail.service_details', $bookingService->getService());
+		endforeach; ?>
         <tr>
             <td align="center" style="Margin:0;padding-top:5px;padding-bottom:20px;padding-left:20px;padding-right:20px;font-size:0">
                 <table border="0" width="100%" height="100%" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">

@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 class SLN_Enum_BookingStatus extends SLN_Enum_AbstractEnum
 {
     const PENDING_PAYMENT = 'sln-b-pendingpayment';

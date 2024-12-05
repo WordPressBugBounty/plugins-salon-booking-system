@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 
 class SLB_Discount_PostType_Discount extends SLN_PostType_Abstract
 {
@@ -38,7 +39,7 @@ class SLB_Discount_PostType_Discount extends SLN_PostType_Abstract
     public function ajax()
     {
         $method = sanitize_text_field( wp_unslash($_POST['method'])  );
-        if (isset($method)) {
+        if (isset($method) && current_user_can('edit_sln_discounts')) {
             $method = 'ajax_'.$method;
             if (method_exists($this, $method)) {
                 $this->$method();

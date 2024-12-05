@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 $helper->showNonce($postType);
 ?>
 <div class="sln-box sln-box--main sln-box--haspanel sln-box--haspanel--open">

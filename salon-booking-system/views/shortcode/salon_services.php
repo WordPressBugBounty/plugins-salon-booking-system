@@ -5,6 +5,7 @@
  * @var string                            $submitName
  * @var SLN_Shortcode_Salon_ServicesStep $step
  */
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 if ($plugin->getSettings()->isDisabled()) {
 	$message = $plugin->getSettings()->getDisabledMessage();
 	?>

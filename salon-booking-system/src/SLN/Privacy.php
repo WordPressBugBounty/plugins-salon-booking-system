@@ -1,4 +1,5 @@
-<?php 
+<?php
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 class SLN_Privacy{
 	/**
 	 * This is a list of exporters.

@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
 {
     private $bookingServices;

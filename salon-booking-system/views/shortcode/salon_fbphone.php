@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 $plugin = SLN_Plugin::getInstance();
 $bb = $plugin->getBookingBuilder();
 $current     = $step->getShortcode()->getCurrentStep();

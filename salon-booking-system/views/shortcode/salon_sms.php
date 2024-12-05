@@ -5,6 +5,8 @@
  * @var string $submitName
  * @var SLN_Shortcode_Salon_Step $step
  */
+// phpcs:ignoreFile WordPress.Security.NonceVerification.Recommended
+
 $bb = $plugin->getBookingBuilder();
 $valid = isset($_SESSION['sln_sms_valid']) ? $_SESSION['sln_sms_valid'] : false;
 $currentStep = $step->getShortcode()->getCurrentStep();

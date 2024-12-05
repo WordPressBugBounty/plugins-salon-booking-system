@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile WordPress.DB.PreparedSQL.NotPrepared
 
 namespace SLB_API_Mobile\Controller;
 

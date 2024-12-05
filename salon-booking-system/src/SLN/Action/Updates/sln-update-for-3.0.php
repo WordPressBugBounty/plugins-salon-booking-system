@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 // START UPDATE SERVICES & ATTENDANTS FOR BOOKINGS BEFORE 110 feature
 $args = array(
     'post_type' => SLN_Plugin::POST_TYPE_BOOKING,

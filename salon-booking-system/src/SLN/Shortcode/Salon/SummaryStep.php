@@ -48,10 +48,10 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
             
             return !$this->hasErrors();
         }elseif(isset($_GET['op']) || $mode){
+            if(!$plugin->getSettings()->get('create_booking_after_pay')){
+                $bb->setStatus($isConfirmation ? SLN_Enum_BookingStatus::PENDING : SLN_Enum_BookingStatus::PENDING_PAYMENT);
+            }
             if($error = $paymentMethod->dispatchThankyou($this, $bb)){
-                if(!$plugin->getSettings()->get('create_booking_after_pay')){
-                    $bb->setStatus($isConfirmation ? SLN_Enum_BookingStatus::PENDING : SLN_Enum_BookingStatus::PENDING_PAYMENT);
-                }
                 $this->addError($error);
             }else{
                 return !$this->hasErrors();
