@@ -82,7 +82,7 @@ class SLN_Action_Reminder
             );
         }
         if($sms->hasError()){
-            throw new Exception($sms->getError());
+            throw new Exception(esc_html($sms->getError()));
         }
     }
 

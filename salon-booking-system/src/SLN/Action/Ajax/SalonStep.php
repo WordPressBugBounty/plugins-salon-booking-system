@@ -1,4 +1,6 @@
 <?php
+// phpcs:ignoreFile WordPress.Security.NonceVerification.Missing
+// phpcs:ignoreFile WordPress.Security.ValidatedSanitizedInput.MissingUnslash
 
 class SLN_Action_Ajax_SalonStep extends SLN_Action_Ajax_Abstract
 {

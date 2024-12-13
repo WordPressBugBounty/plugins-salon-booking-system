@@ -84,7 +84,7 @@ class Composer
         throw new InvalidArgumentException(
             sprintf(
                 'Invalid Google service name "%s"',
-                $service
+                esc_html($service)
             )
         );
       }
@@ -94,7 +94,7 @@ class Composer
         throw new InvalidArgumentException(
             sprintf(
                 'Google service "%s" does not exist or was removed previously',
-                $service
+                esc_html($service)
             )
         );
       }

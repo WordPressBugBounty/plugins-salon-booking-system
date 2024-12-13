@@ -1,0 +1,10 @@
+@font-face {
+  font-family: 'GeoSlab703 XBd BT Extra Bold';
+  src: url('/path-to/GeoSlab703 XBd BT Extra Bold.woff2') format('woff2'),
+       url('/path-to/GeoSlab703 XBd BT Extra Bold.woff') format('woff'),
+       url('/path-to/GeoSlab703 XBd BT Extra Bold.ttf')  format('truetype');
+}
+
+body {
+  font-family: 'GeoSlab703 XBd BT Extra Bold', sans-serif;
+}

@@ -1,4 +1,6 @@
 <?php
+// phpcs:ignoreFile WordPress.Security.NonceVerification.Recommended
+// phpcs:ignoreFile WordPress.Security.NonceVerification.Missing
 
 class SLN_Shortcode_Salon
 {

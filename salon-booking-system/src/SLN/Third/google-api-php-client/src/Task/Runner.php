@@ -254,7 +254,7 @@ class Runner
    */
   private function getJitter()
   {
-    return $this->jitter * 2 * mt_rand() / mt_getrandmax() - $this->jitter;
+    return $this->jitter * 2 * wp_rand() / mt_getrandmax() - $this->jitter;
   }
 
   /**

@@ -1,4 +1,6 @@
 <?php
+// phpcs:ignoreFile plugin_updater_detected
+// phpcs:ignoreFile update_modification_detected
 
 // Make sure that we define this library only once
 // @todo What happens when two different versions are installed?
@@ -172,7 +174,7 @@ class PresetoPluginUpdateEnvato {
 					if ( ! $item_details ) {
 						return new WP_Error(
 								'plugins_api_envato_failed',
-								__( 'Failed to retreive plugin details from the Envato API.' )
+								__( 'Failed to retreive plugin details from the Envato API.', 'salon-booking-plugin')
 							);
 					}
 
@@ -183,7 +185,7 @@ class PresetoPluginUpdateEnvato {
 									'<p>%s</p>',
 									sprintf(
                                         // translators: %s: the name of the new version of the plugin
-										__( 'New version of <strong>%s</strong> is available.' ),
+										__( 'New version of <strong>%s</strong> is available.', 'salon-booking-plugin' ),
 										esc_html( $item_details->item )
 									)
 								),

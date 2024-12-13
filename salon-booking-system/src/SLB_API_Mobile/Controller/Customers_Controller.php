@@ -354,7 +354,7 @@ class Customers_Controller extends REST_Controller
             return new WP_Error( 'salon_rest_cannot_view', __( sprintf('Sorry, resource list error (%s).', $ex->getMessage()), 'salon-booking-system' ), array( 'status' => 404 ) );
         }
 
-        $customers = apply_filters('sln_api_customers_get_items_customers', $customers, $request);
+        //$customers = apply_filters('sln_api_customers_get_items_customers', $customers, $request);
 
         $response = $this->success_response(array('items' => $customers));
 

@@ -235,18 +235,18 @@ class MediaFileUpload
 
     if (self::UPLOAD_RESUMABLE_TYPE == $uploadType) {
       $contentType = $mimeType;
-      $postBody = is_string($meta) ? $meta : json_encode($meta);
+      $postBody = is_string($meta) ? $meta : wp_json_encode($meta);
     } else if (self::UPLOAD_MEDIA_TYPE == $uploadType) {
       $contentType = $mimeType;
       $postBody = $this->data;
     } else if (self::UPLOAD_MULTIPART_TYPE == $uploadType) {
       // This is a multipart/related upload.
-      $boundary = $this->boundary ?: mt_rand();
+      $boundary = $this->boundary ?: wp_rand();
       $boundary = str_replace('"', '', $boundary);
       $contentType = 'multipart/related; boundary=' . $boundary;
       $related = "--$boundary\r\n";
       $related .= "Content-Type: application/json; charset=UTF-8\r\n";
-      $related .= "\r\n" . json_encode($meta) . "\r\n";
+      $related .= "\r\n" . wp_json_encode($meta) . "\r\n";
       $related .= "--$boundary\r\n";
       $related .= "Content-Type: $mimeType\r\n";
       $related .= "Content-Transfer-Encoding: base64\r\n";
@@ -332,7 +332,7 @@ class MediaFileUpload
     $error = "Failed to start the resumable upload (HTTP {$message})";
     $this->client->getLogger()->error($error);
 
-    throw new GoogleException($error);
+    throw new GoogleException(esc_html($error));
   }
 
   private function transformToUploadUrl()

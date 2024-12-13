@@ -27,14 +27,6 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
         $isConfirmation = $plugin->getSettings()->get('confirmation') && in_array($bb->getStatus(), array(SLN_Enum_BookingStatus::DRAFT, SLN_Enum_BookingStatus::PENDING));
 
         if($mode == 'confirm' || empty($paymentMethod) || $bb->getAmount() <= 0.0){
-            $status = $plugin->getSettings()->get('confirmation') ?
-            SLN_Enum_BookingStatus::PENDING
-            : SLN_Enum_BookingStatus::CONFIRMED;
-
-	        $status = apply_filters('sln.booking_builder.getCreateStatus', $status);
-            $bb->setPrepaidServices();
-            $bb->setStatus($status);
-            
             return !$this->hasErrors();
         } elseif($mode == 'later'){
             if(in_array($bb->getStatus(), array(SLN_Enum_BookingStatus::PENDING_PAYMENT, SLN_Enum_BookingStatus::DRAFT))){
@@ -48,9 +40,6 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
             
             return !$this->hasErrors();
         }elseif(isset($_GET['op']) || $mode){
-            if(!$plugin->getSettings()->get('create_booking_after_pay')){
-                $bb->setStatus($isConfirmation ? SLN_Enum_BookingStatus::PENDING : SLN_Enum_BookingStatus::PENDING_PAYMENT);
-            }
             if($error = $paymentMethod->dispatchThankyou($this, $bb)){
                 $this->addError($error);
             }else{
@@ -59,11 +48,6 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
         }
         if(!empty($paymentMethod) && in_array($bb->getStatus(), array(SLN_Enum_BookingStatus::PAY_LATER, SLN_Enum_BookingStatus::PENDING_PAYMENT))){
             return false;
-        }
-        if(!$plugin->getSettings()->get('create_booking_after_pay')){
-            $bb->setStatus($isConfirmation ? SLN_Enum_BookingStatus::PENDING : SLN_Enum_BookingStatus::PENDING_PAYMENT);
-
-            return !$this->hasErrors();
         }
 
         return !$this->hasErrors();
@@ -76,7 +60,7 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
             $data = $this->getViewData();
             do_action('sln.shortcode.summary.dispatchForm.before_booking_creation', $this, $bb);
             if(!$this->hasErrors()){
-                $bb->create(SLN_Enum_BookingStatus::DRAFT);
+                $bb->create();
             }
             do_action('sln.shortcode.summary.dispatchForm.after_booking_creation', $bb);
             return parent::render();

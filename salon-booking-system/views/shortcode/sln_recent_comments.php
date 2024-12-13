@@ -14,7 +14,7 @@ $plugin = SLN_Plugin::getInstance();
                             <?php echo $user ? esc_html($user->first_name) . ' ' . esc_html($user->last_name) : esc_html($comment->comment_author); ?>
                     </div>
                         <p class="sln-datalist__item__date">
-                            <?php echo esc_html(date('d.m.Y', strtotime($comment->comment_date))) ?>
+                            <?php echo esc_html(gmdate('d.m.Y', strtotime($comment->comment_date))) ?>
 			</p>
                         <?php if ($comment->rating) { ?>
                             <span class="sln-datalist__item__rating">

@@ -32,8 +32,9 @@ $isPro = defined('SLN_VERSION_PAY') && SLN_VERSION_PAY;
 			<?php if(!empty($headers) && isset($headers)){
 				foreach($headers as $attCol => $att){
 					if(!empty($att)){
-						for($line = 0; $line < $lines; $line++): ?>
-							<div style="margin-left: <?php echo ($attCol+1)*200; ?>px; top: <?php echo $line * 100; ?>px;" class="att-time-slot <?php echo $calendar->hasAttendantHoliday($line, $att['id']) && !in_array($calendar->getTimeByLine($line), $att['unavailable_times']) ? 'blocked' : ''; ?>" data-index="<?php echo $line; ?>" data-att-id="<?php echo $att['id']; ?>">
+						for($line = 0; $line < $lines; $line++):
+							$holiday_by_line = $calendar->hasHolidaysByLine($line); ?>
+							<div style="margin-left: <?php echo ($attCol+1)*200; ?>px; top: <?php echo $line * 100; ?>px;" class="att-time-slot <?php echo $calendar->hasAttendantHoliday($line, $att['id']) && !in_array($calendar->getTimeByLine($line), $att['unavailable_times']) || $holiday_by_line ? 'blocked' : ''; ?>" data-index="<?php echo $line; ?>" data-att-id="<?php echo $att['id']; ?>" <?php echo ($holiday_by_line) ? 'title="'. __('Holiday rule', 'salon-booking-system').'"' : ''; ?>>
 								<button type="button" class="sln-btn sln-btn--cal-day-select sln-btn--icon sln-icon--checkmark"><?php esc_html_e('SELECT', 'salon-booking-system'); ?></button>
 								<div class="att-row-actions">
 									<span class="cal-day-click-tip"><?php esc_html_e('Click on the "ending time" row', 'salon-booking-system')?></span>
@@ -197,7 +198,7 @@ $isPro = defined('SLN_VERSION_PAY') && SLN_VERSION_PAY;
 
 			<div id="cal-day-panel-hour">
 				<?php for($line = 0; $line < $lines; $line++): ?>
-					<div class="row-fluid cal-day-hour-part <?php echo $calendar->hasHolidaysByLine($line) && !$calendar->getAttendantMode() ? 'blocked' : '' ?>">
+					<div class="row-fluid cal-day-hour-part <?php echo ($calendar->hasHolidaysByLine($line) || $calendar->hasHolidaysDaylyByLine($line)) && !$calendar->getAttendantMode() ? 'blocked' : '' ?>" <?php echo $calendar->hasHolidaysByLine($line) ? 'title="'.__('Holiday rule', 'salon-booking-system').'"':'' ?>>
 						<div class="span1 col-xs-1"><b><?php echo $calendar->getTimeByLine($line); ?></b></div>
 						<div class="span1 col-xs-3 cal-day-hour-part-first-column"></div>
 						<div class="span10 col-xs-8"></div>

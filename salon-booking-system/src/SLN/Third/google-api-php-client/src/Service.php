@@ -39,9 +39,9 @@ class Service
     } else {
       $errorMessage = 'constructor must be array or instance of Google\Client';
       if (class_exists('TypeError')) {
-        throw new TypeError($errorMessage);
+        throw new TypeError(esc_html($errorMessage));
       }
-      trigger_error($errorMessage, E_USER_ERROR);
+      trigger_error(esc_html($errorMessage), E_USER_ERROR);
     }
   }
 

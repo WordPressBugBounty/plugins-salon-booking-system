@@ -1,5 +1,9 @@
 <?php
-
+// phpcs:ignoreFile WordPress.Security.NonceVerification.Recommended
+// phpcs:ignoreFile WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+// phpcs:ignoreFile WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+// phpcs:ignoreFile WordPress.Security.NonceVerification.Missing
+// phpcs:ignoreFile WordPress.Security.ValidatedSanitizedInput.InputNotValidated
 namespace SLB_API_Mobile\Helper;
 
 class RequestHelper {

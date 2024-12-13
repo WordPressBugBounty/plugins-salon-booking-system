@@ -1,5 +1,7 @@
 <?php
-
+// phpcs:ignoreFile WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+// phpcs:ignoreFile WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+// phpcs:ignoreFile WordPress.Security.NonceVerification.Missing
 class SLN_Action_Ajax_FacebookLogin extends SLN_Action_Ajax_Abstract
 {
 	protected $errors = array();

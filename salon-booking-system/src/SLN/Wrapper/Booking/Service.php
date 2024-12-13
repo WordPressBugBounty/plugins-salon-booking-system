@@ -51,7 +51,6 @@ final class SLN_Wrapper_Booking_Service
         if (!empty($data['count'])) {
 			$this->data['count'] = $data['count'];
 		}
-
         if (!empty($data['resource'])) {
             $this->data['resource'] = SLN_Plugin::getInstance()->createResource($data['resource']);
         }
@@ -130,7 +129,7 @@ final class SLN_Wrapper_Booking_Service
      */
     public function getResource()
     {
-        return isset($this->data['resource']) ? $this->data['resource'] : null;
+        return isset($this->data['resource']) && !empty($this->data['resource']) ? $this->data['resource'] : null;
     }
 
     /**

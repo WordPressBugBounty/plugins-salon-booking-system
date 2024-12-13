@@ -38,8 +38,11 @@ class SLB_Discount_PostType_Discount extends SLN_PostType_Abstract
 
     public function ajax()
     {
+        if(!current_user_can('edit_sln_discounts')){
+            wp_die('<p>' . esc_html__('Sory, you not allowed to ajax.'). '</p>', 403);
+        }
         $method = sanitize_text_field( wp_unslash($_POST['method'])  );
-        if (isset($method) && current_user_can('edit_sln_discounts')) {
+        if (isset($method)) {
             $method = 'ajax_'.$method;
             if (method_exists($this, $method)) {
                 $this->$method();

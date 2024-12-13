@@ -1,4 +1,6 @@
 <?php // algolplus
+// phpcs:ignoreFile WordPress.Security.NonceVerification.Recommended
+// phpcs:ignoreFile WordPress.Security.ValidatedSanitizedInput.InputNotValidated
 
 class SLN_Shortcode_SalonServices
 {

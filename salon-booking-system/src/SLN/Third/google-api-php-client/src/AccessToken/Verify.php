@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+// phpcs:ignoreFile WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 namespace Google\AccessToken;
 
 use Firebase\JWT\ExpiredException as ExpiredExceptionV3;
@@ -153,7 +153,7 @@ class Verify
       if (!$file = file_get_contents($url)) {
         throw new GoogleException(
             "Failed to retrieve verification certificates: '" .
-            $url . "'."
+            esc_url_raw($url) . "'."
         );
       }
 
@@ -168,9 +168,9 @@ class Verify
     throw new GoogleException(
         sprintf(
             'Failed to retrieve verification certificates: "%s".',
-            $response->getBody()->getContents()
+            esc_html($response->getBody()->getContents())
         ),
-        $response->getStatusCode()
+        intval($response->getStatusCode())
     );
   }
 

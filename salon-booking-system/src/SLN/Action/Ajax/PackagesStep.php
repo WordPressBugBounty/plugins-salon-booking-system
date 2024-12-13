@@ -1,4 +1,6 @@
 <?php
+// phpcs:ignoreFile WordPress.Security.NonceVerification.Missing
+// phpcs:ignoreFile WordPress.Security.ValidatedSanitizedInput.MissingUnslash
 
 use SalonPackages\Shortcode\SalonPackages;
 

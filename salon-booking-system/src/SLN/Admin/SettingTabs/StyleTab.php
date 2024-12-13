@@ -1,4 +1,6 @@
 <?php
+// phpcs:ignoreFile WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+// phpcs:ignoreFile WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
 class SLN_Admin_SettingTabs_StyleTab extends SLN_Admin_SettingTabs_AbstractTab {
 	protected $fields = array(
 		'style_shortcode',

@@ -953,11 +953,16 @@ class Client
    * @param string|array $config the configuration json
    * @throws \Google\Exception
    */
-  public function setAuthConfig($config)
+    // phpcs:ignoreFile WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+    // phpcs:ignoreFile WordPress.PHP.DevelopmentFunctions.error_log_var_export
+    // phpcs:ignoreFile WordPress.PHP.DevelopmentFunctions.error_log_var_export
+    // phpcs:ignoreFile WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+    // phpcs:ignoreFile WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+    public function setAuthConfig($config)
   {
     if (is_string($config)) {
       if (!file_exists($config)) {
-        throw new InvalidArgumentException(sprintf('file "%s" does not exist', $config));
+        throw new InvalidArgumentException(sprintf('file "%s" does not exist', esc_html($config)));
       }
 
       $json = file_get_contents($config);

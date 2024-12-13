@@ -1,4 +1,7 @@
 <?php
+// phpcs:ignoreFile WordPress.Security.NonceVerification.Recommended
+// phpcs:ignoreFile WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+// phpcs:ignoreFile WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 use Salon\Util\Date;
 

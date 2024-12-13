@@ -24,8 +24,8 @@
 							</a>
 						</p>
 						<p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:'source sans pro', 'helvetica neue', helvetica, arial, sans-serif;line-height:24px;color:#525252;font-size:16px">
-							<a href="tel:<?php echo esc_attr($booking->getPhone()) ?>" target="_blank" style="text-decoration:none;Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:'source sans pro', 'helvetica neue', helvetica, arial, sans-serif;line-height:24px;color:#525252;font-size:16px">
-							<?php echo esc_attr($booking->getPhone()) ?>
+							<a href="tel:<?php echo esc_attr($booking->getSmsPrefix()). esc_attr($booking->getPhone()) ?>" target="_blank" style="text-decoration:none;Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:'source sans pro', 'helvetica neue', helvetica, arial, sans-serif;line-height:24px;color:#525252;font-size:16px">
+							<?php echo esc_attr($booking->getSmsPrefix()). ' '. esc_attr($booking->getPhone()) ?>
 							</a>
 						</p>
 						<p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:'source sans pro', 'helvetica neue', helvetica, arial, sans-serif;line-height:24px;color:#525252;font-size:16px"><?php echo esc_attr($booking->getAddress()) ?></p>

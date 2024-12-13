@@ -25,6 +25,7 @@ use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+// phpcs:ignoreFile Squiz.PHP.Heredoc.NotAllowed
 
 /**
  * Class to handle batched requests to the Google API service.
@@ -62,7 +63,7 @@ class Batch
       $batchPath = null
   ) {
     $this->client = $client;
-    $this->boundary = $boundary ?: mt_rand();
+    $this->boundary = $boundary ?: wp_rand();
     $this->rootUrl = rtrim($rootUrl ?: $this->client->getConfig('base_path'), '/');
     $this->batchPath = $batchPath ?: self::BATCH_PATH;
   }
@@ -70,7 +71,7 @@ class Batch
   public function add(RequestInterface $request, $key = false)
   {
     if (false == $key) {
-      $key = mt_rand();
+      $key = wp_rand();
     }
 
     $this->requests[$key] = $request;

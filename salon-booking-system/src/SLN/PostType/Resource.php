@@ -96,6 +96,9 @@ class SLN_PostType_Resource extends SLN_PostType_Abstract
 
     public function ajax()
     {
+        if(!current_user_can('edit_sln_resources')){
+            wp_die('<p>' . esc_html__('Sory, you not allowed to ajax.'). '</p>', 403);
+        }
         if (isset($_POST['method']) && current_user_can('edit_sln_resources')) {
             $method = 'ajax_'.sanitize_text_field(wp_unslash($_POST['method']));
             if (method_exists($this, $method)) {

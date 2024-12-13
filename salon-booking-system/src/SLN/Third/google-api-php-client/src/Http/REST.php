@@ -125,7 +125,7 @@ class REST
       $body = (string) $response->getBody();
 
       // Check if we received errors, and add those to the Exception for convenience
-      throw new GoogleServiceException($body, $code, null, self::getResponseErrors($body));
+      throw new GoogleServiceException(esc_html($body), intval($code), null, esc_html(self::getResponseErrors($body)));
     }
 
     // Ensure we only pull the entire body into memory if the request is not

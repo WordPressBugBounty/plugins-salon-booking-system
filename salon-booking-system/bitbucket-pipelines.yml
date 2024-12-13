@@ -1,4 +1,8 @@
 image: php:7.4.1
+options:
+  runtime:
+    cloud:
+      atlassian-ip-ranges: true
 pipelines:
   branches:
     develop:
@@ -53,6 +57,8 @@ pipelines:
             - sshpass -p $SFTP_PASS scp -o StrictHostKeyChecking=no build/releases/salon-booking-plugin-pro-dev-pay-*.zip sbit@pro-dev.salonbooking.it:/home/sbit/web/pro-dev.salonbooking.it/public_html/wp-content/plugins
             - sshpass -p $SFTP_PASS ssh -o StrictHostKeyChecking=no sbit@free-dev.salonbooking.it 'cd /home/sbit/web/free-dev.salonbooking.it/public_html/wp-content/plugins && rm -rf salon-booking-system-dev && unzip salon-booking-system-dev-*.zip && rm -rf salon-booking-system-dev-*.zip'
             - sshpass -p $SFTP_PASS ssh -o StrictHostKeyChecking=no sbit@pro-dev.salonbooking.it 'cd /home/sbit/web/pro-dev.salonbooking.it/public_html/wp-content/plugins && rm -rf salon-booking-plugin-pro-dev && unzip salon-booking-plugin-pro-dev-pay-*.zip && rm -rf salon-booking-plugin-pro-dev-pay-*.zip'
+          needs:
+            - Build project
     CI_master:
       - step:
           name: Test plugin in browser

@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.PHP.DevelopmentFunctions.error_log_print_r
 class SLN_Helper_HoursBefore
 {
     private $settings;

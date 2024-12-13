@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 class SLN_Action_UpdatePhoneCountryDialCode
 {
     /** @var SLN_Plugin */

@@ -63,6 +63,7 @@ class SLN_Action_Update
 
     public function hook_admin_notices(){
         remove_action('admin_notice', array($this, 'hook_admin_notices'));
+        $version = $this->plugin->getSettings()->getDbVersion();
         echo $this->plugin->loadView('notice/html_notice_update', compact('version'));
     }
 

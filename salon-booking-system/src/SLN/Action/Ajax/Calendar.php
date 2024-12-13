@@ -573,7 +573,25 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
   public function hasHolidaysByLine($line){
     $settings = $this->plugin->getSettings();
     $holidays = $settings->get('holidays') ?: array();
-    $holidays = array_merge($holidays, $settings->get('holidays_daily') ?: array());
+    if(empty($holidays) || !isset($holidays)){
+      return false;
+    }
+    $interval = $settings->getInterval();
+    $time = clone $this->startTime;
+    $time->modify($line*$interval. ' minutes');
+    foreach($holidays as $holidayRule){
+      $startTime = new DateTime($holidayRule['from_date'] . ' ' . $holidayRule['from_time'], $time->getTimezone());
+      $endTime = new DateTime($holidayRule['to_date'] . ' ' . $holidayRule['to_time'], $time->getTimezone());
+      if($startTime <= $time && $time < $endTime){
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public function hasHolidaysDaylyByLine($line){
+    $settings = $this->plugin->getSettings();
+    $holidays = $settings->get('holidays_daily') ?: array();
     if(empty($holidays) || !isset($holidays)){
       return false;
     }

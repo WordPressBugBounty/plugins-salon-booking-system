@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile WordPress.PHP.DevelopmentFunctions.error_log_print_r
 
 
 abstract class SLN_Helper_Availability_AbstractDayBookings

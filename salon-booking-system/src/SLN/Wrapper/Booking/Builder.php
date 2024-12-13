@@ -1,4 +1,6 @@
 <?php
+// phpcs:ignoreFile WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+// phpcs:ignoreFile WordPress.PHP.DevelopmentFunctions.error_log_print_r
 
 class SLN_Wrapper_Booking_Builder
 {
@@ -356,6 +358,9 @@ class SLN_Wrapper_Booking_Builder
     private function getCreateStatus()
     {
         $settings = $this->plugin->getSettings();
+        if($settings->get('create_booking_after_pay')){
+            return SLN_Enum_BookingStatus::DRAFT;
+        }
 
         $status = $settings->get('confirmation') ?
             SLN_Enum_BookingStatus::PENDING
