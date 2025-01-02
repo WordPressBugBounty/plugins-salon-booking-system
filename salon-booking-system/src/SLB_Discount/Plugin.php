@@ -195,7 +195,7 @@ class SLB_Discount_Plugin {
 
 				if( is_array( $atId ) ){
 					$items[$sId] = array_merge($atId,array(
-						'price'     => $price - $discountValues[$sId]
+						'price'     => $price - $discountValues[$atId['service']]
 					));
 				} else{
 					$items[$sId] = array( 'service' => $sId,
@@ -352,6 +352,7 @@ class SLB_Discount_Plugin {
 				}
 				$rules = $discount->getDiscountRules();
 				if (!empty($rules)) {
+					$discountScores = array();
 					foreach($rules as $rule) {
 						if ($rule['mode'] === 'score') {
 							$discountScores[] = (int)$rule['score_number'];

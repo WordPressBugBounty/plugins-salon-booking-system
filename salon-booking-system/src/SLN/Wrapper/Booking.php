@@ -440,9 +440,6 @@ class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
     public function getCustomer()
     {
         $customer = new SLN_Wrapper_Customer($this->getUserId());
-        if ($customer->isEmpty()) {
-            $customer = null;
-        }
 
         return $customer;
     }

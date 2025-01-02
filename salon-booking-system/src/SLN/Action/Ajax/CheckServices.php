@@ -254,7 +254,12 @@ class SLN_Action_Ajax_CheckServices extends SLN_Action_Ajax_Abstract
 				$serviceErrors[] = __('This service is exclusive. Please remove other services.', 'salon-booking-system');
 			}
 
-			if( ! empty( array_filter($selectedServicesList, function ($sId) use ($checkAddService, $bookingService) { return $this->plugin->createService($sId)->isExclusive() && ($checkAddService || $bookingService->getService()->getId() != $sId ); } ) ) ) {
+			$filteredSelectedServiceList = array_filter($selectedServicesList, function($sId) use ($checkAddService, $bookingService){
+				$service = $this->plugin->createService($sId);
+				return (!$service->isEmpty() && $service->isExclusive()) && ($checkAddService || $bookingService->getService()->getId() != $sId);
+			});
+
+			if( ! empty($filteredSelectedServiceList) ) {
 
 				$serviceErrors[] = __('These selected services have exclusive service. Please remove it before add.', 'salon-booking-system');
 			}

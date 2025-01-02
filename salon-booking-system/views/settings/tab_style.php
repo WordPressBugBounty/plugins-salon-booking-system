@@ -204,6 +204,20 @@ sum(
             </div>
         </div>
     </div>
+    <div class="col-xs-12 col-sm-8 col-md-4">
+        <div id="sln-booking-modal" class="sln-box sln-box--main">
+            <div class="row">
+                <div class="col-xs-12">
+                    <div class="sln-checkbox">
+                        <?php $this->row_input_checkbox('hide_service_duration', __('Hide service duration', 'salon-booking-system'));?>
+                    </div>
+                    <div class="sln-box-maininfo">
+                        <p class="sln-box-info"><?php esc_html_e('When enabled, service duration will be hidden on booking form and email notification', 'salon-booking-system')?></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 

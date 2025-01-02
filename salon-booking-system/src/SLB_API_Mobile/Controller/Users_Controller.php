@@ -5,6 +5,7 @@ namespace SLB_API_Mobile\Controller;
 
 use WP_Error;
 use WP_REST_Server;
+use SLN_Plugin;
 
 class Users_Controller extends REST_Controller
 {
@@ -15,17 +16,85 @@ class Users_Controller extends REST_Controller
      */
     protected $rest_base = 'users';
 
-    public function register_routes() {
-
-        register_rest_route( $this->namespace, '/' . $this->rest_base, array(
+    public function register_routes()
+    {
+        register_rest_route(
+            $this->namespace,
+            '/' . $this->rest_base,
             array(
-                'methods'   => WP_REST_Server::EDITABLE,
-                'callback'  => array( $this, 'update_item' ),
-		'permission_callback' => '__return_true',
-                'args'	    => $this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE ),
-            ),
-            'schema' => array( $this, 'get_public_item_schema' ),
-        ) );
+                array(
+                    'methods'   => WP_REST_Server::EDITABLE,
+                    'callback'  => array($this, 'update_item'),
+                    'permission_callback' => '__return_true',
+                    'args'      => $this->get_endpoint_args_for_item_schema(WP_REST_Server::EDITABLE),
+                ),
+                'schema' => array($this, 'get_public_item_schema'),
+            )
+        );
+
+        register_rest_route(
+            $this->namespace,
+            '/' . $this->rest_base . '/current',
+            array(
+                array(
+                    'methods'   => WP_REST_Server::READABLE,
+                    'callback'  => array($this, 'get_current_user'),
+                    'permission_callback' => array($this, 'check_permissions'),
+                ),
+            )
+        );
+
+        register_rest_route(
+            $this->namespace,
+            '/' . $this->rest_base . '/logout',
+            array(
+                array(
+                    'methods'   => WP_REST_Server::CREATABLE,
+                    'callback'  => array($this, 'logout_user'),
+                    'permission_callback' => array($this, 'check_permissions'),
+                ),
+            )
+        );
+    }
+
+    public function get_current_user($request)
+    {
+        $user = wp_get_current_user();
+
+        if (!$user || $user->ID === 0) {
+            return new WP_Error('no_user', __('No user is currently logged in.', 'salon-booking-system'), array('status' => 401));
+        }
+
+        $roles_map = array(
+            SLN_Plugin::USER_ROLE_STAFF => __('Salon staff', SLN_Plugin::TEXT_DOMAIN),
+            SLN_Plugin::USER_ROLE_CUSTOMER => __('Salon customer', SLN_Plugin::TEXT_DOMAIN),
+            SLN_Plugin::USER_ROLE_WORKER => __('Salon worker', SLN_Plugin::TEXT_DOMAIN),
+        );
+
+        $user_role = $user->roles[0] ?? 'guest';
+        $readable_role = $roles_map[$user_role] ?? $user_role;
+
+        return rest_ensure_response(array(
+            'id'    => $user->ID,
+            'name'  => $user->display_name,
+            'email' => $user->user_email,
+            'role'  => $readable_role,
+        ));
+    }
+
+    public function logout_user($request)
+    {
+        wp_logout();
+
+        return rest_ensure_response(array(
+            'success' => true,
+            'message' => __('User logged out successfully.', 'salon-booking-system'),
+        ));
+    }
+
+    public function check_permissions()
+    {
+        return is_user_logged_in();
     }
 
     public function update_item( $request )

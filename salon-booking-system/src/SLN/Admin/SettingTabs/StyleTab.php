@@ -11,6 +11,7 @@ class SLN_Admin_SettingTabs_StyleTab extends SLN_Admin_SettingTabs_AbstractTab {
 		'no_bootstrap_js',
 		'replace_booking_modal_with_popup',
 		'disable_google_fonts',
+		'hide_service_duration',
 	);
 
 	protected function postProcess() {

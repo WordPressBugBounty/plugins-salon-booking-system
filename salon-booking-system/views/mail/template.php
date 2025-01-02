@@ -82,19 +82,19 @@ a[x-apple-data-detectors] {
              <tr>
               <td align="left" style="padding:0;Margin:0;padding-top:20px;padding-left:20px;padding-right:20px">
                 <?php
-                if(!isset($updated_message)){
+                if(empty($updated_message)){
                     $updated_message = isset($data['updated_message']) ? $data['updated_message'] : '';
                 }
-                if(!isset($updated)){
+                if(empty($updated)){
                     $updated = isset($data['updated']) ? $data['updated'] : false;
                 }
-                if(!isset($remind)){
+                if(empty($remind)){
                     $remind = isset($data['remind']) ? $data['remind'] : false;
                 }
-                if(!isset($customer)){
+                if(empty($customer)){
                     $customer = $booking->getCustomer();
                 }
-                if(!isset($payRemainingAmount)){
+                if(empty($payRemainingAmount)){
                     $payRemainingAmount = isset($data['pay_remaining_amount']) ? $data['pay_remaining_amount'] : false;
                 }
                 echo $plugin->loadView('mail/' . $contentTemplate, compact('booking', 'plugin', 'updated_message', 'customer', 'forAdmin', 'updated', 'remind', 'payRemainingAmount')) ?>

@@ -111,20 +111,20 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
             <ul class="sln-admin__tabs__nav" role="tablist">
                 <li class="sln-admin__tabs__nav__item active" role="presentation">
                     <a data-target="#sln-booking__customer" aria-controls="sln-booking__customer" role="tab" data-toggle="tab">
-                        <span><?php esc_html_e('Customer details', 'salon-booking-system') ?></span>
+                        <span><?php esc_html_e('Client', 'salon-booking-system') ?></span>
                     </a>
                 </li>
                 <li class="sln-admin__tabs__nav__item" role="presentation">
                     <a data-target="#salon-step-date" aria-controls="salon-step-date" role="tab" data-toggle="tab">
-                        <span><?php esc_html_e('Date & Time', 'salon-booking-system') ?></span>
+                        <span><?php esc_html_e('Date', 'salon-booking-system') ?></span>
                     </a>
                 </li>
                 <li class="sln-admin__tabs__nav__item" role="presentation">
                     <a data-target="#sln-booking__services" aria-controls="sln-booking__services" role="tab" data-toggle="tab">
                         <?php if ($isMultipleAttendants || $isAttendants): ?>
-                            <span><?php esc_html_e('Services & Attendants', 'salon-booking-system'); ?></span>
+                            <span><?php esc_html_e('Service', 'salon-booking-system'); ?></span>
                         <?php else: ?>
-                            <span><?php esc_html_e('Services', 'salon-booking-system'); ?></span>
+                            <span><?php esc_html_e('Service', 'salon-booking-system'); ?></span>
                         <?php endif; ?>
                     </a>
                 </li>
@@ -173,7 +173,7 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
     <div id="sln-booking__tabscontent" class="tab-content">
         <div id="sln-booking__customer" role="tabpanel" class="sln-box sln-box--main sln-booking__customer tab-pane sln-admin__tabpanel sln-admin__tabpanel--customer active <?php echo in_array(SLN_Plugin::USER_ROLE_WORKER,  wp_get_current_user()->roles) ? 'sln-disabled' : '' ?>">
             <div class="sln-booking__customer <?php echo in_array(SLN_Plugin::USER_ROLE_WORKER,  wp_get_current_user()->roles) ? 'sln-disabled' : '' ?>">
-                <h4 class="sln-box-title--nu--sec"><?php esc_html_e('Customer details', 'salon-booking-system') ?></h4>
+                <h4 class="sln-box-title--nu--sec"><?php esc_html_e('Client', 'salon-booking-system') ?></h4>
                 <div class="row sln-box__row--flex--alcenter-">
                     <div class="col-xs-12 col-sm-6">
                         <div class="sln-select">
@@ -360,7 +360,7 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                 data-required_user_fields="<?php echo $checkoutFields->implode(',') ?>"
                 data-customer_fields="<?php echo $customer_fields->implode(',') ?>"
                 data-booking_id="<?php echo $booking->getId() ?>">
-                <h4 class="sln-box-title--nu--sec"><?php esc_html_e('Date & Time', 'salon-booking-system') ?></h4>
+                <h4 class="sln-box-title--nu--sec"><?php esc_html_e('Date', 'salon-booking-system') ?></h4>
                 <div class="row form-inline">
                     <?php if (!empty($edit_last_author)): ?>
                         <div class="booking-last-edit hide">
@@ -422,7 +422,7 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
         </div><!-- salon-step-date // END -->
 
         <div id="sln-booking__services" role="tabpanel" class="sln-box sln-box--main tab-pane sln-admin__tabpanel sln-admin__tabpanel--services <?php echo in_array(SLN_Plugin::USER_ROLE_WORKER,  wp_get_current_user()->roles) ? 'sln-disabled' : '' ?>">
-            <h4 class="sln-box-title--nu--sec"><?php esc_html_e('Services & Attendants', 'salon-booking-system'); ?></h4>
+            <h4 class="sln-box-title--nu--sec"><?php esc_html_e('Service', 'salon-booking-system'); ?></h4>
             <?php echo $plugin->loadView('metabox/_booking_services', compact('booking')); ?>
         </div><!-- sln-booking__services // END -->
 

@@ -59,7 +59,7 @@ $bookingDateTime = empty($forAdmin) && $plugin->getSettings()->isDisplaySlotsCus
 		<td align="left" style="padding:0;Margin:0;padding-left:25px;padding-right:25px">
 			<p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:'source sans pro', 'helvetica neue', helvetica, arial, sans-serif;line-height:38px;color:#333333;font-size:25px">
 				<?php echo $plugin->format()->time($bookingDateTime); ?> <?php
-				if($booking->getDuration()):?><span style="font-size:18px">(<?php echo $plugin->format()->duration($booking->getDuration()); ?>)</span>
+				if($booking->getDuration() && !$plugin->getSettings()->get('hide_service_duration')):?><span style="font-size:18px">(<?php echo $plugin->format()->duration($booking->getDuration()); ?>)</span>
 				<?php endif ?>
 			</p>
 		</td>

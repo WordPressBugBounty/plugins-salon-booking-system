@@ -21,7 +21,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 /* import specific icons */
 import { faList, faCalendarDays, faMagnifyingGlass, faChevronRight, faTrash, faCircleXmark,
 faPenToSquare, faCheck, faUsers, faPlus, faCircleChevronDown, faCircleChevronUp, faChartSimple, faMedal, faUnlock, faLock,
-faPhone, faMessage, faCirclePlus, faStore, faImages, faCamera, faCloudArrowUp } from '@fortawesome/free-solid-svg-icons'
+faPhone, faMessage, faCirclePlus, faStore, faImages, faCamera, faCloudArrowUp} from '@fortawesome/free-solid-svg-icons'
 
 import { faAddressBook, faClock, faCircleCheck } from '@fortawesome/free-regular-svg-icons'
 

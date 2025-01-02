@@ -501,6 +501,20 @@ function sln_init($) {
         }
     );
 
+    $('#sln-salon-booking #sln_note').on('change',
+        function (e) {
+            let data = $(this).closest("form").serialize();
+            data += "&sln_step_page=summary&submit_summary=next&action=salon&method=salonStep&security=" + salon.ajax_nonce;
+            let request_arr = {
+                url: salon.ajax_url,
+                method: "POST",
+                dataType: "json",
+                data: data,
+            };
+            $.ajax(request_arr);
+        }
+    );
+
     $(".sln-file input[type=file]").on("change", function (e) {
         let file_list = $(this).parent().find(".sln-file__list");
         //if(!file_list.children().length){

@@ -20,7 +20,9 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
         if(empty($bb) && isset($_GET['op'])){
             $bb = $plugin->createBooking(explode('-', sanitize_text_field($_GET['op']))[1]);
         }
-        $bb->setMeta('note', SLN_Func::filter($value));
+        if(!empty($value)){
+            $bb->setMeta('note', SLN_Func::filter($value));
+        }
         $plugin->getBookingBuilder()->clear($bb->getId());
         $paymentMethod = $plugin->getSettings()->isPayEnabled() ? SLN_Enum_PaymentMethodProvider::getService($plugin->getSettings()->getPaymentMethod(), $plugin) : false;
         $mode = isset($_GET['mode']) ? sanitize_text_field(wp_unslash($_GET['mode'])) : null;

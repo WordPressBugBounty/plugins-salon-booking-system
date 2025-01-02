@@ -38,7 +38,7 @@
                     <!-- .sln-service-price // END -->
                 </h3>
             <?php endif ?>
-            <?php if ($service->getDuration()->format('H:i') != '00:00'):
+            <?php if ($service->getDuration()->format('H:i') != '00:00' && !$plugin->getSettings()->get('hide_service_duration')):
                         $duration = $service->getTotalDuration(); ?>
                    <h3><span class="sln-steps-duration sln-service-duration sln-list__item__duration">
                         <?php echo $duration->format('H:i'); ?>

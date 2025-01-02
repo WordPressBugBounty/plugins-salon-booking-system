@@ -13,622 +13,623 @@ use SLN_Action_Ajax_CheckAttendants;
 
 class AvailabilityBooking_Controller extends REST_Controller
 {
-    /**
-     * Route base.
-     *
-     * @var string
-     */
-    protected $rest_base = 'availability/booking';
+	/**
+	 * Route base.
+	 *
+	 * @var string
+	 */
+	protected $rest_base = 'availability/booking';
 
-    public function register_routes() {
+	public function register_routes() {
 
-        register_rest_route( $this->namespace, '/' . $this->rest_base . '/date', array(
-            'args' => apply_filters('sln_api_availability_booking_register_routes_get_availability_date_time_args', array(
-                'date'     => array(
-                    'description'       => __('Date.', 'salon-booking-system'),
-                    'type'              => 'string',
-                    'format'            => 'YYYY-MM-DD',
-                    'required'          => true,
-                    'validate_callback' => array($this, 'rest_validate_request_arg'),
-                ),
-                'time'     => array(
-                    'description'       => __('Time.', 'salon-booking-system'),
-                    'type'              => 'string',
-                    'format'            => 'HH:ii',
-                    'required'          => true,
-                    'validate_callback' => array($this, 'rest_validate_request_arg'),
-                ),
-            )),
-            array(
-                'methods'  => WP_REST_Server::READABLE,
-                'callback' => array($this, 'get_availability_date_time'),
-		'permission_callback' => '__return_true',
-            ),
-        ) );
+		register_rest_route( $this->namespace, '/' . $this->rest_base . '/date', array(
+			'args' => apply_filters('sln_api_availability_booking_register_routes_get_availability_date_time_args', array(
+				'date'     => array(
+					'description'       => __('Date.', 'salon-booking-system'),
+					'type'              => 'string',
+					'format'            => 'YYYY-MM-DD',
+					'required'          => true,
+					'validate_callback' => array($this, 'rest_validate_request_arg'),
+				),
+				'time'     => array(
+					'description'       => __('Time.', 'salon-booking-system'),
+					'type'              => 'string',
+					'format'            => 'HH:ii',
+					'required'          => true,
+					'validate_callback' => array($this, 'rest_validate_request_arg'),
+				),
+			)),
+			array(
+				'methods'  => WP_REST_Server::READABLE,
+				'callback' => array($this, 'get_availability_date_time'),
+				'permission_callback' => '__return_true',
+			),
+		) );
 
-        register_rest_route( $this->namespace, '/' . $this->rest_base . '/services', array(
-            'args' => apply_filters('sln_api_availability_booking_register_routes_get_availability_services_args', array(
-                'booking_id'     => array(
-                    'description'       => __('Booking id.', 'salon-booking-system'),
-                    'type'              => 'integer',
-                    'default'           => 0,
-                    'validate_callback' => array($this, 'rest_validate_request_arg'),
-                ),
-                'date'     => array(
-                    'description'       => __('Date.', 'salon-booking-system'),
-                    'type'              => 'string',
-                    'format'            => 'YYYY-MM-DD',
-                    'required'          => true,
-                    'validate_callback' => array($this, 'rest_validate_request_arg'),
-                ),
-                'time'     => array(
-                    'description'       => __('Time.', 'salon-booking-system'),
-                    'type'              => 'string',
-                    'format'            => 'HH:ii',
-                    'required'          => true,
-                    'validate_callback' => array($this, 'rest_validate_request_arg'),
-                ),
-                'is_all_services'	=> array(
-                    'description'       => __('Is all services.', 'salon-booking-system'),
-                    'type'              => 'boolean',
-                    'default'           => false,
-                    'validate_callback' => array($this, 'rest_validate_request_arg'),
-                ),
-                'services' => array(
-                    'description'       => __('Booking services.', 'salon-booking-system'),
-                    'type'              => 'array',
-                    'default'           => array(),
-                    'validate_callback' => array($this, 'rest_validate_request_arg'),
-                    'items'             => array(
-                        'type'       => 'object',
-                        'required'   => array('service_id'),
-                        'properties' => array(
-                            'service_id' =>  array(
-                                'type' => 'integer',
-                            ),
-                            'assistant_id' =>  array(
-                                'type' => 'integer',
-                            ),
-                        ),
-                    ),
-                ),
-            )),
-            array(
-                'methods'  => WP_REST_Server::CREATABLE,
-                'callback' => array($this, 'get_availability_services'),
-		'permission_callback' => '__return_true',
-            ),
-        ) );
+		register_rest_route( $this->namespace, '/' . $this->rest_base . '/services', array(
+			'args' => apply_filters('sln_api_availability_booking_register_routes_get_availability_services_args', array(
+				'booking_id'     => array(
+					'description'       => __('Booking id.', 'salon-booking-system'),
+					'type'              => 'integer',
+					'default'           => 0,
+					'validate_callback' => array($this, 'rest_validate_request_arg'),
+				),
+				'date'     => array(
+					'description'       => __('Date.', 'salon-booking-system'),
+					'type'              => 'string',
+					'format'            => 'YYYY-MM-DD',
+					'required'          => true,
+					'validate_callback' => array($this, 'rest_validate_request_arg'),
+				),
+				'time'     => array(
+					'description'       => __('Time.', 'salon-booking-system'),
+					'type'              => 'string',
+					'format'            => 'HH:ii',
+					'required'          => true,
+					'validate_callback' => array($this, 'rest_validate_request_arg'),
+				),
+				'is_all_services'	=> array(
+					'description'       => __('Is all services.', 'salon-booking-system'),
+					'type'              => 'boolean',
+					'default'           => false,
+					'validate_callback' => array($this, 'rest_validate_request_arg'),
+				),
+				'services' => array(
+					'description'       => __('Booking services.', 'salon-booking-system'),
+					'type'              => 'array',
+					'default'           => array(),
+					'validate_callback' => array($this, 'rest_validate_request_arg'),
+					'items'             => array(
+						'type'       => 'object',
+						'required'   => array('service_id'),
+						'properties' => array(
+							'service_id' =>  array(
+								'type' => 'integer',
+							),
+							'assistant_id' =>  array(
+								'type' => 'integer',
+							),
+						),
+					),
+				),
+			)),
+			array(
+				'methods'  => WP_REST_Server::CREATABLE,
+				'callback' => array($this, 'get_availability_services'),
+				'permission_callback' => '__return_true',
+			),
+		) );
 
 	register_rest_route( $this->namespace, '/' . $this->rest_base . '/assistants', array(
-            'args' => apply_filters('sln_api_availability_booking_register_routes_get_availability_assistants_args',  array(
-                'booking_id'     => array(
-                    'description'       => __('Booking id.', 'salon-booking-system'),
-                    'type'              => 'integer',
-                    'default'           => 0,
-                    'validate_callback' => array($this, 'rest_validate_request_arg'),
-                ),
-                'date'     => array(
-                    'description'       => __('Date.', 'salon-booking-system'),
-                    'type'              => 'string',
-                    'format'            => 'YYYY-MM-DD',
-                    'required'          => true,
-                    'validate_callback' => array($this, 'rest_validate_request_arg'),
-                ),
-                'time'     => array(
-                    'description'       => __('Time.', 'salon-booking-system'),
-                    'type'              => 'string',
-                    'format'            => 'HH:ii',
-                    'required'          => true,
-                    'validate_callback' => array($this, 'rest_validate_request_arg'),
-                ),
-                'selected_service_id'	=> array(
-                    'description'       => __('Selected service id.', 'salon-booking-system'),
-                    'type'              => 'integer',
-                    'required'          => true,
-                    'validate_callback' => array($this, 'rest_validate_request_arg'),
-                ),
-                'services' => array(
-                    'description'       => __('Booking services.', 'salon-booking-system'),
-                    'type'              => 'array',
-                    'default'           => array(),
-                    'validate_callback' => array($this, 'rest_validate_request_arg'),
-                    'items'             => array(
-                        'type'       => 'object',
-                        'required'   => array('service_id'),
-                        'properties' => array(
-                            'service_id' =>  array(
-                                'type' => 'integer',
-                            ),
-                            'assistant_id' =>  array(
-                                'type' => 'integer',
-                            ),
-                        ),
-                    ),
-                ),
-            )),
-            array(
-                'methods'  => WP_REST_Server::CREATABLE,
-                'callback' => array($this, 'get_availability_assistants'),
-		'permission_callback' => '__return_true',
-            ),
-        ) );
+			'args' => apply_filters('sln_api_availability_booking_register_routes_get_availability_assistants_args',  array(
+				'booking_id'     => array(
+					'description'       => __('Booking id.', 'salon-booking-system'),
+					'type'              => 'integer',
+					'default'           => 0,
+					'validate_callback' => array($this, 'rest_validate_request_arg'),
+				),
+				'date'     => array(
+					'description'       => __('Date.', 'salon-booking-system'),
+					'type'              => 'string',
+					'format'            => 'YYYY-MM-DD',
+					'required'          => true,
+					'validate_callback' => array($this, 'rest_validate_request_arg'),
+				),
+				'time'     => array(
+					'description'       => __('Time.', 'salon-booking-system'),
+					'type'              => 'string',
+					'format'            => 'HH:ii',
+					'required'          => true,
+					'validate_callback' => array($this, 'rest_validate_request_arg'),
+				),
+				'selected_service_id'	=> array(
+					'description'       => __('Selected service id.', 'salon-booking-system'),
+					'type'              => 'integer',
+					'required'          => true,
+					'validate_callback' => array($this, 'rest_validate_request_arg'),
+				),
+				'services' => array(
+					'description'       => __('Booking services.', 'salon-booking-system'),
+					'type'              => 'array',
+					'default'           => array(),
+					'validate_callback' => array($this, 'rest_validate_request_arg'),
+					'items'             => array(
+						'type'       => 'object',
+						'required'   => array('service_id'),
+						'properties' => array(
+							'service_id' =>  array(
+								'type' => 'integer',
+							),
+							'assistant_id' =>  array(
+								'type' => 'integer',
+							),
+						),
+					),
+				),
+			)),
+			array(
+				'methods'  => WP_REST_Server::CREATABLE,
+				'callback' => array($this, 'get_availability_assistants'),
+				'permission_callback' => '__return_true',
+			),
+		) );
 
-        register_rest_route( $this->namespace, '/' . $this->rest_base . '/resources', array(
-            'args' => apply_filters('sln_api_availability_booking_register_routes_get_availability_resources_args',  array(
-                'booking_id'     => array(
-                    'description'       => __('Booking id.', 'salon-booking-system'),
-                    'type'              => 'integer',
-                    'default'           => 0,
-                    'validate_callback' => array($this, 'rest_validate_request_arg'),
-                ),
-                'date'     => array(
-                    'description'       => __('Date.', 'salon-booking-system'),
-                    'type'              => 'string',
-                    'format'            => 'YYYY-MM-DD',
-                    'required'          => true,
-                    'validate_callback' => array($this, 'rest_validate_request_arg'),
-                ),
-                'time'     => array(
-                    'description'       => __('Time.', 'salon-booking-system'),
-                    'type'              => 'string',
-                    'format'            => 'HH:ii',
-                    'required'          => true,
-                    'validate_callback' => array($this, 'rest_validate_request_arg'),
-                ),
-                'selected_service_id'	=> array(
-                    'description'       => __('Selected service id.', 'salon-booking-system'),
-                    'type'              => 'integer',
-                    'required'          => true,
-                    'validate_callback' => array($this, 'rest_validate_request_arg'),
-                ),
-                'services' => array(
-                    'description'       => __('Booking services.', 'salon-booking-system'),
-                    'type'              => 'array',
-                    'default'           => array(),
-                    'validate_callback' => array($this, 'rest_validate_request_arg'),
-                    'items'             => array(
-                        'type'       => 'object',
-                        'required'   => array('service_id'),
-                        'properties' => array(
-                            'service_id' =>  array(
-                                'type' => 'integer',
-                            ),
-                            'assistant_id' =>  array(
-                                'type' => 'integer',
-                            ),
-                        ),
-                    ),
-                ),
-            )),
-            array(
-                'methods'  => WP_REST_Server::CREATABLE,
-                'callback' => array($this, 'get_availability_resources'),
-                'permission_callback' => '__return_true',
-            ),
-        ) );
-    }
+		register_rest_route( $this->namespace, '/' . $this->rest_base . '/resources', array(
+			'args' => apply_filters('sln_api_availability_booking_register_routes_get_availability_resources_args',  array(
+				'booking_id'     => array(
+					'description'       => __('Booking id.', 'salon-booking-system'),
+					'type'              => 'integer',
+					'default'           => 0,
+					'validate_callback' => array($this, 'rest_validate_request_arg'),
+				),
+				'date'     => array(
+					'description'       => __('Date.', 'salon-booking-system'),
+					'type'              => 'string',
+					'format'            => 'YYYY-MM-DD',
+					'required'          => true,
+					'validate_callback' => array($this, 'rest_validate_request_arg'),
+				),
+				'time'     => array(
+					'description'       => __('Time.', 'salon-booking-system'),
+					'type'              => 'string',
+					'format'            => 'HH:ii',
+					'required'          => true,
+					'validate_callback' => array($this, 'rest_validate_request_arg'),
+				),
+				'selected_service_id'	=> array(
+					'description'       => __('Selected service id.', 'salon-booking-system'),
+					'type'              => 'integer',
+					'required'          => true,
+					'validate_callback' => array($this, 'rest_validate_request_arg'),
+				),
+				'services' => array(
+					'description'       => __('Booking services.', 'salon-booking-system'),
+					'type'              => 'array',
+					'default'           => array(),
+					'validate_callback' => array($this, 'rest_validate_request_arg'),
+					'items'             => array(
+						'type'       => 'object',
+						'required'   => array('service_id'),
+						'properties' => array(
+							'service_id' =>  array(
+								'type' => 'integer',
+							),
+							'assistant_id' =>  array(
+								'type' => 'integer',
+							),
+						),
+					),
+				),
+			)),
+			array(
+				'methods'  => WP_REST_Server::CREATABLE,
+				'callback' => array($this, 'get_availability_resources'),
+				'permission_callback' => '__return_true',
+			),
+		) );
+	}
 
-    public function get_availability_date_time( $request )
-    {
+	public function get_availability_date_time( $request )
+	{
 	try {
 
-	    do_action('sln_api_availability_booking_get_availability_date_time_before', $request);
+		do_action('sln_api_availability_booking_get_availability_date_time_before', $request);
 
-	    $plugin = SLN_Plugin::getInstance();
+		$plugin = SLN_Plugin::getInstance();
 
-	    $handler = new SLN_Action_Ajax_CheckDate($plugin);
+		$handler = new SLN_Action_Ajax_CheckDate($plugin);
 
-	    do_action('sln_api_availability_booking_get_availability_date_time_before_check', $request);
+		do_action('sln_api_availability_booking_get_availability_date_time_before_check', $request);
 
-	    $handler->setDate($request->get_param('date'));
-	    $handler->setTime($request->get_param('time'));
+		$handler->setDate($request->get_param('date'));
+		$handler->setTime($request->get_param('time'));
 
-	    $handler->checkDateTime();
+		$handler->checkDateTime();
 
-	    $ret = array(
-		'success'	=> empty($handler->getErrors()) ? 1 : 0,
-		'errors'	=> array_map('strip_tags', $handler->getErrors()),
-		'intervals' => $handler->getIntervalsArray(),
-	    );
+		$ret = array(
+			'success'	=> empty($handler->getErrors()) ? 1 : 0,
+			'errors'	=> array_map('strip_tags', $handler->getErrors()),
+			'intervals' => $handler->getIntervalsArray(),
+		);
 
-	    return $this->success_response($ret);
+		return $this->success_response($ret);
 
-        } catch (\Exception $ex) {
-            return new \WP_Error( 'salon_rest_cannot_view', $ex->getMessage(), array( 'status' => $ex->getCode() ? $ex->getCode() : 500 ) );
-        }
+		} catch (\Exception $ex) {
+			return new \WP_Error( 'salon_rest_cannot_view', $ex->getMessage(), array( 'status' => $ex->getCode() ? $ex->getCode() : 500 ) );
+		}
 
-    }
+	}
 
-    public function get_availability_services( $request )
-    {
+	public function get_availability_services( $request )
+	{
 	try {
 
-	    do_action('sln_api_availability_booking_get_availability_services_before', $request);
+		do_action('sln_api_availability_booking_get_availability_services_before', $request);
 
-	    $plugin = SLN_Plugin::getInstance();
+		$plugin = SLN_Plugin::getInstance();
 
-	    $handler = new SLN_Action_Ajax_CheckServices($plugin);
+		$handler = new SLN_Action_Ajax_CheckServices($plugin);
 
-	    $handler->setDate($request->get_param('date'));
-	    $handler->setTime($request->get_param('time'));
+		$handler->setDate($request->get_param('date'));
+		$handler->setTime($request->get_param('time'));
 
-	    $bb = $plugin->getBookingBuilder();
+		$bb = $plugin->getBookingBuilder();
 
-	    do_action('sln_api_availability_booking_get_availability_services_before_check', $bb, $request);
+		do_action('sln_api_availability_booking_get_availability_services_before_check', $bb, $request);
 
-	    $bb->setDate($request->get_param('date'));
-	    $bb->setTime($request->get_param('time'));
+		$bb->setDate($request->get_param('date'));
+		$bb->setTime($request->get_param('time'));
 
-	    $handler->setBookingBuilder($bb);
-	    $handler->setAvailabilityHelper($plugin->getAvailabilityHelper());
+		$handler->setBookingBuilder($bb);
+		$handler->setAvailabilityHelper($plugin->getAvailabilityHelper());
 
-	    $services     = array();
-	    $booking_data = array();
+		$services     = array();
+		$booking_data = array();
 
-	    foreach ($request->get_param('services') as $s) {
+		foreach ($request->get_param('services') as $s) {
 
-    		if ( ! isset( $s['service_id'] ) ) {
-    		    continue;
-    		}
+			if ( ! isset( $s['service_id'] ) ) {
+				continue;
+			}
 
-    		$services[] = $s['service_id'];
+			$services[] = $s['service_id'];
 
-            if(!isset($booking_data['service'])){
-                $booking_data['service'] = array();
-            }
+			if(!isset($booking_data['service'])){
+				$booking_data['service'] = array();
+			}
 
-    		if ( ! isset( $booking_data['attendants'] ) ) {
-    		    $booking_data['attendants'] = array();
-    		}
+			if ( ! isset( $booking_data['attendants'] ) ) {
+				$booking_data['attendants'] = array();
+			}
 
-    		if ( ! isset( $booking_data['price'] ) ) {
-    		    $booking_data['price'] = array();
-    		}
+			if ( ! isset( $booking_data['price'] ) ) {
+				$booking_data['price'] = array();
+			}
 
-    		if ( ! isset( $booking_data['duration'] ) ) {
-    		    $booking_data['duration'] = array();
-    		}
+			if ( ! isset( $booking_data['duration'] ) ) {
+				$booking_data['duration'] = array();
+			}
 
-    		if ( ! isset( $booking_data['break_duration'] ) ) {
-    		    $booking_data['break_duration'] = array();
-    		}
+			if ( ! isset( $booking_data['break_duration'] ) ) {
+				$booking_data['break_duration'] = array();
+			}
 
-    		$service = $plugin->createService($s['service_id']);
+			$service = $plugin->createService($s['service_id']);
 
-            $booking_data['service'][$s['service_id']] = $s['service_id'];
-    		$booking_data['attendants'][$s['service_id']]	= isset($s['assistant_id']) ? $s['assistant_id'] : 0;
-    		$booking_data['price'][$s['service_id']]		= $service->getPrice();
-    		$booking_data['duration'][$s['service_id']]		= SLN_Func::getMinutesFromDuration($service->getDuration());
-    		$booking_data['break_duration'][$s['service_id']]	= SLN_Func::getMinutesFromDuration($service->getBreakDuration());
-	    }
-
-	    $check_add_service = false;
-	    $_services         = $services;
-
-	    if ( $request->get_param('is_all_services') ) {
-
-		$services_repo = $plugin->getRepository(SLN_Plugin::POST_TYPE_SERVICE)->getIds();
-		$services	   = array();
-
-		foreach ($services_repo as $service) {
-		    $services[intval($service)] = $service;
+			$booking_data['service'][$s['service_id']] = $s['service_id'];
+			$booking_data['attendants'][$s['service_id']]	= isset($s['assistant_id']) ? $s['assistant_id'] : 0;
+			$booking_data['price'][$s['service_id']]		= $service->getPrice();
+			$booking_data['duration'][$s['service_id']]		= SLN_Func::getMinutesFromDuration($service->getDuration());
+			$booking_data['break_duration'][$s['service_id']]	= SLN_Func::getMinutesFromDuration($service->getBreakDuration());
 		}
 
-		$check_add_service = true;
-	    }
+		$check_add_service = false;
+		$_services         = $services;
 
-	    $ret = $handler->initAllServicesForAdmin($request->get_param('booking_id'), $services, $booking_data, $_services, $check_add_service);
+		if ( $request->get_param('is_all_services') ) {
 
-	    $ret = apply_filters('sln_api_availability_booking_get_availability_services_ret', $ret, $bb);
+			$services_repo = $plugin->getRepository(SLN_Plugin::POST_TYPE_SERVICE)->getIds();
+			$services	   = array();
 
-	    $result = array();
+			foreach ($services_repo as $service) {
+				$services[intval($service)] = $service;
+			}
+			$booking_data['service'] = array();
 
-	    foreach ($ret as $serviceID => $s) {
+			$check_add_service = true;
+		}
 
-		$service	= $plugin->createService($serviceID);
-		$available	= SLN_Action_Ajax_CheckServices::STATUS_ERROR === $s['status'] ? false : true;
+		$ret = $handler->initAllServicesForAdmin($request->get_param('booking_id'), $services, $booking_data, $_services, $check_add_service);
 
-		$result[] = $this->prepare_service_response_for_collection($service, $available);
-	    }
+		$ret = apply_filters('sln_api_availability_booking_get_availability_services_ret', $ret, $bb);
 
-	    return $this->success_response(array(
-		'services' => $result,
-	    ));
+		$result = array();
 
-        } catch (\Exception $ex) {
-            return new \WP_Error( 'salon_rest_cannot_view', $ex->getMessage(), array( 'status' => $ex->getCode() ? $ex->getCode() : 500 ) );
-        }
+		foreach ($ret as $serviceID => $s) {
 
-    }
+			$service	= $plugin->createService($serviceID);
+			$available	= SLN_Action_Ajax_CheckServices::STATUS_ERROR === $s['status'] ? false : true;
 
-    protected function prepare_service_response_for_collection($service, $available)
-    {
-        $availabilities = array();
+			$result[] = $this->prepare_service_response_for_collection($service, $available);
+		}
 
-        foreach ($service->getAvailabilityItems()->toArray() as $availability) {
+		return $this->success_response(array(
+			'services' => $result,
+		));
 
-            $data = $availability->getData();
+		} catch (\Exception $ex) {
+			return new \WP_Error( 'salon_rest_cannot_view', $ex->getMessage(), array( 'status' => $ex->getCode() ? $ex->getCode() : 500 ) );
+		}
 
-            if (!$data) {
-                continue;
-            }
+	}
 
-            $avDays = array();
+	protected function prepare_service_response_for_collection($service, $available)
+	{
+		$availabilities = array();
 
-            for ($i = 1; $i <= 7; $i++) {
-		$apiDayKey    = $i; //1-7 (Mon-Sun)
-		$pluginDayKey = $i + 1 > 7 ? ($i + 1) % 7 : $i + 1; //1-7 (Sun-Sat)
-		$avDays[$apiDayKey] = empty( $data['days'][$pluginDayKey] ) ? 0 : 1;
-            }
+		foreach ($service->getAvailabilityItems()->toArray() as $availability) {
 
-            $availabilities[] = array(
-                'days'      => $avDays,
-                'from'      => (object)$data['from'],
-                'to'        => (object)$data['to'],
-                'always'    => $data['always'],
-                'from_date' => $data['from_date'],
-                'to_date'   => $data['to_date'],
-            );
-        }
+			$data = $availability->getData();
 
-        $categories = get_the_terms($service->getId(), SLN_Plugin::TAXONOMY_SERVICE_CATEGORY);
+			if (!$data) {
+				continue;
+			}
 
-        if (is_wp_error($categories)) {
-            throw new \Exception(esc_html__( 'Get categories error.', 'salon-booking-system' ));
-        }
+			$avDays = array();
 
-        $categories_ids = array();
+			for ($i = 1; $i <= 7; $i++) {
+				$apiDayKey    = $i; //1-7 (Mon-Sun)
+				$pluginDayKey = $i + 1 > 7 ? ($i + 1) % 7 : $i + 1; //1-7 (Sun-Sat)
+				$avDays[$apiDayKey] = empty( $data['days'][$pluginDayKey] ) ? 0 : 1;
+			}
 
-        if (is_array($categories)) {
-            foreach ($categories as $category) {
-                $categories_ids[] = $category->term_id;
-            }
-        }
+			$availabilities[] = array(
+				'days'      => $avDays,
+				'from'      => (object)$data['from'],
+				'to'        => (object)$data['to'],
+				'always'    => $data['always'],
+				'from_date' => $data['from_date'],
+				'to_date'   => $data['to_date'],
+			);
+		}
 
-        $parent_services = $service->getMeta('secondary_parent_services');
-        $parent_services = $parent_services ? $parent_services : array();
+		$categories = get_the_terms($service->getId(), SLN_Plugin::TAXONOMY_SERVICE_CATEGORY);
 
-        return array(
-            'id'                        => $service->getId(),
-            'name'                      => $service->getName(),
-            'available'                 => $available,
-            'price'                     => $service->getPrice(),
-            'currency'                  => SLN_Plugin::getInstance()->getSettings()->getCurrencySymbol(),
-            'unit'                      => $service->getUnitPerHour(),
-            'duration'                  => $service->getDuration()->format('H:i'),
-            'exclusive'                 => $service->isExclusive() ? 1 : 0,
-            'secondary'                 => $service->isSecondary() ? 1 : 0,
-            'secondary_display_mode'    => $service->getMeta('secondary_display_mode'),
-            'secondary_parent_services' => $parent_services,
-            'execution_order'           => $service->getExecOrder(),
-            'break'                     => $service->getBreakDuration()->format('H:i'),
-            'empty_assistants'          => $service->isAttendantsEnabled() ? 0 : 1,
-            'description'               => $service->getContent(),
-            'categories'                => $categories_ids,
-            'availabilities'            => $availabilities,
-            'image_url'                 => (string) wp_get_attachment_url(get_post_thumbnail_id($service->getId())),
-            'order'                     => (int)$service->getPosOrder(),
-        );
-    }
+		if (is_wp_error($categories)) {
+			throw new \Exception(esc_html__( 'Get categories error.', 'salon-booking-system' ));
+		}
 
-    public function get_availability_assistants( $request )
-    {
+		$categories_ids = array();
+
+		if (is_array($categories)) {
+			foreach ($categories as $category) {
+				$categories_ids[] = $category->term_id;
+			}
+		}
+
+		$parent_services = $service->getMeta('secondary_parent_services');
+		$parent_services = $parent_services ? $parent_services : array();
+
+		return array(
+			'id'                        => $service->getId(),
+			'name'                      => $service->getName(),
+			'available'                 => $available,
+			'price'                     => $service->getPrice(),
+			'currency'                  => SLN_Plugin::getInstance()->getSettings()->getCurrencySymbol(),
+			'unit'                      => $service->getUnitPerHour(),
+			'duration'                  => $service->getDuration()->format('H:i'),
+			'exclusive'                 => $service->isExclusive() ? 1 : 0,
+			'secondary'                 => $service->isSecondary() ? 1 : 0,
+			'secondary_display_mode'    => $service->getMeta('secondary_display_mode'),
+			'secondary_parent_services' => $parent_services,
+			'execution_order'           => $service->getExecOrder(),
+			'break'                     => $service->getBreakDuration()->format('H:i'),
+			'empty_assistants'          => $service->isAttendantsEnabled() ? 0 : 1,
+			'description'               => $service->getContent(),
+			'categories'                => $categories_ids,
+			'availabilities'            => $availabilities,
+			'image_url'                 => (string) wp_get_attachment_url(get_post_thumbnail_id($service->getId())),
+			'order'                     => (int)$service->getPosOrder(),
+		);
+	}
+
+	public function get_availability_assistants( $request )
+	{
 	try {
 
-	    do_action('sln_api_availability_booking_get_availability_assistants_before', $request);
+		do_action('sln_api_availability_booking_get_availability_assistants_before', $request);
 
-	    $plugin = SLN_Plugin::getInstance();
+		$plugin = SLN_Plugin::getInstance();
 
-	    $handler = new SLN_Action_Ajax_CheckAttendants($plugin);
+		$handler = new SLN_Action_Ajax_CheckAttendants($plugin);
 
-	    $handler->setDate($request->get_param('date'));
-	    $handler->setTime($request->get_param('time'));
+		$handler->setDate($request->get_param('date'));
+		$handler->setTime($request->get_param('time'));
 
-	    $bb = $plugin->getBookingBuilder();
+		$bb = $plugin->getBookingBuilder();
 
-	    do_action('sln_api_availability_booking_get_availability_assistants_before_check', $bb, $request);
+		do_action('sln_api_availability_booking_get_availability_assistants_before_check', $bb, $request);
 
-	    $bb->setDate($request->get_param('date'));
-	    $bb->setTime($request->get_param('time'));
+		$bb->setDate($request->get_param('date'));
+		$bb->setTime($request->get_param('time'));
 
-	    $handler->setBookingBuilder($bb);
-	    $handler->setAvailabilityHelper($plugin->getAvailabilityHelper());
+		$handler->setBookingBuilder($bb);
+		$handler->setAvailabilityHelper($plugin->getAvailabilityHelper());
 
-	    $services     = array();
-	    $booking_data = array();
+		$services     = array();
+		$booking_data = array();
 
-	    foreach ($request->get_param('services') as $s) {
+		foreach ($request->get_param('services') as $s) {
 
-		if ( ! isset( $s['service_id'] ) ) {
-		    continue;
+			if ( ! isset( $s['service_id'] ) ) {
+				continue;
+			}
+
+			$services[] = $s['service_id'];
+
+			if ( ! isset( $booking_data['attendants'] ) ) {
+				$booking_data['attendants'] = array();
+			}
+
+			if ( ! isset( $booking_data['price'] ) ) {
+				$booking_data['price'] = array();
+			}
+
+			if ( ! isset( $booking_data['duration'] ) ) {
+				$booking_data['duration'] = array();
+			}
+
+			if ( ! isset( $booking_data['break_duration'] ) ) {
+				$booking_data['break_duration'] = array();
+			}
+
+			$service = $plugin->createService($s['service_id']);
+
+			$booking_data['attendants'][$s['service_id']]	= isset($s['assistant_id']) ? $s['assistant_id'] : 0;
+			$booking_data['price'][$s['service_id']]		= $service->getPrice();
+			$booking_data['duration'][$s['service_id']]		= SLN_Func::getMinutesFromDuration($service->getDuration());
+			$booking_data['break_duration'][$s['service_id']]	= SLN_Func::getMinutesFromDuration($service->getBreakDuration());
 		}
 
-		$services[] = $s['service_id'];
+		$ret = $handler->initAllAttentansForAdmin($request->get_param('booking_id'), $services, $booking_data, $request->get_param('selected_service_id'));
+		$ret = apply_filters('sln_api_availability_booking_get_availability_assistants_ret', $ret, $bb);
 
-		if ( ! isset( $booking_data['attendants'] ) ) {
-		    $booking_data['attendants'] = array();
+		$result = array();
+
+		foreach ($ret as $assistantID => $a) {
+
+			$assistant = $plugin->createAttendant($assistantID);
+			$available = SLN_Action_Ajax_CheckServices::STATUS_ERROR === $a['status'] ? false : true;
+
+			$result[] = $this->prepare_assistant_response_for_collection($assistant, $available, $plugin->createService($request->get_param('selected_service_id')));
 		}
 
-		if ( ! isset( $booking_data['price'] ) ) {
-		    $booking_data['price'] = array();
+		return $this->success_response(array(
+			'assistants' => $result,
+		));
+
+		} catch (\Exception $ex) {
+			return new \WP_Error( 'salon_rest_cannot_view', $ex->getMessage(), array( 'status' => $ex->getCode() ? $ex->getCode() : 500 ) );
 		}
 
-		if ( ! isset( $booking_data['duration'] ) ) {
-		    $booking_data['duration'] = array();
+	}
+
+	protected function prepare_assistant_response_for_collection($attendant, $available, $service)
+	{
+		$availabilities = array();
+
+		foreach ($attendant->getAvailabilityItems()->toArray() as $availability) {
+
+			$data = $availability->getData();
+
+			if (!$data) {
+				continue;
+			}
+
+			$avDays = array();
+
+			for ($i = 1; $i <= 7; $i++) {
+				$apiDayKey    = $i; //1-7 (Mon-Sun)
+				$pluginDayKey = $i + 1 > 7 ? ($i + 1) % 7 : $i + 1; //1-7 (Sun-Sat)
+				$avDays[$apiDayKey] = empty( $data['days'][$pluginDayKey] ) ? 0 : 1;
+			}
+
+			$availabilities[] = array(
+				'days'      => $avDays,
+				'from'      => (object)$data['from'],
+				'to'        => (object)$data['to'],
+				'always'    => $data['always'],
+				'from_date' => $data['from_date'],
+				'to_date'   => $data['to_date'],
+			);
 		}
 
-		if ( ! isset( $booking_data['break_duration'] ) ) {
-		    $booking_data['break_duration'] = array();
+		$holidays = array();
+
+		foreach ($attendant->getHolidayItems()->toArray() as $holiday) {
+
+			$data = $holiday->getData();
+
+			if (!$data) {
+				continue;
+			}
+
+			$holidays[] = array(
+				'from_date' => $data['from_date'],
+				'to_date'   => $data['to_date'],
+				'from_time' => $data['from_time'],
+				'to_time'   => $data['to_time'],
+			);
 		}
 
-		$service = $plugin->createService($s['service_id']);
+		return array(
+			'id'             => $attendant->getId(),
+			'name'           => $attendant->getName(),
+			'available'	     => $available,
+			'services'       => $attendant->getServicesIds(),
+			'email'          => $attendant->getEmail(),
+			'phone'          => $attendant->getPhone(),
+			'description'    => $attendant->getContent(),
+			'availabilities' => $availabilities,
+			'holidays'       => $holidays,
+			'image_url'      => (string) wp_get_attachment_url(get_post_thumbnail_id($attendant->getId())),
+			'variable_price' => $service->getVariablePriceEnabled() ? $service->getVariablePrice($attendant->getId()) : '',
+		);
+	}
 
-		$booking_data['attendants'][$s['service_id']]	= isset($s['assistant_id']) ? $s['assistant_id'] : 0;
-		$booking_data['price'][$s['service_id']]		= $service->getPrice();
-		$booking_data['duration'][$s['service_id']]		= SLN_Func::getMinutesFromDuration($service->getDuration());
-		$booking_data['break_duration'][$s['service_id']]	= SLN_Func::getMinutesFromDuration($service->getBreakDuration());
-	    }
+	public function get_availability_resources($request)
+	{
+		try {
 
-	    $ret = $handler->initAllAttentansForAdmin($request->get_param('booking_id'), $services, $booking_data, $request->get_param('selected_service_id'));
-	    $ret = apply_filters('sln_api_availability_booking_get_availability_assistants_ret', $ret, $bb);
+			do_action('sln_api_availability_booking_get_availability_resources_before', $request);
 
-	    $result = array();
+			$plugin = SLN_Plugin::getInstance();
 
-	    foreach ($ret as $assistantID => $a) {
+			$handler = new \SLN_Action_Ajax_CheckResources($plugin);
 
-		$assistant = $plugin->createAttendant($assistantID);
-		$available = SLN_Action_Ajax_CheckServices::STATUS_ERROR === $a['status'] ? false : true;
+			$handler->setDate($request->get_param('date'));
+			$handler->setTime($request->get_param('time'));
 
-		$result[] = $this->prepare_assistant_response_for_collection($assistant, $available, $plugin->createService($request->get_param('selected_service_id')));
-	    }
+			$bb = $plugin->getBookingBuilder();
 
-	    return $this->success_response(array(
-		'assistants' => $result,
-	    ));
+			do_action('sln_api_availability_booking_get_availability_resources_before_check', $bb, $request);
 
-        } catch (\Exception $ex) {
-            return new \WP_Error( 'salon_rest_cannot_view', $ex->getMessage(), array( 'status' => $ex->getCode() ? $ex->getCode() : 500 ) );
-        }
+			$bb->setDate($request->get_param('date'));
+			$bb->setTime($request->get_param('time'));
 
-    }
+			$handler->setBookingBuilder($bb);
+			$handler->setAvailabilityHelper($plugin->getAvailabilityHelper());
+			$handler->bindDate(array(
+				'_sln_booking_date' => $request->get_param('date'),
+				'_sln_booking_time' => $request->get_param('time'))
+			);
 
-    protected function prepare_assistant_response_for_collection($attendant, $available, $service)
-    {
-        $availabilities = array();
+			$services = array();
+			$booking_data = array();
 
-        foreach ($attendant->getAvailabilityItems()->toArray() as $availability) {
+			foreach ($request->get_param('services') as $s) {
+				if (!isset($s['service_id'])) {
+					continue;
+				}
 
-            $data = $availability->getData();
+				$services[] = $s['service_id'];
 
-            if (!$data) {
-                continue;
-            }
+				if (!isset($booking_data['attendants'])) {
+					$booking_data['attendants'] = array();
+				}
 
-            $avDays = array();
+				if (!isset($booking_data['price'])) {
+					$booking_data['price'] = array();
+				}
 
-	    for ($i = 1; $i <= 7; $i++) {
-		$apiDayKey    = $i; //1-7 (Mon-Sun)
-		$pluginDayKey = $i + 1 > 7 ? ($i + 1) % 7 : $i + 1; //1-7 (Sun-Sat)
-		$avDays[$apiDayKey] = empty( $data['days'][$pluginDayKey] ) ? 0 : 1;
-            }
+				if (!isset($booking_data['duration'])) {
+					$booking_data['duration'] = array();
+				}
 
-            $availabilities[] = array(
-                'days'      => $avDays,
-                'from'      => (object)$data['from'],
-                'to'        => (object)$data['to'],
-                'always'    => $data['always'],
-                'from_date' => $data['from_date'],
-                'to_date'   => $data['to_date'],
-            );
-        }
+				if (!isset($booking_data['break_duration'])) {
+					$booking_data['break_duration'] = array();
+				}
 
-        $holidays = array();
+				$service = $plugin->createService($s['service_id']);
 
-        foreach ($attendant->getHolidayItems()->toArray() as $holiday) {
+				$booking_data['attendants'][$s['service_id']] = isset($s['assistant_id']) ? $s['assistant_id'] : 0;
+				$booking_data['price'][$s['service_id']] = $service->getPrice();
+				$booking_data['duration'][$s['service_id']] = SLN_Func::getMinutesFromDuration($service->getDuration());
+				$booking_data['break_duration'][$s['service_id']] = SLN_Func::getMinutesFromDuration($service->getBreakDuration());
+			}
 
-            $data = $holiday->getData();
+			$result = $handler->initAllResourcesForAdmin($request->get_param('booking_id'), $services, $booking_data, $request->get_param('selected_service_id'));
 
-            if (!$data) {
-                continue;
-            }
+			$result = array_map(function($id, $resource) {
+				$resource['id'] = $id;
+				return $resource;
+			}, array_keys($result), $result);
 
-            $holidays[] = array(
-                'from_date' => $data['from_date'],
-                'to_date'   => $data['to_date'],
-                'from_time' => $data['from_time'],
-                'to_time'   => $data['to_time'],
-            );
-        }
-
-        return array(
-            'id'             => $attendant->getId(),
-            'name'           => $attendant->getName(),
-            'available'	     => $available,
-            'services'       => $attendant->getServicesIds(),
-            'email'          => $attendant->getEmail(),
-            'phone'          => $attendant->getPhone(),
-            'description'    => $attendant->getContent(),
-            'availabilities' => $availabilities,
-            'holidays'       => $holidays,
-            'image_url'      => (string) wp_get_attachment_url(get_post_thumbnail_id($attendant->getId())),
-            'variable_price' => $service->getVariablePriceEnabled() ? $service->getVariablePrice($attendant->getId()) : '',
-        );
-    }
-
-    public function get_availability_resources($request)
-    {
-        try {
-
-            do_action('sln_api_availability_booking_get_availability_resources_before', $request);
-
-            $plugin = SLN_Plugin::getInstance();
-
-            $handler = new \SLN_Action_Ajax_CheckResources($plugin);
-
-            $handler->setDate($request->get_param('date'));
-            $handler->setTime($request->get_param('time'));
-
-            $bb = $plugin->getBookingBuilder();
-
-            do_action('sln_api_availability_booking_get_availability_resources_before_check', $bb, $request);
-
-            $bb->setDate($request->get_param('date'));
-            $bb->setTime($request->get_param('time'));
-
-            $handler->setBookingBuilder($bb);
-            $handler->setAvailabilityHelper($plugin->getAvailabilityHelper());
-            $handler->bindDate(array(
-                '_sln_booking_date' => $request->get_param('date'),
-                '_sln_booking_time' => $request->get_param('time'))
-            );
-
-            $services = array();
-            $booking_data = array();
-
-            foreach ($request->get_param('services') as $s) {
-                if (!isset($s['service_id'])) {
-                    continue;
-                }
-
-                $services[] = $s['service_id'];
-
-                if (!isset($booking_data['attendants'])) {
-                    $booking_data['attendants'] = array();
-                }
-
-                if (!isset($booking_data['price'])) {
-                    $booking_data['price'] = array();
-                }
-
-                if (!isset($booking_data['duration'])) {
-                    $booking_data['duration'] = array();
-                }
-
-                if (!isset($booking_data['break_duration'])) {
-                    $booking_data['break_duration'] = array();
-                }
-
-                $service = $plugin->createService($s['service_id']);
-
-                $booking_data['attendants'][$s['service_id']] = isset($s['assistant_id']) ? $s['assistant_id'] : 0;
-                $booking_data['price'][$s['service_id']] = $service->getPrice();
-                $booking_data['duration'][$s['service_id']] = SLN_Func::getMinutesFromDuration($service->getDuration());
-                $booking_data['break_duration'][$s['service_id']] = SLN_Func::getMinutesFromDuration($service->getBreakDuration());
-            }
-
-            $result = $handler->initAllResourcesForAdmin($request->get_param('booking_id'), $services, $booking_data, $request->get_param('selected_service_id'));
-
-            $result = array_map(function($id, $resource) {
-                $resource['id'] = $id;
-                return $resource;
-            }, array_keys($result), $result);
-
-            return $this->success_response(array(
-                'resources' => $result,
-            ));
-        } catch (\Exception $ex) {
-            return new \WP_Error( 'salon_rest_cannot_view', $ex->getMessage(), array( 'status' => $ex->getCode() ? $ex->getCode() : 500 ) );
-        }
-    }
+			return $this->success_response(array(
+				'resources' => $result,
+			));
+		} catch (\Exception $ex) {
+			return new \WP_Error( 'salon_rest_cannot_view', $ex->getMessage(), array( 'status' => $ex->getCode() ? $ex->getCode() : 500 ) );
+		}
+	}
 }

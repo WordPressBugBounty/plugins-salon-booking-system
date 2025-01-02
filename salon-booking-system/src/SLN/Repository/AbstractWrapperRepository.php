@@ -23,9 +23,6 @@ abstract class SLN_Repository_AbstractWrapperRepository extends SLN_Repository_A
             }
             $data = get_post($data);
         }
-        if(empty($data)){
-            return null;
-        }
         $class = $this->getWrapperClass();
         $ret = new $class($data);
         $this->cache[$ret->getId()] = $ret;

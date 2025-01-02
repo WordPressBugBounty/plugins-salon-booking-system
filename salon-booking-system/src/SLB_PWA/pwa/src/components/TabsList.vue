@@ -20,6 +20,19 @@
                 <template #title><span @click="click('#customers')"><font-awesome-icon icon="fa-regular fa-address-book" /></span></template>
                 <CustomersAddressBookTab :shop="shop" @hideTabsHeader="hideTabsHeader"/>
             </b-tab>
+            <b-tab title-item-class="nav-item-profile" :active="isActiveTab('#user-profile')">
+                <template #title>
+                    <span @click="click('#user-profile')">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 27 30" class="svg-inline--fa">
+                        <g fill="none" stroke="currentcolor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3">
+                            <path d="M25.5 28.5v-3a6 6 0 0 0-6-6h-12a6 6 0 0 0-6 6v3"></path>
+                            <path d="M19.5 7.5a6 6 0 1 1-6-6 6 6 0 0 1 6 6Z"></path>
+                        </g>
+                      </svg>
+                  </span>
+                </template>
+                <UserProfileTab/>
+            </b-tab>
         </b-tabs>
     </div>
 </template>
@@ -29,6 +42,7 @@
     import UpcomingReservationsTab from './tabs/UpcomingReservationsTab.vue'
     import ReservationsCalendarTab from './tabs/ReservationsCalendarTab.vue'
     import CustomersAddressBookTab from './tabs/CustomersAddressBookTab.vue'
+    import UserProfileTab from './tabs/UserProfileTab.vue';
     import ShopsTab from './tabs/ShopsTab.vue'
     import ShopTitle from './tabs/shops/ShopTitle.vue'
 
@@ -45,6 +59,7 @@
             UpcomingReservationsTab,
             ReservationsCalendarTab,
             CustomersAddressBookTab,
+            UserProfileTab,
             ShopsTab,
             ShopTitle,
         },
@@ -105,15 +120,18 @@
         margin: 0 14px;
     }
     :deep(.nav-pills) .nav-link.active {
-        color: #C7CED9;
+      color: #fff;
     }
     :deep(.nav-pills) .nav-link {
-        color: #fff;
+      color: #C7CED9;
     }
     .tabs :deep(.card-header-tabs) .nav-item.hide {
         display: none;
     }
     .hide-tabs-header :deep(.card-header) {
         display: none;
+    }
+    :deep(.nav-item-profile) {
+      margin-left: auto;
     }
 </style>

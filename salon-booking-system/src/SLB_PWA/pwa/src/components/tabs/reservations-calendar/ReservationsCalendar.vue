@@ -36,6 +36,9 @@
               <template v-else-if="isAvailableBookings(date)">
                 <div class="day day-available-book">{{ day }}</div>
               </template>
+              <template v-else-if="isHoliday(date)">
+                <div class="day day-holiday">{{ day }}</div>
+              </template>
               <template v-else>
                 <div class="day day-disable-book">{{ day }}</div>
               </template>
@@ -377,6 +380,14 @@ export default {
       });
       return result;
     },
+    isHoliday(date) {
+      return this.availabilityStats.some(
+          (i) =>
+              i.date === this.moment(date).format("YYYY-MM-DD") &&
+              i.error &&
+              i.error.type === "holiday_rules"
+      );
+    },
     getBookingsListByTime(timeStart, timeEnd) {
       return this.filteredBookingsList.filter((i) => this.moment(i.time, 'HH:mm').unix() >= this.moment(timeStart, 'HH:mm').unix() && (!timeEnd || this.moment(i.time, 'HH:mm').unix() < this.moment(timeEnd, 'HH:mm').unix())).sort((a, b) => this.moment(a.time, 'HH:mm').unix() - this.moment(b.time, 'HH:mm').unix());
     },
@@ -466,8 +477,19 @@ export default {
   margin: 0 auto;
 }
 :deep(.dp__cell_inner) {
-  height: 45px;
-  width: 45px;
+  --dp-hover-color: #6983862B;
+  height: auto;
+  width: auto;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+}
+:deep(.dp__calendar_row) {
+  margin: 10px 0;
+  gap: 10px;
+}
+:deep(.dp__calendar_header) {
+  gap: 9px;
 }
 :deep(.dp__calendar_header_item) {
   height: 30px;
@@ -478,32 +500,62 @@ export default {
   align-items: center;
   text-align: center;
   justify-content: center;
-  border-radius: 20px;
-  height: 35px;
-  padding: 10px;
-  width: 35px;
-  border: 1px solid #c7ced9;
+  border-radius: 30px;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 2px solid #C7CED9;
   box-sizing: border-box;
   position: relative;
 }
-.day-with-bookings {
-  border-color: #04409F;
+.day-available-book,.day-with-bookings {
   color: #04409F;
-  border: 1px solid;
-  font-weight:400;
+  border-color: #04409F;
 }
+.day-with-bookings::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 4px;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #04409F;
+}
+.day-disable-book,
 .day-full-booked {
-  border-color: #c7ced9;
+  border-color: #C7CED9;
   color: #c7ced9;
 }
-.day-available-book {
-  color: #04409f;
-  border: 3px solid #04409f;
-  font-weight: 600;
+.day-holiday {
+  color: #9F04048E;
+  border-color: #9F04048F;
 }
-.day-disable-book {
-  border-color: #c7ced9;
-  color: #c7ced9;
+@media screen and (max-width: 450px){
+  :deep(.dp__calendar_row) {
+    margin: 5px 0;
+    gap: 5px;
+  }
+  :deep(.dp__calendar_header) {
+    gap: 0;
+  }
+  .day {
+     width: 38px;
+     height: 38px;
+   }
+}
+@media screen and (max-width: 361px){
+  :deep(.dp__calendar_header_item) {
+    width: 37px;
+  }
+  .day {
+    width: 33px;
+    height: 33px;
+  }
 }
 .attendants .btn {
   margin-right: 20px;
@@ -544,8 +596,7 @@ export default {
   color: #04409f;
   border-color: #7f8ca2;
 }
-.attendants .btn:hover,
-.attendants .btn.active {
+.attendants .btn:hover, .attendants .btn.active {
   color: #04409f;
   background-color: #7f8ca2;
   border-color: #7f8ca2;
@@ -578,8 +629,16 @@ export default {
   background: none;
 }
 :deep(.dp__active_date) .day {
-  background: #1976d2;
+  background: #04409f;
+  border-color: #fff;
   color: #fff;
+}
+:deep(.dp__active_date) .day.day-holiday {
+  background: #a78a8a;
+  border-color: #9f04048f;
+}
+:deep(.dp__active_date) .day.day-with-bookings::before {
+  background-color: #fff;
 }
 .spinner-wrapper {
   width: 100%;
