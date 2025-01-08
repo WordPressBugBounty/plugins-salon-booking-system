@@ -250,4 +250,103 @@ class SLN_TimeFunc
 	return static::$wp_locale;
     }
 
+    public static function wpLocale2DatepickerLocale($wp_locale){
+        $settings = SLN_Plugin::getInstance()->getSettings();
+        $locale = $settings->getLocale() ?? get_user_locale();
+        $weekday_first_short = array($wp_locale->get_weekday_abbrev($wp_locale->weekday[0]));
+        return array(
+            'locale' => $locale,
+            'locale_data' => array(
+                'days' => array_merge($wp_locale->weekday, array($wp_locale->weekday[0])),
+                'daysShort' => array_merge(array_values($wp_locale->weekday_abbrev), $weekday_first_short),
+                'daysMin' => array_merge(array_values($wp_locale->weekday_abbrev), $weekday_first_short),
+                'months' => array_values($wp_locale->month),
+                'monthsShort' => array_values($wp_locale->month_abbrev),
+                'meridiem' => array(
+                    $wp_locale->meridiem['am'],
+                    $wp_locale->meridiem['pm']
+                ),
+                'today' => __('Today'),
+                'suffix' => array()
+            )
+        );
+    }
+
+    public static function wpLocale2CalendarLocale($locale){
+        $settings = SLN_Plugin::getInstance()->getSettings();
+        $locale_name = $settings->getLocale() ?? get_user_locale();
+        return array(
+            'locale' => $locale,
+            'locale_data' => array(
+                'error_noview' => sprintf(__('Calendar: View %s not found', 'salon-booking-system'), '{0}'),
+                'error_dateformat' => sprintf(__('Calendar: Wrong date format %s. Should be either "now" or "yyyy-mm-dd"', 'salon-booking-system'), '{0}'),
+                'error_loadurl' => __('Calendar: Event URL is not set', 'salon-booking-system'),
+                'error_where' => sprintf(__('Calendar: Wrong navigation direction %s. Can be only "next" or "prev" or "today"', 'salon-booking-system'), '{0}'),
+                'error_timedevide' => __('Calendar: Time split parameter should divide 60 without decimals. Something like 10, 15, 30', 'salon-booking-system'),
+
+                'no_events_in_day' => __('No events in this day.', 'salon-booking-system'),
+
+                // {0} will be replaced with the year (example: 2013)
+                'title_year' => '{0}',
+                // {0} will be replaced with the month name (example: September)
+                // {1} will be replaced with the year (example: 2013)
+                'title_month' => '{0} {1}',
+                // {0} will be replaced with the week number (example: 37)
+                // {1} will be replaced with the year (example: 2013)
+                'title_week' => sprintf(__('week %s of %s', 'salon-booking-system'), '{0}', '{1}'),
+                // {0} will be replaced with the weekday name (example: Thursday)
+                // {1} will be replaced with the day of the month (example: 12)
+                // {2} will be replaced with the month name (example: September)
+                // {3} will be replaced with the year (example: 2013)
+                'title_day' => '{0} {1} {2}, {3}',
+
+                'week' => sprintf(__('Week %s', 'salon-booking-system'), '{0}'),
+                'all_day' => __('All day', 'salon-booking-system'),
+                'time' => __('Time', 'salon-booking-system'),
+                'events' => __('Events', 'salon-booking-system'),
+                'before_time' => __('Ends before timeline', 'salon-booking-system'),
+                'after_time' => __('Starts after timeline', 'salon-booking-system'),
+
+                'm0' => $locale->get_month(1),
+                'm1' => $locale->get_month(2),
+                'm2' => $locale->get_month(3),
+                'm3' => $locale->get_month(4),
+                'm4' => $locale->get_month(5),
+                'm5' => $locale->get_month(6),
+                'm6' => $locale->get_month(7),
+                'm7' => $locale->get_month(8),
+                'm8' => $locale->get_month(9),
+                'm9' => $locale->get_month(10),
+                'm10' => $locale->get_month(11),
+                'm11' => $locale->get_month(12),
+
+                'ms0' => $locale->get_month_abbrev($locale->get_month(1)),
+                'ms1' => $locale->get_month_abbrev($locale->get_month(2)),
+                'ms2' => $locale->get_month_abbrev($locale->get_month(3)),
+                'ms3' => $locale->get_month_abbrev($locale->get_month(4)),
+                'ms4' => $locale->get_month_abbrev($locale->get_month(5)),
+                'ms5' => $locale->get_month_abbrev($locale->get_month(6)),
+                'ms6' => $locale->get_month_abbrev($locale->get_month(7)),
+                'ms7' => $locale->get_month_abbrev($locale->get_month(8)),
+                'ms8' => $locale->get_month_abbrev($locale->get_month(9)),
+                'ms9' => $locale->get_month_abbrev($locale->get_month(10)),
+                'ms10' => $locale->get_month_abbrev($locale->get_month(11)),
+                'ms11' => $locale->get_month_abbrev($locale->get_month(12)),
+
+                'd0' => $locale->weekday[0],
+                'd1' => $locale->weekday[1],
+                'd2' => $locale->weekday[2],
+                'd3' => $locale->weekday[3],
+                'd4' => $locale->weekday[4],
+                'd5' => $locale->weekday[5],
+                'd6' => $locale->weekday[6],
+
+                // Which is the first day of the week (2 for sunday, 1 for monday)
+                'first_day' => $settings->get('week_start'),
+
+                'holidays' =>array(),
+            )
+        );
+    }
+
 }

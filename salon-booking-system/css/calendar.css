@@ -1211,13 +1211,9 @@ a.cal-event-week {
 
 .sln-free-locked-slots:after {
   top: 0;
-  left: 0;
-  right: 100%;
 }
 
 .sln-free-locked-slots.sln-btn--icon {
-  padding-left: 30px;
-  padding-right: 0;
   margin-top: 10px;
 }
 
@@ -1842,5 +1838,3 @@ sln-calendar--wrapper .att-time-slot .block_date {
 .sln-btn-disabled:hover {
   background-color: #d5dfe5 !important;
 }
-
-/*# sourceMappingURL=calendar.css.map */

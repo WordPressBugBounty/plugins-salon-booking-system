@@ -107,7 +107,7 @@ class SLB_Discount_Admin_ExportDiscountsCsv{
     public static function hook_tools_export_button(){
 		?><div class="form-group col-xs-12 col-md-4">
 		<button type="submit" id="discount-action" name="sln-tools-export-discounts" value="export"
-			class="sln-btn sln-btn--main sln-btn--big sln-btn--icon sln-icon--tag">
+			class="sln-btn sln-btn--main--tonal sln-btn--big sln-btn--icon sln-icon--tag">
 			<?php esc_html_e('Export discounts', 'salon-booking-system')?></button>
 		</div>
 		<?php

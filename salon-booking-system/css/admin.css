@@ -40458,30 +40458,30 @@ h2.sln-nav-tab-wrapper.nav-tab-wrapper img {
   background-color: #fff;
   color: rgb(0, 53, 83);
   /* FIX 092023
-        &.nav-tab-general::before {
-            content: "\f013";
-        }
-        &.nav-tab-booking::before {
-            content: "\f073";
-        }
-        &.nav-tab-checkout::before {
-            content: "\f07a";
-        }
-        &.nav-tab-payments::before {
-            content: "\f09d";
-            font-weight: 400;
-        }
-        &.nav-tab-style::before {
-            content: "\f036";
-        }
-        &.nav-tab-gcalendar::before {
-            content: "\f1a0";
-            font-weight: 300;
-        }
-        &.nav-tab-documentation::before {
-            content: "\f02d";
-        }
-        */
+      &.nav-tab-general::before {
+          content: "\f013";
+      }
+      &.nav-tab-booking::before {
+          content: "\f073";
+      }
+      &.nav-tab-checkout::before {
+          content: "\f07a";
+      }
+      &.nav-tab-payments::before {
+          content: "\f09d";
+          font-weight: 400;
+      }
+      &.nav-tab-style::before {
+          content: "\f036";
+      }
+      &.nav-tab-gcalendar::before {
+          content: "\f1a0";
+          font-weight: 300;
+      }
+      &.nav-tab-documentation::before {
+          content: "\f02d";
+      }
+      */
 }
 .sln-salon--settings .sln-nav-tab-wrapper.nav-tab-wrapper .nav-tab::before,
 .sln-salon--settings h2.sln-nav-tab-wrapper.nav-tab-wrapper .nav-tab::before {
@@ -40528,18 +40528,18 @@ h2.sln-nav-tab-wrapper.nav-tab-wrapper img {
   color: rgb(0, 53, 83);
   border-right: 1px solid rgba(199, 223, 243, 0.5);
   /* FIX 092023
-        &::before {
-            display: block;
-            content: "\f013";
-            @extend %font-icon;
-            font-size: settings-mixins.rem(24px);
-            line-height: settings-mixins.rem(66px);
-            text-align: center;
-        }
-        &.sln-inpage_navbar__icon--close::before {
-            content: "\f00d";
-        }
-        */
+      &::before {
+          display: block;
+          content: "\f013";
+          @extend %font-icon;
+          font-size: settings-mixins.rem(24px);
+          line-height: settings-mixins.rem(66px);
+          text-align: center;
+      }
+      &.sln-inpage_navbar__icon--close::before {
+          content: "\f00d";
+      }
+      */
 }
 .sln-salon--settings .sln-nav-tab-wrapper.nav-tab-wrapper.affix,
 .sln-salon--settings h2.sln-nav-tab-wrapper.nav-tab-wrapper.affix {
@@ -42320,6 +42320,133 @@ body:not(.sln-salon-page)
     display: none;
   }
 }
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-btn--main--tonal,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal,
+.sln-calendar--wrapper .sln-btn--main--tonal,
+.sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal {
+  background-color: rgba(9, 120, 189, 0.2);
+  color: rgb(0, 53, 83);
+  border-style: solid;
+  border-width: 1px 2px 2px 1px;
+  border-color: transparent;
+}
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-btn--main--tonal input,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-btn--main--tonal button,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal input,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal button,
+.sln-calendar--wrapper .sln-btn--main--tonal input,
+.sln-calendar--wrapper .sln-btn--main--tonal button,
+.sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal input,
+.sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal button {
+  color: rgb(9, 120, 189);
+}
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-btn--main--tonal:hover, .salon_page_salon-calendar .sln-calendar--wrapper .sln-btn--main--tonal:focus,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:hover,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:focus,
+.sln-calendar--wrapper .sln-btn--main--tonal:hover,
+.sln-calendar--wrapper .sln-btn--main--tonal:focus,
+.sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:hover,
+.sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:focus {
+  background-color: rgba(9, 120, 189, 0.2);
+  color: rgb(0, 53, 83);
+  border-color: rgb(9, 120, 189);
+}
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-btn--main--tonal:hover .btn,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-btn--main--tonal:hover input,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-btn--main--tonal:hover button, .salon_page_salon-calendar .sln-calendar--wrapper .sln-btn--main--tonal:focus .btn,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-btn--main--tonal:focus input,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-btn--main--tonal:focus button,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:hover .btn,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:hover input,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:hover button,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:focus .btn,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:focus input,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:focus button,
+.sln-calendar--wrapper .sln-btn--main--tonal:hover .btn,
+.sln-calendar--wrapper .sln-btn--main--tonal:hover input,
+.sln-calendar--wrapper .sln-btn--main--tonal:hover button,
+.sln-calendar--wrapper .sln-btn--main--tonal:focus .btn,
+.sln-calendar--wrapper .sln-btn--main--tonal:focus input,
+.sln-calendar--wrapper .sln-btn--main--tonal:focus button,
+.sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:hover .btn,
+.sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:hover input,
+.sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:hover button,
+.sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:focus .btn,
+.sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:focus input,
+.sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:focus button {
+  color: rgb(0, 53, 83);
+}
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-btn--main--tonal:hover .btn:hover, .salon_page_salon-calendar .sln-calendar--wrapper .sln-btn--main--tonal:hover .btn:focus,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-btn--main--tonal:hover input:hover,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-btn--main--tonal:hover input:focus,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-btn--main--tonal:hover button:hover,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-btn--main--tonal:hover button:focus, .salon_page_salon-calendar .sln-calendar--wrapper .sln-btn--main--tonal:focus .btn:hover, .salon_page_salon-calendar .sln-calendar--wrapper .sln-btn--main--tonal:focus .btn:focus,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-btn--main--tonal:focus input:hover,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-btn--main--tonal:focus input:focus,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-btn--main--tonal:focus button:hover,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-btn--main--tonal:focus button:focus,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:hover .btn:hover,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:hover .btn:focus,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:hover input:hover,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:hover input:focus,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:hover button:hover,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:hover button:focus,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:focus .btn:hover,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:focus .btn:focus,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:focus input:hover,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:focus input:focus,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:focus button:hover,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:focus button:focus,
+.sln-calendar--wrapper .sln-btn--main--tonal:hover .btn:hover,
+.sln-calendar--wrapper .sln-btn--main--tonal:hover .btn:focus,
+.sln-calendar--wrapper .sln-btn--main--tonal:hover input:hover,
+.sln-calendar--wrapper .sln-btn--main--tonal:hover input:focus,
+.sln-calendar--wrapper .sln-btn--main--tonal:hover button:hover,
+.sln-calendar--wrapper .sln-btn--main--tonal:hover button:focus,
+.sln-calendar--wrapper .sln-btn--main--tonal:focus .btn:hover,
+.sln-calendar--wrapper .sln-btn--main--tonal:focus .btn:focus,
+.sln-calendar--wrapper .sln-btn--main--tonal:focus input:hover,
+.sln-calendar--wrapper .sln-btn--main--tonal:focus input:focus,
+.sln-calendar--wrapper .sln-btn--main--tonal:focus button:hover,
+.sln-calendar--wrapper .sln-btn--main--tonal:focus button:focus,
+.sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:hover .btn:hover,
+.sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:hover .btn:focus,
+.sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:hover input:hover,
+.sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:hover input:focus,
+.sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:hover button:hover,
+.sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:hover button:focus,
+.sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:focus .btn:hover,
+.sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:focus .btn:focus,
+.sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:focus input:hover,
+.sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:focus input:focus,
+.sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:focus button:hover,
+.sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal:focus button:focus {
+  color: rgb(0, 53, 83);
+}
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-btn--main--tonal.sln-btn--small.sln-btn--icon,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal.sln-btn--small.sln-btn--icon,
+.sln-calendar--wrapper .sln-btn--main--tonal.sln-btn--small.sln-btn--icon,
+.sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal.sln-btn--small.sln-btn--icon {
+  background-color: transparent;
+}
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-btn--main--tonal.sln-btn--small.sln-btn--icon:after,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal.sln-btn--small.sln-btn--icon:after,
+.sln-calendar--wrapper .sln-btn--main--tonal.sln-btn--small.sln-btn--icon:after,
+.sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal.sln-btn--small.sln-btn--icon:after {
+  color: rgb(2, 119, 189);
+}
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-btn--main--tonal.sln-btn--small.sln-btn--icon:hover,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal.sln-btn--small.sln-btn--icon:hover,
+.sln-calendar--wrapper .sln-btn--main--tonal.sln-btn--small.sln-btn--icon:hover,
+.sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal.sln-btn--small.sln-btn--icon:hover {
+  background-color: transparent;
+}
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-btn--main--tonal.sln-btn--small.sln-btn--icon:hover:after,
+.salon_page_salon-calendar .sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal.sln-btn--small.sln-btn--icon:hover:after,
+.sln-calendar--wrapper .sln-btn--main--tonal.sln-btn--small.sln-btn--icon:hover:after,
+.sln-calendar--wrapper .sln-bootstrap .sln-btn--main--tonal.sln-btn--small.sln-btn--icon:hover:after {
+  color: rgb(0, 53, 83);
+}
 .salon_page_salon-calendar .sln-calendar--wrapper .sln-shops-selection-wrapper,
 .sln-calendar--wrapper .sln-shops-selection-wrapper {
   margin-top: 2em;
@@ -43992,39 +44119,39 @@ body.sln-noscroll .sln-tab .sln-calendar--wrapper .sln-tab__curtain,
 
 .sln-select-wrapper {
   /*.select2-container--sln .select2-selection--multiple .select2-selection__choice {
-             padding: 0 40px 0 10px;
-             margin-left: 7px;
-             margin-top: 8px;
-             line-height: 30px;
-             background-color: #eee;
-             background-image: none;
-             border: none;
-             position: relative;
-             .select2-selection__choice__remove {
-                 position: absolute;
-                 width: 26px;
-                 height: 100%;
-                 left: initial;
-                 top: 0;
-                 right: 0;
-                 background-image: none;
-                 background-color: #e4e4e4;
-                 color: $ca-red;
-                 text-decoration: none;
-                 &:before {
-                     display: block;
-                     content: "x";
-                     font-size: 16px;
-                     font-weight: bold;
-                     line-height: 30px;
-                     text-align: center;
-                 }
-                 &:hover {
-                 background-color: $ca-red;
-                 color: $cl_main--white;
-                 }
-             }
-         }*/
+            padding: 0 40px 0 10px;
+            margin-left: 7px;
+            margin-top: 8px;
+            line-height: 30px;
+            background-color: #eee;
+            background-image: none;
+            border: none;
+            position: relative;
+            .select2-selection__choice__remove {
+                position: absolute;
+                width: 26px;
+                height: 100%;
+                left: initial;
+                top: 0;
+                right: 0;
+                background-image: none;
+                background-color: #e4e4e4;
+                color: $ca-red;
+                text-decoration: none;
+                &:before {
+                    display: block;
+                    content: "x";
+                    font-size: 16px;
+                    font-weight: bold;
+                    line-height: 30px;
+                    text-align: center;
+                }
+                &:hover {
+                background-color: $ca-red;
+                color: $cl_main--white;
+                }
+            }
+        }*/
 }
 .sln-select-wrapper .select2-container--sln .select2-selection--multiple .select2-selection__rendered {
   padding: 0;
@@ -44068,22 +44195,22 @@ body.sln-noscroll .sln-tab .sln-calendar--wrapper .sln-tab__curtain,
 .select2-search--dropdown {
   position: relative;
   /* FIX 092023
-     &:before {
-         position: absolute;
-         right: 10px;
-         top: calc(50% - 13px);
-         width: 26px;
-         height: 26px;
-         display: block;
-         content: "\e003";
-         font-weight: bold;
-         line-height: 26px;
-         text-align: center;
-         font-family: "Glyphicons Halflings";
-         font-size: 14px;
-         color: #32373c;
-     }
-     */
+    &:before {
+        position: absolute;
+        right: 10px;
+        top: calc(50% - 13px);
+        width: 26px;
+        height: 26px;
+        display: block;
+        content: "\e003";
+        font-weight: bold;
+        line-height: 26px;
+        text-align: center;
+        font-family: "Glyphicons Halflings";
+        font-size: 14px;
+        color: #32373c;
+    }
+    */
 }
 
 /* FIX 092023
@@ -44095,10 +44222,10 @@ body.sln-noscroll .sln-tab .sln-calendar--wrapper .sln-tab__curtain,
 */
 .select2-container--sln .select2-selection--multiple {
   /* FIX 092023
-     &:before {
-         color: #32373c;
-     }
-     */
+    &:before {
+        color: #32373c;
+    }
+    */
 }
 .select2-container--sln .select2-selection--multiple:hover:before {
   color: #fff;
@@ -44357,8 +44484,12 @@ body.sln-noscroll .sln-tab .sln-calendar--wrapper .sln-tab__curtain,
 .sln-calendar--wrapper .cal-day-hour-part.active .block_date {
   margin-right: 0;
 }
-#sln-salon--admin .cal-day-hour-part:hover .sln-btn--cal-day-select,
-.sln-calendar--wrapper .cal-day-hour-part:hover .sln-btn--cal-day-select {
+#sln-salon--admin .cal-day-hour-part,
+.sln-calendar--wrapper .cal-day-hour-part {
+  transition: all 350ms;
+}
+#sln-salon--admin .cal-day-hour-part .sln-btn--cal-day-select,
+.sln-calendar--wrapper .cal-day-hour-part .sln-btn--cal-day-select {
   display: flex;
   flex-direction: row-reverse;
   justify-content: center;
@@ -44371,16 +44502,22 @@ body.sln-noscroll .sln-tab .sln-calendar--wrapper .sln-tab__curtain,
   background-color: rgb(199, 223, 243);
   position: absolute;
   top: 50%;
-  transform: translateY(-50%);
+  transform: translateY(0);
   left: 100px;
-  visibility: visible;
   font-size: 1rem;
   letter-spacing: 0.1rem;
+  opacity: 0;
 }
-#sln-salon--admin .cal-day-hour-part:hover .sln-btn--cal-day-select.sln-btn--icon::after,
-.sln-calendar--wrapper .cal-day-hour-part:hover .sln-btn--cal-day-select.sln-btn--icon::after {
+#sln-salon--admin .cal-day-hour-part.sln-btn--icon::after,
+.sln-calendar--wrapper .cal-day-hour-part.sln-btn--icon::after {
   position: relative;
   inset: auto;
+}
+#sln-salon--admin .cal-day-hour-part:hover .sln-btn--cal-day-select,
+.sln-calendar--wrapper .cal-day-hour-part:hover .sln-btn--cal-day-select {
+  transform: translateY(-50%);
+  visibility: visible;
+  opacity: 1;
 }
 #sln-salon--admin .cal-day-hour-part .span1,
 #sln-salon--admin .cal-day-hour-part .sln-btn--cal-day-select,
@@ -44763,20 +44900,20 @@ div#beacon-container .Beacon .BeaconContainer {
   width: 26px;
   height: 26px;
   /* FIX 092023
-     &:before {
-         width: 26px;
-         height: 26px;
-         display: block;
-         content: "\e003";
-         font-weight: bold;
-         line-height: 26px;
-         text-align: center;
-         font-family: "Glyphicons Halflings";
-         font-size: 14px;
-         color: #32373c;
-         cursor: pointer;
-     }
-     */
+    &:before {
+        width: 26px;
+        height: 26px;
+        display: block;
+        content: "\e003";
+        font-weight: bold;
+        line-height: 26px;
+        text-align: center;
+        font-family: "Glyphicons Halflings";
+        font-size: 14px;
+        color: #32373c;
+        cursor: pointer;
+    }
+    */
 }
 
 .sln-calendar-booking-search-input-wrapper {
@@ -45807,9 +45944,9 @@ div#beacon-container .Beacon .BeaconContainer {
 
 .sln-editor-popup-actions .sln-duplicate-booking {
   /* FIX 092023
-     width: 33%;
-     max-width: 13.3333333rem;
-     */
+    width: 33%;
+    max-width: 13.3333333rem;
+    */
   min-width: 0;
 }
 
@@ -45833,9 +45970,9 @@ div#beacon-container .Beacon .BeaconContainer {
 
 .sln-alert.sln-alert--multiple {
   /* FIX 092023
-     position: absolute;
-     top: -30px;
-     */
+    position: absolute;
+    top: -30px;
+    */
   padding: 0 20px;
 }
 

@@ -483,7 +483,7 @@ SLN_Form::fieldText(
 
 <div class="row">
     <div class="form-group col-xs-12 sln-free-locked-slots-block">
-        <button class="sln-btn sln-btn--main sln-btn--big sln-free-locked-slots sln-icon--unlock sln-btn--icon">
+        <button class="sln-btn sln-btn--main--tonal sln-btn--big sln-free-locked-slots sln-icon--unlock sln-btn--icon">
             <?php esc_html_e('Free locked slots', 'salon-booking-system')?>
         </button>
     </div>
@@ -578,7 +578,7 @@ $jsFormat = SLN_Enum_DateFormat::getJsFormat($f);
         <div class="row">
             <div class="form-group col-xs-12 col-md-4">
             <button type="submit" id="action" name="sln-tools-export-bookings" value="export"
-                class="sln-btn sln-btn--main sln-btn--big sln-btn--icon sln-icon--file">
+                class="sln-btn sln-btn--main--tonal sln-btn--big sln-btn--icon sln-icon--file">
                 <?php esc_html_e('Export bookings', 'salon-booking-system')?></button>
             </div>
             <?php do_action('sln.tools.export_button'); ?>

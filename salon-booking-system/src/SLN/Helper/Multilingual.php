@@ -127,6 +127,7 @@ class SLN_Helper_Multilingual{
 	static function getDateLocale(){
 		$implementation = self::getImplementation();
 		$locale = get_user_locale();
+		error_log('user'.$locale);
 		if($implementation === 'wpml'){
 			$languages = apply_filters( 'wpml_active_languages', null);
 

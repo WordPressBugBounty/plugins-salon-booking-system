@@ -355,10 +355,23 @@ class SLN_Action_InitScripts {
 			self::ASSETS_VERSION,
 			true
 		);
+		wp_register_script(
+			'smalot-datepicker-lang',
+			SLN_PLUGIN_URL . '/js/datepicker_language/template.js',
+			array('jquery', 'smalot-datepicker'),
+			self::ASSETS_VERSION,
+			true
+		);
 		if (substr($date_lang, 0, 2) != 'en') {
+			// require_once SLN_PLUGIN_DIR.'/views/js/calendar_language/datepicker.php';
+			wp_localize_script(
+				'smalot-datepicker-lang',
+				'sln_datepicker_calendar', SLN_TimeFunc::wpLocale2DatepickerLocale(SLN_TimeFunc::getWpLocale())
+			);
+
 			wp_enqueue_script(
 				'smalot-datepicker-lang',
-				SLN_PLUGIN_URL . '/js/datepicker_language/bootstrap-datetimepicker.' . $date_lang . '.js',
+				SLN_PLUGIN_URL . '/views/js/calendar_language/datepicker.js',
 				array('jquery', 'smalot-datepicker'),
 				self::ASSETS_VERSION,
 				true

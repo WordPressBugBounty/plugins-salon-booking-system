@@ -44,10 +44,23 @@ class SLN_Admin_Calendar extends SLN_Admin_AbstractPage
 	$locale	    = str_replace($wpLang, $calLang, $locale);
 
         $av = SLN_Action_InitScripts::ASSETS_VERSION;
+        wp_register_script(
+            'salon-calendar-language',
+            SLN_PLUGIN_URL.'/js/calendar_language/template.js',
+            array('jquery'),
+            $av,
+            true
+        );
         if($locale != 'en-US' && $locale != 'en-GB') {
+            // require_once SLN_PLUGIN_DIR.'/views/js/calendar_language/admin_calendar.php';
+            wp_localize_script(
+                'smalot-datepicker-lang',
+                'sln_calendar_languages.locale', SLN_TimeFunc::wpLocale2CalendarLocale(SLN_TimeFunc::getWpLocale())
+            );
+
             wp_enqueue_script(
                 'salon-calendar-language',
-                sprintf(SLN_PLUGIN_URL.'/js/calendar_language/%s.js', $locale),
+                SLN_PLUGIN_URL.'/js/calendar_language/template.js',
                 array('jquery'),
                 $av,
                 true
