@@ -252,7 +252,7 @@ class SLN_TimeFunc
 
     public static function wpLocale2DatepickerLocale($wp_locale){
         $settings = SLN_Plugin::getInstance()->getSettings();
-        $locale = $settings->getLocale() ?? get_user_locale();
+        $locale = $settings->getDateLocale() ?? get_user_locale();
         $weekday_first_short = array($wp_locale->get_weekday_abbrev($wp_locale->weekday[0]));
         return array(
             'locale' => $locale,
@@ -274,7 +274,7 @@ class SLN_TimeFunc
 
     public static function wpLocale2CalendarLocale($locale){
         $settings = SLN_Plugin::getInstance()->getSettings();
-        $locale_name = $settings->getLocale() ?? get_user_locale();
+        $locale_name = $settings->getDateLocale() ?? get_user_locale();
         return array(
             'locale' => $locale,
             'locale_data' => array(
