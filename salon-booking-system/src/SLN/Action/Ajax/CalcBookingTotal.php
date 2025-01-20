@@ -1,24 +1,36 @@
 <?php
+// phpcs:ignoreFile WordPress.Security.NonceVerification.Missing
 
 class SLN_Action_Ajax_CalcBookingTotal extends SLN_Action_Ajax_Abstract
 {
     public function execute()  {
 
-	$booking  = $this->plugin->createFromPost($_POST['post_ID']);
-	$settings = $this->plugin->getSettings();
+        if(!isset($_POST['post_ID']) && !isset($_POST['_sln_booking_date']) && !isset($_POST['_sln_booking_time']) && !isset($_POST['_sln_booking'])) {
+            return array(
+                'total'	=> round(0, 2),
+                'deposit'	=> round(0, 2),
+                'duration'	=> 0,
+                'discounts'	=> apply_filters('sln.calc_booking_total.get_discounts_html', ''),
+                'services'  => 0,
+                'tips'      => round(0, 2),
+            );
+        }
 
-	$startsAt = $this->getStartsAt($_POST['_sln_booking_date'], $_POST['_sln_booking_time']);
-	$services = $this->processServicesSubmission($_POST['_sln_booking']);
+	    $booking  = $this->plugin->createFromPost(wp_unslash($_POST['post_ID']));
+	    $settings = $this->plugin->getSettings();
 
-	$bookingServices = SLN_Wrapper_Booking_Services::build(
-	    apply_filters('sln.calc_booking_total.get_services', $services, SLN_Wrapper_Booking_Services::build($services, $startsAt, 0, $booking->getCountServices()), $booking->getAttendantsIds()),
-	    $startsAt,
-        0,
-        $booking->getCountServices()
-	);
+	    $startsAt = $this->getStartsAt(wp_unslash($_POST['_sln_booking_date']), wp_unslash($_POST['_sln_booking_time']));
+	    $services = $this->processServicesSubmission($_POST['_sln_booking']);
 
-    $tips = isset($_POST['_sln_booking_tips'])? floatval($_POST['_sln_booking_tips']) : 0;
-	$total    = $this->getTotal($bookingServices, $booking, $tips);
+	    $bookingServices = SLN_Wrapper_Booking_Services::build(
+	        apply_filters('sln.calc_booking_total.get_services', $services, SLN_Wrapper_Booking_Services::build($services, $startsAt, 0, $booking->getCountServices()), $booking->getAttendantsIds()),
+	        $startsAt,
+            0,
+            $booking->getCountServices()
+	    );
+
+        $tips = isset($_POST['_sln_booking_tips'])? floatval($_POST['_sln_booking_tips']) : 0;
+	    $total    = $this->getTotal($bookingServices, $booking, $tips);
         $deposit  = $this->getDeposit($total, $settings, $booking);
         $deposit = floatval($deposit);
         $duration = $this->getDuration($bookingServices);
@@ -30,7 +42,7 @@ class SLN_Action_Ajax_CalcBookingTotal extends SLN_Action_Ajax_Abstract
 	    'discounts'	=> apply_filters('sln.calc_booking_total.get_discounts_html', ''),
 	    'services'  => $this->getServicesPrices($bookingServices),
         'tips'      => round($tips, 2),
-	);
+	    );
     }
 
     protected function getTotal($bookingServices, $booking, $tips=0) {
@@ -126,7 +138,7 @@ class SLN_Action_Ajax_CalcBookingTotal extends SLN_Action_Ajax_Abstract
 
 	foreach ($bookingServices->getItems() as $bookingService) {
 	    $service			= $bookingService->getService();
-	    $prices[$service->getId()]	= strip_tags($service->getName() . ' (' . $this->plugin->format()->money($bookingService->getPrice(), true, true, false, true) . ') - ' . $bookingService->getDuration()->format('H:i'));
+	    $prices[$service->getId()]	=  wp_strip_all_tags($service->getName() . ' (' . $this->plugin->format()->money($bookingService->getPrice(), true, true, false, true) . ') - ' . $bookingService->getDuration()->format('H:i'));
 	}
 
 	return $prices;

@@ -113,7 +113,7 @@
                     <?php if($settings->get('pay_transaction_fee_amount')): ?>
                         <div class="sln-summary-row sln-summary-row--transaction-fee sln-list__item sln-list__item--db">
                             <div class="sln-data-val">
-                                <span id="sln_transaction_fee_value"><?php echo $plugin->format()->money(SLN_Helper_TransactionFee::getFee($bb->getDeposit() > 0 ? $bb->getDeposit() : $bb->getAmount()), false, false, true); ?></span>
+                                <span id="sln_transaction_fee_value"><?php echo $plugin->format()->money(SLN_Helper_TransactionFee::getFee($bb->getAmount()), false, false, true); ?></span>
                             </div>
                             <div class="sln-data-desc">
                                 <?php

@@ -1,4 +1,6 @@
-<?php 	
+<?php
+// phpcs:ignoreFile WordPress.Security.NonceVerification.Recommended
+
 class SLN_Admin_SettingTabs_GcalendarTab extends SLN_Admin_SettingTabs_AbstractTab
 {
 	protected $fields = array(

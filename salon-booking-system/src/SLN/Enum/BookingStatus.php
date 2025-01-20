@@ -57,6 +57,12 @@ class SLN_Enum_BookingStatus extends SLN_Enum_AbstractEnum
         return self::getLabels();
     }
 
+    public static function toBackendWrapper(){
+        $ret = self::getLabels();
+        unset($ret[self::PENDING_PAYMENT], $ret[self::PAY_LATER], $ret[self::PAID]);
+        return $ret;
+    }
+
     public static function getLabel($key)
     {
         $labels = self::getLabels();
@@ -90,12 +96,12 @@ class SLN_Enum_BookingStatus extends SLN_Enum_AbstractEnum
     public static function init()
     {
         self::$labels = array(
+            self::CONFIRMED => __('Confirmed', 'salon-booking-system'),
             self::PENDING_PAYMENT   => __('Pending payment', 'salon-booking-system'),
             self::PENDING   => __('Pending', 'salon-booking-system'),
             self::PAID      => __('Paid', 'salon-booking-system'),
             self::PAY_LATER => __('Pay later', 'salon-booking-system'),
             self::CANCELED  => __('Canceled', 'salon-booking-system'),
-            self::CONFIRMED => __('Confirmed', 'salon-booking-system'),
             self::ERROR     => __('ERROR', 'salon-booking-system'),
         );
     }

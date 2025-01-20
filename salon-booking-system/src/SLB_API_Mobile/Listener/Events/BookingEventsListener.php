@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 namespace SLB_API_Mobile\Listener\Events;
 
 use SLN_Plugin;

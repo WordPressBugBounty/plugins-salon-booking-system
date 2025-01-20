@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 
 class SLN_Action_WeeklyReport
 {

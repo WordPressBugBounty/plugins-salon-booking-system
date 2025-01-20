@@ -62,7 +62,7 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
             $data = $this->getViewData();
             do_action('sln.shortcode.summary.dispatchForm.before_booking_creation', $this, $bb);
             if(!$this->hasErrors()){
-                $bb->create(SLN_Enum_BookingStatus::PAY_LATER);
+                $bb->create(); // check SLN_Wrapper_BookingBuilder::getCreateStatus or adding set status to dispathcForm
             }
             do_action('sln.shortcode.summary.dispatchForm.after_booking_creation', $bb);
             return parent::render();

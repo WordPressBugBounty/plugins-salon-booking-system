@@ -138,6 +138,8 @@ class SLN_Action_Ajax_ImportAssistants extends SLN_Action_Ajax_AbstractImport
             }
             $filename = $checkImageSuffix[0];
 
+            // phpcs:ignoreFile WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+            // phpcs:ignoreFile WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
             $uploaddir  = wp_upload_dir();
             $uploadfile = $uploaddir['path'] . '/' . $filename .'.' . explode('/', $imageData['mime'])[1];
 

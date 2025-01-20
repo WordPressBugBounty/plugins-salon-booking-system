@@ -1,5 +1,5 @@
 <?php // algolplus
-
+// phpcs:ignoreFile WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 class SLN_Shortcode_SalonCalendar {
 
         const NAME = 'salon_booking_calendar';

@@ -40,7 +40,7 @@ class SLN_Helper_Availability_MyAccountBookings
 				$ret[] = $b;
 			}
 		}
-
+        // phpcs:ignoreFile WordPress.WP.DiscouragedFunctions.wp_reset_query_wp_reset_query
 		wp_reset_query();
 		wp_reset_postdata();
 		usort(

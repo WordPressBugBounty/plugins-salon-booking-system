@@ -71,10 +71,25 @@
 								<div class="sln_meta_field_file">
 								<?php foreach($files as $file): ?>
 									<?php
-										if($file){
-											$file_url = implode('/', array_filter(array(wp_get_upload_dir()['baseurl'], trim($file['subdir'], '/'), $file['file'])));
-											$file_name = preg_replace('/^[0-9]+_/i', '', $file['file']);
-										}
+                                    if ($file) {
+                                        $upload_dir = wp_get_upload_dir();
+                                        $custom_path = implode('/', array_filter(array($upload_dir['baseurl'], 'salonbookingsystem/user/' . $customer->getId(), $file['file'])));
+                                        $custom_path2 = implode('/', array_filter(array($upload_dir['baseurl'], 'salonbookingsystem/user/0', $file['file'])));
+
+                                        $default_path = implode('/', array_filter(array($upload_dir['baseurl'], trim($file['subdir'], '/'), $file['file'])));
+
+                                        if (file_exists(str_replace($upload_dir['baseurl'], $upload_dir['basedir'], $default_path))) {
+                                            $file_url = $default_path;
+                                        }elseif (file_exists(str_replace($upload_dir['baseurl'], $upload_dir['basedir'], $custom_path))) {
+                                            $file_url = $custom_path;
+                                        }elseif (file_exists(str_replace($upload_dir['baseurl'], $upload_dir['basedir'], $custom_path2))) {
+                                            $file_url = $custom_path2;
+                                        }else {
+                                            $file_url = null;
+                                        }
+
+                                        $file_name = preg_replace('/^[0-9]+_/i', '', $file['file']);
+                                    }
 									?>
 								<a href="<?php echo $file_url ?>" download="<?php echo $file_url ?>"><?php echo $file_name; ?></a>
 								<?php endforeach; ?>

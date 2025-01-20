@@ -209,12 +209,7 @@ class SLN_Third_GoogleCalendarImport
 
                 if($localStartTime != $googleStartTime &&  $googleUpdatedFormatted  > $localUpdatedFormatted){
 
-                    if($booking->getStatus() == SLN_Enum_BookingStatus::PENDING_PAYMENT && SLN_Plugin::getInstance()->getSettings()->get('google_calendar_publish_pending_payment')) {
-                        $this->updateBookingFromGoogleCalendarEvent($gEvent, $booking);
-                    } else if($booking->getStatus() == SLN_Enum_BookingStatus::PAID) {
-                        $this->updateBookingFromGoogleCalendarEvent($gEvent, $booking);
-                    }
-
+                    $this->updateBookingFromGoogleCalendarEvent($gEvent, $booking);
                     $this->printMsg(sprintf("Booking update id: '%s'", $booking->getId()));
                 }
 

@@ -5,7 +5,7 @@
  * @var SLN_Wrapper_Booking $booking
  */
 
-$template = $plugin->getSettings()->get('sms_notification_message');
+$template = $plugin->getSettings()->get('sms_remind_message');
 
 $bookingDateTime = $plugin->getSettings()->isDisplaySlotsCustomerTimezone() && $booking->getCustomerTimezone() ? (new SLN_DateTime($booking->getDate()->format('Y-m-d') . ' ' . $booking->getTime()->format('H:i')))->setTimezone(new DateTimeZone($booking->getCustomerTimezone())) : new SLN_DateTime($booking->getDate()->format('Y-m-d') . ' ' . $booking->getTime()->format('H:i'));
 

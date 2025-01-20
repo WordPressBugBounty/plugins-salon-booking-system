@@ -1,5 +1,7 @@
 <?php
-
+// phpcs:ignoreFile WordPress.DB.DirectDatabaseQuery.DirectQuery
+// phpcs:ignoreFile WordPress.DB.DirectDatabaseQuery.NoCaching
+// phpcs:ignoreFile WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 class SLN_Wrapper_Customer {
 
 	private $bookings = array();

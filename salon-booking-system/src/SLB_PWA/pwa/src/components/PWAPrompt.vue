@@ -63,6 +63,7 @@
 <style scoped>
     .add-to-home-screen {
         position: fixed;
+        z-index: 600;
         bottom: 36px;
         width: 100%;
         display: flex;

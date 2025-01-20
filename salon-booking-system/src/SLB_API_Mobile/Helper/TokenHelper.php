@@ -1,5 +1,6 @@
 <?php
-
+// phpcs:ignoreFile WordPress.DB.DirectDatabaseQuery.DirectQuery
+// phpcs:ignoreFile WordPress.DB.DirectDatabaseQuery.NoCaching
 namespace SLB_API_Mobile\Helper;
 
 class TokenHelper {

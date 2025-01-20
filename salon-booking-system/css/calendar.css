@@ -81,6 +81,17 @@
     transform: scale(1);
   }
 }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
 [class*=cal-cell] {
   float: left;
   margin-left: 0;
@@ -1604,7 +1615,10 @@ sln-calendar--wrapper .att-time-slot .block_date {
   grid-row: 1;
 }
 
-.sln-calendar--wrapper .att-time-slot:hover .sln-btn--cal-day-select {
+.sln-calendar--wrapper .att-time-slot {
+  transition: all 350ms;
+}
+.sln-calendar--wrapper .att-time-slot .sln-btn--cal-day-select {
   display: flex;
   flex-direction: row-reverse;
   justify-content: center;
@@ -1613,19 +1627,24 @@ sln-calendar--wrapper .att-time-slot .block_date {
   text-align: center;
   height: 40px;
   width: 160px;
-  color: #003553;
-  background-color: #c7dff3;
+  color: rgb(0, 53, 83);
+  background-color: rgb(199, 223, 243);
   position: absolute;
   top: 50%;
-  transform: translateY(-50%);
+  transform: translateY(0);
   left: 20px;
-  visibility: visible;
   font-size: 1rem;
   letter-spacing: 0.1rem;
+  opacity: 0;
 }
-.sln-calendar--wrapper .att-time-slot:hover .sln-btn--cal-day-select.sln-btn--icon::after {
+.sln-calendar--wrapper .att-time-slot.sln-btn--icon::after {
   position: relative;
   inset: auto;
+}
+.sln-calendar--wrapper .att-time-slot:hover .sln-btn--cal-day-select {
+  transform: translateY(-50%);
+  visibility: visible;
+  opacity: 1;
 }
 
 .sln-calendar--wrapper .att-time-slot .sln-btn--cal-day-select,

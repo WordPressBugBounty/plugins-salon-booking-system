@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile WordPress.WP.DiscouragedFunctions.wp_reset_query_wp_reset_query
 
 // START DOWNGRADE SERVICES & ATTENDANTS FOR BOOKINGS
 $args = array(

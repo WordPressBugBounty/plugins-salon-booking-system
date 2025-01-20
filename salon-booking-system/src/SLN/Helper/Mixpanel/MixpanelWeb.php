@@ -1,5 +1,6 @@
 <?php
-
+// phpcs:ignoreFile WordPress.WP.EnqueuedResourceParameters.MissingVersion
+// phpcs:ignoreFile WordPress.WP.EnqueuedResourceParameters.NotInFooter
 class SLN_Helper_Mixpanel_MixpanelWeb
 {
     protected $token;

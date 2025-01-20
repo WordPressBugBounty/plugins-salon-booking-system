@@ -31,6 +31,7 @@ class SLN_Admin_SettingTabs_GeneralTab extends SLN_Admin_SettingTabs_AbstractTab
 		'whatsapp_enabled',
 		'sms_notification_message',
 		'sms_notification_message_modified',
+		'sms_remind_message',
 		'sms_remind',
 		'sms_remind_interval',
 		'sms_trunk_prefix',
@@ -102,6 +103,11 @@ class SLN_Admin_SettingTabs_GeneralTab extends SLN_Admin_SettingTabs_AbstractTab
 		esc_html($this->submitted['sms_notification_message'])
 		:
 		self::getDefaultSmsNotificationMessage();
+		
+		$this->submitted['sms_remind_message'] = !empty($this->submitted['sms_remind_message']) ?
+			esc_html($this->submitted['sms_remind_message'])
+			:
+			self::getDefaultSmsNotificationMessage();
 
 		$this->submitted['sms_notification_message_modified'] = !empty($this->submitted['sms_notification_message_modified']) ?
 		$this->submitted['sms_notification_message_modified']

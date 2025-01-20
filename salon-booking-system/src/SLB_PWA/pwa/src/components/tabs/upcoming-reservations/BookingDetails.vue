@@ -56,13 +56,13 @@
                             <div class="customer-phone">
                                 {{ customerPhone }}
                                 <span class="customer-phone-actions" v-if="customerPhone">
-                                    <a :href="'tel:' + customerPhone" class="phone">
+                                    <a target="_blank" :href="'tel:' + customerPhone" class="phone">
                                         <font-awesome-icon icon="fa-solid fa-phone" />
                                     </a>
-                                    <a :href="'sms:' + customerPhone" class="sms">
+                                    <a target="_blank" :href="'sms:' + customerPhone" class="sms">
                                         <font-awesome-icon icon="fa-solid fa-message" />
                                     </a>
-                                    <a :href="'https://wa.me/' + customerPhone" class="whatsapp">
+                                    <a target="_blank" :href="'https://wa.me/' + customerPhone" class="whatsapp">
                                         <font-awesome-icon icon="fa-brands fa-whatsapp" />
                                     </a>
                                 </span>

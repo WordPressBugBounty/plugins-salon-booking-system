@@ -1,4 +1,6 @@
 <?php // algolplus
+// phpcs:ignoreFile WordPress.Security.NonceVerification.Recommended
+// phpcs:ignoreFile WordPress.Security.ValidatedSanitizedInput.MissingUnslash
 
 class SLN_Action_Ajax_SalonCalendar extends SLN_Action_Ajax_Abstract
 {

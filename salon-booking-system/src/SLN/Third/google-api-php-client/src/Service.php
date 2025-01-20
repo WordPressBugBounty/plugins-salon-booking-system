@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// phpcs:ignoreFile WordPress.PHP.DevelopmentFunctions.error_log_trigger_error
 
 namespace Google;
 

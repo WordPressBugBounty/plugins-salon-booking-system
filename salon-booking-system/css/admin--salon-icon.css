@@ -278,28 +278,6 @@
   vertical-align: middle;
 }
 
-.sln-booking-pro-feature-tooltip::after {
-  margin-left: 0;
-  font-family: "FontAwesome";
-  font-weight: 900;
-  letter-spacing: normal;
-  text-transform: none;
-  white-space: nowrap;
-  word-wrap: normal;
-  direction: ltr;
-  -webkit-font-feature-settings: "liga";
-  font-size: 25px;
-  line-height: 1;
-  display: inline-block;
-  content: "\f054";
-  font-style: normal;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  border-radius: 50%;
-  color: #ffdd50;
-  vertical-align: middle;
-}
-
 .glyphicon {
   position: relative;
   top: 1px;
@@ -1403,5 +1381,3 @@ body:not(.sln-salon-page) #sln-update-user-field + .select2-container.select2-co
   font-size: 1.2rem;
   color: gray;
 }
-
-/*# sourceMappingURL=admin--salon-icon.css.map */

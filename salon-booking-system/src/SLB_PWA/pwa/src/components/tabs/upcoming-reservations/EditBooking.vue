@@ -34,19 +34,26 @@
                         <b-col sm="6">
                             <div class="time">
                                 <span>{{ this.getLabel('timeTitle') }}</span>
-                                <b-input-group>
-                                    <template #prepend>
-                                        <b-input-group-text>
-                                            <font-awesome-icon icon="fa-regular fa-clock" />
-                                        </b-input-group-text>
-                                    </template>
-                                    <b-form-input v-model="elTime" @click.stop="showTimeslots = !showTimeslots" class="timeslot-input" :class="{required: requiredFields.indexOf('time') > -1}" />
-                                    <div class="timeslots" :class="{hide: !this.showTimeslots}" @click.stop>
-                                        <span v-for="timeslot in timeslots" :key="timeslot" class="timeslot" :class="{free: freeTimeslots.indexOf(this.moment(timeslot, this.getTimeFormat()).format('HH:mm')) > -1}" @click="setTime(timeslot)">
-                                            {{ timeslot }}
-                                        </span>
-                                    </div>
-                                </b-input-group>
+                              <b-input-group>
+                                <template #prepend>
+                                  <b-input-group-text>
+                                    <font-awesome-icon icon="fa-regular fa-clock"/>
+                                  </b-input-group-text>
+                                </template>
+                                <b-form-input v-model="elTime"
+                                              @click.stop="showTimeslots = !showTimeslots"
+                                              class="timeslot-input"
+                                              :class="{required: requiredFields.indexOf('time') > -1}" />
+                                <div class="timeslots" :class="{hide: !this.showTimeslots}" @click.stop>
+                                <span v-for="timeslot in timeslots"
+                                      :key="timeslot"
+                                      class="timeslot"
+                                      :class="{free: freeTimeslots.includes(this.moment(timeslot, this.getTimeFormat()).format('HH:mm'))}"
+                                      @click="setTime(timeslot)">
+                                    {{ timeslot }}
+                                </span>
+                                </div>
+                              </b-input-group>
                             </div>
                         </b-col>
                     </b-row>
@@ -506,10 +513,10 @@
             ]).then(() => {
                 this.isLoadingServicesAssistants = false
                 this.elServices.forEach((i, index) => {
-                    this.addServicesSelectSearchInput(index)
-                    this.addAssistantsSelectSearchInput(index)
-                    this.addResourcesSelectSearchInput(index)
-                })
+                this.addServicesSelectSearchInput(index)
+                this.addAssistantsSelectSearchInput(index)
+                this.addResourcesSelectSearchInput(index)
+              })
             })
         },
         data: function () {
@@ -564,6 +571,11 @@
             elTime() {
                 this.loadAvailabilityServices()
                 this.loadDiscounts()
+            },
+            timeslots(newTimeslots) {
+                if (newTimeslots.length && !this.elTime) {
+                    this.elTime = this.moment(newTimeslots[0], this.getTimeFormat()).format('HH:mm');
+                }
             },
             bookingServices() {
                 this.loadDiscounts()
@@ -711,7 +723,7 @@
                     date: this.moment(this.elDate).format('YYYY-MM-DD'),
                     time: this.moment(this.elTime, this.getTimeFormat()).format('HH:mm'),
                     status: this.elStatus,
-                    customer_id: this.customerID ? this.customerID : 0,
+                    customer_id: this.customer ? this.customer.id : 0,
                     customer_first_name: this.elCustomerFirstname,
                     customer_last_name: this.elCustomerLastname,
                     customer_email: this.elCustomerEmail,
@@ -842,8 +854,10 @@
                 this.serviceSearch.splice(index, 1)
             },
             setTime(timeslot) {
-                this.elTime = timeslot
-                this.showTimeslots = false
+                this.elTime = this.moment(timeslot, this.getTimeFormat()).format('HH:mm');
+                this.showTimeslots = false;
+                this.loadAvailabilityServices();
+                this.loadDiscounts();
             },
             getServicesListBySearch(list, search) {
                 if (!search) {

@@ -67,7 +67,7 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                 <?php
                 SLN_Form::fieldSelect(
                     $helper->getFieldName($postType, 'status'),
-                    SLN_Enum_BookingStatus::toArray(),
+                    SLN_Enum_BookingStatus::toBackendWrapper(),
                     empty($_GET['post']) && SLN_Plugin::getInstance()->getSettings()->getDefaultBookingStatus() ?
                         SLN_Plugin::getInstance()->getSettings()->getDefaultBookingStatus() :
                         $booking->getStatus(),
@@ -75,12 +75,15 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                 );
                 ?>
             </div>
-            <div class="sln-set-default-booking-status--block-labels <?php echo !defined("SLN_VERSION_PAY")  ? 'sln-set-default-booking-status--block-label-disabled' : '' ?>" data-default-status="<?php echo SLN_Plugin::getInstance()->getSettings()->getDefaultBookingStatus() ?>">
-                <span class="sln-booking-pro-feature-tooltip">
-                    <a href="https://www.salonbookingsystem.com/homepage/plugin-pricing/?utm_source=default_status&utm_medium=free-edition-back-end&utm_campaign=unlock_feature&utm_id=GOPRO" target="_blank">
-                        <?php echo esc_html__('Switch to PRO to unlock this feature', 'salon-booking-system') ?>
-                    </a>
-                </span>
+            <div class="sln-set-default-booking-status--block-labels sln-profeature <?php echo !defined("SLN_VERSION_PAY")  ? 'sln-set-default-booking-status--block-label-disabled sln-profeature--disabled  sln-profeature__tooltip-wrapper' : '' ?>" data-default-status="<?php echo SLN_Plugin::getInstance()->getSettings()->getDefaultBookingStatus() ?>">
+                <?php echo $plugin->loadView(
+                    'metabox/_pro_feature_tooltip',
+                    array(
+                        // 'cta_url' => 'https://www.salonbookingsystem.com/homepage/plugin-pricing/?utm_source=default_status&utm_medium=free-edition-back-end&utm_campaign=unlock_feature&utm_id=GOPRO',
+                        'additional_classes' => 'sln-profeature--button--bare- sln-profeature--sln-booking__header',
+                        'trigger' => 'sln-set-default-booking-status',
+                    )
+                ); ?>
                 <?php if (isset($_GET['action']) && $_GET['action'] == 'duplicate'): ?>
                     <span id="sln-booking-cloned-notice" class="<?php echo in_array(SLN_Plugin::USER_ROLE_WORKER,  wp_get_current_user()->roles) ? 'sln-disabled' : '' ?>">
                         <?php echo esc_html__('Please set a new date and time', 'salon-booking-system'); ?>
@@ -264,7 +267,22 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                                             <?php foreach ($files as $file): ?>
                                                 <?php
                                                 if ($file) {
-                                                    $file_url = implode('/', array_filter(array(wp_get_upload_dir()['baseurl'], trim($file['subdir'], '/'), $file['file'])));
+                                                    $upload_dir = wp_get_upload_dir();
+                                                    $custom_path = implode('/', array_filter(array($upload_dir['baseurl'], 'salonbookingsystem/user/' . $booking->getCustomer()->getId(), $file['file'])));
+                                                    $custom_path2 = implode('/', array_filter(array($upload_dir['baseurl'], 'salonbookingsystem/user/0', $file['file'])));
+
+                                                    $default_path = implode('/', array_filter(array($upload_dir['baseurl'], trim($file['subdir'], '/'), $file['file'])));
+
+                                                    if (file_exists(str_replace($upload_dir['baseurl'], $upload_dir['basedir'], $default_path))) {
+                                                        $file_url = $default_path;
+                                                    } elseif (file_exists(str_replace($upload_dir['baseurl'], $upload_dir['basedir'], $custom_path))) {
+                                                        $file_url = $custom_path;
+                                                    } elseif (file_exists(str_replace($upload_dir['baseurl'], $upload_dir['basedir'], $custom_path2))) {
+                                                        $file_url = $custom_path2;
+                                                    } else {
+                                                        $file_url = null;
+                                                    }
+
                                                     $file_name = preg_replace('/^[0-9]+_/i', '', $file['file']);
                                                 }
                                                 ?>
@@ -663,8 +681,8 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                 <button type="button" class="sln-btn sln-btn--nu sln-btn--nu--highemph sln-btn--big" aria-hidden="true" data-action="save-edited-booking">
                     <?php esc_html_e('Save', 'salon-booking-system') ?>
                 </button>
-                <div class="sln-duplicate-booking <?php echo !defined("SLN_VERSION_PAY")  ? 'sln-duplicate-booking--disabled' : '' ?> <?php echo isset($_GET['action']) && $_GET['action'] === 'duplicate' ? 'hide' : '' ?>">
-                    <span class="sln-booking-pro-feature-tooltip">
+                <div class="sln-duplicate-booking <?php echo !defined("SLN_VERSION_PAY")  ? 'sln-duplicate-booking--disabled sln-profeature__tooltip-wrapper' : '' ?> <?php echo isset($_GET['action']) && $_GET['action'] === 'duplicate' ? 'hide' : '' ?>">
+                    <span class="sln-profeature__tooltip">
                         <a href="https://www.salonbookingsystem.com/homepage/plugin-pricing/?utm_source=default_status&utm_medium=free-edition-back-end&utm_campaign=unlock_feature&utm_id=GOPRO" target="_blank">
                             <?php echo esc_html__('Switch to PRO to unlock this feature', 'salon-booking-system') ?>
                         </a>

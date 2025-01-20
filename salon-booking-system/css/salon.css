@@ -553,7 +553,7 @@ body {
   color: #1183c4;
 }
 
-#sln-salon, #sln-salon #sln-salon__content, .sln-checkbox input + label:before,
+#sln-salon #sln-salon__content, .sln-checkbox input + label:before,
 #sln-salon .sln-checkbox input + label:before, .sln-checkbox input[type=checkbox][disabled] + label:before, #sln-salon.sln-loginform #loginform .login-emember label:before, #sln-salon.sln-loginform #loginform .login-emember input[type=checkbox][disabled] + label:before, .sln-radiobox input + label:before,
 #sln-salon .sln-radiobox input + label:before, .sln-radiobox input + label:after,
 #sln-salon .sln-radiobox input + label:after, .sln-radiobox input[type=radio][disabled] + label:before {
@@ -7015,7 +7015,6 @@ body.modal-open {
 .sln-topbar a,
 #sln-salon .sln-topbar a {
   color: rgb(9, 120, 189);
-  font-weight: 600;
   border-bottom: 1px solid;
   border-bottom-color: transparent;
 }
@@ -7084,6 +7083,7 @@ body.modal-open {
   }
 }
 #sln-salon #sln-salon__content {
+  box-shadow: 2px 2px 8px hsla(0, 0%, 0%, 0.2);
   border-radius: 0.3125em;
   padding-top: 1em;
 }
@@ -7102,6 +7102,7 @@ body.modal-open {
 }
 #sln-salon.sln-salon--l {
   width: 100vw;
+  max-width: 900px;
 }
 @media only screen and (min-width: 768px) {
   #sln-salon.sln-salon--l {
@@ -7109,26 +7110,18 @@ body.modal-open {
     padding: 1em;
   }
 }
-@media only screen and (min-width: 992px) {
-  #sln-salon.sln-salon--l {
-    max-width: 900px;
-  }
-}
 #sln-salon.sln-salon--m {
   width: 100%;
+  max-width: 600px;
 }
 @media only screen and (min-width: 768px) {
   #sln-salon.sln-salon--m {
     padding: 1em;
   }
 }
-@media only screen and (min-width: 992px) {
-  #sln-salon.sln-salon--m {
-    max-width: 600px;
-  }
-}
 #sln-salon.sln-salon--s {
   width: 100%;
+  max-width: 400px;
 }
 @media only screen and (min-width: 768px) {
   #sln-salon.sln-salon--s {
@@ -10902,7 +10895,7 @@ td.day.disabled.full:hover {
   color: #5bc24c;
 }
 
-#sln-salon, #sln-salon #sln-salon__content {
+#sln-salon #sln-salon__content {
   background-color: rgb(255, 255, 255);
 }
 
@@ -11257,7 +11250,7 @@ ul.sln-list--dashed li,
   color: #5bc24c;
 }
 
-#sln-salon, #sln-salon #sln-salon__content {
+#sln-salon #sln-salon__content {
   background-color: rgb(255, 255, 255);
 }
 
@@ -12557,6 +12550,11 @@ body:not(.sln-salon-page)
   .sln-credits.sln-salon--s-credits {
     max-width: calc(400px - 2em);
   }
+}
+
+.sln-salon-page.elementor-page .elementor.elementor .e-con > .elementor-widget,
+.sln-salon-page.elementor-page .e-con.e-con > .e-con-inner > .elementor-widget {
+  width: 100%;
 }
 
 /*# sourceMappingURL=salon.css.map */

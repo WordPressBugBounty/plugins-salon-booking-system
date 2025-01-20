@@ -1209,11 +1209,17 @@ function sln_updateDatepickerTimepickerSlots($, intervals, bookingId) {
             .find(".sln_timepicker div")
             .data("datetimepicker");
     }
-    var DtHours = datetimepicker.viewDate.getUTCHours();
-    DtHours = DtHours >= 10 ? DtHours : "0" + DtHours;
-    var DtMinutes = datetimepicker.viewDate.getUTCMinutes();
-    DtMinutes = DtMinutes >= 10 ? DtMinutes : "0" + DtMinutes;
-    var DtTime = DtHours + ":" + DtMinutes;
+
+    console.log(datetimepicker.length);
+    if(datetimepicker == undefined) {
+        var DtTime = document.getElementById('_sln_booking_time').value;
+    } else {
+        var DtHours = datetimepicker.viewDate.getUTCHours();
+        DtHours = DtHours >= 10 ? DtHours : "0" + DtHours;
+        var DtMinutes = datetimepicker.viewDate.getUTCMinutes();
+        DtMinutes = DtMinutes >= 10 ? DtMinutes : "0" + DtMinutes;
+        var DtTime = DtHours + ":" + DtMinutes;
+    }
 
     $.each(intervals.dates, function (key, value) {
         $('.day[data-ymd="' + value + '"]').removeClass("disabled");

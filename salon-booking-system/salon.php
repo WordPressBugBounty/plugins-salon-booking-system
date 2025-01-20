@@ -3,7 +3,7 @@
 /*
 Plugin Name: Salon Booking Wordpress Plugin - Free Version
 Description: Let your customers book you services through your website. Perfect for hairdressing salons, barber shops and beauty centers.
-Version: 10.10.4
+Version: 10.10.5
 Plugin URI: http://salonbookingsystem.com/
 Author: Salon Booking System
 Author URI: http://salonbookingsystem.com/
@@ -11,39 +11,40 @@ Text Domain: salon-booking-system
 Domain Path: /languages
  */
 
-if( !function_exists( 'sln_deactivate_plugin' ) ){
-	function sln_deactivate_plugin(){
+if (!function_exists('sln_deactivate_plugin')) {
+	function sln_deactivate_plugin()
+	{
 		$mixpanel = SLN_Helper_Mixpanel_MixpanelServer::create();
-    	$mixpanel->track('Plugin change version');
-		if( function_exists( 'sln_autoload' ) ){  //deactivate for other version
-			spl_autoload_unregister( 'sln_autoload' );
+		$mixpanel->track('Plugin change version');
+		if (function_exists('sln_autoload')) {  //deactivate for other version
+			spl_autoload_unregister('sln_autoload');
 		}
-		if( function_exists( 'my_update_notice' ) ){
-			remove_action( 'in_plugin_update_message-' . SLN_PLUGIN_BASENAME, 'my_update_notice' );
+		if (function_exists('my_update_notice')) {
+			remove_action('in_plugin_update_message-' . SLN_PLUGIN_BASENAME, 'my_update_notice');
 		}
 
 		global $sln_autoload, $my_update_notice; //deactivate for this version
-		if( isset( $sln_autoload ) ){
-			spl_autoload_unregister( $sln_autoload );
+		if (isset($sln_autoload)) {
+			spl_autoload_unregister($sln_autoload);
 		}
-		if( isset( $my_update_notice ) ){
-			remove_action( 'in_plugin_update_message-' . SLN_PLUGIN_BASENAME, $my_update_notice);
+		if (isset($my_update_notice)) {
+			remove_action('in_plugin_update_message-' . SLN_PLUGIN_BASENAME, $my_update_notice);
 		}
-		deactivate_plugins( SLN_PLUGIN_BASENAME );
+		deactivate_plugins(SLN_PLUGIN_BASENAME);
 	}
 }
 
-if ( defined( 'SLN_PLUGIN_BASENAME' ) ) {
-    if ( ! function_exists( 'deactivate_plugins' ) ) {
-        require_once ABSPATH . 'wp-admin/includes/plugin.php';
-    }
-    sln_deactivate_plugin();
+if (defined('SLN_PLUGIN_BASENAME')) {
+	if (! function_exists('deactivate_plugins')) {
+		require_once ABSPATH . 'wp-admin/includes/plugin.php';
+	}
+	sln_deactivate_plugin();
 }
 
 define('SLN_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('SLN_PLUGIN_DIR', untrailingslashit(dirname(__FILE__)));
 define('SLN_PLUGIN_URL', untrailingslashit(plugins_url('', __FILE__)));
-define('SLN_VERSION', '10.10.4');
+define('SLN_VERSION', '10.10.5');
 define('SLN_STORE_URL', 'https://salonbookingsystem.com');
 define('SLN_AUTHOR', 'Salon Booking');
 define('SLN_UPLOADS_DIR', wp_upload_dir()['basedir'] . '/sln_uploads/');
@@ -58,7 +59,7 @@ define('SLN_API_TOKEN', '7c901a98fa10dd3af65b038d6f5f190c');
 
 define('SLN_ONESIGNAL_USER_AUTH_KEY', 'YTc3MDkyMjYtMGZiMC00OGI1LTliMDAtZjA2NTZhMGRmZDNl');
 
-$sln_autoload = function($className) {
+$sln_autoload = function ($className) {
 	if (strpos($className, 'SLN_') === 0) {
 		$filename = SLN_PLUGIN_DIR . "/src/" . str_replace("_", "/", $className) . '.php';
 		if (file_exists($filename)) {
@@ -120,18 +121,18 @@ $sln_autoload = function($className) {
 	}
 };
 
-$my_update_notice = function() {
+$my_update_notice = function () {
 	$info = __('-', 'salon-booking-system');
-    echo '<span class="spam">' . wp_kses($info, array(
-            'br' => array(),
-            'a' => array(
-                'href' => array(),
-                'title' => array()
-            ),
-            'b' => array(),
-            'i' => array(),
-            'span' => array()
-        )) . '</span>';
+	echo '<span class="spam">' . wp_kses($info, array(
+		'br' => array(),
+		'a' => array(
+			'href' => array(),
+			'title' => array()
+		),
+		'b' => array(),
+		'i' => array(),
+		'span' => array()
+	)) . '</span>';
 };
 
 if (is_admin()) {
@@ -139,9 +140,9 @@ if (is_admin()) {
 }
 
 add_action("in_plugin_update_message-" . plugin_basename(__FILE__), function ($plugin_data, $response) {
-    echo '<span style="background-color: #d54e21; padding: 10px; color: #f9f9f9; margin-top: 10px; display: block"><strong>';
-    esc_html_e('Attention: this is a major release, please make sure to clear your browser cache after the plugin update.', 'salon-booking-system');
-    echo '</strong></span>';
+	echo '<span style="background-color: #d54e21; padding: 10px; color: #f9f9f9; margin-top: 10px; display: block"><strong>';
+	esc_html_e('Attention: this is a major release, please make sure to clear your browser cache after the plugin update.', 'salon-booking-system');
+	echo '</strong></span>';
 }, 10, 2);
 
 add_action('plugins_loaded', function () {
@@ -149,14 +150,14 @@ add_action('plugins_loaded', function () {
 		if ($domain === 'salon-booking-system') {
 			return SLN_Helper_Multilingual::getDateLocale();
 		}
-		unload_textdomain( 'salon-booking-system' );
-		load_textdomain( 'salon-booking-system', SLN_PLUGIN_DIR . '/languages/salon-booking-system-' . $locale . '.mo' );
+		unload_textdomain('salon-booking-system');
+		load_textdomain('salon-booking-system', SLN_PLUGIN_DIR . '/languages/salon-booking-system-' . $locale . '.mo');
 		load_plugin_textdomain('salon-booking-system', false, SLN_PLUGIN_DIR . '/languages/');
 		return $locale;
 	}, 10, 2);
 	$locale = determine_locale();
-	unload_textdomain( 'salon-booking-system' );
-	load_textdomain( 'salon-booking-system', SLN_PLUGIN_DIR . '/languages/salon-booking-system-' . $locale . '.mo' );
+	unload_textdomain('salon-booking-system');
+	load_textdomain('salon-booking-system', SLN_PLUGIN_DIR . '/languages/salon-booking-system-' . $locale . '.mo');
 	load_plugin_textdomain('salon-booking-system', false, SLN_PLUGIN_DIR . '/languages/');
 });
 // phpcs:ignoreFile WordPress.Security.NonceVerification.Missing
@@ -206,15 +207,17 @@ add_filter('body_class', function ($classes) {
 });
 
 register_activation_hook(__FILE__, function () {
-    $mixpanel = SLN_Helper_Mixpanel_MixpanelServer::create();
-    $mixpanel->track('Plugin activation');
+	$mixpanel = SLN_Helper_Mixpanel_MixpanelServer::create();
+	$mixpanel->track('Plugin activation');
 });
 
 register_deactivation_hook(__FILE__, function () {
-	try{
+	try {
 		$mixpanel = SLN_Helper_Mixpanel_MixpanelServer::create();
-	    $mixpanel->track('Plugin deactivation');
-	}catch(Error $e){ return; }
+		$mixpanel->track('Plugin deactivation');
+	} catch (Error $e) {
+		return;
+	}
 });
 
 ob_start();

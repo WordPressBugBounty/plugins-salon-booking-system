@@ -233,6 +233,22 @@
             <div class="col-xs-12">
                 <div class="row">
                     <div class="col-xs-12 col-sm-6 form-group sln-input--simple sln-input--mt">
+                        <?php $helper->row_input_textarea('sms_remind_message', __('Customize the SMS remind notification message on bookings (max 160 characters)', 'salon-booking-system'), array(
+                            'textarea' => array(
+                                'attrs' => array(
+                                    'placeholder' => str_replace("\r\n", " ", SLN_Admin_SettingTabs_GeneralTab::getDefaultSmsNotificationMessage()),
+                                ),
+                            ),
+                        )); ?>
+                        <p class="sln-input-help">
+                            <?php esc_html_e('You can use [NAME], [SALON NAME], [DATE], [TIME], [PRICE], [BOOKING ID]', 'salon-booking-system') ?>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xs-12">
+                <div class="row">
+                    <div class="col-xs-12 col-sm-6 form-group sln-input--simple sln-input--mt">
                         <?php $helper->row_input_textarea('sms_notification_message_modified', __('Customize the SMS notification message on modified bookings (max 160 characters)', 'salon-booking-system'), array(
                             'textarea' => array(
                                 'attrs' => array(

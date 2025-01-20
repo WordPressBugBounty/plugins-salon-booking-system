@@ -23,13 +23,13 @@ $bookingMyAccountPageId = $plugin->getSettings()->getBookingmyaccountPageId();
 <div id="sln-salon-booking" class="sln-shortcode <?php echo $class_salon ?>">
     <div id="sln-salon-booking__content" class="<?php echo $class_salon_content ?>">
         <?php
-        if ($bookingMyAccountPageId && !$plugin->getSettings()->get('enabled_force_guest_checkout') ) {
+        if ($bookingMyAccountPageId && !$plugin->getSettings()->get('enabled_force_guest_checkout')) {
             echo '<div class="sln-topbar"><h6>';
-            if (is_user_logged_in()){
+            if (is_user_logged_in()) {
                 $current_user = wp_get_current_user();
-                echo __('Hi', 'salon-booking-system'), ' ', $current_user->display_name . ' <a href="' . get_permalink($bookingMyAccountPageId) . '">' . __('Go to your account', 'salon-booking-system') . '</a>';
+                echo ' <a href="' . get_permalink($bookingMyAccountPageId) . '">' . __('Hi', 'salon-booking-system'), ' ', $current_user->display_name  . '</a>';
             } else {
-                echo __('Already a customer?', 'salon-booking-system') . ' <a href="' . get_permalink($bookingMyAccountPageId) . '">' . __('Log-in', 'salon-booking-system') . '</a>';
+                echo '<a href="' . get_permalink($bookingMyAccountPageId) . '">' . __('Log-in', 'salon-booking-system') . '</a>';
             }
             echo '</h6></div>';
         } //// $bookingMyAccountPageId  && !$plugin->getSettings()->get('enabled_force_guest_checkout') // END ////

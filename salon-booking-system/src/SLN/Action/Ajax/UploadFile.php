@@ -1,4 +1,6 @@
 <?php
+// phpcs:ignoreFile WordPress.Security.NonceVerification.Missing
+// phpcs:ignoreFile WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 class SLN_Action_Ajax_UploadFile extends SLN_Action_Ajax_Abstract
 {

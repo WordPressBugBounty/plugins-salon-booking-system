@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile WordPress.PHP.DevelopmentFunctions.error_log_print_r
 
 class SLN_Action_Sms_Fake extends SLN_Action_Sms_Abstract
 {

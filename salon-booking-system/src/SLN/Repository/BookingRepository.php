@@ -1,5 +1,7 @@
 <?php
-
+// phpcs:ignoreFile WordPress.DB.DirectDatabaseQuery.DirectQuery
+// phpcs:ignoreFile WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+// phpcs:ignoreFile WordPress.DB.DirectDatabaseQuery.NoCaching
 /**
  * @method SLN_Wrapper_Booking getOne($criteria = [])
  * @method SLN_Wrapper_Booking[] get($criteria = [])

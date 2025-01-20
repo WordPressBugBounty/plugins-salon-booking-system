@@ -1,13 +1,15 @@
 <?php
 // phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 
-class SLN_Action_InitScripts {
+class SLN_Action_InitScripts
+{
 	const ASSETS_VERSION = SLN_VERSION;
 	private static $isInclude = false;
 	private $isAdmin;
 	private $plugin;
 
-	public function __construct(SLN_Plugin $plugin, $isAdmin) {
+	public function __construct(SLN_Plugin $plugin, $isAdmin)
+	{
 		$this->plugin = $plugin;
 		$this->isAdmin = $isAdmin;
 
@@ -23,109 +25,108 @@ class SLN_Action_InitScripts {
 		add_action('wp_enqueue_scripts', array($this, 'hook_enqueue_scripts'), 99999);
 	}
 
-        public function hook_enqueue_scripts() {
+	public function hook_enqueue_scripts()
+	{
 
-            global $post;
+		global $post;
 
-            /**
+		/**
 
-             * Betheme compatibility
+		 * Betheme compatibility
 
-             */
-            $mfnCmpHasShortcode = false;
-            if (!$this->isAdmin && is_a($post, 'WP_Post') && defined('MFN_THEME_VERSION')) {
-                $mfn_builder = new \Mfn_Builder_Front(get_the_ID());
-                ob_start();
-                $mfn_builder->show();
-                $content = ob_get_clean();
-                $mfnCmpHasShortcode = strpos($content, SLN_Shortcode_Salon::NAME)
+		 */
+		$mfnCmpHasShortcode = false;
+		if (!$this->isAdmin && is_a($post, 'WP_Post') && defined('MFN_THEME_VERSION')) {
+			$mfn_builder = new \Mfn_Builder_Front(get_the_ID());
+			ob_start();
+			$mfn_builder->show();
+			$content = ob_get_clean();
+			$mfnCmpHasShortcode = strpos($content, SLN_Shortcode_Salon::NAME)
 
-                    || strpos($content, SLN_Shortcode_SalonMyAccount::NAME)
+				|| strpos($content, SLN_Shortcode_SalonMyAccount::NAME)
 
-                    || strpos($content, SLN_Shortcode_SalonCalendar::NAME)
+				|| strpos($content, SLN_Shortcode_SalonCalendar::NAME)
 
-                    || strpos($content, SLN_Shortcode_SalonAssistant::NAME)
+				|| strpos($content, SLN_Shortcode_SalonAssistant::NAME)
 
-                    || strpos($content, SLN_Shortcode_SalonServices::NAME)
+				|| strpos($content, SLN_Shortcode_SalonServices::NAME)
 
-                    || strpos($content, SLN_Shortcode_SalonRecentComments::NAME);
-            }
+				|| strpos($content, SLN_Shortcode_SalonRecentComments::NAME);
+		}
 
-            if (
-                !$this->isAdmin && is_a( $post, 'WP_Post' ) && (
+		if (
+			!$this->isAdmin && is_a($post, 'WP_Post') && (
 
-                    has_shortcode( $post->post_content, SLN_Shortcode_Salon::NAME )
+				has_shortcode($post->post_content, SLN_Shortcode_Salon::NAME)
 
-                    || has_shortcode( $post->post_content, SLN_Shortcode_SalonMyAccount::NAME )
+				|| has_shortcode($post->post_content, SLN_Shortcode_SalonMyAccount::NAME)
 
-                    || has_shortcode( $post->post_content, SLN_Shortcode_SalonCalendar::NAME )
+				|| has_shortcode($post->post_content, SLN_Shortcode_SalonCalendar::NAME)
 
-                    || has_shortcode( $post->post_content, SLN_Shortcode_SalonAssistant::NAME )
+				|| has_shortcode($post->post_content, SLN_Shortcode_SalonAssistant::NAME)
 
-                    || has_shortcode( $post->post_content, SLN_Shortcode_SalonServices::NAME )
+				|| has_shortcode($post->post_content, SLN_Shortcode_SalonServices::NAME)
 
-                    || has_shortcode( $post->post_content, SLN_Shortcode_SalonRecentComments::NAME)
-
-
-                    /**
-
-                    * Unyson compatibility
-
-                    */
-
-                    || (has_shortcode( $post->post_content, 'text_block' ) && ($text_attr = shortcode_parse_atts($post->post_content)['text']) && (
-
-                    strpos( $text_attr, SLN_Shortcode_Salon::NAME )
-
-                    || strpos( $text_attr, SLN_Shortcode_SalonMyAccount::NAME )
-
-                    || strpos( $text_attr, SLN_Shortcode_SalonCalendar::NAME )
-
-                    || strpos( $text_attr, SLN_Shortcode_SalonAssistant::NAME )
-
-                    || strpos( $text_attr, SLN_Shortcode_SalonServices::NAME )
-
-                    || strpos( $text_attr, SLN_Shortcode_SalonRecentComments::NAME )
-
-                    ))
-
-                    || $mfnCmpHasShortcode
-                )
-
-            ) {
-				self::$isInclude = true;
-
-                self::preloadScripts();
-
-                self::enqueueTwitterBootstrap(false);
-
-                $this->preloadFrontendScripts();
-
-            }
-
-            if (!empty($_REQUEST['sln_thankyou_layout'])) {
-                $mixpanel = SLN_Helper_Mixpanel_MixpanelWeb::create();
-                $mixpanel->init();
-                $event   = 'Front-end booking form';
-                $version = defined('SLN_VERSION_PAY') && SLN_VERSION_PAY ? 'pro' : 'free';
-
-                $style  = $_REQUEST['sln_thankyou_layout'];
-                $size   = strtolower(SLN_Enum_ShortcodeStyle::getLabel($style));
-
-                $data = array(
-                    'step'      => 'thankyou',
-                    'version'   => $version,
-                    'layout'    => $size,
-					'enviroment' => defined('SLN_VERSION_DEV') && SLN_VERSION_DEV ? 'dev' : 'live',
-                );
-                $mixpanel->track($event, $data);
-            }
+				|| has_shortcode($post->post_content, SLN_Shortcode_SalonRecentComments::NAME)
 
 
-        }
+				/**
 
-	public static function preloadEnqueueScript(){
-		if(!self::$isInclude){
+				 * Unyson compatibility
+
+				 */
+
+				|| (has_shortcode($post->post_content, 'text_block') && ($text_attr = shortcode_parse_atts($post->post_content)['text']) && (
+
+					strpos($text_attr, SLN_Shortcode_Salon::NAME)
+
+					|| strpos($text_attr, SLN_Shortcode_SalonMyAccount::NAME)
+
+					|| strpos($text_attr, SLN_Shortcode_SalonCalendar::NAME)
+
+					|| strpos($text_attr, SLN_Shortcode_SalonAssistant::NAME)
+
+					|| strpos($text_attr, SLN_Shortcode_SalonServices::NAME)
+
+					|| strpos($text_attr, SLN_Shortcode_SalonRecentComments::NAME)
+
+				))
+
+				|| $mfnCmpHasShortcode
+			)
+
+		) {
+			self::$isInclude = true;
+
+			self::preloadScripts();
+
+			self::enqueueTwitterBootstrap(false);
+
+			$this->preloadFrontendScripts();
+		}
+
+		if (!empty($_REQUEST['sln_thankyou_layout'])) {
+			$mixpanel = SLN_Helper_Mixpanel_MixpanelWeb::create();
+			$mixpanel->init();
+			$event   = 'Front-end booking form';
+			$version = defined('SLN_VERSION_PAY') && SLN_VERSION_PAY ? 'pro' : 'free';
+
+			$style  = $_REQUEST['sln_thankyou_layout'];
+			$size   = strtolower(SLN_Enum_ShortcodeStyle::getLabel($style));
+
+			$data = array(
+				'step'      => 'thankyou',
+				'version'   => $version,
+				'layout'    => $size,
+				'enviroment' => defined('SLN_VERSION_DEV') && SLN_VERSION_DEV ? 'dev' : 'live',
+			);
+			$mixpanel->track($event, $data);
+		}
+	}
+
+	public static function preloadEnqueueScript()
+	{
+		if (!self::$isInclude) {
 			self::$isInclude = true;
 			self::preloadScripts();
 			self::enqueueTwitterBootstrap(false);
@@ -133,7 +134,8 @@ class SLN_Action_InitScripts {
 		}
 	}
 
-	public static function preloadScripts() {
+	public static function preloadScripts()
+	{
 		wp_enqueue_script(
 			'salon-raty',
 			SLN_PLUGIN_URL . '/js/jquery.raty.js',
@@ -178,10 +180,11 @@ class SLN_Action_InitScripts {
 			$params
 		);
 
-                self::enqueueIntlTelInput();
+		self::enqueueIntlTelInput();
 	}
 
-	private static function enqueueSalonMyAccount() {
+	private static function enqueueSalonMyAccount()
+	{
 		wp_enqueue_script(
 			'salon-my-account',
 			SLN_PLUGIN_URL . '/js/salon-my-account.js',
@@ -190,7 +193,7 @@ class SLN_Action_InitScripts {
 			true
 		);
 
-                wp_enqueue_script('jquery-ui-core');
+		wp_enqueue_script('jquery-ui-core');
 		wp_enqueue_script('jquery-ui-tooltip');
 
 		$l10n = array(
@@ -199,14 +202,22 @@ class SLN_Action_InitScripts {
 		wp_localize_script('salon-my-account', 'salonMyAccount_l10n', $l10n);
 	}
 
-	public function enqueueCustomFieldEditor() {
-		wp_register_script('sortable', SLN_PLUGIN_URL . '/js/Sortable.min.js',
+	public function enqueueCustomFieldEditor()
+	{
+		wp_register_script(
+			'sortable',
+			SLN_PLUGIN_URL . '/js/Sortable.min.js',
 			array('jquery'),
-			self::ASSETS_VERSION, true);
-		wp_enqueue_script('custom_field_editor', SLN_PLUGIN_URL . '/js/admin/customFieldEditor.js',
+			self::ASSETS_VERSION,
+			true
+		);
+		wp_enqueue_script(
+			'custom_field_editor',
+			SLN_PLUGIN_URL . '/js/admin/customFieldEditor.js',
 			array('jquery', 'sortable'),
 			self::ASSETS_VERSION,
-			true);
+			true
+		);
 		wp_add_inline_script('custom_field_editor', 'var sln_getFieldDefault = function(){ return ' . wp_json_encode(SLN_Enum_CheckoutFields::$default_atts) . ';
         }', 'before');
 		wp_localize_script('custom_field_editor', 'salonCheckoutFieldsEditor_l10n', [
@@ -216,22 +227,24 @@ class SLN_Action_InitScripts {
 		]);
 	}
 
-	private static function hasStockholmTransition() {
+	private static function hasStockholmTransition()
+	{
 		global $qode_options;
 
 		return $qode_options && $qode_options['page_transitions'] > 0;
 	}
 
-	private static function preloadFrontendScripts() {
+	private static function preloadFrontendScripts()
+	{
 		self::enqueueDateTimePicker();
 		self::enqueueSelect2();
 		wp_enqueue_style('salon-booking-calendar-shortcode', SLN_PLUGIN_URL . '/css/booking-calendar-shortcode/css/style.css', array(), self::ASSETS_VERSION, 'all');
 		//Rtl support
 		wp_style_add_data('salon-booking-calendar-shortcode', 'rtl', 'replace');
 		wp_enqueue_style('salon', SLN_PLUGIN_URL . '/css/salon.css', array(), self::ASSETS_VERSION, 'all');
-		if(SLN_Plugin::getInstance()->getSettings()->isGoogleFontsDisabled()){
+		if (SLN_Plugin::getInstance()->getSettings()->isGoogleFontsDisabled()) {
 			wp_enqueue_style('salon-icons', SLN_PLUGIN_URL . '/css/salon--salon-icon.css', array(), self::ASSETS_VERSION, 'all');
-		}else{
+		} else {
 			wp_enqueue_style('salon-icons', SLN_PLUGIN_URL . '/css/salon--google-icon.css', array(), self::ASSETS_VERSION, 'all');
 		}
 		//Rtl support
@@ -246,11 +259,12 @@ class SLN_Action_InitScripts {
 			wp_enqueue_style('sln-custom', $dir . '/sln-colors.css', array(), self::ASSETS_VERSION, 'all');
 		}
 		self::enqueueSalonMyAccount();
-                $mixpanel = SLN_Helper_Mixpanel_MixpanelWeb::create();
-                $mixpanel->init();
+		$mixpanel = SLN_Helper_Mixpanel_MixpanelWeb::create();
+		$mixpanel->init();
 	}
 
-	public static function enqueueCustomSliderRange() {
+	public static function enqueueCustomSliderRange()
+	{
 		wp_enqueue_script(
 			'salon-customSliderRange',
 			SLN_PLUGIN_URL . '/js/admin/customSliderRange.js',
@@ -266,10 +280,10 @@ class SLN_Action_InitScripts {
 			self::ASSETS_VERSION,
 			true
 		);
-
 	}
 
-	public static function enqueueServiceBreakSliderRange() {
+	public static function enqueueServiceBreakSliderRange()
+	{
 		wp_enqueue_script(
 			'salon-sliderRange',
 			SLN_PLUGIN_URL . '/js/jquery.ui.slider.dragRange.js',
@@ -284,12 +298,13 @@ class SLN_Action_InitScripts {
 			self::ASSETS_VERSION,
 			true
 		);
-                wp_localize_script('salon-serviceBreakSliderRange', 'sln_SliderDragRange', [
-                    'break_string' => __('break', 'salon-booking-system'),
+		wp_localize_script('salon-serviceBreakSliderRange', 'sln_SliderDragRange', [
+			'break_string' => __('break', 'salon-booking-system'),
 		]);
 	}
 
-	public static function enqueueCustomMetaService() {
+	public static function enqueueCustomMetaService()
+	{
 		wp_enqueue_script(
 			'salon-customMetaService',
 			SLN_PLUGIN_URL . '/js/admin/customMetaService.js',
@@ -299,7 +314,8 @@ class SLN_Action_InitScripts {
 		);
 	}
 
-	public static function enqueueCustomBookingUser() {
+	public static function enqueueCustomBookingUser()
+	{
 		wp_enqueue_script(
 			'salon-customBookingUser',
 			SLN_PLUGIN_URL . '/js/admin/customBookingUser.js',
@@ -312,7 +328,8 @@ class SLN_Action_InitScripts {
 		));
 	}
 
-	public static function enqueueTwitterBootstrap($force = true) {
+	public static function enqueueTwitterBootstrap($force = true)
+	{
 		$s = SLN_Plugin::getInstance()->getSettings();
 		if ($force || !$s->get('no_bootstrap')) {
 			wp_enqueue_style(
@@ -336,16 +353,23 @@ class SLN_Action_InitScripts {
 		}
 	}
 
-	public static function enqueueGoogleMapsApi() {
+	public static function enqueueGoogleMapsApi()
+	{
 		$settings = SLN_Plugin::getInstance()->getSettings();
 		if ($settings->get('google_maps_api_key') && $settings->get('google_maps_api_key_valid')) {
 			do_action('sln_before_enqueue_googlemapsapi');
-			wp_enqueue_script('salon-google-maps', '//maps.googleapis.com/maps/api/js?key=' . $settings->get('google_maps_api_key') . '&libraries=places,drawing' . '&callback=sln_google_maps_places_api_callback',
-				array('salon'), null, 'in_footer'); //drawing library enabled for compatibility with shop georef addon
+			wp_enqueue_script(
+				'salon-google-maps',
+				'//maps.googleapis.com/maps/api/js?key=' . $settings->get('google_maps_api_key') . '&libraries=places,drawing' . '&callback=sln_google_maps_places_api_callback',
+				array('salon'),
+				null,
+				'in_footer'
+			); //drawing library enabled for compatibility with shop georef addon
 		}
 	}
 
-	public static function enqueueDateTimePicker() {
+	public static function enqueueDateTimePicker()
+	{
 		$date_lang = SLN_Plugin::getInstance()->getSettings()->getDateLocale();
 
 		wp_enqueue_script(
@@ -366,7 +390,8 @@ class SLN_Action_InitScripts {
 			// require_once SLN_PLUGIN_DIR.'/views/js/calendar_language/datepicker.php';
 			wp_localize_script(
 				'smalot-datepicker-lang',
-				'sln_datepicker_calendar', SLN_TimeFunc::wpLocale2DatepickerLocale(SLN_TimeFunc::getWpLocale())
+				'sln_datepicker_calendar',
+				SLN_TimeFunc::wpLocale2DatepickerLocale(SLN_TimeFunc::getWpLocale())
 			);
 
 			wp_enqueue_script(
@@ -379,7 +404,8 @@ class SLN_Action_InitScripts {
 		}
 	}
 
-	public static function enqueueColorPicker() {
+	public static function enqueueColorPicker()
+	{
 		// COLOR PICKER
 		wp_enqueue_script(
 			'salon-colorpicker-js',
@@ -395,9 +421,9 @@ class SLN_Action_InitScripts {
 			self::ASSETS_VERSION,
 			'all'
 		);
-
 	}
-	public static function enqueueSettingsNavigation() {
+	public static function enqueueSettingsNavigation()
+	{
 		wp_enqueue_script(
 			'salon-adminSettingsNavigation-js',
 			SLN_PLUGIN_URL . '/js/admin/adminSettingsNavigation.js',
@@ -407,7 +433,8 @@ class SLN_Action_InitScripts {
 		);
 	}
 
-	public static function enqueueSelect2() {
+	public static function enqueueSelect2()
+	{
 
 		if (is_admin()) {
 			wp_enqueue_script('jquery-ui-core');
@@ -432,7 +459,8 @@ class SLN_Action_InitScripts {
 		);
 	}
 
-	public static function enqueueAdmin() {
+	public static function enqueueAdmin()
+	{
 		self::preloadScripts();
 		self::enqueueDateTimePicker();
 		wp_enqueue_script(
@@ -444,42 +472,46 @@ class SLN_Action_InitScripts {
 		);
 
 		wp_enqueue_style('salon-admin-css', SLN_PLUGIN_URL . '/css/admin.css', array(), SLN_VERSION, 'all');
-		
-		if(SLN_Plugin::getInstance()->getSettings()->isGoogleFontsDisabled()){
+
+		if (SLN_Plugin::getInstance()->getSettings()->isGoogleFontsDisabled()) {
 			wp_enqueue_style('admin-icons', SLN_PLUGIN_URL . '/css/admin--salon-icon.css', array(), self::ASSETS_VERSION, 'all');
-		}else{
+		} else {
 			wp_enqueue_style('admin-icons', SLN_PLUGIN_URL . '/css/admin--google-icon.css', array(), self::ASSETS_VERSION, 'all');
 		}
 
 		//Rtl support
 		wp_style_add_data('salon-admin-css', 'rtl', 'replace');
-		
+
 		wp_enqueue_script('salon-admin-js', SLN_PLUGIN_URL . '/js/admin.js', array('jquery'), self::ASSETS_VERSION, true);
 		wp_localize_script('salon-admin-js', 'salon_admin', array(
 			'i18n_mon_decimal_error' => sprintf(
 				// translators: %s will be replaced by decimal separator
-				esc_html__('Please enter in monetary decimal (%s) format without thousand separators and currency symbols.', 'salon-booking-system'), SLN_Plugin::getInstance()->getSettings()->get('pay_decimal_separator')),
+				esc_html__('Please enter in monetary decimal (%s) format without thousand separators and currency symbols.', 'salon-booking-system'),
+				SLN_Plugin::getInstance()->getSettings()->get('pay_decimal_separator')
+			),
 			'mon_decimal_point' => SLN_Plugin::getInstance()->getSettings()->get('pay_decimal_separator'),
 
 		));
-		if(empty(get_option('_sln_welcome_show_page'))){
+		if (empty(get_option('_sln_welcome_show_page'))) {
 			wp_add_inline_script(
 				'salon-admin-js',
-				sprintf('
+				sprintf(
+					'
 					const sln_pendo_user_id = \'%s\';
 					const sln_pendo_paid_or_trail_user = \'%s\';
 					const sln_pendo_account_id = \'%s\';
 				',
 					SLN_Plugin::getInstance()->getSettings()->get('_sln_mixpanel_user_id'),
-					(defined('SLN_VERSION_PAY') && SLN_VERSION_PAY ? 'PRO': 'FREE'),
+					(defined('SLN_VERSION_PAY') && SLN_VERSION_PAY ? 'PRO' : 'FREE'),
 					123456
-			),
-			'before'
+				),
+				'before'
 			);
 			update_option('_sln_welcome_show_page', 1);
 		}
 	}
-	public function hook_admin_print_scripts() {
+	public function hook_admin_print_scripts()
+	{
 
 		if (
 			(is_plugin_active('wordpress-seo/wp-seo.php') || is_plugin_active('wordpress-seo-premium/wp-seo-premium.php'))
@@ -489,31 +521,55 @@ class SLN_Action_InitScripts {
 		}
 	}
 
-	public function hook_script_loader_src($src, $handle) {
+	public function hook_script_loader_src($src, $handle)
+	{
 		if (!preg_match('/\/woocommerce\//', $src) && !preg_match('/\/select2\./', $src) || preg_match('/scope=sln/', $src)) {
 			return $src;
 		}
 	}
 
-	public static function dequeueYoast() {
+	public static function dequeueYoast()
+	{
 		$scripts = array(
-			'yoast-social-preview', 'wp-seo-premium-redirect-notifications', 'wp-seo-premium-custom-fields-plugin', 'yoast-seo-premium-metabox', 'yoast-seo-admin-script', 'yoast-seo-admin-media', 'yoast-seo-bulk-editor', 'yoast-seo-dismissible', 'yoast-seo-admin-global-script', 'yoast-seo-metabox', 'yoast-seo-featured-image', 'yoast-seo-admin-gsc', 'yoast-seo-post-scraper', 'yoast-seo-term-scraper', 'yoast-seo-replacevar-plugin', 'yoast-seo-shortcode-plugin', 'yoast-seo-recalculate', 'yoast-seo-primary-category', 'yoast-seo-select2', 'yoast-seo-select2-translations', 'yoast-seo-configuration-wizard');
+			'yoast-social-preview',
+			'wp-seo-premium-redirect-notifications',
+			'wp-seo-premium-custom-fields-plugin',
+			'yoast-seo-premium-metabox',
+			'yoast-seo-admin-script',
+			'yoast-seo-admin-media',
+			'yoast-seo-bulk-editor',
+			'yoast-seo-dismissible',
+			'yoast-seo-admin-global-script',
+			'yoast-seo-metabox',
+			'yoast-seo-featured-image',
+			'yoast-seo-admin-gsc',
+			'yoast-seo-post-scraper',
+			'yoast-seo-term-scraper',
+			'yoast-seo-replacevar-plugin',
+			'yoast-seo-shortcode-plugin',
+			'yoast-seo-recalculate',
+			'yoast-seo-primary-category',
+			'yoast-seo-select2',
+			'yoast-seo-select2-translations',
+			'yoast-seo-configuration-wizard'
+		);
 		foreach ($scripts as $s) {
 			wp_dequeue_script($s);
 		}
 	}
 
-        public static function enqueueIntlTelInput() {
-                wp_enqueue_script('salon-intl-tel-input', SLN_PLUGIN_URL . '/js/intl-tel-input/build/js/intlTelInput.js', array('jquery'), self::ASSETS_VERSION, true);
-                wp_enqueue_style('salon-intl-tel-input', SLN_PLUGIN_URL . '/js/intl-tel-input/build/css/intlTelInput.min.css', array(), self::ASSETS_VERSION, 'all');
+	public static function enqueueIntlTelInput()
+	{
+		wp_enqueue_script('salon-intl-tel-input', SLN_PLUGIN_URL . '/js/intl-tel-input/build/js/intlTelInput.js', array('jquery'), self::ASSETS_VERSION, true);
+		wp_enqueue_style('salon-intl-tel-input', SLN_PLUGIN_URL . '/js/intl-tel-input/build/css/intlTelInput.min.css', array(), self::ASSETS_VERSION, 'all');
 	}
 
-        public static function mixpanelTrack($event, $data)
-        {
-            $mixpanel = SLN_Helper_Mixpanel_MixpanelWeb::create();
-			$data['version'] = defined('SLN_VERSION_PAY') && SLN_VERSION_PAY ? 'pro' : 'free';
-			$data['enviroment'] = defined('SLN_VERSION_DEV') && SLN_VERSION_DEV ? 'dev' : 'live';
-            $mixpanel->init();
-            $mixpanel->track($event, $data);
-        }
+	public static function mixpanelTrack($event, $data)
+	{
+		$mixpanel = SLN_Helper_Mixpanel_MixpanelWeb::create();
+		$data['version'] = defined('SLN_VERSION_PAY') && SLN_VERSION_PAY ? 'pro' : 'free';
+		$data['enviroment'] = defined('SLN_VERSION_DEV') && SLN_VERSION_DEV ? 'dev' : 'live';
+		$mixpanel->init();
+		$mixpanel->track($event, $data);
+	}
 }

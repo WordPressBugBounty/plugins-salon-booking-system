@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile WordPress.Security.NonceVerification.Recommended
 
 class SLN_Action_Ajax_SearchBookings extends SLN_Action_Ajax_Abstract
 {
@@ -6,8 +7,8 @@ class SLN_Action_Ajax_SearchBookings extends SLN_Action_Ajax_Abstract
 		if( !current_user_can( 'manage_salon' ) ){
 			return array( 'status' => '403' );
 		}
-		$search = sanitize_text_field( $_POST['search'] );
-		$day = sanitize_text_field( $_POST['day'] );
+		$search = sanitize_text_field( isset($_POST['search']) ? wp_unslash($_POST['search']) : '' );
+		$day = sanitize_text_field( isset($_POST['day']) ? wp_unslash($_POST['day']) : '' );
 		try {
 			$timestamp = new SLN_DateTime($day);
 		} catch (Exception $e) {

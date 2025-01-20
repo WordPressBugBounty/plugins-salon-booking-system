@@ -1,5 +1,5 @@
 <template>
-    <b-row>
+    <b-row gutter-x="0">
         <b-col sm="12" class="booking-wrapper">
             <div class="booking">
                 <b-row>

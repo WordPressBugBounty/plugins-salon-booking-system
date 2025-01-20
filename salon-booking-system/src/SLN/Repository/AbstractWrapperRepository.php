@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile WordPress.WP.DiscouragedFunctions.wp_reset_query_wp_reset_query
 
 abstract class SLN_Repository_AbstractWrapperRepository extends SLN_Repository_AbstractRepository
 {

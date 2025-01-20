@@ -284,7 +284,7 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
             case 'myauthor':
 		        echo '<a href="'.esc_url(add_query_arg(array('page' => SLN_Admin_Customers::PAGE, 'id' => $customer ? $customer->getId() : null), admin_url('admin.php'))).'">'. esc_html($obj->getDisplayName()) .'</a>';
                 if($obj->getPhone()){
-                    echo '<div><a href="' . esc_html('https://wa.me/'. $obj->getSmsPrefix() . $obj->getPhone()) .'">Tel. '. esc_html($obj->getSmsPrefix() . $obj->getPhone()) .'</a></div>';
+                    echo '<div><a href="' . esc_html('https://wa.me/'. $obj->getSmsPrefix() . $obj->getPhone()) .'" target="_blank">Tel. '. esc_html($obj->getSmsPrefix() . $obj->getPhone()) .'</a></div>';
                 }
                 break;
             case 'booking_status' :

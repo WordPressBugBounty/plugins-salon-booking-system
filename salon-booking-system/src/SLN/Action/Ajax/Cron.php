@@ -40,6 +40,7 @@ class SLN_Action_Ajax_Cron extends SLN_Action_Ajax_Abstract
                 $plugin->sms()->send($booking->getPhone(), $plugin->loadView('sms/remind', compact('booking'))); 
             }
         }
+        // phpcs:ignoreFile WordPress.WP.DiscouragedFunctions.wp_reset_query_wp_reset_query
         wp_reset_query();
         wp_reset_postdata();
 

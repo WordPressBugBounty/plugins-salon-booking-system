@@ -600,6 +600,7 @@ function sln_adminDate($) {
 					$("#sln-notifications").html("").fadeIn(500);
 					firstValidate = false;
 				} else if (!data.success) {
+					window.parent.close_btn_save();
 					var alertBox = $('<div class="alert alert-danger"></div>');
 					$(data.errors).each(function () {
 						alertBox.append("<p>").html(this);
@@ -609,6 +610,7 @@ function sln_adminDate($) {
 						.append(alertBox)
 						.fadeIn(500);
 				} else {
+					window.parent.show_btn_save();
 					$("#sln-notifications")
 						.html("")
 						.append(

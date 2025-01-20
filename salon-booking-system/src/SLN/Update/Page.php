@@ -32,6 +32,7 @@ class SLN_Update_Page
 
     public function render()
     {
+        $this->updater->checkLicense();
 
         if (isset($_POST['submit']) && isset($_POST['license_key'])) {
             $response = $this->updater->activateLicense($_POST['license_key']);

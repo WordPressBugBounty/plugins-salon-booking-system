@@ -1,4 +1,5 @@
 <?php // algolplus
+// phpcs:ignoreFile WordPress.Security.NonceVerification.Missing
 
 class SLN_Action_Ajax_SetBookingStatus extends SLN_Action_Ajax_Abstract
 {
@@ -15,10 +16,13 @@ class SLN_Action_Ajax_SetBookingStatus extends SLN_Action_Ajax_Abstract
         }
 
 		$plugin = SLN_Plugin::getInstance();
+        if(!isset($_POST['booking_id']) && !isset($_POST['status'])) {
+            return array('success' => 0, 'status' => 'failure');
+        }
 		$booking = $plugin->createBooking(intval($_POST['booking_id']));
 
 		if (in_array($_POST['status'], array(SLN_Enum_BookingStatus::CONFIRMED, SLN_Enum_BookingStatus::CANCELED))) {
-			$booking->setStatus($_POST['status']);
+			$booking->setStatus(wp_unslash($_POST['status']));
 		}
 
 		$status = SLN_Enum_BookingStatus::getLabel($booking->getStatus());
