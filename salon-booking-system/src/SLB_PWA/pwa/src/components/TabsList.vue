@@ -3,20 +3,20 @@
         <b-tabs pills card end>
             <b-tab :active="isActiveTab('#shops')" v-show="isShopsEnabled" :title-item-class="{hide: !isShopsEnabled}">
                 <template #title><span @click="click('#shops')"><font-awesome-icon icon="fa-solid fa-store" /></span></template>
-                <ShopsTab @applyShop="applyShop"/>
+                <ShopsTab @applyShop="applyShopAndSwitch"/>
             </b-tab>
             <b-tab :active="isActiveTab('#upcoming-reservations')">
-                <ShopTitle :shop="shop" />
+                <ShopTitle :shop="shop" @applyShop="applyShop" />
                 <template #title><span @click="click('#upcoming-reservations')" ref="upcoming-reservations-tab-link"><font-awesome-icon icon="fa-solid fa-list" /></span></template>
                 <UpcomingReservationsTab :shop="shop" @hideTabsHeader="hideTabsHeader"/>
             </b-tab>
             <b-tab :active="isActiveTab('#reservations-calendar')">
-                <ShopTitle :shop="shop" />
+                <ShopTitle :shop="shop" @applyShop="applyShop" />
                 <template #title><span @click="click('#reservations-calendar')"><font-awesome-icon icon="fa-solid fa-calendar-days" /></span></template>
                 <ReservationsCalendarTab :shop="shop" @hideTabsHeader="hideTabsHeader"/>
             </b-tab>
             <b-tab :active="isActiveTab('#customers')">
-                <ShopTitle :shop="shop" />
+                <ShopTitle :shop="shop" @applyShop="applyShop" />
                 <template #title><span @click="click('#customers')"><font-awesome-icon icon="fa-regular fa-address-book" /></span></template>
                 <CustomersAddressBookTab :shop="shop" @hideTabsHeader="hideTabsHeader"/>
             </b-tab>
@@ -77,7 +77,13 @@
                 hash: window.location.hash ? window.location.hash : (this.isShopsEnabled ? '#shops' : '#upcoming-reservations'),
                 shop: null,
                 isHideTabsHeader: false,
+                isShopSelected: false,
             }
+        },
+        watch: {
+            shop(newShop) {
+                this.isShopSelected = !!newShop && !!newShop.id;
+            },
         },
         methods: {
             click(href) {
@@ -87,6 +93,10 @@
                 return this.hash === hash ? '' : undefined
             },
             applyShop(shop) {
+                this.shop = shop
+                this.$emit('applyShop', shop)
+            },
+            applyShopAndSwitch(shop) {
                 this.shop = shop
                 this.$refs['upcoming-reservations-tab-link'].click()
                 this.$emit('applyShop', shop)

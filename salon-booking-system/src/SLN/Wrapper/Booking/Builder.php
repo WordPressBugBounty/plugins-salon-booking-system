@@ -358,7 +358,7 @@ class SLN_Wrapper_Booking_Builder
     private function getCreateStatus()
     {
         $settings = $this->plugin->getSettings();
-        if($settings->get('create_booking_after_pay')){
+        if($settings->isPayEnabled() && $settings->get('create_booking_after_pay')){
             return SLN_Enum_BookingStatus::DRAFT;
         }
 

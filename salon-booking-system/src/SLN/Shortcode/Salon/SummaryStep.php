@@ -26,9 +26,12 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
         $plugin->getBookingBuilder()->clear($bb->getId());
         $paymentMethod = $plugin->getSettings()->isPayEnabled() ? SLN_Enum_PaymentMethodProvider::getService($plugin->getSettings()->getPaymentMethod(), $plugin) : false;
         $mode = isset($_GET['mode']) ? sanitize_text_field(wp_unslash($_GET['mode'])) : null;
-        $isConfirmation = $plugin->getSettings()->get('confirmation') && in_array($bb->getStatus(), array(SLN_Enum_BookingStatus::DRAFT, SLN_Enum_BookingStatus::PENDING));
 
         if($mode == 'confirm' || empty($paymentMethod) || $bb->getAmount() <= 0.0){
+            $bb->setPrepaidServices();
+            if($bb->getStatus() == SLN_Enum_BookingStatus::DRAFT){
+                $bb->setStatus($bb->getCreateStatus()); // SLN_Wrapper_Booking::getCreateStatus
+            }
             return !$this->hasErrors();
         } elseif($mode == 'later'){
             if(in_array($bb->getStatus(), array(SLN_Enum_BookingStatus::PENDING_PAYMENT, SLN_Enum_BookingStatus::DRAFT))){
@@ -36,7 +39,7 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
                     $bb->setStatus(SLN_Enum_BookingStatus::PAY_LATER);
                 }else{
                     $bb->setPrepaidServices();
-                    $bb->setStatus(SLN_Enum_BookingStatus::CONFIRMED);
+                    $bb->setStatus($bb->getCreateStatus()); // SLN_Wrapper_Booking::getCreateStatus
                 }
             }
             
@@ -44,12 +47,13 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
         }elseif(isset($_GET['op']) || $mode){
             if($error = $paymentMethod->dispatchThankyou($this, $bb)){
                 $this->addError($error);
-            }else{
-                return !$this->hasErrors();
             }
         }
         if(!empty($paymentMethod) && in_array($bb->getStatus(), array(SLN_Enum_BookingStatus::PAY_LATER, SLN_Enum_BookingStatus::PENDING_PAYMENT))){
             return false;
+        }
+        if($bb->getStatus() == SLN_Enum_BookingStatus::DRAFT){
+            $bb->setStatus($bb->getCreateStatus());
         }
 
         return !$this->hasErrors();
@@ -62,7 +66,7 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
             $data = $this->getViewData();
             do_action('sln.shortcode.summary.dispatchForm.before_booking_creation', $this, $bb);
             if(!$this->hasErrors()){
-                $bb->create(); // check SLN_Wrapper_BookingBuilder::getCreateStatus or adding set status to dispathcForm
+                $bb->create(SLN_Enum_BookingStatus::DRAFT); 
             }
             do_action('sln.shortcode.summary.dispatchForm.after_booking_creation', $bb);
             return parent::render();

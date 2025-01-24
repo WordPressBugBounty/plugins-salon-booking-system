@@ -20,7 +20,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 /* import specific icons */
 import { faList, faCalendarDays, faMagnifyingGlass, faChevronRight, faTrash, faCircleXmark,
-faPenToSquare, faCheck, faUsers, faPlus, faCircleChevronDown, faCircleChevronUp, faChartSimple, faMedal, faUnlock, faLock,
+faPenToSquare, faCheck, faUsers, faUserAlt, faPlus, faCircleChevronDown, faCircleChevronUp, faChartSimple, faMedal, faUnlock, faLock,
 faPhone, faMessage, faCirclePlus, faStore, faImages, faCamera, faCloudArrowUp} from '@fortawesome/free-solid-svg-icons'
 
 import { faAddressBook, faClock, faCircleCheck } from '@fortawesome/free-regular-svg-icons'
@@ -29,7 +29,7 @@ import { faWhatsapp } from '@fortawesome/free-brands-svg-icons'
 
 /* add icons to the library */
 library.add(faList, faCalendarDays, faAddressBook, faMagnifyingGlass, faClock, faChevronRight, faTrash, faCircleXmark,
-faPenToSquare, faCheck, faUsers, faPlus, faCircleChevronDown, faCircleChevronUp, faChartSimple, faMedal, faUnlock, faLock,
+faPenToSquare, faCheck, faUsers, faUserAlt, faPlus, faCircleChevronDown, faCircleChevronUp, faChartSimple, faMedal, faUnlock, faLock,
 faPhone, faMessage, faCirclePlus, faWhatsapp, faStore, faImages, faCamera, faCloudArrowUp, faCircleCheck)
 
 import Datepicker from '@vuepic/vue-datepicker';

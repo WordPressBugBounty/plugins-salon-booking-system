@@ -41,19 +41,27 @@
               </template>
             </template>
           </Datepicker>
-          <div class="spinner-wrapper" v-if="isLoadingCalendar"></div>
-          <b-spinner variant="primary" v-if="isLoadingCalendar"></b-spinner>
+          <div v-if="isLoadingTimeslots || !attendantsLoaded" class="spinner-wrapper"/>
+          <b-spinner v-if="isLoadingTimeslots || !attendantsLoaded" variant="primary"/>
         </div>
       </b-col>
     </b-row>
 
-    <div class="selected-date">
-      {{ formattedDate }}
+    <div class="slots-headline">
+      <div class="selected-date">
+        {{ formattedDate }}
+      </div>
+      <div class="attendant-toggle" v-if="$root.settings?.attendant_enabled && attendants.length > 0">
+        Assistants view
+        <b-form-checkbox v-model="isAttendantView" switch size="lg">
+          {{ getLabel('attendantViewLabel') }}
+        </b-form-checkbox>
+      </div>
     </div>
 
-    <div class="slots" ref="slotsContainer">
-      <b-spinner variant="primary" v-if="isLoadingTimeslots"></b-spinner>
-      <div v-else-if="timeslots.length > 0" class="slots-inner">
+    <div class="slots" :class="{ 'slots--assistants': isAttendantView }" ref="slotsContainer">
+      <b-spinner variant="primary" v-if="isLoadingTimeslots || !attendantsLoaded"/>
+      <div v-else-if="timeslots.length > 0 && attendantsLoaded" class="slots-inner">
         <div class="time-axis">
           <div
               class="time-axis-item"
@@ -75,7 +83,35 @@
             @touchmove.stop="onTouchMove"
             @touchend.stop="onTouchEnd"
         >
-          <div class="bookings-canvas" :style="{ height: canvasHeight + 'px', width: canvasWidth + 'px' }">
+          <div v-if="attendantsLoaded" class="attendants-list"
+               :class="{ 'attendants-list--hidden': !shouldShowAttendants }">
+            <div v-for="(attendant, index) in sortedAttendants" :key="attendant.id" class="attendant-column"
+                 :style="{ width: columnWidths[attendant.id] + 'px', marginRight: (index === sortedAttendants.length - 1 ? 0 : attendantColumnGap) + 'px' }">
+              <div class="attendant-header">
+                <div class="attendant-avatar">
+                  <img
+                      v-if="attendant.image_url"
+                      :src="attendant.image_url"
+                      :alt="attendant.name"
+                  />
+                  <font-awesome-icon v-else icon="fa-solid fa-user-alt" class="default-avatar-icon"/>
+                </div>
+                <div class="attendant-name" :title="attendant.name">
+                  {{ attendant.name }}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="bookings-canvas" :style="canvasStyle">
+            <div v-if="isAttendantView" class="assistant-columns">
+              <div v-for="(attendant, index) in sortedAttendants"
+                   :key="'col-' + attendant.id"
+                   class="assistant-column-highlight"
+                   :style="{
+                      width: (columnWidths[attendant.id] || attendantColumnWidth) + 'px',
+                      left: getAssistantColumnLeft(index) + 'px'
+                    }"/>
+            </div>
             <div
                 v-for="(slot, idx) in timeslots"
                 :key="'line-' + idx"
@@ -114,9 +150,10 @@
             </div>
 
             <div
-                v-for="(booking, bIndex) in bookingsList"
-                :key="booking.id"
+                v-for="(booking, bIndex) in processedBookings"
+                :key="booking.id + (booking._serviceTime?.start || '')"
                 class="booking-card"
+                :class="{ 'booking-card--default-duration': booking._isDefaultDuration }"
                 :style="getBookingStyle(booking, bIndex)"
             >
               <BookingCard
@@ -143,8 +180,23 @@ import BookingCard from "./BookingCard.vue";
 import BookingAdd from "./BookingAdd.vue";
 import BookingBlockSlot from "./BookingBlockSlot.vue";
 
+function debounce(fn, delay = 300) {
+  let timer = null;
+  return (...args) => {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => {
+      fn(...args);
+    }, delay);
+  };
+}
+
 export default {
   name: "ReservationsCalendar",
+  components: {
+    BookingCard,
+    BookingBlockSlot,
+    BookingAdd
+  },
   props: {
     modelValue: {
       type: Date,
@@ -156,11 +208,6 @@ export default {
       },
     },
   },
-  components: {
-    BookingCard,
-    BookingBlockSlot,
-    BookingAdd
-  },
   data() {
     return {
       // calendar data
@@ -170,7 +217,6 @@ export default {
       bookingsList: [],
       availabilityIntervals: {},
       processingSlots: [],
-      columns: [],
 
       // UI state
       search: "",
@@ -186,7 +232,7 @@ export default {
       // layout configuration
       slotHeight: 110,
       cardWidth: 245,
-      gap: 24,
+      gap: 0,
 
       // drag handling
       isDragging: false,
@@ -197,10 +243,17 @@ export default {
       scrollLeft: 0,
 
       // timeouts and intervals
-      timeout: null,
       intervalId: null,
-      loadIntervalsTimeout: null,
-      processingTimeouts: new Map()
+
+      // attendants
+      isAttendantView: localStorage.getItem('isAttendantView') === 'true' || false,
+      attendantColumnWidth: 245,
+      attendantColumnGap: 8,
+      attendants: [],
+      attendantsLoaded: false,
+
+      // search
+      searchTimeout: null
     };
   },
   computed: {
@@ -213,53 +266,179 @@ export default {
       }
     },
     canvasWidth() {
-      return this.bookingsList.length * (this.cardWidth + this.gap);
+      if (!this.$refs.dragScrollContainer) return 500;
+      return this.$refs.dragScrollContainer.clientWidth;
     },
     canvasHeight() {
       return this.timeslots.length * this.slotHeight;
     },
     formattedDate() {
-      return this.moment(this.modelValue).format("dddd DD MMMM YYYY");
+      return this.moment(this.modelValue).format("dddd DD YYYY");
+    },
+    canvasStyle() {
+      if (this.isAttendantView) {
+        const totalWidth = this.sortedAttendants.reduce((sum, attendant, index) => {
+          const width = this.columnWidths[attendant.id] || this.attendantColumnWidth;
+          const gap = (index < this.sortedAttendants.length - 1) ? this.attendantColumnGap : 0;
+          return sum + width + gap;
+        }, 0);
+
+        return {
+          height: `${this.canvasHeight}px`,
+          width: `${totalWidth}px`,
+          minWidth: `${totalWidth}px`
+        };
+      }
+
+      const dynamicWidth = Math.max(
+          this.bookingsList.length * (this.cardWidth + this.gap),
+          this.canvasWidth
+      );
+
+      return {
+        height: `${this.canvasHeight}px`,
+        width: `${dynamicWidth}px`,
+        minWidth: 'calc(100% + 245px)'
+      };
+    },
+    processedBookings() {
+      if (!this.isAttendantView) {
+        return this.bookingsList;
+      }
+
+      return this.bookingsList.flatMap((booking) => {
+        if (!booking.services || booking.services.length === 0) {
+          return [{
+            ...booking,
+            _serviceTime: {
+              start: booking.time,
+              end: this.calculateEndTime(booking.time, this.getDefaultDuration(booking))
+            },
+            _assistantId: 0,
+            _isDefaultDuration: true
+          }];
+        }
+
+        const servicesByAssistant = booking.services.reduce((acc, service) => {
+          const assistantId = service.assistant_id || 0;
+          if (!acc[assistantId]) {
+            acc[assistantId] = [];
+          }
+          acc[assistantId].push(service);
+          return acc;
+        }, {});
+
+        return Object.entries(servicesByAssistant).map(([assistantId, services]) => {
+          const sortedServices = [...services].sort((a, b) => {
+            const aStart = this.getMinutes(a.start_at || booking.time);
+            const bStart = this.getMinutes(b.start_at || booking.time);
+            return aStart - bStart;
+          });
+
+          const firstService = sortedServices[0];
+          const lastService = sortedServices[sortedServices.length - 1];
+
+          return {
+            ...booking,
+            services: sortedServices,
+            _serviceTime: {
+              start: firstService.start_at || booking.time,
+              end: lastService.end_at || this.calculateEndTime(
+                  lastService.start_at || booking.time,
+                  this.getDefaultDuration(booking)
+              )
+            },
+            _assistantId: parseInt(assistantId),
+            _isDefaultDuration: !lastService.end_at
+          };
+        });
+      });
+    },
+    sortedAttendants() {
+      if (!this.attendants || !this.bookingsList) return [];
+      const bookingsMap = new Map();
+      this.bookingsList.forEach((booking) => {
+        if (booking.services) {
+          booking.services.forEach((service) => {
+            if (service.assistant_id) {
+              if (!bookingsMap.has(service.assistant_id)) {
+                bookingsMap.set(service.assistant_id, []);
+              }
+              bookingsMap.get(service.assistant_id).push(booking);
+            }
+          });
+        }
+      });
+      return [...this.attendants].sort((a, b) => {
+        const aHas = bookingsMap.has(a.id);
+        const bHas = bookingsMap.has(b.id);
+
+        if (aHas && !bHas) return -1;
+        if (!aHas && bHas) return 1;
+        if (aHas && bHas) {
+          return bookingsMap.get(b.id).length - bookingsMap.get(a.id).length;
+        }
+        return a.name.localeCompare(b.name);
+      });
+    },
+    shouldShowAttendants() {
+      return this.isAttendantView && this.attendants && this.attendants.length > 0;
+    },
+    columnWidths() {
+      if (!this.isAttendantView) return {};
+
+      const widths = {};
+      this.sortedAttendants.forEach((attendant) => {
+        const maxOverlap = this.getOverlappingBookingsCount(attendant.id);
+        widths[attendant.id] = this.cardWidth * maxOverlap;
+      });
+
+      return widths;
     }
   },
   watch: {
-    modelValue: {
-      handler() {
+    modelValue(newVal, oldVal) {
+      if (newVal.getTime() !== oldVal?.getTime()) {
         this.activeSlotIndex = -1;
         this.loadLockedTimeslots();
         this.loadBookingsList();
         this.loadAvailabilityIntervals();
-      },
-      immediate: true
+        this.$nextTick(() => {
+          this.updateCurrentTimeLinePosition();
+        });
+      }
     },
-    search(newVal) {
-      this.activeSlotIndex = -1;
-      if (newVal) this.loadSearchBookingsList();
-      else this.loadBookingsList();
+    search: {
+      handler: debounce(function (newVal) {
+        this.activeSlotIndex = -1;
+        if (newVal) {
+          this.loadSearchBookingsList();
+        } else {
+          this.loadBookingsList();
+        }
+      }, 600),
+      immediate: false
     },
-    timeslots() {
-      this.loadAvailabilityIntervals();
-      this.$nextTick(() => {
-        this.updateCurrentTimeLinePosition();
-      });
-    },
-    lockedTimeslots: {
-      handler() {
-        if (this.timeslots.length > 0) {
-          if (this.loadIntervalsTimeout) {
-            clearTimeout(this.loadIntervalsTimeout);
-          }
-          this.loadIntervalsTimeout = setTimeout(() => {
-            this.loadAvailabilityIntervals();
-          }, 300);
+    shop: {
+      handler(newVal, oldVal) {
+        if (newVal?.id !== oldVal?.id) {
+          this.activeSlotIndex = -1;
+          this.load();
         }
       },
       deep: true
     },
-    shop() {
-      this.activeSlotIndex = -1;
-      this.load();
+    "$root.settings": {
+      handler(newSettings) {
+        if (newSettings?.attendant_enabled) {
+          this.loadAttendants();
+        }
+      },
+      deep: true
     },
+    isAttendantView(newValue) {
+      localStorage.setItem('isAttendantView', newValue);
+    }
   },
   mounted() {
     this.load();
@@ -281,28 +460,28 @@ export default {
 
       const container = this.$refs.dragScrollContainer;
       if (container) {
-        container.addEventListener("touchmove", this.onTouchMove, {
-          passive: false,
-        });
+        container.addEventListener("touchmove", this.onTouchMove, {passive: false});
       }
-    });
-    this.$refs.slotsContainer.addEventListener('click', (e) => {
-      if (e.target === this.$refs.slotsContainer) {
-        this.handleOutsideClick();
-      }
-    });
+    })
+    if (this.$refs.slotsContainer) {
+      this.$refs.slotsContainer.addEventListener("click", (e) => {
+        if (e.target === this.$refs.slotsContainer) {
+          this.handleOutsideClick();
+        }
+      });
+    }
+    if (this.$root.settings?.attendant_enabled) {
+      this.loadAttendants();
+    }
   },
   beforeUnmount() {
     if (this.intervalId) clearInterval(this.intervalId);
-    if (this.loadIntervalsTimeout) clearTimeout(this.loadIntervalsTimeout);
-    this.processingTimeouts.forEach(timeout => clearTimeout(timeout));
-    this.processingTimeouts.clear();
     const container = this.$refs.dragScrollContainer;
     if (container) {
       container.removeEventListener("touchmove", this.onTouchMove);
     }
     if (this.$refs.slotsContainer) {
-      this.$refs.slotsContainer.removeEventListener('click', this.handleOutsideClick);
+      this.$refs.slotsContainer.removeEventListener("click", this.handleOutsideClick);
     }
   },
   methods: {
@@ -320,13 +499,14 @@ export default {
     update() {
       this.updateBookingsList();
     },
-    /*load*/
     loadTimeslots() {
       this.isLoadingTimeslots = true;
       this.axios
           .get("calendar/intervals", {params: {shop: this.shop?.id || null}})
           .then((r) => {
             this.timeslots = r.data.items;
+            this.loadAvailabilityIntervals();
+            this.$nextTick(() => this.updateCurrentTimeLinePosition());
           })
           .finally(() => {
             this.isLoadingTimeslots = false;
@@ -339,10 +519,13 @@ export default {
             params: {
               date: this.moment(this.date).format("YYYY-MM-DD"),
               shop: this.shop ? this.shop.id : null
-            },
+            }
           })
           .then((response) => {
             this.lockedTimeslots = response.data.items;
+            setTimeout(() => {
+              this.loadAvailabilityIntervals();
+            }, 300);
           })
           .finally(() => {
             this.isLoading = false;
@@ -355,7 +538,7 @@ export default {
             params: {
               from_date: this.moment(fd).format("YYYY-MM-DD"),
               to_date: this.moment(td).format("YYYY-MM-DD"),
-              shop: this.shop?.id || null,
+              shop: this.shop?.id || null
             },
           })
           .then((r) => {
@@ -368,6 +551,8 @@ export default {
     loadBookingsList() {
       this.isLoadingTimeslots = true;
       this.bookingsList = [];
+      const currentView = this.isAttendantView;
+
       this.axios
           .get("bookings", {
             params: {
@@ -388,28 +573,19 @@ export default {
           .then((r) => {
             this.bookingsList = r.data.items;
             this.arrangeBookings();
+            this.isAttendantView = currentView;
           })
           .finally(() => {
             this.isLoadingTimeslots = false;
           });
     },
-    loadAvailabilityIntervals() {
-      if (!this.timeslots.length) return;
-      this.axios
-          .post("availability/intervals", {
-            date: this.moment(this.date).format("YYYY-MM-DD"),
-            time: this.timeslots[0],
-            shop: this.shop?.id || 0,
-          })
-          .then((r) => {
-            this.availabilityIntervals = r.data.intervals;
-          });
-    },
     loadSearchBookingsList() {
-      if (this.timeout) clearTimeout(this.timeout);
-      this.timeout = setTimeout(() => {
+      if (this.searchTimeout) clearTimeout(this.searchTimeout);
+      this.searchTimeout = setTimeout(() => {
         this.isLoadingTimeslots = true;
         this.bookingsList = [];
+        const currentView = this.isAttendantView;
+
         this.axios
             .get("bookings", {
               params: {
@@ -431,16 +607,72 @@ export default {
             .then((r) => {
               this.bookingsList = r.data.items;
               this.arrangeBookings();
+              this.isAttendantView = currentView;
             })
             .finally(() => {
               this.isLoadingTimeslots = false;
             });
       }, 1000);
     },
-    /*handle*/
+    updateBookingsList() {
+      const currentView = this.isAttendantView;
+
+      this.axios
+          .get("bookings", {
+            params: {
+              start_date: this.moment(this.date).format("YYYY-MM-DD"),
+              end_date: this.moment(this.date).format("YYYY-MM-DD"),
+              per_page: -1,
+              statuses: [
+                "sln-b-pendingpayment",
+                "sln-b-pending",
+                "sln-b-paid",
+                "sln-b-paylater",
+                "sln-b-canceled",
+                "sln-b-confirmed"
+              ],
+              shop: this.shop?.id || null
+            }
+          })
+          .then((r) => {
+            this.bookingsList = r.data.items;
+            this.arrangeBookings();
+            this.isAttendantView = currentView;
+          });
+    },
+    loadAvailabilityIntervals() {
+      if (!this.timeslots.length) return;
+      this.axios
+          .post("availability/intervals", {
+            date: this.moment(this.date).format("YYYY-MM-DD"),
+            time: this.timeslots[0],
+            shop: this.shop?.id || 0
+          })
+          .then((r) => {
+            this.availabilityIntervals = r.data.intervals;
+          });
+    },
+    loadAttendants() {
+      this.axios
+          .get("assistants", {
+            params: {
+              shop: this.shop?.id || null,
+              per_page: -1
+            }
+          })
+          .then((response) => {
+            this.attendants = response.data.items;
+            this.attendantsLoaded = true;
+          })
+          .catch((error) => {
+            // eslint-disable-next-line
+            console.error("Error loading attendants:", error);
+            this.attendantsLoaded = true;
+          });
+    },
     handleLockStart(slot) {
-      if (!this.processingSlots.some(s =>
-          s.from_time === slot.from_time && s.to_time === slot.to_time
+      if (!this.processingSlots.some(
+          s => s.from_time === slot.from_time && s.to_time === slot.to_time
       )) {
         this.processingSlots.push(slot);
         setTimeout(() => {
@@ -485,12 +717,11 @@ export default {
               )
       );
     },
-    handleMonthYear(obj) {
-      const fd = new Date(obj.year, obj.month, 1);
-      const td = new Date(obj.year, obj.month + 1, 0);
+    handleMonthYear({year, month}) {
+      const fd = new Date(year, month, 1);
+      const td = new Date(year, month + 1, 0);
       this.loadAvailabilityStats(fd, td);
     },
-    /* is */
     isDayWithBookings(date) {
       return this.availabilityStats.some(
           (stat) =>
@@ -522,9 +753,7 @@ export default {
       );
     },
     isAvailable(start) {
-      if (this.isHoliday(this.date)) {
-        return false;
-      }
+      if (this.isHoliday(this.date)) return false;
 
       if (
           this.availabilityIntervals.universalSuggestedDate !==
@@ -558,36 +787,6 @@ export default {
           slot => slot.from_time === from && (to === undefined || slot.to_time === to)
       );
     },
-    /*other*/
-    updateBookingsList() {
-      this.axios
-          .get("bookings", {
-            params: {
-              start_date: this.moment(this.date).format("YYYY-MM-DD"),
-              end_date: this.moment(this.date).format("YYYY-MM-DD"),
-              per_page: -1,
-              statuses: [
-                "sln-b-pendingpayment",
-                "sln-b-pending",
-                "sln-b-paid",
-                "sln-b-paylater",
-                "sln-b-canceled",
-                "sln-b-confirmed",
-              ],
-              shop: this.shop?.id || null,
-            },
-          })
-          .then((r) => {
-            this.bookingsList = r.data.items;
-            this.arrangeBookings();
-          });
-    },
-    calcSlotStep() {
-      if (this.timeslots.length < 2) return 30;
-      const t1 = this.getMinutes(this.timeslots[0]);
-      const t2 = this.getMinutes(this.timeslots[1]);
-      return t2 - t1;
-    },
     toggleSlotActions(idx) {
       if (!this.isDragging && !this.wasRecentlyDragging) {
         this.activeSlotIndex = this.activeSlotIndex === idx ? -1 : idx;
@@ -607,21 +806,26 @@ export default {
       this.$emit("showItem", booking);
     },
     updateCurrentTimeLinePosition() {
-      if (!this.timeslots || this.timeslots.length < 1) {
+      if (!this.timeslots || !this.timeslots.length) {
         this.showCurrentTimeLine = false;
         return;
       }
       const startTime = this.timeslots[0];
       const endTime = this.timeslots[this.timeslots.length - 1];
       const now = this.moment();
-      const opening = this.moment(startTime, "HH:mm");
-      const closing = this.moment(endTime, "HH:mm");
 
-      opening.year(now.year()).month(now.month()).date(now.date());
-      closing.year(now.year()).month(now.month()).date(now.date());
-
+      const opening = this.moment(startTime, "HH:mm").set({
+        year: now.year(),
+        month: now.month(),
+        date: now.date()
+      });
+      let closing = this.moment(endTime, "HH:mm").set({
+        year: now.year(),
+        month: now.month(),
+        date: now.date()
+      });
       if (closing.isBefore(opening)) {
-        closing.add(1, 'day');
+        closing.add(1, "day");
       }
 
       if (now.isBefore(opening)) {
@@ -637,21 +841,29 @@ export default {
       }
 
       const slotDuration = this.calcSlotStep();
-      const minutesSinceOpening = now.diff(opening, 'minutes');
+      const minutesSinceOpening = now.diff(opening, "minutes");
       const position = (minutesSinceOpening / slotDuration) * this.slotHeight;
 
-      this.currentTimeLinePosition = Math.max(0, Math.min(position, this.timeslots.length * this.slotHeight));
+      this.currentTimeLinePosition = Math.max(
+          0,
+          Math.min(position, this.timeslots.length * this.slotHeight)
+      );
       this.showCurrentTimeLine = true;
     },
     arrangeBookings() {
       this.columns = [];
+      if (!Array.isArray(this.bookingsList)) return;
+
       const sorted = [...this.bookingsList].sort((a, b) => {
         const aStart = this.getBookingStart(a);
         const bStart = this.getBookingStart(b);
         return aStart - bStart;
       });
-      sorted.forEach(booking => {
-        booking._column = this.findFreeColumn(booking);
+
+      sorted.forEach((booking) => {
+        if (booking) {
+          booking._column = this.findFreeColumn(booking);
+        }
       });
     },
     findFreeColumn(booking) {
@@ -664,22 +876,9 @@ export default {
       this.columns.push([booking]);
       return this.columns.length - 1;
     },
-    hasOverlappingBookings(slotIndex) {
-      const slotStart = this.getMinutes(this.timeslots[slotIndex]);
-      const slotEnd = slotIndex + 1 < this.timeslots.length
-          ? this.getMinutes(this.timeslots[slotIndex + 1])
-          : slotStart + this.calcSlotStep();
-
-      return this.bookingsList.some(booking => {
-        const bookingStart = this.getBookingStart(booking);
-        const bookingEnd = this.getBookingEnd(booking);
-        return bookingStart < slotEnd && bookingEnd > slotStart;
-      });
-    },
     doesOverlapColumn(newBooking, columnBookings) {
       const newStart = this.getBookingStart(newBooking);
       const newEnd = this.getBookingEnd(newBooking);
-
       for (const b of columnBookings) {
         const bStart = this.getBookingStart(b);
         const bEnd = this.getBookingEnd(b);
@@ -689,46 +888,76 @@ export default {
       }
       return false;
     },
-    /*get*/
+    hasOverlappingBookings(slotIndex) {
+      const slotStart = this.getMinutes(this.timeslots[slotIndex]);
+      const slotEnd = (slotIndex + 1 < this.timeslots.length)
+          ? this.getMinutes(this.timeslots[slotIndex + 1])
+          : slotStart + this.calcSlotStep();
+
+      return this.bookingsList.some((booking) => {
+        const bookingStart = this.getBookingStart(booking);
+        const bookingEnd = this.getBookingEnd(booking);
+        return bookingStart < slotEnd && bookingEnd > slotStart;
+      });
+    },
+    calcSlotStep() {
+      if (this.timeslots.length < 2) return 30;
+      const t1 = this.getMinutes(this.timeslots[0]);
+      const t2 = this.getMinutes(this.timeslots[1]);
+      return t2 - t1;
+    },
     getBookingStart(booking) {
+      if (!booking || !booking.time) return 0;
       return this.getMinutes(booking.time);
     },
     getBookingEnd(booking) {
+      if (!booking) return 0;
       let endAt = booking.time;
       if (booking.services?.length) {
-        endAt = booking.services[booking.services.length - 1].end_at || booking.time;
+        const lastService = booking.services[booking.services.length - 1];
+        endAt = lastService.end_at || booking.time;
       }
       return this.getMinutes(endAt);
-    },
-    getDisplayDuration(booking, realDuration) {
-      if (booking.services?.length === 1 && realDuration === 15) {
-        return 30;
-      }
-      if (realDuration <= 30) {
-        return 30;
-      }
-      if (realDuration <= 45) {
-        return 60;
-      }
-      return Math.ceil(realDuration / 30) * 30;
     },
     getBookingStyle(booking) {
       const openStr = this.timeslots[0];
       const openMin = this.getMinutes(openStr);
-      const startMin = this.getMinutes(booking.time);
-      let endAt = booking.time;
-      if (booking.services?.length) {
-        endAt = booking.services[booking.services.length - 1].end_at || booking.time;
+      let startMin, endMin, duration;
+
+      if (this.isAttendantView) {
+        startMin = this.getMinutes(booking._serviceTime.start);
+        const realDuration = this.getMinutes(booking._serviceTime.end) - startMin;
+        duration = this.getDisplayDuration(booking, realDuration);
+        endMin = startMin + duration;
+      } else {
+        startMin = this.getMinutes(booking.time);
+        if (booking.services?.length) {
+          const lastService = booking.services[booking.services.length - 1];
+          const endTime = lastService.end_at || booking.time;
+          const realDuration = this.getMinutes(endTime) - startMin;
+          duration = this.getDisplayDuration(booking, realDuration);
+          endMin = startMin + duration;
+        } else {
+          duration = this.getDefaultDuration(booking);
+          endMin = startMin + duration;
+        }
       }
-      const endMin = this.getMinutes(endAt);
-      const realDuration = endMin - startMin;
-      const topMin = Math.max(startMin, openMin);
+
       const pxPerMin = this.slotHeight / this.calcSlotStep();
-      const displayDuration = this.getDisplayDuration(booking, realDuration);
-      const heightPx = displayDuration * pxPerMin;
-      const colIndex = booking._column || 0;
-      const leftPx = colIndex * (this.cardWidth + this.gap);
-      const topPx = (topMin - openMin) * pxPerMin;
+      const topPx = (startMin - openMin) * pxPerMin;
+      const heightPx = Math.max((endMin - startMin) * pxPerMin, this.slotHeight);
+
+      let leftPx = 0;
+      if (this.isAttendantView) {
+        const columnIndex = this.sortedAttendants.findIndex(a => a.id === booking._assistantId);
+        if (columnIndex >= 0) {
+          leftPx = this.getAssistantColumnLeft(columnIndex);
+          leftPx += this.getBookingPosition(booking);
+        }
+      } else {
+        const colIndex = booking._column || 0;
+        leftPx = colIndex * (this.cardWidth + this.gap);
+      }
 
       return {
         position: "absolute",
@@ -753,40 +982,106 @@ export default {
         boxSizing: "border-box",
       };
     },
+    getOverlappingBookingsCount(attendantId) {
+      const bookings = this.processedBookings.filter(b => b._assistantId === attendantId);
+      if (bookings.length <= 1) return 1;
+
+      let maxOverlap = 1;
+      for (let i = 0; i < bookings.length; i++) {
+        let currentOverlap = 1;
+        const current = bookings[i];
+        const currentStart = this.getMinutes(current._serviceTime.start);
+        const currentEnd = this.getMinutes(current._serviceTime.end);
+
+        for (let j = i + 1; j < bookings.length; j++) {
+          const other = bookings[j];
+          const otherStart = this.getMinutes(other._serviceTime.start);
+          const otherEnd = this.getMinutes(other._serviceTime.end);
+
+          if (currentStart < otherEnd && currentEnd > otherStart) {
+            currentOverlap++;
+          }
+        }
+        maxOverlap = Math.max(maxOverlap, currentOverlap);
+      }
+      return maxOverlap;
+    },
+    getAssistantColumnLeft(index) {
+      return this.sortedAttendants.slice(0, index).reduce((sum, attendant) => {
+        const width = this.columnWidths[attendant.id] || this.attendantColumnWidth;
+        return sum + width + this.attendantColumnGap;
+      }, 0);
+    },
+    getBookingPosition(booking) {
+      const attendantId = booking._assistantId;
+      const overlappingBookings = this.processedBookings
+          .filter((b) => b._assistantId === attendantId && this.doBookingsOverlap(booking, b) && b.id !== booking.id)
+          .sort((a, b) => this.getMinutes(a._serviceTime.start) - this.getMinutes(b._serviceTime.start));
+
+      let position = 0;
+      const usedPositions = new Set(overlappingBookings.map(b => b._position));
+      while (usedPositions.has(position)) {
+        position++;
+      }
+      booking._position = position;
+      return position * this.cardWidth;
+    },
+    doBookingsOverlap(booking1, booking2) {
+      if (!booking1 || !booking2) return false;
+      const start1 = this.getMinutes(booking1._serviceTime.start);
+      const end1 = this.getMinutes(booking1._serviceTime.end);
+      const start2 = this.getMinutes(booking2._serviceTime.start);
+      const end2 = this.getMinutes(booking2._serviceTime.end);
+      return start1 < end2 && end1 > start2;
+    },
     getMinutes(str) {
       const [hh, mm] = str.split(":").map(Number);
       return hh * 60 + mm;
     },
-    /*on*/
+    getDefaultDuration(booking) {
+      if (!booking.services?.length) return 30;
+      return this.getDisplayDuration(booking, 30);
+    },
+    getDisplayDuration(booking, realDuration) {
+      if (booking.services?.length === 1 && realDuration === 15) {
+        return 30;
+      }
+      if (realDuration <= 30) return 30;
+      if (realDuration <= 45) return 60;
+      return Math.ceil(realDuration / 30) * 30;
+    },
+    calculateEndTime(startTime, durationMinutes) {
+      const [hours, minutes] = startTime.split(":").map(Number);
+      const totalMinutes = hours * 60 + minutes + durationMinutes;
+      const newHours = Math.floor(totalMinutes / 60);
+      const newMinutes = totalMinutes % 60;
+      return `${String(newHours).padStart(2, "0")}:${String(newMinutes).padStart(2, "0")}`;
+    },
     onMouseDown(e) {
       if (!this.$refs.dragScrollContainer) return;
-
       this.possibleDrag = true;
       this.isDragging = false;
       this.wasRecentlyDragging = false;
-
       this.startX = e.pageX - this.$refs.dragScrollContainer.offsetLeft;
       this.scrollLeft = this.$refs.dragScrollContainer.scrollLeft;
-      document.body.style.userSelect = 'none';
+      document.body.style.userSelect = "none";
     },
     onMouseMove(e) {
       if (!this.possibleDrag) return;
-
       const x = e.pageX - this.$refs.dragScrollContainer.offsetLeft;
       const walk = Math.abs(x - this.startX);
-
       if (walk > 5) {
         this.isDragging = true;
         this.activeSlotIndex = -1;
       }
       if (this.isDragging) {
         e.preventDefault();
-        this.$refs.dragScrollContainer.scrollLeft = this.scrollLeft - (x - this.startX);
+        this.$refs.dragScrollContainer.scrollLeft =
+            this.scrollLeft - (x - this.startX);
       }
     },
     onMouseUp() {
       this.possibleDrag = false;
-
       if (this.isDragging) {
         this.isDragging = false;
         this.wasRecentlyDragging = true;
@@ -794,7 +1089,7 @@ export default {
           this.wasRecentlyDragging = false;
         }, 200);
       }
-      document.body.style.userSelect = '';
+      document.body.style.userSelect = "";
     },
     onMouseLeave() {
       if (this.possibleDrag) {
@@ -803,7 +1098,6 @@ export default {
     },
     onTouchStart(e) {
       if (!this.$refs.dragScrollContainer) return;
-
       this.isDragging = false;
       this.possibleDrag = true;
       this.startX = e.touches[0].clientX - this.$refs.dragScrollContainer.offsetLeft;
@@ -812,25 +1106,20 @@ export default {
     },
     onTouchMove(e) {
       if (!this.possibleDrag) return;
-
       const x = e.touches[0].clientX - this.$refs.dragScrollContainer.offsetLeft;
       const y = e.touches[0].clientY;
       const walkX = Math.abs(x - this.startX);
       const walkY = Math.abs(y - this.startY);
-
       if (walkX > 5 && walkX > walkY) {
         this.isDragging = true;
         this.activeSlotIndex = -1;
-
-        if (e.cancelable) {
-          e.preventDefault();
-        }
-        this.$refs.dragScrollContainer.scrollLeft = this.scrollLeft - (x - this.startX);
+        if (e.cancelable) e.preventDefault();
+        this.$refs.dragScrollContainer.scrollLeft =
+            this.scrollLeft - (x - this.startX);
       }
     },
     onTouchEnd() {
       this.possibleDrag = false;
-
       if (this.isDragging) {
         this.isDragging = false;
         this.wasRecentlyDragging = true;
@@ -845,7 +1134,17 @@ export default {
       }
     }
   },
-  emits: ["update:modelValue", "add", "showItem", 'lock', 'unlock', 'lock-start', 'lock-end', 'unlock-start', 'unlock-end'],
+  emits: [
+    "update:modelValue",
+    "add",
+    "showItem",
+    "lock",
+    "unlock",
+    "lock-start",
+    "lock-end",
+    "unlock-start",
+    "unlock-end"
+  ],
 };
 </script>
 
@@ -900,6 +1199,14 @@ export default {
   position: relative;
 }
 
+.slots.slots--assistants .slots-content, .slots.slots--assistants .time-axis {
+  padding-top: 64px;
+}
+
+.slots.slots--assistants .current-time-line {
+  margin-top: 64px;
+}
+
 .slots-inner {
   position: relative;
   display: flex;
@@ -907,6 +1214,7 @@ export default {
 
 .time-axis {
   flex-shrink: 0;
+  transition: .15s ease-in-out;
 }
 
 .time-axis-item {
@@ -928,16 +1236,7 @@ export default {
   overflow-y: hidden;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
-}
-
-@media (hover: hover) {
-  .slots-content {
-    cursor: grab;
-  }
-
-  .slots-content:active {
-    cursor: grabbing;
-  }
+  transition: .15s ease-in-out;
 }
 
 .slots-content * {
@@ -977,34 +1276,24 @@ export default {
   border-top: none;
 }
 
-.time-slot-line.processing .time-slot-actions,
-.time-slot-line.locked .time-slot-actions {
+.time-slot-line.processing .time-slot-actions, .time-slot-line.locked .time-slot-actions {
   opacity: 1;
   pointer-events: auto;
 }
 
-.time-slot-line.processing :deep(.booking-add),
-.time-slot-line.locked :deep(.booking-add) {
+.time-slot-line.processing :deep(.booking-add), .time-slot-line.locked :deep(.booking-add) {
   display: none;
 }
 
-@media (hover: hover) {
-  .time-slot-line:hover {
-    background-color: rgb(225 233 247 / 40%) !important;
-  }
-
-  .time-slot-line.locked:hover {
-    background-color: #f1b0b7 !important;
-  }
-}
 
 .time-slot-line.active {
   background-color: rgb(237 240 245 / 40%) !important;
-  z-index: 6;
+  z-index: 13;
   backdrop-filter: blur(5px);
 }
 
 .time-slot-line.locked {
+  z-index: 13;
   background-color: rgba(248, 215, 218, 0.4) !important;
 }
 
@@ -1037,9 +1326,9 @@ export default {
 }
 
 .booking-card {
-  z-index: 5;
+  z-index: 11;
   display: flex;
-  padding: 10px 0;
+  padding: 10px;
   pointer-events: none;
 }
 
@@ -1203,6 +1492,209 @@ export default {
   border-color: #9F04048F;
 }
 
+.time-slot-line.processing {
+  background-color: #fff3cd !important;
+  cursor: wait;
+}
+
+.time-slot-line.processing .time-slot-actions {
+  display: flex;
+}
+
+.attendant-toggle {
+  margin-top: 55px;
+  color: #4A454F;
+  font-weight: 400;
+  font-size: 14px;
+  user-select: none;
+}
+
+.selected-date {
+  margin-top: 55px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #322d38;
+  text-align: left;
+}
+
+.slots-headline {
+  display: flex;
+  align-items: center;
+}
+
+.attendants-list {
+  display: flex;
+  position: absolute;
+  top: 0;
+  z-index: 10;
+  padding: 8px 0;
+  opacity: 1;
+  transform: translateY(-10px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  width: 100%;
+  overflow: hidden;
+}
+
+.attendants-list--hidden {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.attendant-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.attendant-toggle {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.slots--assistants .attendants-list {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  padding: 8px 0;
+  display: flex;
+  width: fit-content;
+}
+
+.attendant-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgb(255 255 255 / 50%);
+  border-radius: 8px;
+  height: 48px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .05);
+}
+
+.attendant-header::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #28a745;
+  opacity: 0;
+  transform: scale(0);
+  transition: all 0.3s ease;
+}
+
+.attendant-column {
+  flex-shrink: 0;
+}
+
+.attendant-column[data-has-bookings="true"] .attendant-header::after {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.assistant-column-highlight {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: rgba(171, 180, 187, .33);
+  z-index: 10;
+  border-radius: 8px;
+  user-select: none;
+  pointer-events: none;
+}
+
+.slots--assistants .slots-content {
+  padding-top: 64px;
+  position: relative;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.slots--assistants .bookings-canvas {
+  min-width: fit-content;
+}
+
+.attendant-avatar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  color: #04409F;
+}
+
+.attendant-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.attendant-name {
+  font-weight: 500;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+:deep(.booking) {
+  box-shadow: 0 0 10px 5px rgb(0 0 0 / 10%);
+}
+
+:deep(.form-check-input:focus), :deep(.form-check-input) {
+  box-shadow: none;
+  border-color: rgba(0, 0, 0, .25);
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3E%3Ccircle r='3' fill='rgba(0, 0, 0, 0.25)'/%3E%3C/svg%3E");
+}
+
+:deep(.form-check-input:checked) {
+  background-color: #04409F;
+  border-color: #04409F;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3E%3Ccircle r='3' fill='%23fff'/%3E%3C/svg%3E") !important;
+}
+
+
+@media (hover: hover) {
+  .slots-content {
+    cursor: grab;
+  }
+
+  .slots-content:active {
+    cursor: grabbing;
+  }
+
+  .time-slot-line:hover {
+    background-color: rgb(225 233 247 / 40%) !important;
+  }
+
+  .time-slot-line.locked:hover {
+    background-color: #f1b0b7 !important;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .attendant-toggle {
+    margin-top: 32px;
+  }
+
+  .selected-date {
+    font-size: 16px;
+    margin-top: 32px;
+  }
+}
+
 @media screen and (max-width: 450px) {
   :deep(.dp__calendar_row) {
     margin: 5px 0;
@@ -1230,27 +1722,4 @@ export default {
   }
 }
 
-.time-slot-line.processing {
-  background-color: #fff3cd !important;
-  cursor: wait;
-}
-
-.time-slot-line.processing .time-slot-actions {
-  display: flex;
-}
-
-.selected-date {
-  margin-top: 55px;
-  font-size: 18px;
-  font-weight: 700;
-  color: #322d38;
-  text-align: left;
-}
-
-@media screen and (max-width: 600px) {
-  .selected-date {
-    font-size: 16px;
-    margin-top: 32px;
-  }
-}
 </style>

@@ -88,6 +88,8 @@ class LabelProvider
             'shopsTitle' => __('Select a shop', 'salon-booking-system'),
             'shopsNoResultLabel' => __('No shops ...', 'salon-booking-system'),
             'shopTitleLabel' => __('Shop', 'salon-booking-system'),
+            'selectShopFirstMessage' => __('Please select a shop first to edit booking', 'salon-booking-system'),
+            'selectShopPlaceholder' => __('Select shop', 'salon-booking-system'),
             'successMessagePayRemainingAmount' => __('Email sent', 'salon-booking-system'),
             'errorMessagePayRemainingAmount' => __('Error, email not sent', 'salon-booking-system'),
             'takePhotoButtonLabel' => __('Take Photo', 'salon-booking-system'),
@@ -96,6 +98,8 @@ class LabelProvider
             'photoCameraButtonLabel' => __('Photo', 'salon-booking-system'),
             'customerDetailsUpdateButtonLabel' => __('Update customer', 'salon-booking-system'),
             'customerDetailsGoBackButtonLabel' => __('Go back', 'salon-booking-system'),
+            'assistantBusyTitle' => __('Assistant is busy', 'salon-booking-system'),
+            'assistantBusyMessage' => __('is busy from %s to %s. Please select another time or assistant.', 'salon-booking-system'),
         );
     }
 

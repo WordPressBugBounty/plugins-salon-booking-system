@@ -455,6 +455,10 @@ class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
         $services_credits = $this->getMeta('service_credit', false, false);
         $prepaid_services = get_user_meta($user_id, '_sln_prepaid_services', true);
 
+        if (empty($services_credits)) {
+            return;
+        }
+
         foreach ($services_credits as $service_credit) {
             $prepaid_services[$service_credit] -= 1;
         }
@@ -657,6 +661,23 @@ class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
     {
         return $this->getMeta('soap_notes') ?: [];
     }
+
+    public function getCreateStatus()
+    {
+        $settings = SLN_Plugin::getInstance()->getSettings();
+        if($settings->isPayEnabled() && $settings->get('create_booking_after_pay')){
+            return SLN_Enum_BookingStatus::DRAFT;
+        }
+
+        $status = $settings->get('confirmation') ?
+            SLN_Enum_BookingStatus::PENDING
+            : ($settings->isPayEnabled() && $this->getAmount() > 0 ?
+                SLN_Enum_BookingStatus::PENDING_PAYMENT
+                : SLN_Enum_BookingStatus::CONFIRMED);
+
+    return apply_filters('sln.booking_builder.getCreateStatus', $status);
+    }
+
 
     public function getData(){
         return array(
