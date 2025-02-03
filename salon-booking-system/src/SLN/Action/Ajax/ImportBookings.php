@@ -105,7 +105,9 @@ class SLN_Action_Ajax_ImportBookings extends SLN_Action_Ajax_AbstractImport{
             $criteria = array('@wp_query' => array('title' => $service_name,));
             $service = $repository->getIDs($criteria);
             if(empty($service) || !isset($service[0]) || count($service) > 1){
-                return true;
+                $service_message = (count($service) > 1 ? esc_html__('One or more services with the name', 'salon-booking-system') : esc_html__('Undefined service', 'salon-booking-system')) . ': ' . $service_name;
+                $service_message = empty($service_name) ? esc_html__('Service required', 'salon-booking-system') : $service_message;
+                return $this->dataToErrorRespons($data, $service_message);
             }
             $services[] = $repository->create($service[0]);
         }
@@ -123,7 +125,8 @@ class SLN_Action_Ajax_ImportBookings extends SLN_Action_Ajax_AbstractImport{
                 $criteria = array('@wp_query' => array('title' => $attendant_name));
                 $attendant = $repository->getIDs($criteria);
                 if(empty($attendant) || !isset($attendant[0]) || count($attendant) > 1){
-                    return true;
+                    $attendant_message = empty($attendant_name) ? esc_html__('Attendant required', 'salon-booking-system') : esc_html__('Undefined attendant', 'salon-booking-system'). ' '. $attendant_name;
+                    return $this->dataToErrorRespons($data, $attendant_message);
                 }
                 $attendants[] = $repository->create($attendant[0]);
             }
@@ -140,11 +143,11 @@ class SLN_Action_Ajax_ImportBookings extends SLN_Action_Ajax_AbstractImport{
                 }else{
                     $booking_service['attendant'] = $attendants[$i%count($attendants)]->getId();
                 }
+                $booking_services[] = $booking_service;
             }
-            $booking_services[] = $booking_service;
         }
         if(!($booking_status = array_search($this->getData('status'), SLN_Enum_BookingStatus::getLabels()))){
-            return true;
+            return $this->dataToErrorRespons($data, esc_html__('Invalid booking status', 'salon-booking-system'));
         }
         $args = array(
             'post_title' => $this->getData('firstname'). ' '.$this->getData('lastname'),
@@ -154,7 +157,7 @@ class SLN_Action_Ajax_ImportBookings extends SLN_Action_Ajax_AbstractImport{
         $args['post_status'] = $booking_status;
 
         if(empty($this->getData('datetime'))){
-            return true;
+            return $this->dataToErrorRespons($data, esc_html__('Invalid date', 'salon-booking-system'));
         }
         
         $booking_id = wp_insert_post($args);
@@ -176,5 +179,16 @@ class SLN_Action_Ajax_ImportBookings extends SLN_Action_Ajax_AbstractImport{
         $booking->setMeta('amount', $this->getData('total'));
         $booking->setMeta('deposit', 0);
         return true;
+    }
+
+    protected function dataToErrorRespons($data, $error_message){
+        return array(
+            'id' => $data['ID'],
+            'datetime' => $this->getData('datetime'),
+            'first_name' => $this->getData('firstname'),
+            'last_name' => $this->getData('lastname'),
+            'email' => $this->getData('email'),
+            'error' => $error_message,
+        );
     }
 }

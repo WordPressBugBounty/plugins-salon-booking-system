@@ -161,17 +161,18 @@ abstract class SLN_Action_Ajax_AbstractImport extends SLN_Action_Ajax_Abstract
         }
         $imported = $this->processRow($item);
 
-        if ($imported === true) {
+        // if ($imported === true) {
             file_put_contents($filename, $this->jsonEncodePartialOnError($import));
             return array(
                 'total' => $import['total'],
                 'left'  => count($import['items']),
+                'skipped' => $imported,
             );
-        }
-        else {
-            $this->addError($imported);
-            return false;
-        }
+        // }
+        // else {
+        //     $this->addError($imported);
+        //     return false;
+        // }
     }
 
 	/**

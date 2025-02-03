@@ -111,6 +111,8 @@ export default {
 <style scoped>
 .booking-wrapper {
   width: 100%;
+  z-index: 20;
+  padding: 10px;
 }
 
 .booking {
@@ -126,6 +128,7 @@ export default {
   border: 1px solid #e1e6ef;
   backdrop-filter: blur(5px);
   pointer-events: none;
+  box-shadow: 0 0 10px 1px rgb(0 0 0 / 10%);
 }
 
 .booking-status {

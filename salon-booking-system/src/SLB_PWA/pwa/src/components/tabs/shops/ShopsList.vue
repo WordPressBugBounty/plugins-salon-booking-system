@@ -26,6 +26,12 @@
 
     export default {
         name: 'ShopsList',
+        props: {
+            isShopsEnabled: {
+                type: Boolean,
+                required: true,
+            },
+        },
         data: function () {
             return {
                 shopsList: [],
@@ -33,13 +39,16 @@
             }
         },
         mounted() {
-            this.load();
+            if (this.isShopsEnabled) {
+              this.load();
+            }
         },
         components: {
             ShopItem,
         },
         methods: {
             load() {
+                if (!this.isShopsEnabled) return;
                 this.isLoading = true;
                 this.shopsList = [];
                 this.axios

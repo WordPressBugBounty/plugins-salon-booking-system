@@ -1,122 +1,183 @@
 <template>
   <div class="block-slot">
-    <b-spinner variant="primary" v-if="isLoading"></b-spinner>
-    <font-awesome-icon
-        icon="fa-solid fa-unlock"
-        v-else-if="!isLock"
-        @click="lock"
-        :class="{ 'disabled': isLoading }"
-    />
-    <font-awesome-icon
-        icon="fa-solid fa-lock"
-        v-else
-        @click="unlock"
-        :class="{ 'disabled': isLoading }"
-    />
+    <template v-if="isLoading">
+      <b-spinner variant="primary" size="sm"/>
+    </template>
+    <template v-else>
+      <font-awesome-icon
+          icon="fa-solid fa-unlock"
+          v-if="!isLock"
+          @click="lock"
+          class="icon"
+          :class="{ 'disabled': isDisabled }"
+      />
+      <font-awesome-icon
+          icon="fa-solid fa-lock"
+          v-else
+          @click="unlock"
+          class="icon"
+          :class="{ 'disabled': isDisabled }"
+      />
+    </template>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'BookingBlockSlot',
+  name: "BookingBlockSlot",
   props: {
     isLock: {
-      default: function () {
-        return false;
-      },
+      type: Boolean,
+      default: false,
     },
     start: {
-      default: function () {
-        return '08:00';
-      },
+      type: String,
+      default: "08:00",
     },
     end: {
-      default: function () {
-        return '08:30';
-      },
+      type: String,
+      default: "08:30",
     },
     date: {
-      default: function () {
-        return null;
-      },
+      type: String,
+      required: true,
+      validator: function (value) {
+        return /^\d{4}-\d{2}-\d{2}$/.test(value);
+      }
     },
     shop: {
-      default: function () {
-        return {};
-      },
+      type: Number,
+      required: true,
     },
+    isDisabled: {
+      type: Boolean,
+      default: false
+    },
+    assistantId: {
+      type: Number,
+      default: null
+    }
   },
-  data: function () {
+  data() {
     return {
       isLoading: false,
-    }
+      operationTimeout: null
+    };
   },
   computed: {
     holidayRule() {
-      const fromDate = this.moment(this.date).format('YYYY-MM-DD');
-      let toDate = this.moment(this.date).format('YYYY-MM-DD');
+      const rule = {
+        from_date: this.date,
+        to_date: this.date,
+        from_time: this.moment(this.start, "HH:mm").format("HH:mm"),
+        to_time: this.moment(this.end, "HH:mm").format("HH:mm"),
+        daily: true
+      };
 
-      const fromTime = this.moment(this.start, 'HH:mm').format('HH:mm');
-      const toTimeFormatted = this.moment(this.end, 'HH:mm').format('HH:mm');
-
-      if (fromTime >= toTimeFormatted) {
-        toDate = this.moment(this.date).add(1, 'day').format('YYYY-MM-DD');
+      if (this.assistantId !== null) {
+        rule.assistant_id = this.assistantId;
       }
 
-      return {
-        from_date: fromDate,
-        to_date: toDate,
-        from_time: fromTime,
-        to_time: toTimeFormatted,
-        daily: true,
-        shop: this.shop && this.shop.id ? this.shop.id : 0,
-      }
+      return rule;
     },
   },
   methods: {
-    lock() {
-      if (this.isLoading) return;
-      this.isLoading = true;
-      this.$emit('lock-start', {from_time: this.start, to_time: this.end});
+    async lock() {
+      if (this.isLoading || this.isDisabled) return;
 
-      this.axios.post('holiday-rules', this.holidayRule)
-          .then(() => {
-            this.$emit('lock', this.holidayRule);
-          })
-          .finally(() => {
-            this.isLoading = false;
-            this.$emit('lock-end', {from_time: this.start, to_time: this.end});
-          });
-    },
-    unlock() {
-      if (this.isLoading) return;
       this.isLoading = true;
-      this.$emit('unlock-start', {from_time: this.start, to_time: this.end});
+      this.$emit("lock-start", this.holidayRule);
 
-      this.axios.delete('holiday-rules', {data: this.holidayRule})
-          .then(() => {
-            this.$emit('unlock', this.holidayRule);
-          })
-          .finally(() => {
-            this.isLoading = false;
-            this.$emit('unlock-end', {from_time: this.start, to_time: this.end});
-          });
+      try {
+        const response = await this.axios.post('holiday-rules', this.holidayRule);
+
+        if (response.data?.status === "OK") {
+          this.$emit("lock", this.holidayRule);
+        } else {
+          console.error('lock operation failed');
+        }
+      } catch (error) {
+        console.error('Lock error:', error?.response?.data || error);
+      } finally {
+        this.operationTimeout = setTimeout(() => {
+          this.isLoading = false;
+          this.$emit("lock-end", this.holidayRule);
+        }, 300);
+      }
     },
+
+    async unlock() {
+      if (this.isLoading || this.isDisabled) return;
+      this.isLoading = true;
+      this.$emit("unlock-start", this.holidayRule);
+
+      try {
+        const deletePayload = {
+          from_date: this.date,
+          to_date: this.date,
+          from_time: this.moment(this.start, "HH:mm").format("HH:mm"),
+          to_time: this.moment(this.end, "HH:mm").format("HH:mm"),
+          daily: true
+        };
+
+        if (this.assistantId !== null) {
+          deletePayload.assistant_id = this.assistantId;
+        }
+
+        const response = await this.axios.delete('holiday-rules', {
+          data: deletePayload
+        });
+
+        if (response.data?.status === "OK") {
+          this.$emit("unlock", this.holidayRule);
+          this.$emit("refresh-rules");
+        } else {
+          console.error('unlock operation failed');
+        }
+      } catch (error) {
+        console.error('Unlock error:', error?.response?.data || error);
+      } finally {
+        this.operationTimeout = setTimeout(() => {
+          this.isLoading = false;
+          this.$emit("unlock-end", this.holidayRule);
+        }, 300);
+      }
+    }
   },
-  emits: ['lock', 'unlock', 'lock-start', 'lock-end', 'unlock-start', 'unlock-end'],
+  unmounted() {
+    if (this.operationTimeout) {
+      clearTimeout(this.operationTimeout);
+    }
+  },
+  emits: ["lock", "unlock", "lock-start", "unlock-start", "lock-end", "unlock-end", "refresh-rules"],
 };
 </script>
 
 <style scoped>
-.block-slot .fa-unlock, .block-slot .fa-lock {
+.block-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 35px;
+  min-height: 35px;
+}
+
+.icon {
   font-size: 35px;
   cursor: pointer;
   color: #04409F;
-  display: flex;
+  transition: opacity 0.2s ease;
 }
 
-.block-slot .fa-unlock.disabled, .block-slot .fa-lock.disabled {
+.icon:disabled,
+.icon.disabled {
   cursor: not-allowed;
   opacity: 0.5;
+}
+
+.spinner-border {
+  width: 35px;
+  height: 35px;
+  color: #04409F;
 }
 </style>

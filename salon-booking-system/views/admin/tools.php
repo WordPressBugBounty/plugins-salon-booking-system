@@ -74,11 +74,9 @@
 
 									<div class="alert alert-success hide" role="alert"><?php esc_html_e('Well done! Your import has been successfully completed.', 'salon-booking-system') ?></div>
 									<div class="alert alert-danger hide" role="alert"><?php esc_html_e('Error! Something is gone wrong.', 'salon-booking-system') ?></div>
-									<div class="progress-wrapper hide">
-										<div class="progress">
-											<div class="progress-bar active" role="progressbar"
-											     aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-											</div>
+									<div class="progress hide">
+										<div class="progress-bar active" role="progressbar"
+										     aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
 										</div>
 									</div>
 								</div>
@@ -180,7 +178,22 @@
                                             <?php esc_html_e('Import', 'salon-booking-system') ?>
                                         </button>
                                     </div>
-									<div class="alert alert-success hide" role="alert"><?php esc_html_e('Well done! Your import has been successfully completed.', 'salon-booking-system') ?></div>
+									<div class="alert alert-success hide" role="alert">
+										<?php esc_html_e('Well done! Your import has been successfully completed.', 'salon-booking-system') ?>
+										<div class="alert-skipped hide">
+											<div class="alert-skipped--message"><?php esc_html_e('Booking have been skipped due to errors', 'salon-booking-system'); ?></div>
+											<div class="skipped-bookings--title">
+												<span class="skipped-booking--id"><?php esc_html_e('ID', 'salon-booking-system') ?></span>
+												<span class="skipped-booking--datetime"><?php esc_html_e('Date/Time', 'salon-booking-system') ?></span>
+												<span class="skipped-booking--first-name"><?php esc_html_e('First name', 'salon-booking-system') ?></span>
+												<span class="skipped-booking--last-name"><?php esc_html_e('Last name', 'salon-booking-system') ?></span>
+												<span class="skipped-booking--email"><?php esc_html_e('Email', 'salon-booking-system') ?></span>
+												<span class="skipped-booking--error"><?php esc_html_e('Error message', 'salon-booking-system'); ?></span>
+											</div>
+											<ul class="skipped-bookings">
+											</ul>
+										</div>
+									</div>
 									<div class="alert alert-danger hide" role="alert"><?php esc_html_e('Error! Something is gone wrong.', 'salon-booking-system') ?></div>
 
 									<div class="progress hide">

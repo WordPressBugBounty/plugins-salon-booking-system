@@ -720,238 +720,253 @@ jQuery(function ($) {
 
 var sln_importRows;
 function sln_initImporter($item, mode) {
-	var $importArea = $item;
+    var $importArea = $item;
 
-	$importArea[0].ondragover = function () {
-		$importArea.addClass("hover");
-		return false;
-	};
+    $importArea[0].ondragover = function () {
+        $importArea.addClass("hover");
+        return false;
+    };
 
-	$importArea[0].ondragleave = function () {
-		$importArea.removeClass("hover");
-		return false;
-	};
+    $importArea[0].ondragleave = function () {
+        $importArea.removeClass("hover");
+        return false;
+    };
 
-	$importArea[0].ondrop = function (event) {
-		event.preventDefault();
-		$importArea.removeClass("hover").addClass("drop");
+    $importArea[0].ondrop = function (event) {
+        event.preventDefault();
+        $importArea.removeClass("hover").addClass("drop");
 
-		var file = event.dataTransfer.files[0];
+        var file = event.dataTransfer.files[0];
 
-		$importArea.file = file;
+        $importArea.file = file;
 
-		$importArea.find(".text").html(file.name);
-		$importArea.removeClass("is_loading");
-		importShowFileInfo();
-	};
+        $importArea.find(".text").html(file.name);
+        $importArea.removeClass("is_loading");
+        importShowFileInfo();
+    };
 
-	jQuery(
-		"[data-action=sln_import][data-target=" + $importArea.attr("id") + "]"
-	).on("click", function () {
-		var $importBtn = jQuery(this);
-		$importBtn.button("loading");
-		jQuery(this).parent().parent().addClass("is_loading");
-		if (!$importArea.file) {
-			$importBtn.button("reset");
-			jQuery(this).parent().parent().removeClass("is_loading");
-			return false;
-		}
-		$importArea
-			.find(".progress-bar")
-			.attr("aria-valuenow", 0)
-			.css("width", "0%");
-		importShowInfo();
+    jQuery(
+        "[data-action=sln_import][data-target=" + $importArea.attr("id") + "]"
+    ).on("click", function () {
+        var $importBtn = jQuery(this);
+        $importBtn.button("loading");
+        jQuery(this).parent().parent().addClass("is_loading");
+        if (!$importArea.file) {
+            $importBtn.button("reset");
+            jQuery(this).parent().parent().removeClass("is_loading");
+            return false;
+        }
+        $importArea
+            .find(".progress-bar")
+            .attr("aria-valuenow", 0)
+            .css("width", "0%");
+        importShowInfo();
 
-		var data = new FormData();
+        var data = new FormData();
 
-		data.append("action", "salon");
-		data.append("method", "import" + mode);
-		data.append("step", "start");
-		data.append("_wpnonce", jQuery("input#_wpnonce").val());
-		data.append("file", $importArea.file);
+        data.append("action", "salon");
+        data.append("method", "import" + mode);
+        data.append("step", "start");
+        data.append('_wpnonce', jQuery('input#_wpnonce').val());
+        data.append("file", $importArea.file);
 
-		jQuery.ajax({
-			url: ajaxurl,
-			type: "POST",
-			data: data,
-			cache: false,
-			dataType: "json",
-			processData: false, //(Don't process the files)
-			contentType: false,
-			success: function (response) {
-				$importBtn.button("reset");
-				if (response.success) {
-					console.log(response);
-					sln_importRows = response.data.rows;
+        jQuery.ajax({
+            url: ajaxurl,
+            type: "POST",
+            data: data,
+            cache: false,
+            dataType: "json",
+            processData: false, //(Don't process the files)
+            contentType: false,
+            success: function (response) {
+                $importBtn.button("reset");
+                if (response.success) {
+                    console.log(response);
+                    sln_importRows = response.data.rows;
 
-					var $modal = jQuery("#import-matching-modal");
+                    var $modal = jQuery("#import-matching-modal");
 
-					var $modalBtn = $modal.find(
-						"[data-action=sln_import_matching]"
-					);
-					$modalBtn.button("reset");
+                    var $modalBtn = $modal.find(
+                        "[data-action=sln_import_matching]"
+                    );
+                    $modalBtn.button("reset");
 
-					$modal.find("table tbody").html(response.data.matching);
-					jQuery("#wpwrap").css("z-index", "auto");
-					$modal.modal({
-						keyboard: false,
-						backdrop: true,
-					});
-					sln_createSelect2Full(jQuery);
-					sln_validImportMatching();
-					$modal
-						.find("[data-action=sln_import_matching_select]")
-						.on("change", sln_changeImportMatching);
+                    $modal.find("table tbody").html(response.data.matching);
+                    jQuery("#wpwrap").css("z-index", "auto");
+                    $modal.modal({
+                        keyboard: false,
+                        backdrop: true,
+                    });
+                    sln_createSelect2Full(jQuery);
+                    sln_validImportMatching();
+                    $modal
+                        .find("[data-action=sln_import_matching_select]")
+                        .on("change", sln_changeImportMatching);
 
-					jQuery("[data-action=sln_import_matching]")
-						.off("click")
-						.on("click", function () {
-							if (!sln_validImportMatching()) {
-								return false;
-							}
-							$modalBtn.button("loading");
+                    jQuery("[data-action=sln_import_matching]")
+                        .off("click")
+                        .on("click", function () {
+                            if (!sln_validImportMatching()) {
+                                return false;
+                            }
+                            $modalBtn.button("loading");
 
-							jQuery.ajax({
-								url: ajaxurl,
-								type: "POST",
-								data: {
-									action: "salon",
-									method: "import" + mode,
-									step: "matching",
-									_wpnonce: jQuery("input#_wpnonce").val(),
-									form: $modal.closest("form").serialize(),
-								},
-								cache: false,
-								dataType: "json",
-								success: function (response) {
-									console.log(response);
-									$modal.modal("hide");
-									if (response.success) {
-										importShowPB();
-										importProgressPB(
-											response.data.total,
-											response.data.left
-										);
-									} else {
-										importShowError();
-									}
-								},
-								error: function () {
-									$modal.modal("hide");
-									importShowError();
-								},
-							});
-						});
-				} else {
-					importShowError();
-				}
-			},
-			error: function () {
-				$importBtn.button("reset");
-				importShowError();
-			},
-		});
+                            jQuery.ajax({
+                                url: ajaxurl,
+                                type: "POST",
+                                data: {
+                                    action: "salon",
+                                    method: "import" + mode,
+                                    step: "matching",
+                                    _wpnonce: jQuery('input#_wpnonce').val(),
+                                    form: $modal.closest("form").serialize(),
+                                },
+                                cache: false,
+                                dataType: "json",
+                                success: function (response) {
+                                    console.log(response);
+                                    $modal.modal("hide");
+                                    if (response.success) {
+                                        jQuery('.alert.alert-success .alert-skipped .skipped-bookings').html('')
+                                        importShowPB();
+                                        importProgressPB(
+                                            response.data.total,
+                                            response.data.left,
+                                        );
+                                    } else {
+                                        importShowError();
+                                    }
+                                },
+                                error: function () {
+                                    $modal.modal("hide");
+                                    importShowError();
+                                },
+                            });
+                        });
+                } else {
+                    importShowError();
+                }
+            },
+            error: function () {
+                $importBtn.button("reset");
+                importShowError();
+            },
+        });
 
-		$importArea.file = false;
+        $importArea.file = false;
 
-		return false;
-	});
+        return false;
+    });
 
-	function importProgressPB(total, left) {
-		total = parseInt(total);
-		left = parseInt(left);
+    function importProgressPB(total, left, skipped=true) {
+        total = parseInt(total);
+        left = parseInt(left);
 
-		var value = ((total - left) / total) * 100;
-		$importArea
-			.find(".progress-bar")
-			.attr("aria-valuenow", value)
-			.css("width", value + "%");
+        var value = ((total - left) / total) * 100;
+        $importArea
+            .find(".progress-bar")
+            .attr("aria-valuenow", value)
+            .css("width", value + "%");
+        if(skipped !== true){
+            jQuery('.alert.alert-success .alert-skipped').removeClass('hide');
+            let skipped_list = jQuery('.alert.alert-success .alert-skipped .skipped-bookings');
+            skipped_list.append(
+                '<li><span class="skipped-booking--id">' + skipped.id + '</span>' +
+                    '<span class="skipped-booking--datetime">' + skipped.datetime + '</span>' +
+                    '<span class="skipped-booking--first-name">' + skipped.first_name + '</span>' +
+                    '<span class="skipped-booking--last-name">' + skipped.last_name + '</span>' +
+                    '<span class="skipped-booking--email">' + skipped.email + '</span>' +
+                    '<span class="skipped-booking--error">' + skipped.error + '</span>' +
+                '</li>'
+            );
+        }
 
-		if (left != 0) {
-			jQuery.ajax({
-				url: ajaxurl,
-				type: "GET",
-				data: {
-					action: "salon",
-					method: "import" + mode,
-					step: "process",
-					_wpnonce: jQuery("input#_wpnonce").val(),
-				},
-				cache: false,
-				dataType: "json",
-				success: function (response) {
-					if (response.success) {
-						console.log(response);
-						importProgressPB(
-							response.data.total,
-							response.data.left
-						);
-					} else {
-						importShowError();
-					}
-				},
-				error: function () {
-					importShowError();
-				},
-			});
-		} else {
-			jQuery.ajax({
-				url: ajaxurl,
-				type: "POST",
-				data: {
-					action: "salon",
-					method: "import" + mode,
-					step: "finish",
-					_wpnonce: jQuery("input#_wpnonce").val(),
-				},
-				cache: false,
-				dataType: "json",
-				success: function (response) {
-					if (response.success) {
-						importShowSuccess();
-					} else {
-						importShowError();
-					}
-				},
-				error: function () {
-					importShowError();
-				},
-			});
-		}
-	}
+        if (left != 0) {
+            jQuery.ajax({
+                url: ajaxurl,
+                type: "GET",
+                data: {
+                    action: "salon",
+                    method: "import" + mode,
+                    step: "process",
+                    _wpnonce: jQuery('input#_wpnonce').val(),
+                },
+                cache: false,
+                dataType: "json",
+                success: function (response) {
+                    if (response.success) {
+                        console.log(response);
+                        importProgressPB(
+                            response.data.total,
+                            response.data.left,
+                            response.data.skipped
+                        );
+                    } else {
+                        importShowError();
+                    }
+                },
+                error: function () {
+                    importShowError();
+                },
+            });
+        } else {
+            jQuery.ajax({
+                url: ajaxurl,
+                type: "POST",
+                data: {
+                    action: "salon",
+                    method: "import" + mode,
+                    step: "finish",
+                    _wpnonce: jQuery('input#_wpnonce').val(),
+                },
+                cache: false,
+                dataType: "json",
+                success: function (response) {
+                    if (response.success) {
+                        importShowSuccess();
+                    } else {
+                        importShowError();
+                    }
+                },
+                error: function () {
+                    importShowError();
+                },
+            });
+        }
+    }
 
-	function importShowPB() {
-		$importArea.find(".info, .alert").addClass("hide");
-		$importArea.find(".progress-wrapper").removeClass("hide");
-		$importArea.removeClass("drop");
-	}
+    function importShowPB() {
+        $importArea.find(".info, .alert").addClass("hide");
+        $importArea.find(".progress").removeClass("hide");
+        $importArea.removeClass("drop");
+    }
 
-	function importShowFileInfo() {
-		$importArea.find(".alert, .progress-wrapper").addClass("hide");
-		$importArea.find(".info").removeClass("hide");
-	}
+    function importShowFileInfo() {
+        $importArea.find(".alert, .progress").addClass("hide");
+        $importArea.find(".info").removeClass("hide");
+    }
 
-	function importShowInfo() {
-		$importArea
-			.find(".text")
-			.html($importArea.find(".text").attr("placeholder"));
+    function importShowInfo() {
+        $importArea
+            .find(".text")
+            .html($importArea.find(".text").attr("placeholder"));
 
-		$importArea.removeClass("is_loading");
-		$importArea.find(".alert, .progress-wrapper").addClass("hide");
-		$importArea.find(".info").removeClass("hide");
-	}
+        $importArea.removeClass("is_loading");
+        $importArea.find(".alert, .progress").addClass("hide");
+        $importArea.find(".info").removeClass("hide");
+    }
 
-	function importShowSuccess() {
-		$importArea.find(".info, .alert, .progress-wrapper").addClass("hide");
-		$importArea.find(".alert-success").removeClass("hide");
-		$importArea.removeClass("drop");
-	}
+    function importShowSuccess() {
+        $importArea.find(".info, .alert, .progress").addClass("hide");
+        $importArea.find(".alert-success").removeClass("hide");
+        $importArea.removeClass("drop");
+    }
 
-	function importShowError() {
-		$importArea.find(".alert, .progress-wrapper").addClass("hide");
-		$importArea.find(".alert-danger").removeClass("hide");
-		$importArea.removeClass("drop");
-	}
+    function importShowError() {
+        $importArea.find(".alert, .progress").addClass("hide");
+        $importArea.find(".alert-danger").removeClass("hide");
+        $importArea.removeClass("drop");
+    }
 }
 
 function sln_changeImportMatching() {

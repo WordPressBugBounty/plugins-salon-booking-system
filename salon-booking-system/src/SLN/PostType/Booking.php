@@ -113,34 +113,39 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
     public function pre_get_posts($query){
         global $pagenow;
 
-        if (isset($_GET['post_type']) && $_GET['post_type'] === $this->getPostType() && is_admin() && $pagenow=='edit.php' && $query->get('post_type') === $this->getPostType()) {
+        if (
+            isset($_GET['post_type']) && $_GET['post_type'] === $this->getPostType()
+            && is_admin()
+            && $pagenow=='edit.php'
+            && (is_array($query->get('post_type')) ? in_array($this->getPostType(), $query->get('post_type')) : $query->get('post_type') === $this->getPostType())
+        ) {
             $query->set('m', null);
 
-	    if ( in_array(SLN_Plugin::USER_ROLE_STAFF,  wp_get_current_user()->roles) || in_array(SLN_Plugin::USER_ROLE_WORKER,  wp_get_current_user()->roles) ) {
+    	    if ( in_array(SLN_Plugin::USER_ROLE_STAFF,  wp_get_current_user()->roles) || in_array(SLN_Plugin::USER_ROLE_WORKER,  wp_get_current_user()->roles) ) {
 
-		$assistantsIDs = array();
+        		$assistantsIDs = array();
 
-		$repo	    = $this->getPlugin()->getRepository(SLN_Plugin::POST_TYPE_ATTENDANT);
-		$attendants = $repo->getAll();
+        		$repo	    = $this->getPlugin()->getRepository(SLN_Plugin::POST_TYPE_ATTENDANT);
+        		$attendants = $repo->getAll();
 
-		foreach ($attendants as $attendant) {
-		    if ($attendant->getMeta('staff_member_id') == get_current_user_id() && $attendant->getIsStaffMemberAssignedToBookingsOnly()) {
-			$assistantsIDs[] = $attendant->getId();
-		    }
-		}
+        		foreach ($attendants as $attendant) {
+        		    if ($attendant->getMeta('staff_member_id') == get_current_user_id() && $attendant->getIsStaffMemberAssignedToBookingsOnly()) {
+        			$assistantsIDs[] = $attendant->getId();
+        		    }
+        		}
 
-		if ( ! empty( $assistantsIDs ) ) {
-                    $meta_query   = $query->get('meta_query') ? $query->get('meta_query') : array();
-                    $meta_query[] = array(
-                        'key'   => '_sln_booking_services',
-                        'value' => implode('|', array_map(function ($v) {
-                            return sprintf('"attendant";i:%s;', $v);
-                        }, $assistantsIDs)),
-                        'compare' => 'REGEXP',
-                    );
-		    $query->set('meta_query', $meta_query);
-		}
-	    }
+        		if ( ! empty( $assistantsIDs ) ) {
+                            $meta_query   = $query->get('meta_query') ? $query->get('meta_query') : array();
+                            $meta_query[] = array(
+                                'key'   => '_sln_booking_services',
+                                'value' => implode('|', array_map(function ($v) {
+                                    return sprintf('"attendant";i:%s;', $v);
+                                }, $assistantsIDs)),
+                                'compare' => 'REGEXP',
+                            );
+        		    $query->set('meta_query', $meta_query);
+        		}
+    	    }
         }
         return $query;
     }

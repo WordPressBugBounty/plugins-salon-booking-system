@@ -1,22 +1,22 @@
 <template>
     <div :class="{'hide-tabs-header': isHideTabsHeader}" >
         <b-tabs pills card end>
-            <b-tab :active="isActiveTab('#shops')" v-show="isShopsEnabled" :title-item-class="{hide: !isShopsEnabled}">
+            <b-tab v-if="isShopsEnabled" :active="isActiveTab('#shops')" :title-item-class="{ hide: !isShopsEnabled }" >
                 <template #title><span @click="click('#shops')"><font-awesome-icon icon="fa-solid fa-store" /></span></template>
-                <ShopsTab @applyShop="applyShopAndSwitch"/>
+                <ShopsTab :isShopsEnabled="isShopsEnabled" @applyShop="applyShopAndSwitch"/>
             </b-tab>
             <b-tab :active="isActiveTab('#upcoming-reservations')">
-                <ShopTitle :shop="shop" @applyShop="applyShop" />
+                <ShopTitle v-if="isShopsEnabled" :shop="shop" @applyShop="applyShop"/>
                 <template #title><span @click="click('#upcoming-reservations')" ref="upcoming-reservations-tab-link"><font-awesome-icon icon="fa-solid fa-list" /></span></template>
                 <UpcomingReservationsTab :shop="shop" @hideTabsHeader="hideTabsHeader"/>
             </b-tab>
             <b-tab :active="isActiveTab('#reservations-calendar')">
-                <ShopTitle :shop="shop" @applyShop="applyShop" />
+                <ShopTitle v-if="isShopsEnabled" :shop="shop" @applyShop="applyShop"/>
                 <template #title><span @click="click('#reservations-calendar')"><font-awesome-icon icon="fa-solid fa-calendar-days" /></span></template>
                 <ReservationsCalendarTab :shop="shop" @hideTabsHeader="hideTabsHeader"/>
             </b-tab>
             <b-tab :active="isActiveTab('#customers')">
-                <ShopTitle :shop="shop" @applyShop="applyShop" />
+                <ShopTitle v-if="isShopsEnabled" :shop="shop" @applyShop="applyShop"/>
                 <template #title><span @click="click('#customers')"><font-awesome-icon icon="fa-regular fa-address-book" /></span></template>
                 <CustomersAddressBookTab :shop="shop" @hideTabsHeader="hideTabsHeader"/>
             </b-tab>

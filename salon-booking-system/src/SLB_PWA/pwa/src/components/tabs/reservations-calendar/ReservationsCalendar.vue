@@ -2,200 +2,156 @@
   <div class="reservations-calendar">
     <h5 class="title">{{ this.getLabel("reservationsCalendarTitle") }}</h5>
 
-    <div class="search">
-      <font-awesome-icon icon="fa-solid fa-magnifying-glass" class="search-icon"/>
-      <b-form-input v-model="search" class="search-input"/>
-      <font-awesome-icon icon="fa-solid fa-circle-xmark"
-                         class="clear"
-                         @click="search = ''"
-                         v-if="search"/>
-    </div>
+    <SearchInput
+        v-model="search"
+        @search="handleSearch"
+    />
 
-    <b-row>
-      <b-col sm="12">
-        <div class="calendar">
-          <Datepicker
-              v-model="date"
-              inline
-              autoApply
-              noSwipe
-              :enableTimePicker="false"
-              :monthChangeOnScroll="false"
-              @updateMonthYear="handleMonthYear"
-          >
-            <template #day="{ day, date }">
-              <template v-if="isDayWithBookings(date)">
-                <div class="day day-with-bookings">{{ day }}</div>
-              </template>
-              <template v-else-if="isDayFullBooked(date)">
-                <div class="day day-full-booked">{{ day }}</div>
-              </template>
-              <template v-else-if="isAvailableBookings(date)">
-                <div class="day day-available-book">{{ day }}</div>
-              </template>
-              <template v-else-if="isHoliday(date)">
-                <div class="day day-holiday">{{ day }}</div>
-              </template>
-              <template v-else>
-                <div class="day day-disable-book">{{ day }}</div>
-              </template>
-            </template>
-          </Datepicker>
-          <div v-if="isLoadingTimeslots || !attendantsLoaded" class="spinner-wrapper"/>
-          <b-spinner v-if="isLoadingTimeslots || !attendantsLoaded" variant="primary"/>
-        </div>
-      </b-col>
-    </b-row>
+    <BookingCalendar
+        v-model="date"
+        :availability-stats="availabilityStats"
+        :is-loading="isLoadingTimeslots || !attendantsLoaded"
+        @month-year-update="handleMonthYear"
+    />
 
-    <div class="slots-headline">
-      <div class="selected-date">
-        {{ formattedDate }}
-      </div>
-      <div class="attendant-toggle" v-if="$root.settings?.attendant_enabled && attendants.length > 0">
-        Assistants view
-        <b-form-checkbox v-model="isAttendantView" switch size="lg">
-          {{ getLabel('attendantViewLabel') }}
-        </b-form-checkbox>
-      </div>
-    </div>
+    <SlotsHeadline
+        :date="date"
+        :settings="$root.settings"
+        :attendants="attendants"
+        v-model:is-attendant-view="isAttendantView"
+    />
 
     <div class="slots" :class="{ 'slots--assistants': isAttendantView }" ref="slotsContainer">
-      <b-spinner variant="primary" v-if="isLoadingTimeslots || !attendantsLoaded"/>
-      <div v-else-if="timeslots.length > 0 && attendantsLoaded" class="slots-inner">
-        <div class="time-axis">
-          <div
-              class="time-axis-item"
-              v-for="(timeslot, index) in timeslots"
-              :key="'axis-' + index"
-              :style="{ height: slotHeight + 'px' }"
-          >
-            {{ timeslot }}
-          </div>
-        </div>
+
+      <b-spinner variant="primary" v-if="isLoading"/>
+
+      <div v-else-if="isReadyToRender" class="slots-inner">
+        <TimeAxis
+            :timeslots="timeslots"
+            :slot-height="slotHeight"
+        />
         <div
             class="slots-content"
             ref="dragScrollContainer"
-            @mousedown="onMouseDown"
-            @mousemove="onMouseMove"
-            @mouseup="onMouseUp"
-            @mouseleave="onMouseLeave"
-            @touchstart.stop="onTouchStart"
-            @touchmove.stop="onTouchMove"
-            @touchend.stop="onTouchEnd"
+            v-on="dragHandlers"
         >
-          <div v-if="attendantsLoaded" class="attendants-list"
-               :class="{ 'attendants-list--hidden': !shouldShowAttendants }">
-            <div v-for="(attendant, index) in sortedAttendants" :key="attendant.id" class="attendant-column"
-                 :style="{ width: columnWidths[attendant.id] + 'px', marginRight: (index === sortedAttendants.length - 1 ? 0 : attendantColumnGap) + 'px' }">
-              <div class="attendant-header">
-                <div class="attendant-avatar">
-                  <img
-                      v-if="attendant.image_url"
-                      :src="attendant.image_url"
-                      :alt="attendant.name"
-                  />
-                  <font-awesome-icon v-else icon="fa-solid fa-user-alt" class="default-avatar-icon"/>
-                </div>
-                <div class="attendant-name" :title="attendant.name">
-                  {{ attendant.name }}
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="bookings-canvas" :style="canvasStyle">
-            <div v-if="isAttendantView" class="assistant-columns">
-              <div v-for="(attendant, index) in sortedAttendants"
-                   :key="'col-' + attendant.id"
-                   class="assistant-column-highlight"
-                   :style="{
-                      width: (columnWidths[attendant.id] || attendantColumnWidth) + 'px',
-                      left: getAssistantColumnLeft(index) + 'px'
-                    }"/>
-            </div>
-            <div
-                v-for="(slot, idx) in timeslots"
-                :key="'line-' + idx"
-                class="time-slot-line"
-                :style="getTimeSlotLineStyle(idx)"
-                :class="{
-                  active: activeSlotIndex === idx,
-                  locked: isSlotLocked(timeslots[idx], timeslots[idx + 1]),
-                  processing: isSlotProcessing(timeslots[idx], timeslots[idx + 1])
-                }"
-                @click="toggleSlotActions(idx)"
-            >
+          <!--with-->
+          <template v-if="isAttendantView">
+            <AttendantsList
+                v-if="attendantsLoaded"
+                :attendants="sortedAttendants"
+                :column-widths="columnWidths"
+                :column-gap="attendantColumnGap"
+                :is-hidden="!shouldShowAttendants"
+            />
 
-              <div class="time-slot-actions">
-                <BookingAdd
-                    v-if="!isSlotLocked(timeslots[idx], timeslots[idx + 1])"
-                    :timeslot="slot"
-                    :isAvailable="isAvailable(slot)"
-                    @add="addBooking(slot)"
-                />
-                <BookingBlockSlot
-                    v-if="!hasOverlappingBookings(idx) || isSlotLocked(timeslots[idx], timeslots[idx + 1])"
-                    :isLock="isSlotLocked(timeslots[idx], timeslots[idx + 1])"
-                    :start="timeslots[idx]"
-                    :end="timeslots[idx + 1]"
-                    :date="date"
-                    :shop="shop"
-                    @lock-start="handleLockStart"
-                    @lock="handleSlotLock"
-                    @lock-end="handleLockEnd"
-                    @unlock-start="handleUnlockStart"
-                    @unlock="handleSlotUnlock"
-                    @unlock-end="handleUnlockEnd"
-                />
-              </div>
-            </div>
-
-            <div
-                v-for="(booking, bIndex) in processedBookings"
-                :key="booking.id + (booking._serviceTime?.start || '')"
-                class="booking-card"
-                :class="{ 'booking-card--default-duration': booking._isDefaultDuration }"
-                :style="getBookingStyle(booking, bIndex)"
-            >
-              <BookingCard
-                  :booking="booking"
-                  @deleteItem="deleteItem(booking.id)"
-                  @showDetails="showDetails(booking)"
+            <div class="bookings-canvas" :style="canvasStyle">
+              <AttendantTimeSlots
+                  v-if="sortedAttendants.length > 0 && timeslots.length > 0"
+                  :sorted-attendants="sortedAttendants"
+                  :timeslots="timeslots"
+                  :column-widths="columnWidths"
+                  :slot-height="slotHeight"
+                  :selected-slots="selectedTimeSlots"
+                  :processed-bookings="processedBookings"
+                  v-model:lockedTimeslots="lockedTimeslots"
+                  @lock="handleAttendantLock"
+                  @unlock="handleAttendantUnlock"
+                  @slot-processing="setSlotProcessing"
+                  :date="date"
+                  :shop="shop"
+                  @add="addBookingForAttendant"
               />
+              <!-- Bookings display -->
+              <template v-for="booking in processedBookings" :key="booking.id + (booking._serviceTime?.start || '')">
+                <BookingCard
+                    v-if="booking._assistantId"
+                    :booking="booking"
+                    :style="getBookingStyle(booking)"
+                    :class="{ 'booking-card--default-duration': booking._isDefaultDuration }"
+                    @delete="deleteItem"
+                    @show-details="showDetails"
+                />
+              </template>
             </div>
-          </div>
+          </template>
+          <!--without-->
+          <template v-else>
+            <div class="bookings-canvas" :style="canvasStyle">
+
+              <TimeSlots
+                  :timeslots="timeslots"
+                  :slot-style="getTimeSlotLineStyle"
+                  :is-locked="isSlotLocked"
+                  :is-processing="(start, end) => slotProcessing[`${start}-${end}`]"
+                  :active-index="activeSlotIndex"
+                  @toggle="toggleSlotActions"
+              >
+                <template #actions="{ timeSlot, slotIndex }">
+                  <SlotActions
+                      :time-slot="timeSlot"
+                      :index="slotIndex"
+                      :timeslots="timeslots"
+                      :is-locked="isSlotLocked"
+                      :is-available="isAvailable"
+                      :has-overlapping="hasOverlappingBookings"
+                      :date="date"
+                      :shop="shop"
+                      @add="addBooking"
+                      @lock="handleSlotLock"
+                      @unlock="handleSlotUnlock"
+                      @update-processing="updateSlotProcessing"
+                  />
+                </template>
+              </TimeSlots>
+
+              <template v-for="booking in bookingsList" :key="booking.id">
+                <BookingCard
+                    :booking="booking"
+                    :style="getBookingStyle(booking)"
+                    @delete="deleteItem"
+                    @show-details="showDetails"
+                />
+              </template>
+            </div>
+          </template>
         </div>
-        <div
-            class="current-time-line"
-            v-if="showCurrentTimeLine"
-            :style="{ top: currentTimeLinePosition + 'px' }"
+
+        <div v-if="showCurrentTimeLine"
+             class="current-time-line"
+             :style="{ top: currentTimeLinePosition + 'px' }"
         />
       </div>
+
       <span v-else>{{ this.getLabel("noResultTimeslotsLabel") }}</span>
     </div>
+
   </div>
 </template>
 
 <script>
+import TimeAxis from './TimeAxis.vue';
+import AttendantsList from './AttendantsList.vue';
+import TimeSlots from './TimeSlots.vue';
+import SlotActions from './SlotActions.vue';
+import SlotsHeadline from './SlotsHeadline.vue';
+import SearchInput from './SearchInput.vue';
+import BookingCalendar from './BookingCalendar.vue';
 import BookingCard from "./BookingCard.vue";
-import BookingAdd from "./BookingAdd.vue";
-import BookingBlockSlot from "./BookingBlockSlot.vue";
-
-function debounce(fn, delay = 300) {
-  let timer = null;
-  return (...args) => {
-    if (timer) clearTimeout(timer);
-    timer = setTimeout(() => {
-      fn(...args);
-    }, delay);
-  };
-}
+import AttendantTimeSlots from './AttendantTimeSlots.vue';
 
 export default {
   name: "ReservationsCalendar",
   components: {
+    TimeAxis,
+    AttendantsList,
+    TimeSlots,
+    SlotActions,
+    SlotsHeadline,
+    SearchInput,
+    BookingCalendar,
     BookingCard,
-    BookingBlockSlot,
-    BookingAdd
+    AttendantTimeSlots,
   },
   props: {
     modelValue: {
@@ -252,11 +208,24 @@ export default {
       attendants: [],
       attendantsLoaded: false,
 
-      // search
-      searchTimeout: null
+      // slot data
+      slotProcessingStates: new Map(),
+      slotProcessing: {},
+      selectedTimeSlots: [],
     };
   },
   computed: {
+    dragHandlers() {
+      return {
+        mousedown: this.onMouseDown,
+        mousemove: this.onMouseMove,
+        mouseup: this.onMouseUp,
+        mouseleave: this.onMouseLeave,
+        touchstart: this.onTouchStart,
+        touchmove: this.onTouchMove,
+        touchend: this.onTouchEnd
+      }
+    },
     date: {
       get() {
         return this.modelValue;
@@ -266,14 +235,10 @@ export default {
       }
     },
     canvasWidth() {
-      if (!this.$refs.dragScrollContainer) return 500;
-      return this.$refs.dragScrollContainer.clientWidth;
+      return this.$refs.dragScrollContainer?.clientWidth ?? 500;
     },
     canvasHeight() {
       return this.timeslots.length * this.slotHeight;
-    },
-    formattedDate() {
-      return this.moment(this.modelValue).format("dddd DD YYYY");
     },
     canvasStyle() {
       if (this.isAttendantView) {
@@ -394,6 +359,21 @@ export default {
       });
 
       return widths;
+    },
+    isReadyToRender() {
+      return !this.isLoadingTimeslots && this.attendantsLoaded && this.timeslots.length > 0;
+    },
+    validatedHolidayRule() {
+      return (rule) => {
+        if (!rule || typeof rule !== 'object') return false;
+        if (!rule.from_date || !rule.to_date) return false;
+        if (!rule.from_time || !rule.to_time) return false;
+
+        return this.moment(rule.from_date, 'YYYY-MM-DD').isValid() &&
+            this.moment(rule.to_date, 'YYYY-MM-DD').isValid() &&
+            /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(rule.from_time) &&
+            /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(rule.to_time);
+      };
     }
   },
   watch: {
@@ -407,17 +387,6 @@ export default {
           this.updateCurrentTimeLinePosition();
         });
       }
-    },
-    search: {
-      handler: debounce(function (newVal) {
-        this.activeSlotIndex = -1;
-        if (newVal) {
-          this.loadSearchBookingsList();
-        } else {
-          this.loadBookingsList();
-        }
-      }, 600),
-      immediate: false
     },
     shop: {
       handler(newVal, oldVal) {
@@ -438,7 +407,23 @@ export default {
     },
     isAttendantView(newValue) {
       localStorage.setItem('isAttendantView', newValue);
-    }
+      this.isLoading = true;
+
+      Promise.all([
+        this.loadTimeslots(),
+        this.loadLockedTimeslots(),
+        this.loadBookingsList(),
+      ]).finally(() => {
+        this.isLoading = false;
+      });
+    },
+    date(newVal, oldVal) {
+      if (newVal.getTime() !== oldVal?.getTime()) {
+        this.loadTimeslots();
+        this.loadLockedTimeslots();
+        this.loadBookingsList();
+      }
+    },
   },
   mounted() {
     this.load();
@@ -485,6 +470,18 @@ export default {
     }
   },
   methods: {
+    updateSlotProcessing({slot, status}) {
+      this.slotProcessing = {
+        ...this.slotProcessing,
+        [slot]: status,
+      };
+    },
+    handleAttendantLock(payload) {
+      console.log('Lock payload:', payload);
+    },
+    handleAttendantUnlock(payload) {
+      console.log('Unlock payload:', payload);
+    },
     load() {
       this.loadTimeslots();
       this.loadLockedTimeslots();
@@ -499,37 +496,54 @@ export default {
     update() {
       this.updateBookingsList();
     },
-    loadTimeslots() {
+    async loadTimeslots() {
       this.isLoadingTimeslots = true;
-      this.axios
-          .get("calendar/intervals", {params: {shop: this.shop?.id || null}})
-          .then((r) => {
-            this.timeslots = r.data.items;
-            this.loadAvailabilityIntervals();
-            this.$nextTick(() => this.updateCurrentTimeLinePosition());
-          })
-          .finally(() => {
-            this.isLoadingTimeslots = false;
-          });
+      try {
+        const response = await this.axios.get('calendar/intervals', {
+          params: {shop: this.shop?.id || null},
+        });
+        this.timeslots = response.data.items || [];
+      } catch (error) {
+        console.error('error loading timeslots:', error);
+      } finally {
+        this.isLoadingTimeslots = false;
+      }
     },
-    loadLockedTimeslots() {
+    addBookingForAttendant({timeslot, attendantId}) {
+      const selectedDate = this.modelValue;
+      this.$emit("add", selectedDate, timeslot, attendantId);
+    },
+    async loadLockedTimeslots() {
       this.isLoading = true;
-      this.axios
-          .get("holiday-rules", {
-            params: {
-              date: this.moment(this.date).format("YYYY-MM-DD"),
-              shop: this.shop ? this.shop.id : null
-            }
-          })
-          .then((response) => {
-            this.lockedTimeslots = response.data.items;
-            setTimeout(() => {
-              this.loadAvailabilityIntervals();
-            }, 300);
-          })
-          .finally(() => {
-            this.isLoading = false;
-          });
+      try {
+        const formattedDate = this.moment(this.date).format('YYYY-MM-DD');
+        const response = await this.axios.get('holiday-rules', {
+          params: {
+            assistants_mode: this.isAttendantView ? 'true' : 'false',
+            date: formattedDate,
+          },
+        });
+
+        if (response.data?.status === 'OK') {
+          if (this.isAttendantView) {
+            const assistantsRules = response.data.assistants_rules || {};
+            this.lockedTimeslots = Object.entries(assistantsRules).flatMap(([assistantId, rules]) =>
+                rules.map(rule => ({
+                  ...rule,
+                  assistant_id: Number(assistantId) || null,
+                }))
+            );
+          } else {
+            this.lockedTimeslots = response.data.items || [];
+          }
+        } else {
+          console.error('unexpected response:', response.data);
+        }
+      } catch (error) {
+        console.error('error loading locked timeslots:', error.response?.data || error.message);
+      } finally {
+        this.isLoading = false;
+      }
     },
     loadAvailabilityStats(fd, td) {
       this.isLoadingCalendar = true;
@@ -548,16 +562,48 @@ export default {
             this.isLoadingCalendar = false;
           });
     },
-    loadBookingsList() {
+    async loadBookingsList() {
+      try {
+        const response = await this.axios.get('bookings', {
+          params: {
+            start_date: this.moment(this.date).format('YYYY-MM-DD'),
+            end_date: this.moment(this.date).format('YYYY-MM-DD'),
+            per_page: -1,
+            statuses: [
+              'sln-b-pendingpayment',
+              'sln-b-pending',
+              'sln-b-paid',
+              'sln-b-paylater',
+              'sln-b-canceled',
+              'sln-b-confirmed',
+            ],
+            shop: this.shop?.id || null,
+          },
+        });
+        this.bookingsList = response.data.items || [];
+      } catch (error) {
+        console.error('error loading bookings list:', error);
+      }
+    },
+    handleSearch(value) {
+      this.activeSlotIndex = -1;
+      if (value) {
+        this.loadFilteredBookings(value);
+      } else {
+        this.loadBookingsList();
+      }
+    },
+    loadFilteredBookings(searchQuery) {
       this.isLoadingTimeslots = true;
       this.bookingsList = [];
       const currentView = this.isAttendantView;
 
-      this.axios
+      return this.axios
           .get("bookings", {
             params: {
               start_date: this.moment(this.date).format("YYYY-MM-DD"),
               end_date: this.moment(this.date).format("YYYY-MM-DD"),
+              search: searchQuery,
               per_page: -1,
               statuses: [
                 "sln-b-pendingpayment",
@@ -578,41 +624,6 @@ export default {
           .finally(() => {
             this.isLoadingTimeslots = false;
           });
-    },
-    loadSearchBookingsList() {
-      if (this.searchTimeout) clearTimeout(this.searchTimeout);
-      this.searchTimeout = setTimeout(() => {
-        this.isLoadingTimeslots = true;
-        this.bookingsList = [];
-        const currentView = this.isAttendantView;
-
-        this.axios
-            .get("bookings", {
-              params: {
-                start_date: this.moment(this.date).format("YYYY-MM-DD"),
-                end_date: this.moment(this.date).format("YYYY-MM-DD"),
-                search: this.search,
-                per_page: -1,
-                statuses: [
-                  "sln-b-pendingpayment",
-                  "sln-b-pending",
-                  "sln-b-paid",
-                  "sln-b-paylater",
-                  "sln-b-canceled",
-                  "sln-b-confirmed",
-                ],
-                shop: this.shop?.id || null,
-              },
-            })
-            .then((r) => {
-              this.bookingsList = r.data.items;
-              this.arrangeBookings();
-              this.isAttendantView = currentView;
-            })
-            .finally(() => {
-              this.isLoadingTimeslots = false;
-            });
-      }, 1000);
     },
     updateBookingsList() {
       const currentView = this.isAttendantView;
@@ -654,95 +665,54 @@ export default {
     },
     loadAttendants() {
       this.axios
-          .get("assistants", {
-            params: {
-              shop: this.shop?.id || null,
-              per_page: -1
-            }
-          })
+          .get("assistants", {params: {shop: this.shop?.id || null, per_page: -1}})
           .then((response) => {
             this.attendants = response.data.items;
             this.attendantsLoaded = true;
           })
           .catch((error) => {
-            // eslint-disable-next-line
             console.error("Error loading attendants:", error);
             this.attendantsLoaded = true;
           });
     },
-    handleLockStart(slot) {
-      if (!this.processingSlots.some(
-          s => s.from_time === slot.from_time && s.to_time === slot.to_time
-      )) {
-        this.processingSlots.push(slot);
-        setTimeout(() => {
-          this.handleLockEnd(slot);
-        }, 5000);
-      }
-    },
-    handleLockEnd(slot) {
-      this.processingSlots = this.processingSlots.filter(
-          (s) => !(s.from_time === slot.from_time && s.to_time === slot.to_time)
-      );
-    },
-    handleUnlockStart(slot) {
-      this.processingSlots.push(slot);
-    },
-    handleUnlockEnd(slot) {
-      this.processingSlots = this.processingSlots.filter(
-          (s) => !(s.from_time === slot.from_time && s.to_time === slot.to_time)
-      );
-    },
     handleSlotLock(holidayRule) {
-      const exists = this.lockedTimeslots.some(
-          locked =>
-              locked.from_time === holidayRule.from_time &&
-              locked.to_time === holidayRule.to_time &&
-              locked.from_date === holidayRule.from_date &&
-              locked.to_date === holidayRule.to_date
+      if (!this.validatedHolidayRule(holidayRule)) return;
+
+      const exists = this.lockedTimeslots.some(locked =>
+          locked.from_time === holidayRule.from_time &&
+          locked.to_time === holidayRule.to_time &&
+          locked.from_date === holidayRule.from_date &&
+          locked.to_date === holidayRule.to_date &&
+          locked.assistant_id === holidayRule.assistant_id
       );
 
       if (!exists) {
         this.lockedTimeslots = [...this.lockedTimeslots, holidayRule];
+      } else {
+        console.warn("slot is already locked!");
       }
     },
+
     handleSlotUnlock(holidayRule) {
-      this.lockedTimeslots = this.lockedTimeslots.filter(
-          (locked) =>
-              !(
-                  locked.from_time === holidayRule.from_time &&
-                  locked.to_time === holidayRule.to_time &&
-                  locked.from_date === holidayRule.from_date &&
-                  locked.to_date === holidayRule.to_date
-              )
+      const newLockedTimeslots = this.lockedTimeslots.filter(locked =>
+          !(locked.from_time === holidayRule.from_time &&
+              locked.to_time === holidayRule.to_time &&
+              locked.from_date === holidayRule.from_date &&
+              locked.to_date === holidayRule.to_date &&
+              locked.assistant_id === holidayRule.assistant_id)
       );
+
+      if (newLockedTimeslots.length > 0) {
+        this.lockedTimeslots = newLockedTimeslots;
+      } else {
+        console.warn("no locked slots left, keeping last state");
+        this.lockedTimeslots = [...this.lockedTimeslots];
+      }
     },
     handleMonthYear({year, month}) {
       const fd = new Date(year, month, 1);
       const td = new Date(year, month + 1, 0);
       this.loadAvailabilityStats(fd, td);
-    },
-    isDayWithBookings(date) {
-      return this.availabilityStats.some(
-          (stat) =>
-              stat.date === this.moment(date).format("YYYY-MM-DD") &&
-              stat.data &&
-              stat.data.bookings > 0
-      );
-    },
-    isAvailableBookings(date) {
-      return this.availabilityStats.some(
-          (stat) =>
-              stat.date === this.moment(date).format("YYYY-MM-DD") &&
-              stat.available &&
-              !stat.full_booked
-      );
-    },
-    isDayFullBooked(date) {
-      return this.availabilityStats.some(
-          (stat) =>
-              stat.date === this.moment(date).format("YYYY-MM-DD") && stat.full_booked
-      );
     },
     isHoliday(date) {
       return this.availabilityStats.some(
@@ -763,29 +733,34 @@ export default {
       }
       return Object.values(this.availabilityIntervals.times).indexOf(start) > -1;
     },
-    isSlotLocked(from, to) {
+    isSlotLocked(currentSlot, nextSlot) {
       if (this.isHoliday(this.date)) {
         return true;
       }
-      const slotDate = this.moment(this.date).format('YYYY-MM-DD');
-      let slotStart = this.moment(`${slotDate} ${from}`, 'YYYY-MM-DD HH:mm');
-      let slotEnd = this.moment(`${slotDate} ${to}`, 'YYYY-MM-DD HH:mm');
 
-      if (slotStart.isSameOrAfter(slotEnd)) {
-        slotEnd = slotEnd.add(1, 'day');
+      if (!Array.isArray(this.lockedTimeslots)) {
+        console.error('lockedTimeslots is not an array:', this.lockedTimeslots);
+        return false;
       }
 
-      return this.lockedTimeslots.some((lockedSlot) => {
-        const lockedStart = this.moment(`${lockedSlot.from_date} ${lockedSlot.from_time}`, 'YYYY-MM-DD HH:mm');
-        const lockedEnd = this.moment(`${lockedSlot.to_date} ${lockedSlot.to_time}`, 'YYYY-MM-DD HH:mm');
+      return this.lockedTimeslots.some(locked => {
+        const timeMatch = locked.from_time === currentSlot &&
+            locked.to_time === nextSlot;
+        const dateMatch = locked.from_date === this.moment(this.date).format("YYYY-MM-DD");
+        const processingCheck = !this.isSlotProcessing(currentSlot, nextSlot);
 
-        return slotStart.isBefore(lockedEnd) && slotEnd.isAfter(lockedStart);
+        return timeMatch && dateMatch && processingCheck;
       });
     },
-    isSlotProcessing(from, to) {
-      return this.processingSlots.some(
-          slot => slot.from_time === from && (to === undefined || slot.to_time === to)
-      );
+    setSlotProcessing(slotKey, isProcessing) {
+      if (isProcessing) {
+        this.slotProcessingStates.set(slotKey, true);
+      } else {
+        this.slotProcessingStates.delete(slotKey);
+      }
+    },
+    isSlotProcessing(slotKey) {
+      return this.slotProcessingStates.has(slotKey);
     },
     toggleSlotActions(idx) {
       if (!this.isDragging && !this.wasRecentlyDragging) {
@@ -901,7 +876,7 @@ export default {
       });
     },
     calcSlotStep() {
-      if (this.timeslots.length < 2) return 30;
+      if (!this.timeslots || this.timeslots.length < 2) return 30;
       const t1 = this.getMinutes(this.timeslots[0]);
       const t2 = this.getMinutes(this.timeslots[1]);
       return t2 - t1;
@@ -1136,6 +1111,7 @@ export default {
   },
   emits: [
     "update:modelValue",
+    'update:lockedTimeslots',
     "add",
     "showItem",
     "lock",
@@ -1143,7 +1119,6 @@ export default {
     "lock-start",
     "lock-end",
     "unlock-start",
-    "unlock-end"
   ],
 };
 </script>
@@ -1153,42 +1128,11 @@ export default {
   margin-bottom: 48px;
 }
 
-.calendar, .slots, .calendar .btn, .search {
-  margin-top: 1.5rem;
-}
-
 .title {
   text-align: left;
   font-weight: bold;
   color: #322d38;
   font-size: 22px;
-}
-
-.search {
-  position: relative;
-}
-
-.search-icon {
-  position: absolute;
-  z-index: 1000;
-  top: 12px;
-  left: 15px;
-  color: #7f8ca2;
-}
-
-.search .search-input {
-  padding-left: 40px;
-  padding-right: 20px;
-  border-radius: 30px;
-  border-color: #7f8ca2;
-}
-
-.clear {
-  position: absolute;
-  top: 10px;
-  z-index: 1000;
-  right: 15px;
-  cursor: pointer;
 }
 
 .slots {
@@ -1199,12 +1143,13 @@ export default {
   position: relative;
 }
 
-.slots.slots--assistants .slots-content, .slots.slots--assistants .time-axis {
-  padding-top: 64px;
-}
-
 .slots.slots--assistants .current-time-line {
   margin-top: 64px;
+}
+
+.slots.slots--assistants .slots-content,
+.slots.slots--assistants .time-axis {
+  padding-top: 64px;
 }
 
 .slots-inner {
@@ -1212,24 +1157,8 @@ export default {
   display: flex;
 }
 
-.time-axis {
-  flex-shrink: 0;
-  transition: .15s ease-in-out;
-}
-
-.time-axis-item {
-  color: #5f5f5f;
-  padding: 7px 14px 0 0;
-  font-size: 14px;
-  border-bottom: 1px solid #ddd;
-  box-sizing: border-box;
-}
-
-.time-axis-item:last-child {
-  border-bottom: none;
-}
-
 .slots-content {
+  display: flex;
   position: relative;
   flex: 1;
   overflow-x: auto;
@@ -1257,72 +1186,6 @@ export default {
   width: auto;
   height: auto;
   overflow: visible;
-}
-
-.time-slot-line {
-  position: absolute;
-  left: 0;
-  width: 100%;
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  border-top: 1px solid #ddd;
-  box-sizing: border-box;
-  margin-top: -1px;
-  transition: all 0.15s ease;
-}
-
-.time-slot-line:first-child {
-  border-top: none;
-}
-
-.time-slot-line.processing .time-slot-actions, .time-slot-line.locked .time-slot-actions {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.time-slot-line.processing :deep(.booking-add), .time-slot-line.locked :deep(.booking-add) {
-  display: none;
-}
-
-
-.time-slot-line.active {
-  background-color: rgb(237 240 245 / 40%) !important;
-  z-index: 13;
-  backdrop-filter: blur(5px);
-}
-
-.time-slot-line.locked {
-  z-index: 13;
-  background-color: rgba(248, 215, 218, 0.4) !important;
-}
-
-.time-slot-line.processing {
-  background-color: #fff3cd;
-  cursor: wait;
-}
-
-.time-slot-line.processing .time-slot-actions {
-  display: flex;
-}
-
-.time-slot-actions {
-  display: flex;
-  align-items: center;
-  gap: 95px;
-  position: sticky;
-  left: 35px;
-  width: calc(100vw - 235px);
-  justify-content: center;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.15s ease;
-}
-
-.time-slot-line.active .time-slot-actions {
-  display: flex;
-  opacity: 1;
-  pointer-events: auto;
 }
 
 .booking-card {
@@ -1375,351 +1238,20 @@ export default {
   border-radius: 12px;
 }
 
-.calendar .spinner-border {
-  position: absolute;
-  top: 45%;
-  left: 45%;
-}
-
-.calendar :deep(.dp__menu) {
-  margin: 0 auto;
-}
-
-:deep(.dp__cell_inner) {
-  --dp-hover-color: #6983862B;
-  height: auto;
-  width: auto;
-  padding: 0;
-  border-radius: 50%;
-}
-
-:deep(.dp__calendar_row) {
-  margin: 10px 0;
-  gap: 10px;
-}
-
-:deep(.dp__calendar_header) {
-  gap: 9px;
-}
-
-:deep(.dp__calendar_header_item) {
-  height: 30px;
-  width: 45px;
-}
-
-:deep(.dp__month_year_select) {
-  width: 100%;
-  pointer-events: none;
-}
-
-:deep(.dp__month_year_select + .dp__month_year_select) {
-  display: none;
-}
-
-:deep(.dp__cell_inner), :deep(.dp__today), :deep(.dp__menu), :deep(.dp__menu:focus) {
-  border: none;
-}
-
-:deep(.dp__today:not(.dp__active_date)) .day {
-  border-color: green;
-  color: green;
-}
-
-:deep(.dp__calendar_header_separator) {
-  height: 0;
-}
-
-:deep(.dp__active_date) {
-  background: none;
-}
-
-:deep(.dp__active_date) .day {
-  background: #04409f;
-  border-color: #fff;
-  color: #fff;
-}
-
-:deep(.dp__active_date) .day.day-holiday {
-  background: #a78a8a;
-  border-color: #9f04048f;
-}
-
-:deep(.dp__active_date) .day.day-with-bookings::before {
-  background-color: #fff;
-}
-
-.day {
-  display: flex;
-  align-items: center;
-  text-align: center;
-  justify-content: center;
-  border-radius: 30px;
-  font-weight: 500;
-  font-size: 16px;
-  line-height: 1;
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  border: 2px solid #C7CED9;
-  box-sizing: border-box;
-  position: relative;
-}
-
-.day-available-book, .day-with-bookings {
-  color: #04409f;
-  border-color: #04409f;
-}
-
-.day-with-bookings::before {
-  content: '';
-  position: absolute;
-  left: 50%;
-  bottom: 4px;
-  transform: translateX(-50%);
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: #04409f;
-}
-
-.day-disable-book, .day-full-booked {
-  border-color: #C7CED9;
-  color: #c7ced9;
-}
-
-.day-holiday {
-  color: #9F04048E;
-  border-color: #9F04048F;
-}
-
-.time-slot-line.processing {
-  background-color: #fff3cd !important;
-  cursor: wait;
-}
-
-.time-slot-line.processing .time-slot-actions {
-  display: flex;
-}
-
-.attendant-toggle {
-  margin-top: 55px;
-  color: #4A454F;
-  font-weight: 400;
-  font-size: 14px;
-  user-select: none;
-}
-
-.selected-date {
-  margin-top: 55px;
-  font-size: 18px;
-  font-weight: 700;
-  color: #322d38;
-  text-align: left;
-}
-
-.slots-headline {
-  display: flex;
-  align-items: center;
-}
-
-.attendants-list {
-  display: flex;
-  position: absolute;
-  top: 0;
-  z-index: 10;
-  padding: 8px 0;
-  opacity: 1;
-  transform: translateY(-10px);
-  transition: opacity 0.3s ease, transform 0.3s ease;
-  width: 100%;
-  overflow: hidden;
-}
-
-.attendants-list--hidden {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-
-.attendant-name {
-  font-weight: 500;
-  color: #333;
-}
-
-.attendant-toggle {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 14px;
-}
-
-.slots--assistants .attendants-list {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 20;
-  padding: 8px 0;
-  display: flex;
-  width: fit-content;
-}
-
-.attendant-header {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: rgb(255 255 255 / 50%);
-  border-radius: 8px;
-  height: 48px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, .05);
-}
-
-.attendant-header::after {
-  content: '';
-  position: absolute;
-  top: -2px;
-  right: -2px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: #28a745;
-  opacity: 0;
-  transform: scale(0);
-  transition: all 0.3s ease;
-}
-
 .attendant-column {
-  flex-shrink: 0;
-}
-
-.attendant-column[data-has-bookings="true"] .attendant-header::after {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.assistant-column-highlight {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  background: rgba(171, 180, 187, .33);
-  z-index: 10;
-  border-radius: 8px;
-  user-select: none;
-  pointer-events: none;
-}
-
-.slots--assistants .slots-content {
-  padding-top: 64px;
   position: relative;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.slots--assistants .bookings-canvas {
-  min-width: fit-content;
-}
-
-.attendant-avatar {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 2px solid #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  color: #04409F;
-}
-
-.attendant-avatar img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  display: flex;
+  flex-direction: column;
 }
 
-.attendant-name {
-  font-weight: 500;
-  color: #333;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 200px;
+.time-slot-actions {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  z-index: 20;
+  left: 50%;
+  transform: translateX(-50%);
 }
-
-:deep(.booking) {
-  box-shadow: 0 0 10px 5px rgb(0 0 0 / 10%);
-}
-
-:deep(.form-check-input:focus), :deep(.form-check-input) {
-  box-shadow: none;
-  border-color: rgba(0, 0, 0, .25);
-  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3E%3Ccircle r='3' fill='rgba(0, 0, 0, 0.25)'/%3E%3C/svg%3E");
-}
-
-:deep(.form-check-input:checked) {
-  background-color: #04409F;
-  border-color: #04409F;
-  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3E%3Ccircle r='3' fill='%23fff'/%3E%3C/svg%3E") !important;
-}
-
-
-@media (hover: hover) {
-  .slots-content {
-    cursor: grab;
-  }
-
-  .slots-content:active {
-    cursor: grabbing;
-  }
-
-  .time-slot-line:hover {
-    background-color: rgb(225 233 247 / 40%) !important;
-  }
-
-  .time-slot-line.locked:hover {
-    background-color: #f1b0b7 !important;
-  }
-}
-
-@media screen and (max-width: 600px) {
-  .attendant-toggle {
-    margin-top: 32px;
-  }
-
-  .selected-date {
-    font-size: 16px;
-    margin-top: 32px;
-  }
-}
-
-@media screen and (max-width: 450px) {
-  :deep(.dp__calendar_row) {
-    margin: 5px 0;
-    gap: 5px;
-  }
-
-  :deep(.dp__calendar_header) {
-    gap: 0;
-  }
-
-  .day {
-    width: 38px;
-    height: 38px;
-  }
-}
-
-@media screen and (max-width: 361px) {
-  :deep(.dp__calendar_header_item) {
-    width: 37px;
-  }
-
-  .day {
-    width: 33px;
-    height: 33px;
-  }
-}
-
 </style>

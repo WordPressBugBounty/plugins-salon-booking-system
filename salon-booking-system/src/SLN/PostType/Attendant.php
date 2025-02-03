@@ -32,8 +32,12 @@ class SLN_PostType_Attendant extends SLN_PostType_Abstract {
 	 */
 	function admin_posts_sort($query) {
 		global $pagenow, $post_type;
-
-		if (is_admin() && 'edit.php' == $pagenow && $post_type == $this->getPostType() && $query->get('orderby') !== 'title') {
+		if (
+			is_admin() && 'edit.php' == $pagenow 
+			&& $post_type == $this->getPostType()
+            && (is_array($query->get('post_type')) ? in_array($this->getPostType(), $query->get('post_type')) : $query->get('post_type') === $this->getPostType()) 
+			&& $query->get('orderby') !== 'title'
+		) {
 			/** @var SLN_Repository_AttendantRepository $repo */
 			$repo = $this->getPlugin()->getRepository($this->getPostType());
 			foreach ($repo->getStandardCriteria() as $k => $v) {

@@ -17,6 +17,13 @@ class SLN_TaxonomyType_ServiceCategory extends SLN_TaxonomyType_Abstract
     add_action('saved_'.$taxonomyType, array($this, 'saved_taxonomy'), 10, 4);
     add_action($taxonomyType.'_edit_form_fields', array($this, 'service_category_meta_fields_table'), 10, 2);
     add_action('pre_delete_term', array($this, 'delete'), 10, 2);
+    wp_register_script(
+        'salon-customServiceCategory',
+        SLN_PLUGIN_URL . '/js/admin/customServiceCategory.js',
+        array('jquery'),
+        SLN_Action_InitScripts::ASSETS_VERSION,
+        true
+    );
     wp_enqueue_script(
         'salon-customServiceCategory',
         SLN_PLUGIN_URL . '/js/admin/customServiceCategory.js',

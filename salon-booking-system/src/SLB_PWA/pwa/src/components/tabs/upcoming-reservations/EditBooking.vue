@@ -882,7 +882,7 @@ export default {
     async save() {
       this.isValid = this.validate();
       if (!this.isValid) {
-        if (this.requiredFields.includes('shop')) {
+        if (this.requiredFields.includes('shop') && this.$root.settings.shops_enabled) {
           this.$emit('error', {
             message: this.getLabel('selectShopFirstMessage'),
             type: 'shop'
@@ -1086,10 +1086,13 @@ export default {
       this.requiredFields = [];
       this.shopError = false;
 
-      if (!this.shop || !this.shop.id) {
-        this.requiredFields.push('shop');
-        this.shopError = true;
+      if (this.$root.settings.shops_enabled) {
+        if (!this.shop || !this.shop.id) {
+          this.requiredFields.push('shop');
+          this.shopError = true;
+        }
       }
+
       if (!this.elDate) {
         this.requiredFields.push('date')
       }

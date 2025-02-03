@@ -1,6 +1,6 @@
 <template>
-    <div>
-        <ShopsList @applyShop="applyShop"/>
+    <div v-if="isShopsEnabled">
+        <ShopsList :isShopsEnabled="isShopsEnabled" @applyShop="applyShop"/>
     </div>
 </template>
 
@@ -10,6 +10,12 @@
 
     export default {
         name: 'ShopsTab',
+        props: {
+            isShopsEnabled: {
+                type: Boolean,
+                required: true,
+            },
+        },
         components: {
             ShopsList,
         },
@@ -21,7 +27,3 @@
         emits:['applyShop']
     }
 </script>
-
-<style scoped>
-
-</style>

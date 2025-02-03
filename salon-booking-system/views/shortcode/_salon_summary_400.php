@@ -25,12 +25,13 @@
                     <div class="sln-summary-row sln-list__item sln-list__item--db">
                         <div class="sln-data-val">
                             <ul class="sln-summary__list sln-summary__list--s <?php if(!$showPrices){echo ' sln-summary__list--2col';}?>">
-                                <?php foreach ($bb->getServices() as $service): ?>
+                                <?php foreach ($bb->getBookingServices()->getItems() as $bookingService): ?>
+                                    <?php $service = $bookingService->getService(); ?>
                                     <li class="sln-summary__list__item sln-summary__list__item--s">
                                                 <?php $attendant = isset($bb->getAttendantsIds()[$service->getId()]) ? $plugin->createAttendant($bb->getAttendantsIds()[$service->getId()]) : null; ?>
                                         <?php if($showPrices){?>
                                             <div class="sln-summary__list__price">
-                                                <?php $servicePrice = $attendant !== null && $service->getVariablePriceEnabled() && $service->getVariablePrice($attendant->getId()) !== '' ? $service->getVariablePrice($attendant->getId()) : $service->getPrice() ?>
+                                                <?php $servicePrice = $bookingService->getPrice() ?>
                                                 <?php echo $plugin->format()->moneyFormatted($servicePrice) ?>
                                             </div>
                                         <?php } ?>

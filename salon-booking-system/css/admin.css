@@ -13730,6 +13730,50 @@ img.typing_msg {
   align-items: center;
   font-size: 1.3em;
   font-weight: 600;
+  flex-direction: column;
+}
+
+#sln-tab-import-data .sln-box .sln-file__droparea .alert-success .alert-skipped{
+  padding-top: 5%;
+  width: 100%;
+  text-align: center;
+}
+
+#sln-tab-import-data .sln-box .sln-file__droparea .alert-success .alert-skipped .skipped-bookings{
+  overflow-y: scroll;
+  max-height: 200px;
+}
+#sln-tab-import-data .sln-box .sln-file__droparea .alert-success .alert-skipped .skipped-bookings--title,
+#sln-tab-import-data .sln-box .sln-file__droparea .alert-success .alert-skipped .skipped-bookings li{
+  display: flex;
+  padding: 0 3%;
+  text-align: center;
+}
+
+#sln-tab-import-data .sln-box .sln-file__droparea .alert-success .alert-skipped .skipped-booking--id{
+/*  width:5%;*/
+  flex: 1;
+}
+#sln-tab-import-data .sln-box .sln-file__droparea .alert-success .alert-skipped .skipped-booking--datetime{
+/*  width: 18%;*/
+  flex: 4;
+}
+#sln-tab-import-data .sln-box .sln-file__droparea .alert-success .alert-skipped .skipped-booking--first-name{
+/*  width: 18%;*/
+  flex: 4;
+}
+#sln-tab-import-data .sln-box .sln-file__droparea .alert-success .alert-skipped .skipped-booking--last-name{
+/*  width:18%;*/
+  flex: 4;
+}
+#sln-tab-import-data .sln-box .sln-file__droparea .alert-success .alert-skipped .skipped-booking--email{
+/*  width:25%;*/
+  flex: 5;
+  overflow-wrap: anywhere;
+}
+#sln-tab-import-data .sln-box .sln-file__droparea .alert-success .alert-skipped .skipped-booking--error{
+/*  width:25%;*/
+  flex: 4;
 }
 #sln-tab-import-data .sln-box .sln-file__droparea .alert-danger {
   padding: 2em;

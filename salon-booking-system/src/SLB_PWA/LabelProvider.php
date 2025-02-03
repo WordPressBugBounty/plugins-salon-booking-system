@@ -100,6 +100,7 @@ class LabelProvider
             'customerDetailsGoBackButtonLabel' => __('Go back', 'salon-booking-system'),
             'assistantBusyTitle' => __('Assistant is busy', 'salon-booking-system'),
             'assistantBusyMessage' => __('is busy from %s to %s. Please select another time or assistant.', 'salon-booking-system'),
+            'attendantViewLabel' => __('Assistants view', 'salon-booking-system'),
         );
     }
 
