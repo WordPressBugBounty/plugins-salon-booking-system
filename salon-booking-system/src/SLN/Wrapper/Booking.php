@@ -475,7 +475,7 @@ class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
             $this->setMeta('paid_remained_amount', $remainedAmount);
             $this->setMeta('remainedAmount', 0);
         }
-        if (class_exists('SalonPackages\Addon') && slnpackages_is_pro_version_salon()) {
+        if (class_exists('SalonPackages\Addon') && slnpackages_is_pro_version_salon() && slnpackages_is_license_active()) {
             $this->setPrepaidServices();
         }
         $this->setStatus(SLN_Enum_BookingStatus::PAID);

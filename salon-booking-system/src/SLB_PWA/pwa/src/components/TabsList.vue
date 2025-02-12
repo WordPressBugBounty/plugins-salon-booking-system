@@ -7,7 +7,7 @@
             </b-tab>
             <b-tab :active="isActiveTab('#upcoming-reservations')">
                 <ShopTitle v-if="isShopsEnabled" :shop="shop" @applyShop="applyShop"/>
-                <template #title><span @click="click('#upcoming-reservations')" ref="upcoming-reservations-tab-link"><font-awesome-icon icon="fa-solid fa-list" /></span></template>
+                <template #title><span @click="click('#upcoming-reservations');scrollInto()" ref="upcoming-reservations-tab-link"><font-awesome-icon icon="fa-solid fa-list" /></span></template>
                 <UpcomingReservationsTab :shop="shop" @hideTabsHeader="hideTabsHeader"/>
             </b-tab>
             <b-tab :active="isActiveTab('#reservations-calendar')">
@@ -87,7 +87,13 @@
         },
         methods: {
             click(href) {
-                window.location.href = href
+                window.location.href = href;
+              if(document.querySelector('.dp__active_date.dp__today') !== null){
+                document.querySelector('.current-time-line').style.display = 'block';
+                document.querySelector('.current-time-line').scrollIntoView({ behavior: 'smooth', block: 'center' })
+              } else {
+                document.querySelector('.current-time-line').style.display = 'none';
+              }
             },
             isActiveTab(hash) {
                 return this.hash === hash ? '' : undefined

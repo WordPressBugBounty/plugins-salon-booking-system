@@ -124,6 +124,8 @@
                 return this.booking.services.map((service) => ({id: service.assistant_id, name: service.assistant_name})).filter((i) => +i.id)
             },
             timeFormat() {
+                if(this.$root.settings.time_format === undefined)
+                  return 'default';
                 return this.$root.settings.time_format.type ?? 'default'
             },
         },

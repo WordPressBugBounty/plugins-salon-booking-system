@@ -15,7 +15,7 @@ $currentTab = $_SESSION['currentTab'] ?? 'services';
 ?>
     <div id="sln-salon" class="sln-bootstrap container-fluid <?php echo $class_salon ?>">
         <div id="sln-salon__content" class="sln-bootstrap container-fluid <?php echo $class_salon_content ?>">
-            <?php if (class_exists('SalonPackages\Addon') && slnpackages_is_pro_version_salon()): ?>
+            <?php if (class_exists('SalonPackages\Addon') && slnpackages_is_pro_version_salon() && slnpackages_is_license_active()): ?>
                 <?php
                 $tabs = [
                     ['name' => 'services', 'shortcode' => '[salon_booking/]'],

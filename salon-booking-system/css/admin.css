@@ -5094,7 +5094,7 @@ h2.sln-nav-tab-wrapper.nav-tab-wrapper .nav-tab,
 .sln-bootstrap .sln-admin-nav a button,
 .sln-admin-nav .sln-bootstrap a button {
   width: 100%;
-  position: absolute;
+  position: relative;
   top: 0;
   right: 0;
   bottom: 0;
@@ -13733,45 +13733,44 @@ img.typing_msg {
   flex-direction: column;
 }
 
-#sln-tab-import-data .sln-box .sln-file__droparea .alert-success .alert-skipped{
-  padding-top: 5%;
+#sln-tab-import-data #import-skipped-booking-modal .alert-skipped{
   width: 100%;
   text-align: center;
 }
 
-#sln-tab-import-data .sln-box .sln-file__droparea .alert-success .alert-skipped .skipped-bookings{
+#sln-tab-import-data #import-skipped-booking-modal .alert-skipped .skipped-bookings{
   overflow-y: scroll;
   max-height: 200px;
 }
-#sln-tab-import-data .sln-box .sln-file__droparea .alert-success .alert-skipped .skipped-bookings--title,
-#sln-tab-import-data .sln-box .sln-file__droparea .alert-success .alert-skipped .skipped-bookings li{
+#sln-tab-import-data #import-skipped-booking-modal .alert-skipped .skipped-bookings--title,
+#sln-tab-import-data #import-skipped-booking-modal .alert-skipped .skipped-bookings li{
   display: flex;
   padding: 0 3%;
   text-align: center;
 }
 
-#sln-tab-import-data .sln-box .sln-file__droparea .alert-success .alert-skipped .skipped-booking--id{
+#sln-tab-import-data #import-skipped-booking-modal .alert-skipped .skipped-booking--id{
 /*  width:5%;*/
   flex: 1;
 }
-#sln-tab-import-data .sln-box .sln-file__droparea .alert-success .alert-skipped .skipped-booking--datetime{
+#sln-tab-import-data #import-skipped-booking-modal .alert-skipped .skipped-booking--datetime{
 /*  width: 18%;*/
   flex: 4;
 }
-#sln-tab-import-data .sln-box .sln-file__droparea .alert-success .alert-skipped .skipped-booking--first-name{
+#sln-tab-import-data #import-skipped-booking-modal .alert-skipped .skipped-booking--first-name{
 /*  width: 18%;*/
   flex: 4;
 }
-#sln-tab-import-data .sln-box .sln-file__droparea .alert-success .alert-skipped .skipped-booking--last-name{
+#sln-tab-import-data #import-skipped-booking-modal .alert-skipped .skipped-booking--last-name{
 /*  width:18%;*/
   flex: 4;
 }
-#sln-tab-import-data .sln-box .sln-file__droparea .alert-success .alert-skipped .skipped-booking--email{
+#sln-tab-import-data #import-skipped-booking-modal .alert-skipped .skipped-booking--email{
 /*  width:25%;*/
   flex: 5;
   overflow-wrap: anywhere;
 }
-#sln-tab-import-data .sln-box .sln-file__droparea .alert-success .alert-skipped .skipped-booking--error{
+#sln-tab-import-data #import-skipped-booking-modal .alert-skipped .skipped-booking--error{
 /*  width:25%;*/
   flex: 4;
 }
@@ -14015,11 +14014,14 @@ body.sln-noscroll .sln-tab .sln-tab__curtain {
   filter: alpha(opacity=50);
 }
 
+#import-skipped-booking-modal,
 #import-matching-modal {
   left: 160px !important;
 }
+#import-skipped-booking-modal .modal-content,
 #import-matching-modal .modal-dialog {
   width: 70% !important;
+  margin: 30px auto;
 }
 
 .sln-import-table {

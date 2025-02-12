@@ -22260,11 +22260,14 @@ body.sln-noscroll .sln-tab .sln-tab__curtain {
   filter: alpha(opacity=50);
 }
 
+#import-skipped-booking-modal,
 #import-matching-modal {
   left: 160px !important;
 }
+#import-skipped-booking-modal .modal-content
 #import-matching-modal .modal-dialog {
   width: 70% !important;
+  margin: 30px auto;
 }
 
 .sln-import-table {

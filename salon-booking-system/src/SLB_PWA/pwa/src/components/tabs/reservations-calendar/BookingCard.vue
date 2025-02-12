@@ -98,7 +98,7 @@ export default {
       this.isDelete = false
     },
     showDetails() {
-      this.$emit('showDetails')
+      this.$emit('showDetails', this.booking);
     },
     getLabel(labelKey) {
       return this.$root.labels ? this.$root.labels[labelKey] : labelKey
@@ -193,6 +193,7 @@ export default {
 .services-list .service-item .service-name {
   color: #637491;
   font-size: 13px;
+  text-align: left;
 }
 
 .services-list .service-item .assistant-name {

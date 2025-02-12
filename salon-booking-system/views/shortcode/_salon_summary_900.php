@@ -75,7 +75,7 @@
                         </div>
                     </div>
                     <?php
-                    if (class_exists('SalonPackages\Addon') && slnpackages_is_pro_version_salon()) {
+                    if (class_exists('SalonPackages\Addon') && slnpackages_is_pro_version_salon() && slnpackages_is_license_active()) {
                         echo $plugin->templating()->loadView('shortcode/_salon_summary_credit', compact('plugin', 'bb', 'packages_credits'));
                     }
                     ?>

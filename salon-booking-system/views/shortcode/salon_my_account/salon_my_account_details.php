@@ -27,7 +27,7 @@
 				</a>
 			</li>
 			<?php do_action('sln.my_account.nav'); ?>
-            <?php if (class_exists('SalonPackages\Addon') && slnpackages_is_pro_version_salon()) { ?>
+            <?php if (class_exists('SalonPackages\Addon') && slnpackages_is_pro_version_salon() && slnpackages_is_license_active()) { ?>
                 <li class="sln-account__nav__item sln-account__nav__packages" role="presentation">
 					<a href="#sln-account__packages__content" data-target="#sln-account__packages__content" aria-controls="sln-account__packages__content" role="tab" data-toggle="tab">
 						<span><?php esc_html_e('Packages', 'sln-package')?></span>
@@ -114,7 +114,7 @@ unset($data['table_data']);
 
 </div>
 	<?php do_action('sln.my_account.content', array_merge($data['history']['items'], $data['new']['items'])); ?>
-    <?php if (class_exists('SalonPackages\Addon') && slnpackages_is_pro_version_salon()) { ?>
+    <?php if (class_exists('SalonPackages\Addon') && slnpackages_is_pro_version_salon() && slnpackages_is_license_active()) { ?>
         <div role="tabpanel" class="tab-pane sln-account__tabpanel sln-account__tabpanel--packages" id="sln-account__packages__content">
             <?php echo SLN_Plugin::getInstance()->templating()->loadView('shortcode/salon_my_account/_salon_my_account_packages'); ?>
         </div>

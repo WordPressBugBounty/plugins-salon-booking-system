@@ -178,7 +178,7 @@ export default {
       search: "",
       activeSlotIndex: -1,
       currentTimeLinePosition: 0,
-      showCurrentTimeLine: false,
+      showCurrentTimeLine: true,
 
       // loading states
       isLoadingTimeslots: false,
@@ -243,7 +243,7 @@ export default {
     canvasStyle() {
       if (this.isAttendantView) {
         const totalWidth = this.sortedAttendants.reduce((sum, attendant, index) => {
-          const width = this.columnWidths[attendant.id] || this.attendantColumnWidth;
+          const width = this.columnWidths?.[attendant.id] ?? this.attendantColumnWidth;
           const gap = (index < this.sortedAttendants.length - 1) ? this.attendantColumnGap : 0;
           return sum + width + gap;
         }, 0);
@@ -268,10 +268,9 @@ export default {
     },
     processedBookings() {
       if (!this.isAttendantView) {
-        return this.bookingsList;
+        return [...this.bookingsList];
       }
-
-      return this.bookingsList.flatMap((booking) => {
+      return this.bookingsList.flatMap(booking => {
         if (!booking.services || booking.services.length === 0) {
           return [{
             ...booking,
@@ -283,7 +282,6 @@ export default {
             _isDefaultDuration: true
           }];
         }
-
         const servicesByAssistant = booking.services.reduce((acc, service) => {
           const assistantId = service.assistant_id || 0;
           if (!acc[assistantId]) {
@@ -292,26 +290,20 @@ export default {
           acc[assistantId].push(service);
           return acc;
         }, {});
-
         return Object.entries(servicesByAssistant).map(([assistantId, services]) => {
           const sortedServices = [...services].sort((a, b) => {
             const aStart = this.getMinutes(a.start_at || booking.time);
             const bStart = this.getMinutes(b.start_at || booking.time);
             return aStart - bStart;
           });
-
           const firstService = sortedServices[0];
           const lastService = sortedServices[sortedServices.length - 1];
-
           return {
             ...booking,
             services: sortedServices,
             _serviceTime: {
               start: firstService.start_at || booking.time,
-              end: lastService.end_at || this.calculateEndTime(
-                  lastService.start_at || booking.time,
-                  this.getDefaultDuration(booking)
-              )
+              end: lastService.end_at || this.calculateEndTime(lastService.start_at || booking.time, this.getDefaultDuration(booking))
             },
             _assistantId: parseInt(assistantId),
             _isDefaultDuration: !lastService.end_at
@@ -320,7 +312,7 @@ export default {
       });
     },
     sortedAttendants() {
-      if (!this.attendants || !this.bookingsList) return [];
+      if (!Array.isArray(this.attendants) || this.attendants.length === 0) return [];
       const bookingsMap = new Map();
       this.bookingsList.forEach((booking) => {
         if (booking.services) {
@@ -354,13 +346,38 @@ export default {
 
       const widths = {};
       this.sortedAttendants.forEach((attendant) => {
-        const maxOverlap = this.getOverlappingBookingsCount(attendant.id);
-        widths[attendant.id] = this.cardWidth * maxOverlap;
+        const timeSlotMap = new Map();
+        const attendantBookings = this.processedBookings.filter(b => b._assistantId === attendant.id);
+
+        attendantBookings.forEach(booking => {
+          if (!booking._serviceTime) return;
+          const startTime = this.getMinutes(booking._serviceTime.start);
+          const realDuration = this.getMinutes(booking._serviceTime.end) - startTime;
+          const displayDuration = this.getDisplayDuration(booking, realDuration);
+          const endTime = startTime + displayDuration;
+
+          for (let time = startTime; time < endTime; time++) {
+            const currentCount = timeSlotMap.get(time) || 0;
+            timeSlotMap.set(time, currentCount + 1);
+          }
+        });
+
+        const maxConcurrent = timeSlotMap.size > 0 ? Math.max(...timeSlotMap.values()) : 1;
+        widths[attendant.id] = (this.cardWidth * maxConcurrent) + (this.attendantColumnGap * (maxConcurrent - 1));
+
       });
 
       return widths;
     },
     isReadyToRender() {
+      if (this.bookingsList.length > 0 && this.timeslots.length > 0) {
+        this.bookingsList.forEach(booking => {
+          let bookingTime = booking.time;
+          if (!this.timeslots.includes(bookingTime) && bookingTime < this.timeslots[0]) {
+            this.timeslots.unshift(bookingTime);
+          }
+        });
+      }
       return !this.isLoadingTimeslots && this.attendantsLoaded && this.timeslots.length > 0;
     },
     validatedHolidayRule() {
@@ -377,6 +394,12 @@ export default {
     }
   },
   watch: {
+    bookingsList() {
+      this.arrangeBookings();
+      this.$nextTick(() => {
+        this.$forceUpdate();
+      });
+    },
     modelValue(newVal, oldVal) {
       if (newVal.getTime() !== oldVal?.getTime()) {
         this.activeSlotIndex = -1;
@@ -385,6 +408,13 @@ export default {
         this.loadAvailabilityIntervals();
         this.$nextTick(() => {
           this.updateCurrentTimeLinePosition();
+        });
+      }
+    },
+    attendantsLoaded(newVal) {
+      if (newVal) {
+        this.$nextTick(() => {
+          this.$forceUpdate();
         });
       }
     },
@@ -401,6 +431,10 @@ export default {
       handler(newSettings) {
         if (newSettings?.attendant_enabled) {
           this.loadAttendants();
+        } else {
+          this.attendantsLoaded = true;
+          this.isAttendantView = false;
+
         }
       },
       deep: true
@@ -413,7 +447,12 @@ export default {
         this.loadTimeslots(),
         this.loadLockedTimeslots(),
         this.loadBookingsList(),
-      ]).finally(() => {
+      ]).then(() => {
+        this.$nextTick(() => {
+          this.arrangeBookings();
+          this.$forceUpdate();
+        });
+      }).finally(() => {
         this.isLoading = false;
       });
     },
@@ -457,7 +496,10 @@ export default {
     }
     if (this.$root.settings?.attendant_enabled) {
       this.loadAttendants();
+    } else {
+      this.attendantsLoaded = true;
     }
+
   },
   beforeUnmount() {
     if (this.intervalId) clearInterval(this.intervalId);
@@ -494,7 +536,7 @@ export default {
       this.loadAvailabilityStats(firstDate, lastDate);
     },
     update() {
-      this.updateBookingsList();
+      this.loadBookingsList();
     },
     async loadTimeslots() {
       this.isLoadingTimeslots = true;
@@ -503,15 +545,12 @@ export default {
           params: {shop: this.shop?.id || null},
         });
         this.timeslots = response.data.items || [];
+        this.updateCurrentTimeLinePosition()
       } catch (error) {
         console.error('error loading timeslots:', error);
       } finally {
         this.isLoadingTimeslots = false;
       }
-    },
-    addBookingForAttendant({timeslot, attendantId}) {
-      const selectedDate = this.modelValue;
-      this.$emit("add", selectedDate, timeslot, attendantId);
     },
     async loadLockedTimeslots() {
       this.isLoading = true;
@@ -545,6 +584,42 @@ export default {
         this.isLoading = false;
       }
     },
+    async loadBookingsList() {
+      try {
+        const response = await this.axios.get('bookings', {
+          params: {
+            start_date: this.moment(this.date).format('YYYY-MM-DD'),
+            end_date: this.moment(this.date).format('YYYY-MM-DD'),
+            per_page: -1,
+            statuses: [
+              'sln-b-pendingpayment', 'sln-b-pending', 'sln-b-paid',
+              'sln-b-paylater',
+              'sln-b-confirmed',
+            ],
+            shop: this.shop?.id || null,
+          },
+        });
+
+        const newBookings = response.data.items || [];
+        const newBookingsMap = new Map(newBookings.map(b => [b.id, b]));
+        this.bookingsList = [];
+        this.bookingsList = this.bookingsList.map(existingBooking =>
+            newBookingsMap.has(existingBooking.id)
+                ? {...existingBooking, ...newBookingsMap.get(existingBooking.id)}
+                : existingBooking
+        );
+
+        newBookings.forEach(newBooking => {
+          if (!this.bookingsList.some(existing => existing.id === newBooking.id)) {
+            this.bookingsList.push(newBooking);
+          }
+        });
+
+        this.arrangeBookings();
+      } catch (error) {
+        console.error('error loading bookings list:', error);
+      }
+    },
     loadAvailabilityStats(fd, td) {
       this.isLoadingCalendar = true;
       this.axios
@@ -562,28 +637,9 @@ export default {
             this.isLoadingCalendar = false;
           });
     },
-    async loadBookingsList() {
-      try {
-        const response = await this.axios.get('bookings', {
-          params: {
-            start_date: this.moment(this.date).format('YYYY-MM-DD'),
-            end_date: this.moment(this.date).format('YYYY-MM-DD'),
-            per_page: -1,
-            statuses: [
-              'sln-b-pendingpayment',
-              'sln-b-pending',
-              'sln-b-paid',
-              'sln-b-paylater',
-              'sln-b-canceled',
-              'sln-b-confirmed',
-            ],
-            shop: this.shop?.id || null,
-          },
-        });
-        this.bookingsList = response.data.items || [];
-      } catch (error) {
-        console.error('error loading bookings list:', error);
-      }
+    addBookingForAttendant({timeslot, attendantId}) {
+      const selectedDate = this.modelValue;
+      this.$emit("add", selectedDate, timeslot, attendantId);
     },
     handleSearch(value) {
       this.activeSlotIndex = -1;
@@ -610,7 +666,6 @@ export default {
                 "sln-b-pending",
                 "sln-b-paid",
                 "sln-b-paylater",
-                "sln-b-canceled",
                 "sln-b-confirmed",
               ],
               shop: this.shop?.id || null,
@@ -623,32 +678,6 @@ export default {
           })
           .finally(() => {
             this.isLoadingTimeslots = false;
-          });
-    },
-    updateBookingsList() {
-      const currentView = this.isAttendantView;
-
-      this.axios
-          .get("bookings", {
-            params: {
-              start_date: this.moment(this.date).format("YYYY-MM-DD"),
-              end_date: this.moment(this.date).format("YYYY-MM-DD"),
-              per_page: -1,
-              statuses: [
-                "sln-b-pendingpayment",
-                "sln-b-pending",
-                "sln-b-paid",
-                "sln-b-paylater",
-                "sln-b-canceled",
-                "sln-b-confirmed"
-              ],
-              shop: this.shop?.id || null
-            }
-          })
-          .then((r) => {
-            this.bookingsList = r.data.items;
-            this.arrangeBookings();
-            this.isAttendantView = currentView;
           });
     },
     loadAvailabilityIntervals() {
@@ -692,7 +721,6 @@ export default {
         console.warn("slot is already locked!");
       }
     },
-
     handleSlotUnlock(holidayRule) {
       const newLockedTimeslots = this.lockedTimeslots.filter(locked =>
           !(locked.from_time === holidayRule.from_time &&
@@ -826,42 +854,52 @@ export default {
       this.showCurrentTimeLine = true;
     },
     arrangeBookings() {
-      this.columns = [];
       if (!Array.isArray(this.bookingsList)) return;
 
+      this.columns = [];
       const sorted = [...this.bookingsList].sort((a, b) => {
         const aStart = this.getBookingStart(a);
         const bStart = this.getBookingStart(b);
         return aStart - bStart;
       });
 
+
       sorted.forEach((booking) => {
         if (booking) {
           booking._column = this.findFreeColumn(booking);
         }
       });
+      if(document.querySelector('.dp__active_date.dp__today') !== null){
+        if(document.querySelector('.current-time-line') !== null){
+          document.querySelector('.current-time-line').style.display = 'block';
+          document.querySelector('.current-time-line').scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+      } else {
+        if(document.querySelector('.current-time-line') !== null)
+          document.querySelector('.current-time-line').style.display = 'none';
+      }
     },
     findFreeColumn(booking) {
+
       for (let column = 0; column < this.columns.length; column++) {
         if (!this.doesOverlapColumn(booking, this.columns[column])) {
           this.columns[column].push(booking);
           return column;
         }
       }
+
       this.columns.push([booking]);
       return this.columns.length - 1;
     },
     doesOverlapColumn(newBooking, columnBookings) {
       const newStart = this.getBookingStart(newBooking);
       const newEnd = this.getBookingEnd(newBooking);
-      for (const b of columnBookings) {
-        const bStart = this.getBookingStart(b);
-        const bEnd = this.getBookingEnd(b);
-        if (bStart < newEnd && bEnd > newStart) {
-          return true;
-        }
-      }
-      return false;
+
+      return columnBookings.some(existingBooking => {
+        const existingStart = this.getBookingStart(existingBooking);
+        const existingEnd = this.getBookingEnd(existingBooking);
+        return (newStart < existingEnd && newEnd > existingStart);
+      });
     },
     hasOverlappingBookings(slotIndex) {
       const slotStart = this.getMinutes(this.timeslots[slotIndex]);
@@ -887,12 +925,20 @@ export default {
     },
     getBookingEnd(booking) {
       if (!booking) return 0;
-      let endAt = booking.time;
+
+      let realEndTime = booking.time;
       if (booking.services?.length) {
         const lastService = booking.services[booking.services.length - 1];
-        endAt = lastService.end_at || booking.time;
+        realEndTime = lastService.end_at || booking.time;
       }
-      return this.getMinutes(endAt);
+
+      const startMin = this.getMinutes(booking.time);
+      const endMin = this.getMinutes(realEndTime);
+      const realDuration = endMin - startMin;
+
+      const duration = this.getDisplayDuration(booking, realDuration);
+
+      return startMin + duration;
     },
     getBookingStyle(booking) {
       const openStr = this.timeslots[0];
@@ -931,7 +977,7 @@ export default {
         }
       } else {
         const colIndex = booking._column || 0;
-        leftPx = colIndex * (this.cardWidth + this.gap);
+        leftPx = colIndex * this.cardWidth;
       }
 
       return {
@@ -957,30 +1003,6 @@ export default {
         boxSizing: "border-box",
       };
     },
-    getOverlappingBookingsCount(attendantId) {
-      const bookings = this.processedBookings.filter(b => b._assistantId === attendantId);
-      if (bookings.length <= 1) return 1;
-
-      let maxOverlap = 1;
-      for (let i = 0; i < bookings.length; i++) {
-        let currentOverlap = 1;
-        const current = bookings[i];
-        const currentStart = this.getMinutes(current._serviceTime.start);
-        const currentEnd = this.getMinutes(current._serviceTime.end);
-
-        for (let j = i + 1; j < bookings.length; j++) {
-          const other = bookings[j];
-          const otherStart = this.getMinutes(other._serviceTime.start);
-          const otherEnd = this.getMinutes(other._serviceTime.end);
-
-          if (currentStart < otherEnd && currentEnd > otherStart) {
-            currentOverlap++;
-          }
-        }
-        maxOverlap = Math.max(maxOverlap, currentOverlap);
-      }
-      return maxOverlap;
-    },
     getAssistantColumnLeft(index) {
       return this.sortedAttendants.slice(0, index).reduce((sum, attendant) => {
         const width = this.columnWidths[attendant.id] || this.attendantColumnWidth;
@@ -989,25 +1011,41 @@ export default {
     },
     getBookingPosition(booking) {
       const attendantId = booking._assistantId;
+
+      const startMin = this.getMinutes(booking._serviceTime.start);
+      const realDuration = this.getMinutes(booking._serviceTime.end) - startMin;
+      const displayDuration = this.getDisplayDuration(booking, realDuration);
+      const bookingEnd = startMin + displayDuration;
+
       const overlappingBookings = this.processedBookings
-          .filter((b) => b._assistantId === attendantId && this.doBookingsOverlap(booking, b) && b.id !== booking.id)
-          .sort((a, b) => this.getMinutes(a._serviceTime.start) - this.getMinutes(b._serviceTime.start));
+          .filter(b => {
+            if (b._assistantId !== attendantId || b.id === booking.id) return false;
+            const bStart = this.getMinutes(b._serviceTime.start);
+            const bRealDuration = this.getMinutes(b._serviceTime.end) - bStart;
+            const bDisplayDuration = this.getDisplayDuration(b, bRealDuration);
+            const bEnd = bStart + bDisplayDuration;
+            return startMin < bEnd && bookingEnd > bStart;
+          })
+          .sort((a, b) => {
+            const timeA = this.getMinutes(a._serviceTime.start);
+            const timeB = this.getMinutes(b._serviceTime.start);
+            return timeA === timeB ? a.id - b.id : timeA - timeB;
+          });
+
+      if (overlappingBookings.length === 0) {
+        booking._position = 0;
+        return 0;
+      }
+
+      const usedPositions = new Set(overlappingBookings.map(b => b._position || 0));
 
       let position = 0;
-      const usedPositions = new Set(overlappingBookings.map(b => b._position));
       while (usedPositions.has(position)) {
         position++;
       }
       booking._position = position;
+
       return position * this.cardWidth;
-    },
-    doBookingsOverlap(booking1, booking2) {
-      if (!booking1 || !booking2) return false;
-      const start1 = this.getMinutes(booking1._serviceTime.start);
-      const end1 = this.getMinutes(booking1._serviceTime.end);
-      const start2 = this.getMinutes(booking2._serviceTime.start);
-      const end2 = this.getMinutes(booking2._serviceTime.end);
-      return start1 < end2 && end1 > start2;
     },
     getMinutes(str) {
       const [hh, mm] = str.split(":").map(Number);

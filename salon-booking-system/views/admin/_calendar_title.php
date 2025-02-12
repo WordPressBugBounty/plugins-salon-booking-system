@@ -60,7 +60,7 @@ $booking_phone = esc_html($booking->getPhone());
             '').
          $format->time($bookingService->getStartsAt()) . ' &#8594; ' .
          $format->time($bookingService->getEndsAt()).'<br /></span>';
-         echo $bookingService->getResource() ? $bookingService->getResource() .'<br />' : '' ;
+         echo !empty($bookingService->getResource()) && !$bookingService->getResource()->isEmpty() ? $bookingService->getResource() .'<br />' : '' ;
 
     ?>
 <?php endforeach ?>

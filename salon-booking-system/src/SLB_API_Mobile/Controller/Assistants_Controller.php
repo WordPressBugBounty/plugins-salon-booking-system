@@ -20,6 +20,43 @@ class Assistants_Controller extends REST_Controller
      */
     protected $rest_base = 'assistants';
 
+    protected function get_primary_language() {
+        // WPML Implementation - with proper initialization check
+        if (defined('ICL_LANGUAGE_CODE') && function_exists('icl_object_id')) {
+            global $sitepress;
+            if ($sitepress && method_exists($sitepress, 'get_default_language')) {
+                return $sitepress->get_default_language();
+            }
+        }
+
+        // Polylang Integration
+        if (function_exists('pll_default_language')) {
+            return pll_default_language();
+        }
+
+        // WordPress core Fallback
+        $locale = get_option('WPLANG');
+        return !empty($locale) ? substr($locale, 0, 2) : 'en';
+    }
+
+    protected function apply_language_filters(&$prepared_args) {
+        if (defined('ICL_LANGUAGE_CODE') && function_exists('icl_object_id')) {
+            global $sitepress;
+            if ($sitepress && method_exists($sitepress, 'get_default_language')) {
+                $prepared_args['suppress_filters'] = false;
+                $primary_language = $sitepress->get_default_language();
+                $sitepress->switch_lang($primary_language);
+                return;
+            }
+        }
+
+        if (function_exists('pll_languages_list')) {
+            $primary_language = $this->get_primary_language();
+            $prepared_args['lang'] = $primary_language;
+            return;
+        }
+    }
+
     public function register_routes() {
 
         register_rest_route( $this->namespace, '/' . $this->rest_base, array(
@@ -121,24 +158,23 @@ class Assistants_Controller extends REST_Controller
         $prepared_args['post_type']	= self::POST_TYPE;
         $prepared_args['post_status']	= 'publish';
 
-        $assistants = array();
+        $this->apply_language_filters($prepared_args);
 
-	$prepared_args = apply_filters('sln_api_assistants_get_items_prepared_args', $prepared_args, $request);
+        $prepared_args = apply_filters('sln_api_assistants_get_items_prepared_args', $prepared_args, $request);
 
         $query = new WP_Query( $prepared_args );
 
+        $assistants = array();
         foreach ( $query->posts as $assistant ) {
             $data         = $this->prepare_item_for_response( $assistant, $request );
             $assistants[] = $this->prepare_response_for_collection( $data );
         }
 
-        $response = $this->success_response(array('items' => $assistants));
-
         // Store pagination values for headers then unset for count query.
         $per_page = (int) $prepared_args['posts_per_page'];
         $page     = ceil( ( ( (int) $prepared_args['offset'] ) / $per_page ) + 1 );
 
-	$prepared_args['fields'] = 'ID';
+        $prepared_args['fields'] = 'ID';
 
         $total_assistants = $query->found_posts;
 
@@ -150,6 +186,7 @@ class Assistants_Controller extends REST_Controller
             $total_assistants = $count_query->found_posts;
         }
 
+        $response = $this->success_response(array('items' => $assistants));
         $response->header( 'X-WP-Total', (int) $total_assistants );
 
         $max_pages = ceil( $total_assistants / $per_page );

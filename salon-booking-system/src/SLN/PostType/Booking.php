@@ -492,7 +492,7 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
                     if ($obj->getOrigin()) {
 	                    echo esc_html__($obj->getOrigin(), 'salon-booking-system');
                     } else {
-	                    echo '';
+	                    echo 'Direct';
                     }
 
                 break;
@@ -650,7 +650,6 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
                         $isNew ? "Add booking" : 'Update booking',
                         'salon-booking-system'
                     ) ?>').addClass('sln-btn sln-btn--main');
-                    $('#major-publishing-actions').css('display', 'none');
                     $('#submitdiv h3 span').text('<?php echo esc_html__('Booking', 'salon-booking-system') ?>');
                     <?php
                     foreach (SLN_Enum_BookingStatus::toArray() as $k => $v) {

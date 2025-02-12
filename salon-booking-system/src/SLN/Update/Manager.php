@@ -115,7 +115,7 @@ class SLN_Update_Manager
         $response = $this->doCall('check_license');
 
         if (is_wp_error($response)) {
-            SLN_Func::updateOption($this->get('slug').'_license_status', $response->get_error_message());
+            error_log("Error checking license of {$this->get('slug')}: {$response->get_error_message()}");
         }
 
         if ($response->license == 'expired' ) {

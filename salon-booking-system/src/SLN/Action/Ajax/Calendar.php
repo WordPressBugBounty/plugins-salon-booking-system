@@ -141,34 +141,6 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
     }
   }
 
-  private function getAssistantsOrder()
-  {
-	$ret = array();
-	  foreach ($this->assistants as $att) {
-		  $position = $att->getMeta('order');
-		  if (!empty($position)) {
-			if (!isset($ret[$position])) {
-			  $ret[$position] = array();
-			}
-			  $ret[$position][] = $att->getId();
-		  } else {
-			$ret[] = $att->getId();
-		  }
-	  }
-		ksort($ret);
-		$ordered = array();
-		foreach ($ret as $pos => $ids) {
-		  if (is_array($ids)) {
-			foreach ($ids as $id) {
-			  $ordered[] = $id;
-			}
-		  } else {
-			$ordered[] = $ids;
-		  }
-		}
-	return $ordered;
-  }
-
   private function getAjaxDayWeekStart(Date $day, $weekStart = null)
   {
     if (empty($weekStart)) {
@@ -682,22 +654,97 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
   }
 
   private function buildAssistants()
-  {
-    $this->assistants = $this->plugin
-      ->getRepository(SLN_Plugin::POST_TYPE_ATTENDANT)
-      ->getAll();
+    {
+        $prepared_args = [
+            'post_type'   => SLN_Plugin::POST_TYPE_ATTENDANT,
+            'post_status' => 'publish',
+            'orderby'     => 'meta_value',
+            'meta_key'    => '_sln_attendant_order',
+            'order'       => 'ASC',
+        ];
 
-    $this->assistants = apply_filters('sln.action.ajaxcalendar.assistants', $this->assistants);
+        $this->applyLanguageFilters($prepared_args);
 
-    if (in_array(SLN_Plugin::USER_ROLE_STAFF, wp_get_current_user()->roles) || in_array(SLN_Plugin::USER_ROLE_WORKER, wp_get_current_user()->roles)) {
-      $assistants = array_filter($this->assistants, function ($attendant) {
-        return $attendant->getMeta('staff_member_id') == get_current_user_id() && $attendant->getIsStaffMemberAssignedToBookingsOnly();
-      });
-      if (!empty($assistants)) {
-        $this->assistants = $assistants;
-      }
+        $current_user = wp_get_current_user();
+        $roles = $current_user->roles;
+        $repo  = $this->plugin->getRepository(SLN_Plugin::POST_TYPE_ATTENDANT);
+
+        // if (in_array(SLN_Plugin::USER_ROLE_STAFF, $roles) || in_array(SLN_Plugin::USER_ROLE_WORKER, $roles)) {
+        //     $all_assistants = $repo->getAll();
+        //     $this->assistants = array_filter($all_assistants, function ($attendant) use ($current_user) {
+        //         return $attendant->getMeta('staff_member_id') == $current_user->ID
+        //             && $attendant->getIsStaffMemberAssignedToBookingsOnly();
+        //     });
+        // } else {
+            $this->assistants = $repo->get($prepared_args);
+        // }
+
+        $this->assistants = apply_filters('sln.action.calendar.assistants', $this->assistants);
     }
-  }
+
+  private function applyLanguageFilters(array &$prepared_args)
+    {
+        // check WPML language settings
+        if (defined('ICL_LANGUAGE_CODE') && function_exists('icl_object_id')) {
+            global $sitepress;
+            if ($sitepress && method_exists($sitepress, 'get_default_language')) {
+                $prepared_args['suppress_filters'] = false;
+                // Switch to the primary language.
+                $sitepress->switch_lang($sitepress->get_default_language());
+                return;
+            }
+        }
+
+        // check polylang settings
+        if (function_exists('pll_languages_list')) {
+            $prepared_args['lang'] = $this->getPrimaryLanguage();
+        }
+    }
+
+  private function getPrimaryLanguage()
+    {
+        // WPML
+        if (defined('ICL_LANGUAGE_CODE') && function_exists('icl_object_id')) {
+            global $sitepress;
+            if ($sitepress && method_exists($sitepress, 'get_default_language')) {
+                return $sitepress->get_default_language();
+            }
+        }
+
+        // Polylang
+        if (function_exists('pll_default_language')) {
+            return pll_default_language();
+        }
+
+        $locale = get_option('WPLANG');
+        return !empty($locale) ? substr($locale, 0, 2) : 'en';
+    }
+
+  private function getAssistantsOrder()
+    {
+        $assistants = $this->assistants;
+
+        usort($assistants, function ($a, $b) {
+            $orderA = $a->getMeta('order');
+            $orderB = $b->getMeta('order');
+
+            if (empty($orderA) && empty($orderB)) {
+                return 0;
+            } elseif (empty($orderA)) {
+                return 1;
+            } elseif (empty($orderB)) {
+                return -1;
+            }
+
+            return $orderA <=> $orderB;
+        });
+
+        $ordered_ids = array_map(function ($assistant) {
+            return $assistant->getId();
+        }, $assistants);
+
+        return array_unique($ordered_ids);
+    }
 
   public function getDuplicateActionPostLink($id = 0, $context = 'display')
   {

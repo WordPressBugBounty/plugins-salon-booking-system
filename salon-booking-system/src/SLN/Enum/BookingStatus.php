@@ -59,7 +59,9 @@ class SLN_Enum_BookingStatus extends SLN_Enum_AbstractEnum
 
     public static function toBackendWrapper(){
         $ret = self::getLabels();
-        unset($ret[self::PENDING_PAYMENT], $ret[self::PAY_LATER], $ret[self::PAID]);
+        if(! defined('SLN_VERSION_PAY')){
+            unset($ret[self::PENDING_PAYMENT], $ret[self::PAY_LATER], $ret[self::PAID]);
+        }
         return $ret;
     }
 

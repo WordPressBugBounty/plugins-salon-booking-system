@@ -827,7 +827,7 @@ function sln_initImporter($item, mode) {
                                     console.log(response);
                                     $modal.modal("hide");
                                     if (response.success) {
-                                        jQuery('.alert.alert-success .alert-skipped .skipped-bookings').html('')
+                                        jQuery('#import-skipped-booking-modal .alert-skipped .skipped-bookings').html('')
                                         importShowPB();
                                         importProgressPB(
                                             response.data.total,
@@ -869,7 +869,7 @@ function sln_initImporter($item, mode) {
             .css("width", value + "%");
         if(skipped !== true){
             jQuery('.alert.alert-success .alert-skipped').removeClass('hide');
-            let skipped_list = jQuery('.alert.alert-success .alert-skipped .skipped-bookings');
+            let skipped_list = jQuery('#import-skipped-booking-modal .alert-skipped .skipped-bookings');
             skipped_list.append(
                 '<li><span class="skipped-booking--id">' + skipped.id + '</span>' +
                     '<span class="skipped-booking--datetime">' + skipped.datetime + '</span>' +
@@ -924,6 +924,15 @@ function sln_initImporter($item, mode) {
                 success: function (response) {
                     if (response.success) {
                         importShowSuccess();
+                        if(jQuery('#import-skipped-booking-modal .alert-skipped .skipped-bookings li').length){
+                        	jQuery("#wpwrap").css("z-index", "auto");
+                        	let $modal = jQuery('#import-skipped-booking-modal').modal({
+                        		keyboard: false,
+                        		backdrop: true,
+                        	});
+                        	$modal.find('.skipped-bookings--number').text($modal.find('.skipped-bookings li').length);
+                        	$modal.find('.skipped-bookings--total').text(total);
+                        }
                     } else {
                         importShowError();
                     }
