@@ -60,15 +60,12 @@ class SLN_Shortcode_Salon
                     return $this->render($obj->render());
                 }
 
-                if (!$settings->isAttendantsEnabled()) {
-                    continue;
-                }
                 if (!$settings->isFormStepsAltOrder()) {
                     if ($step === 'details' && $curr === 'details') {
                         if (!$obj->setResources()) {
                             return $this->render($obj->render());
                         }
-                        if (!$obj->setAttendantsAuto()) {
+                        if ($settings->isAttendantsEnabled() && !$obj->setAttendantsAuto()) {
                             return $this->render($obj->render());
                         }
                     }
@@ -77,7 +74,7 @@ class SLN_Shortcode_Salon
                         if (!$obj->setResources()) {
                             return $this->render($obj->render());
                         }
-                        if (!$obj->setAttendantsAuto()) {
+                        if ($settings->isAttendantsEnabled() && !$obj->setAttendantsAuto()) {
                             return $this->render($obj->render());
                         }
                     }
@@ -296,8 +293,6 @@ class SLN_Shortcode_Salon
     }
 
     protected function maybeReverseSteps($steps) {
-        // print_r($_GET);
-        // print_r($_POST);
         if (!(isset($_GET['submit_'.$this->getCurrentStep()]) && $_GET['submit_'.$this->getCurrentStep()] === 'next' ||
             isset($_POST['submit_'.$this->getCurrentStep()]) && $_POST['submit_'.$this->getCurrentStep()] === 'next')) {
             $steps = array_reverse($steps);

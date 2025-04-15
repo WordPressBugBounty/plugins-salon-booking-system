@@ -69,8 +69,8 @@ export default {
       const rule = {
         from_date: this.date,
         to_date: this.date,
-        from_time: this.moment(this.start, "HH:mm").format("HH:mm"),
-        to_time: this.moment(this.end, "HH:mm").format("HH:mm"),
+        from_time: this.normalizeTime(this.start),
+        to_time: this.normalizeTime(this.end),
         daily: true
       };
 
@@ -142,6 +142,10 @@ export default {
           this.$emit("unlock-end", this.holidayRule);
         }, 300);
       }
+    },
+    normalizeTime(time) {
+      const momentFormat = this.getTimeFormat();
+      return this.moment(time, momentFormat).format('HH:mm');
     }
   },
   unmounted() {

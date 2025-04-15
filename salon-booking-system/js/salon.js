@@ -65,6 +65,9 @@ function sln_init($) {
             )
         ) {
             $(document).scrollTop($("#sln-salon").offset().top);
+            if($(
+                '#salon-step-services input[type="checkbox"][checked="checked"]'
+            ).length){
             $("#salon-step-services .sln-box--fixed_height").scrollTop(
                 $(
                     '#salon-step-services input[type="checkbox"][checked="checked"]'
@@ -74,6 +77,7 @@ function sln_init($) {
                         .offset().top -
                     100
             );
+            }
         }
         if ($("#salon-step-services").length) {
             $(".sln-service-variable-duration--counter--minus").addClass(
@@ -303,6 +307,13 @@ function sln_init($) {
     if ($("#salon-step-date").length) {
         sln_stepDate($);
     } else {
+        if ($("#salon-step-summary").length && $('#start-over').length) {
+            $('#sln-step-submit').text($('#sln-step-submit-complete').text());
+            $('.sln-btn--prevstep a').text($('#start-over').text());
+            $('.sln-btn--prevstep a').click(function (){
+                location.reload();
+            });
+        }
         if ($("#salon-step-details").length) {
             $("a.tec-link").on("click", function (e) {
                 e.preventDefault();

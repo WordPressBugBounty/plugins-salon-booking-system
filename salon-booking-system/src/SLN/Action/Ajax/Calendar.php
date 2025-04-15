@@ -45,6 +45,7 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
     }else{
       $this->intervalName = 'day';
     }
+    //var_dump(123123);die;
     $this->buildBookings();
     $this->buildAssistants();
     $this->saveAttendantPositions($_GET['assistant_position']);
@@ -298,6 +299,35 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
 
     return $this->plugin->loadView('admin/_calendar_render_week_day', array('calendar' => $this, 'bookings' => $bookings, 'attendant' => $this->getassistantsOrder()));
   }
+
+  public function isTimeUnavailable($line, $unavailableTimes) {
+    $currentTime = $this->getTimeByLine($line);
+    $currentTime24h = $this->normalizeTimeFormat($currentTime);
+    foreach ($unavailableTimes as $unavailableTime) {
+      if ($currentTime24h === $unavailableTime) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private function normalizeTimeFormat($time) {
+    $time = strtolower(str_replace(' ', '', $time));
+
+    if (strpos($time, 'am') !== false) {
+      $time = str_replace('am', '', $time);
+      $parts = explode(':', trim($time));
+      if ((int)$parts[0] === 12) $parts[0] = '00';
+        return sprintf("%02d:%02d", (int)$parts[0], (int)$parts[1]);
+      }
+      else if (strpos($time, 'pm') !== false) {
+        $time = str_replace('pm', '', $time);
+        $parts = explode(':', trim($time));
+        if ((int)$parts[0] !== 12) $parts[0] = (int)$parts[0] + 12;
+        return sprintf("%02d:%02d", (int)$parts[0], (int)$parts[1]);
+      }
+      return $time;
+    }
 
   protected function renderDay(){
     $format = $this->plugin->format();
@@ -657,7 +687,7 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
     {
         $prepared_args = [
             'post_type'   => SLN_Plugin::POST_TYPE_ATTENDANT,
-            'post_status' => 'publish',
+            //'post_status' => 'publish',
             'orderby'     => 'meta_value',
             'meta_key'    => '_sln_attendant_order',
             'order'       => 'ASC',

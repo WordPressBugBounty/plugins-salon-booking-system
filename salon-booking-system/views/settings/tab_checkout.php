@@ -253,6 +253,7 @@ sum(
             </div>
         </div>
     </div>
+</div>
     <div class="row">
         <div class="col-xs-12 col-sm-6">
             <div id="sln-advanced_discount_system" class="sln-box sln-box--main sln-box--main--small">

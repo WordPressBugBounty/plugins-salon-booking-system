@@ -4,7 +4,7 @@ Tags: booking, reservations, scheduling, booking calendar, appointment calendar
 Requires at least: 4.1
 Tested up to: 6.7
 Requires PHP: 7.4.8
-Stable tag: 10.11
+Stable tag: 10.15
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -408,6 +408,21 @@ FREE version doesn't have the online payments options, no mobile app access, no 
 
 
 == Changelog ==
+
+15.04.2025 - 10.15
+
+* Fixed vulnerability issue
+* Fixed minor issues
+
+27.03.2025
+
+* Improved mobile web app
+* Minor fixes
+
+21.03.2025
+
+* Fixed issue with Google Calendar library
+* Improved PWA
 
 12.02.2025 - 10.11
 

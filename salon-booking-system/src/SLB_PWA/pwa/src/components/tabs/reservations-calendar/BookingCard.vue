@@ -17,44 +17,36 @@
           <span class="assistant-name">{{ service.assistant_name }}</span>
         </div>
       </div>
+
+      <div class="booking-actions-bottom">
+        <button class="booking-actions-menu-dots" @click.stop="toggleActionsMenu">
+          &bull;&bull;&bull;
+        </button>
+      </div>
+
       <div class="booking-status">
         <span class="status-label">{{ statusLabel }}</span>
       </div>
     </div>
-
-    <template v-if="isDelete">
-      <div class="delete-backdrop" @click="isDelete = false"></div>
-      <div class="delete-btn-wrapper">
-        <p class="delete-btn-wrapper-text">{{ this.getLabel('deleteBookingConfirmText') }}</p>
-        <!-- <p>
-                  <b-button
-                      variant="primary"
-                      @click="deleteItem"
-                      class="delete-btn-wrapper-button"
-                  >
-                    {{ this.getLabel('deleteBookingButtonLabel') }}
-                  </b-button>
-                </p>-->
-        <p>
-          <a
-              href="#"
-              class="delete-btn-wrapper-go-back"
-              @click.prevent="isDelete = false"
-          >
-            {{ this.getLabel('deleteBookingGoBackLabel') }}
-          </a>
-        </p>
-      </div>
-    </template>
+    <CustomerActionsMenu
+        :booking="booking"
+        :show="showActionsMenu"
+        @close="showActionsMenu = false"
+        @edit="onEdit"
+        @delete="onDelete"
+        @view-profile="onViewProfile"
+    />
   </div>
 </template>
 
 <script>
 // import PayRemainingAmount from '../upcoming-reservations/PayRemainingAmount.vue'
+import CustomerActionsMenu from './CustomerActionsMenu.vue';
 
 export default {
   name: 'BookingCard',
   components: {
+    CustomerActionsMenu,
     // PayRemainingAmount,
   },
   props: {
@@ -67,6 +59,7 @@ export default {
   data() {
     return {
       isDelete: false,
+      showActionsMenu: false
     }
   },
   computed: {
@@ -93,9 +86,18 @@ export default {
     },
   },
   methods: {
-    deleteItem() {
-      this.$emit('deleteItem')
-      this.isDelete = false
+    toggleActionsMenu() {
+      this.showActionsMenu = !this.showActionsMenu;
+    },
+    onEdit() {
+      this.$emit('showDetails', this.booking);
+      this.$emit('edit', this.booking);
+    },
+    onDelete() {
+      this.$emit('deleteItem', this.booking.id);
+    },
+    onViewProfile(customer) {
+      this.$emit('viewCustomerProfile', customer);
     },
     showDetails() {
       this.$emit('showDetails', this.booking);
@@ -104,12 +106,13 @@ export default {
       return this.$root.labels ? this.$root.labels[labelKey] : labelKey
     },
   },
-  emits: ['deleteItem', 'showDetails'],
+  emits: ['deleteItem', 'showDetails', 'edit', 'viewCustomerProfile'],
 }
 </script>
 
 <style scoped>
 .booking-wrapper {
+  position: relative;
   width: 100%;
   z-index: 20;
   padding: 10px;
@@ -129,6 +132,7 @@ export default {
   backdrop-filter: blur(5px);
   pointer-events: none;
   box-shadow: 0 0 10px 1px rgb(0 0 0 / 10%);
+  position: relative;
 }
 
 .booking-status {
@@ -139,6 +143,23 @@ export default {
   font-size: 10px;
   letter-spacing: -0.1px;
   color: #637491;
+}
+
+.booking-actions {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 5;
+}
+
+.booking-actions-button {
+  background: none;
+  border: none;
+  color: #04409F;
+  font-size: 20px;
+  padding: 5px 10px;
+  cursor: pointer;
+  pointer-events: auto;
 }
 
 .customer-name {
@@ -201,52 +222,22 @@ export default {
   font-size: 11px;
 }
 
-.delete {
-  color: #6A6F76;
+.booking-actions-bottom {
+  position: absolute;
+  left: 12px;
+  bottom: 8px;
+  z-index: 5;
+}
+
+.booking-actions-menu-dots {
+  background: none;
+  border: none;
+  color: #000;
+  font-size: 20px;
+  line-height: 5px;
+  letter-spacing: 1px;
+  padding: 5px;
   cursor: pointer;
-}
-
-.details-link {
-  color: #04409F;
-  margin-left: 16px;
-  cursor: pointer;
-}
-
-.booking-actions-remaining-amount {
-  display: flex;
-}
-
-.delete-backdrop {
-  position: fixed;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  background-color: #E0E0E0E6;
-  left: 0;
-  z-index: 1000000;
-}
-
-.delete-btn-wrapper {
-  position: fixed;
-  top: 45%;
-  left: 0;
-  width: 100%;
-  z-index: 1000000;
-  text-align: center;
-}
-
-.delete-btn-wrapper-text {
-  font-size: 12px;
-  color: #322D38;
-}
-
-.delete-btn-wrapper-button {
-  font-weight: bold;
-  text-transform: uppercase;
-}
-
-.delete-btn-wrapper-go-back {
-  color: #6A6F76;
-  font-size: 12px;
+  pointer-events: auto;
 }
 </style>

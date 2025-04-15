@@ -89,6 +89,10 @@ $ajaxEnabled = $plugin->getSettings()->isAjaxEnabled(); ?>
             id="sln-step-submit" type="submit" name="<?php echo $submitName ?>" value="next">
             <?php echo $nextLabel ?> <i class="glyphicon glyphicon-chevron-right"></i>
         </button>
+        <button
+                id="sln-step-submit-complete" value="next" class="hidden">
+            <?php echo __('Complete', 'salon-booking-system') ?>
+        </button>
         <?php
         }
         $nextBtn = ob_get_clean();
@@ -109,6 +113,7 @@ $ajaxEnabled = $plugin->getSettings()->isAjaxEnabled(); ?>
                 <?php endif?>
                 href="<?php echo $backUrl ?> ">
                 <i class="glyphicon glyphicon-chevron-left"></i> <?php esc_html_e('Back', 'salon-booking-system') ?>
+                <span id="start-over" class="hidden"><?php echo esc_html__('Start over', 'salon-booking-system'); ?></span>
             </a> 
         <?php
         endif;

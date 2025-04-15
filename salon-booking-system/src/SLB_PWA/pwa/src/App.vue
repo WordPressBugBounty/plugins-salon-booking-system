@@ -30,6 +30,7 @@ export default {
                 'sln-b-paylater': {label: this.getLabel('payLaterStatusLabel'), color: '#17a2b8'},
                 'sln-b-error': {label: this.getLabel('errorStatusLabel'), color: '#dc3545'},
                 'sln-b-confirmed': {label: this.getLabel('confirmedStatusLabel'), color: '#28a745'},
+                'sln-b-canceled': {label: this.getLabel('canceledStatusLabel'), color: '#dc3545'},
             },
             shop: null,
         }

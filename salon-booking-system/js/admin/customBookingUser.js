@@ -1903,15 +1903,29 @@ function sln_booking_list_view() {
 					: "Booking editor view disabled."
 			);
 		};
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
 
 		// Initial state on load
-		const initialValue = $bookingEditorView.is(":checked");
+		let cookieValue = getCookie("bookingEditorChecked");
+		let initialValue;
+
+		if (cookieValue !== undefined) {
+			initialValue = cookieValue === "true";
+			$bookingEditorView.prop("checked", initialValue);
+		} else {
+			initialValue = $bookingEditorView.is(":checked");
+		}
 		toggleClasses(initialValue);
 
 		// Event listener for changes
 		$bookingEditorView.on("change", function () {
 			const isChecked = $(this).is(":checked");
 			toggleClasses(isChecked);
+			document.cookie = "bookingEditorChecked=" + isChecked + "; path=/; max-age=" + 60 * 60 * 24 * 30; // expires in 30 days
 		});
 	})(jQuery);
 }

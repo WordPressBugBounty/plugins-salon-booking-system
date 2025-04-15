@@ -264,8 +264,16 @@ class HolidayRules_Controller extends REST_Controller
 
         $holidays_assistants_rules = array();
         foreach ($assistants as $att) {
-            $holidays_assistants_rules[$att->getId()] =
-                $att->getMeta('holidays_daily') ?: array();
+            $holidays_daily = $att->getMeta('holidays_daily') ?: array();
+            $holidays = $att->getMeta('holidays') ?: array();
+
+            foreach ($holidays as &$holiday) {
+                if (!isset($holiday['daily'])) {
+                    $holiday['daily'] = true;
+                }
+            }
+
+            $holidays_assistants_rules[$att->getId()] = array_merge($holidays_daily, $holidays);
         }
 
         return apply_filters(
@@ -282,24 +290,35 @@ class HolidayRules_Controller extends REST_Controller
         $formatter = new SLN_Formatter($plugin);
 
         $holidays_rules = $settings->get('holidays_daily') ?: array();
+        $holidays = $settings->get('holidays') ?: array();
+        $all_rules = array_merge($holidays_rules, $holidays);
+
         $ret = array();
 
         if (!empty($date)) {
-            foreach ($holidays_rules as $rule) {
+            foreach ($all_rules as $rule) {
                 if (
                     ($date === $rule['from_date'] ||
-                        $date === $rule['to_date']) &&
-                    $rule['daily'] === true
+                        $date === $rule['to_date'] ||
+                        ($date >= $rule['from_date'] && $date <= $rule['to_date']))
                 ) {
-                    $rule['from_time'] = date('H:i', strtotime($rule['from_time']));
-                    $rule['to_time'] = date('H:i', strtotime($rule['to_time']));
+                    if (isset($rule['from_time'])) {
+                        $rule['from_time'] = $formatter->time($rule['from_time']);
+                    }
+                    if (isset($rule['to_time'])) {
+                        $rule['to_time'] = $formatter->time($rule['to_time']);
+                    }
                     $ret[] = $rule;
                 }
             }
         } else {
-            foreach ($holidays_rules as $rule) {
-                $rule['from_time'] = date('H:i', strtotime($rule['from_time']));
-                $rule['to_time'] = date('H:i', strtotime($rule['to_time']));
+            foreach ($all_rules as $rule) {
+                if (isset($rule['from_time'])) {
+                    $rule['from_time'] = $formatter->time($rule['from_time']);
+                }
+                if (isset($rule['to_time'])) {
+                    $rule['to_time'] = $formatter->time($rule['to_time']);
+                }
                 $ret[] = $rule;
             }
         }

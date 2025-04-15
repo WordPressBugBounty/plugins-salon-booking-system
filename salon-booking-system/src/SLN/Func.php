@@ -40,7 +40,11 @@ class SLN_Func
         if( setlocale(LC_TIME,0) !== get_locale() ){ setlocale(LC_TIME, get_locale()); }
         for ($i = 1; $i <= 12; $i++) {
             $now->setDate(1970,$i,1);
-            $ret[$i] = SLN_TimeFunc::translateDate('M', $now->getTimestamp());
+            if(isset($_POST['sln-tools-export-bookings'])){
+                $ret[$i] = date('M',  $now->getTimestamp());
+            } else {
+                $ret[$i] = SLN_TimeFunc::translateDate('M', $now->getTimestamp());
+            }
         }
         return $ret;
     }

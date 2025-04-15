@@ -20,7 +20,7 @@
       <key name="feedback_message"/>
       <key name="last_step_note"/>
       <key name="checkout_fields">
-      <key name="firstname"><key name="label"/></key><key name="lastname"><key name="label"/></key><key name="email"><key name="label"/></key><key name="phone"><key name="label"/></key><key name="address"><key name="label"/></key><key name="privacy"><key name="label"/></key><key name="qwe"><key name="label"/></key></key>
+      <key name="firstname"><key name="label"/></key><key name="lastname"><key name="label"/></key><key name="email"><key name="label"/></key><key name="phone"><key name="label"/></key><key name="address"><key name="label"/></key><key name="privacy"><key name="label"/></key><key name="qwe"><key name="label"/></key><key name="file"><key name="label"/></key></key>
     </key>
   </admin-texts>
 </wpml-config>

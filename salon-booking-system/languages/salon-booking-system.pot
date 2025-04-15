@@ -7463,3 +7463,11 @@ msgstr ""
 #: views/sms/remind.php:51
 msgid "| Timing: "
 msgstr ""
+
+#: views/discount/shortcode/_salon_summary_next_button.php:13
+msgid "Complete"
+msgstr ""
+
+#:views/shortcode/_form_actions.php:
+msgid "Start over"
+msgstr ""

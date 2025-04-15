@@ -388,14 +388,24 @@ class SLN_PostType_Service extends SLN_PostType_Abstract
 	    'taxonomy'	    => SLN_Plugin::TAXONOMY_SERVICE_CATEGORY,
 	    'hide_empty'    => false,
 	) );
+    //	$tmp_service_categories = array_map('trim', $_POST['tax_input']['sln_service_category']);
+        if(isset($_POST['tax_input']['sln_service_category']) && !empty($_POST['tax_input']['sln_service_category'])){
+            $tmp_service_categories = $_POST['tax_input']['sln_service_category'];
+            foreach ($service_categories as $service_category) {
+                if (in_array($service_category->term_id, $tmp_service_categories)) {
+                    $selected_service_categories[] = $service_category->term_id;
+                }
+            }
+        } else{
+            $tmp_service_categories = array_map('trim', explode(',', $_POST['sln_service_category']));
 
-	$tmp_service_categories = array_map('trim', explode(',', $_POST['sln_service_category']));
+            foreach ($service_categories as $service_category) {
+                if (in_array($service_category->name, $tmp_service_categories)) {
+                    $selected_service_categories[] = $service_category->term_id;
+                }
+            }
+        }
 
-	foreach ($service_categories as $service_category) {
-	    if (in_array($service_category->name, $tmp_service_categories)) {
-		$selected_service_categories[] = $service_category->term_id;
-	    }
-	}
 
 	wp_update_post(array(
 	   'ID'		 => $post_id,

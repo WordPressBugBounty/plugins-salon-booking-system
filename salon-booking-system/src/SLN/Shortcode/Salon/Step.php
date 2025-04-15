@@ -134,8 +134,7 @@ abstract class SLN_Shortcode_Salon_Step
 
         if ($this->getPlugin()->getSettings()->isMultipleAttendantsEnabled()) {
 
-            $ids = array();
-
+            $ids = $bb->getAttendantsIds();
             foreach ($bb->getAttendantsIds() as $sId => $aId) {
                 if($aId === 0)
                     $ids[$sId] = '';

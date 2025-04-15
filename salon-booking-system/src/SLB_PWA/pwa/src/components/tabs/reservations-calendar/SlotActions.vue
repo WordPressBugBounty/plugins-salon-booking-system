@@ -76,7 +76,7 @@ export default {
       return this.timeslots[this.index + 1] || null;
     },
     getFormattedDate() {
-      return this.moment(this.date).format('YYYY-MM-DD');
+      return this.dateFormat(this.date, 'YYYY-MM-DD');
     },
     handleLockStart() {
       const slotKey = `${this.timeSlot}-${this.getNextSlot()}`;

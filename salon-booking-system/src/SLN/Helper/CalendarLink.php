@@ -73,6 +73,7 @@ class SLN_Helper_CalendarLink
         }
         $notes = $booking->getNote();
         $desc .= "\n\n" . __('Booking notes', 'salon-booking-system') . ":\n" . (empty($notes) ? __("None", 'salon-booking-system') : $notes);
+        $desc .= "\n\n" . __('Customer name', 'salon-booking-system') . ":\n" . $booking->getFirstname() .' '.$booking->getLastname();
         $desc .= "\n\n" . __('Booking status', 'salon-booking-system') . ": " . SLN_Enum_BookingStatus::getLabel($booking->getStatus());
 
 	$link = Link::create($title, $from, $to)

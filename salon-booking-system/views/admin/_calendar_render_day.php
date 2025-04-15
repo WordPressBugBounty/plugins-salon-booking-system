@@ -50,9 +50,9 @@ $isPro = defined('SLN_VERSION_PAY') && SLN_VERSION_PAY;
 		                            ></button>
 		                        </div>
 		                    </div>
-		                    <?php if(in_array($calendar->getTimeByLine($line), $att['unavailable_times'])): ?>
-								<div style="margin-left: <?php echo ($attCol + 1)*200; ?>px; top: <?php echo $line*100; ?>px;" class="att-unavailable-highlight"></div>
-							<?php endif; ?>
+                            <?php if($calendar->isTimeUnavailable($line, $att['unavailable_times'])): ?>
+                               <div style="margin-left: <?php echo ($attCol + 1)*200; ?>px; top: <?php echo $line*100; ?>px;" class="att-unavailable-highlight"></div>
+                            <?php endif; ?>
 						<?php endfor;
 					}
 				}

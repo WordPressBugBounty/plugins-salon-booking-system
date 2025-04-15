@@ -55,7 +55,7 @@ class SLN_Admin_Calendar extends SLN_Admin_AbstractPage
             // require_once SLN_PLUGIN_DIR.'/views/js/calendar_language/admin_calendar.php';
             wp_localize_script(
                 'smalot-datepicker-lang',
-                'sln_calendar_languages.locale', SLN_TimeFunc::wpLocale2CalendarLocale(SLN_TimeFunc::getWpLocale())
+                'sln_calendar_languages', SLN_TimeFunc::wpLocale2CalendarLocale(SLN_TimeFunc::getWpLocale())
             );
 
             wp_enqueue_script(

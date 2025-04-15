@@ -275,8 +275,12 @@ class SLN_TimeFunc
     public static function wpLocale2CalendarLocale($locale){
         $settings = SLN_Plugin::getInstance()->getSettings();
         $locale_name = $settings->getDateLocale() ?? get_user_locale();
+        $locale_name = str_replace('_', '-', $locale_name);
+        $wpLang     = array('el', 'fi', 'hr', 'ja', 'nb-NO', 'sl-SI');
+        $calLang    = array('el-GR', 'fi-FI', 'hr-HR', 'ja-JP', 'no-NO', 'sl-SL');
+        $locale_name     = str_replace($wpLang, $calLang, $locale_name);
         return array(
-            'locale' => $locale,
+            'locale' => $locale_name,
             'locale_data' => array(
                 'error_noview' => sprintf(__('Calendar: View %s not found', 'salon-booking-system'), '{0}'),
                 'error_dateformat' => sprintf(__('Calendar: Wrong date format %s. Should be either "now" or "yyyy-mm-dd"', 'salon-booking-system'), '{0}'),

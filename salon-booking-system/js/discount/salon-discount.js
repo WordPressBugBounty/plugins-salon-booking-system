@@ -70,6 +70,7 @@ function sln_applyDiscountCode() {
                 );
                 if(data.button != undefined){
                     $('.sln-btn.sln-btn--fullwidth.sln-btn--nextstep').html(data.button);
+                    $('#sln-step-submit-complete').hide();
                     sln_discountCodeInitButton();
                 }
             } else {
@@ -78,6 +79,7 @@ function sln_applyDiscountCode() {
                 $(".sln-total-price").html(data.total);
                 if(data.button != undefined){
                     $('.sln-btn.sln-btn--fullwidth.sln-btn--nextstep').html(data.button);
+                    $('#sln-step-submit-complete').hide();
                     sln_discountCodeInitButton();
                 }
                 alertBox = $(

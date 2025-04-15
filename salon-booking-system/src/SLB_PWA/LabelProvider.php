@@ -101,6 +101,11 @@ class LabelProvider
             'assistantBusyTitle' => __('Assistant is busy', 'salon-booking-system'),
             'assistantBusyMessage' => __('is busy from %s to %s. Please select another time or assistant.', 'salon-booking-system'),
             'attendantViewLabel' => __('Assistants view', 'salon-booking-system'),
+            'bookingActionEdit' => __('Edit', 'salon-booking-system'),
+            'bookingActionDelete' => __('Delete', 'salon-booking-system'),
+            'bookingActionCallCustomer' => __('Call customer', 'salon-booking-system'),
+            'bookingActionWhatsappCustomer' => __('Whatsapp customer', 'salon-booking-system'),
+            'bookingActionOpenProfile' => __('Open customer profile', 'salon-booking-system'),
         );
     }
 

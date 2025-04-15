@@ -8,6 +8,15 @@
                     @chooseCustomer="chooseCustomer" :shop="shop"/>
     <EditBookingItem v-else-if="editItem" :booking="item" :customer="customer" @close="closeEditItem"
                      @chooseCustomer="chooseCustomer"/>
+    <CustomerDetails v-else-if="showCustomerProfile"
+                     :customerID="selectedCustomer.id"
+                     :customerFirstname="selectedCustomer.first_name"
+                     :customerLastname="selectedCustomer.last_name"
+                     :customerEmail="selectedCustomer.email"
+                     :customerPhone="selectedCustomer.phone"
+                     :customerAddress="selectedCustomer.address"
+                     :customerPersonalNotes="selectedCustomer.note"
+                     @close="closeCustomerProfile"/>
     <BookingDetails v-else-if="showItem" :booking="item" @close="closeShowItem" @edit="setEditItem"
                     @showCustomerImages="showCustomerImages"/>
     <ReservationsCalendar
@@ -15,6 +24,7 @@
         v-model="selectedDate"
         @showItem="setShowItem"
         @add="add"
+        @viewCustomerProfile="openCustomerProfile"
         :shop="shop"
     />
   </div>
@@ -27,6 +37,7 @@ import CustomersAddressBook from './customers-address-book/CustomersAddressBook.
 import BookingDetails from './upcoming-reservations/BookingDetails.vue'
 import EditBookingItem from './upcoming-reservations/EditBookingItem.vue'
 import ImagesList from './customers-address-book/ImagesList.vue'
+import CustomerDetails from './customers-address-book/CustomerDetails.vue'
 
 export default {
   name: 'ReservationsCalendarTab',
@@ -44,6 +55,7 @@ export default {
     BookingDetails,
     EditBookingItem,
     ImagesList,
+    CustomerDetails,
   },
   mounted() {
     let params = this.getQueryParams()
@@ -69,6 +81,8 @@ export default {
       isShowCustomerImages: false,
       showImagesCustomer: null,
       selectedDate: new Date(),
+      showCustomerProfile: false,
+      selectedCustomer: null,
     };
   },
   methods: {
@@ -120,6 +134,18 @@ export default {
       this.item.customer_photos = customer.photos
       this.isShowCustomerImages = false;
       this.$emit('hideTabsHeader', false)
+    },
+    openCustomerProfile(customer) {
+      this.selectedCustomer = customer;
+      this.showItem = false;
+      this.showCustomerProfile = true;
+    },
+    closeCustomerProfile() {
+      this.showCustomerProfile = false;
+      this.selectedCustomer = null;
+      if (this.item) {
+        this.showItem = true;
+      }
     },
   },
   emits: ['hideTabsHeader'],

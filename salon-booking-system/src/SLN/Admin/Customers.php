@@ -97,6 +97,9 @@ class SLN_Admin_Customers extends SLN_Admin_AbstractPage {
         wp_update_user($customer);
 
         foreach ($_POST['sln_customer_meta'] as $k => $value) {
+            if(strpos($k, 'wp') == 0){
+                continue;
+            }
             $value = is_array($value) ? array_map('sanitize_textarea_field', $value) : sanitize_textarea_field($value);
             update_user_meta($user_id, $k, $value);
         }

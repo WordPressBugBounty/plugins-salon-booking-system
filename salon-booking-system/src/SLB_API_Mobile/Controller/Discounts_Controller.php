@@ -457,7 +457,7 @@ class Discounts_Controller extends REST_Controller
                 ),
                 'discount_code' => array(
                     'description' => __( 'The coupon code for the resource.', 'salon-booking-system' ),
-                    'type'        => 'integer',
+                    'type'        => 'string',
                     'context'     => array( 'view', 'edit' ),
                     'arg_options' => array(
                         'default' => SLB_Discount_Wrapper_Discount::generateCouponCode(),

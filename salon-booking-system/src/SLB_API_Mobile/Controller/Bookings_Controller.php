@@ -976,7 +976,7 @@ class Bookings_Controller extends REST_Controller
 
         try {
 
-	    do_action('sln_api_bookings_update_item_before_update_post', $request, $booking_id);
+	    //do_action('sln_api_bookings_update_item_before_update_post', $request, $booking_id);
 
             $cloned_request = clone $request;
 

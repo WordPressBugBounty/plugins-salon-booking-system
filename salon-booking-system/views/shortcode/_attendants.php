@@ -58,6 +58,9 @@ foreach ($attendants as $attendant) {
     if(get_post_status($attendant->getId()) == 'draft'){
         continue;
     }
+    if(get_post_status($attendant->getId()) == 'private'){
+        continue;
+    }
     if ($attendant->hasServices($services)) {
         $errors = SLN_Shortcode_Salon_AttendantHelper::validateItem($bookingServices->getItems(), $ah, $attendant);
     if($plugin->getSettings()->get('hide_invalid_attendants_enabled') && !empty($errors)){

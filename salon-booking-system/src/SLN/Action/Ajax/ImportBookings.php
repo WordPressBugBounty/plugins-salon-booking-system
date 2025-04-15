@@ -133,9 +133,9 @@ class SLN_Action_Ajax_ImportBookings extends SLN_Action_Ajax_AbstractImport{
         }
         $booking_services = array();
         for($i = 0; $i < count($services); $i++){
+            $booking_service = array('service' => $services[$i]->getId());
             if($services[$i]->isAttendantsEnabled()){
                 $service = $services[$i];
-                $booking_service = array('service' => $service->getId());
                 if($service->isMultipleAttendantsForServiceEnabled()){
                     $attendants = array_slice($attendants, 0, $service->getCountMultipleAttendants());
                     $attendants = array_map(function($att){return $att->getId();}, $attendants);
@@ -143,8 +143,8 @@ class SLN_Action_Ajax_ImportBookings extends SLN_Action_Ajax_AbstractImport{
                 }else{
                     $booking_service['attendant'] = $attendants[$i%count($attendants)]->getId();
                 }
-                $booking_services[] = $booking_service;
             }
+            $booking_services[] = $booking_service;
         }
         if(!($booking_status = array_search($this->getData('status'), SLN_Enum_BookingStatus::getLabels()))){
             return $this->dataToErrorRespons($data, esc_html__('Invalid booking status', 'salon-booking-system'));

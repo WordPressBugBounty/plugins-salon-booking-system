@@ -85,7 +85,7 @@ export default {
     isDayWithBookings(date) {
       return this.availabilityStats.some(
           stat =>
-              stat.date === this.moment(date).format("YYYY-MM-DD") &&
+              stat.date === this.dateFormat(date, "YYYY-MM-DD") &&
               stat.data?.bookings > 0
       );
     },
@@ -93,7 +93,7 @@ export default {
     isAvailableBookings(date) {
       return this.availabilityStats.some(
           stat =>
-              stat.date === this.moment(date).format("YYYY-MM-DD") &&
+              stat.date === this.dateFormat(date, "YYYY-MM-DD") &&
               stat.available &&
               !stat.full_booked
       );
@@ -102,7 +102,7 @@ export default {
     isDayFullBooked(date) {
       return this.availabilityStats.some(
           stat =>
-              stat.date === this.moment(date).format("YYYY-MM-DD") &&
+              stat.date === this.dateFormat(date, "YYYY-MM-DD") &&
               stat.full_booked
       );
     },
@@ -110,7 +110,7 @@ export default {
     isHoliday(date) {
       return this.availabilityStats.some(
           stat =>
-              stat.date === this.moment(date).format("YYYY-MM-DD") &&
+              stat.date === this.dateFormat(date, "YYYY-MM-DD") &&
               stat.error?.type === "holiday_rules"
       );
     }

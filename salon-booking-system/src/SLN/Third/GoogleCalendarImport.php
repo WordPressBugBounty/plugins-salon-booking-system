@@ -36,6 +36,7 @@ class SLN_Third_GoogleCalendarImport
 
         if (defined('DOING_CRON') && isset($_GET['action']) && $_GET['action'] === 'sln_sync_from_google_calendar') {
             add_action('wp_loaded', array($this, 'syncFull'));
+            add_action('wp_loaded', array($this, 'syncFullShops'));
             add_filter('user_has_cap', array($this, 'userHasCapCallback'), 10, 4);
         }
     }
@@ -120,8 +121,92 @@ class SLN_Third_GoogleCalendarImport
 
         self::updateSyncToken($nextSyncToken);
     }
+    public function syncFullShops()
+    {
+        global $wpdb;
+        $meta_key = '_sln_shop_google_client_calendar';
 
-    private function importBookingsFromGoogleCalendarEvents($gEvents)
+        $shops = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s",
+                $meta_key
+            ),
+            ARRAY_A
+        );
+        foreach ($shops as $shop){
+        $gScope = $this->gScope;
+        $gScope->google_client_calendar = $shop['meta_value'];
+        if ( ! $gScope->is_connected() ) {
+            return;
+        }
+
+        $syncToken = self::getSyncToken();
+        $this->printMsg(sprintf("Current token '%s'", $syncToken));
+
+        $showDeletedParams = array(
+           'showDeleted' => true,
+        );
+
+        $params = $showDeletedParams;
+
+	    $now	 = new SLN_DateTime();
+	    $timeMin = $now->sub(new DateInterval('P2M'))->format(DateTime::RFC3339);
+
+	    $showDeletedParams['timeMin'] = $timeMin;
+
+        if (!empty($syncToken)) {
+            //$params['syncToken'] = $syncToken;
+        } else {
+	        $params['timeMin'] = $timeMin;
+	    }
+
+        $nextPageToken = null;
+
+        try {
+            $timezone = $gScope->get_google_service()->settings->get('timezone')->value;
+            $this->timezone = new DateTimeZone($timezone);
+        }catch (\Exception $e) {
+            $this->timezone = SLN_TimeFunc::getWpTimezone();
+        }
+
+        do {
+
+            if ($nextPageToken) {
+                $params['pageToken'] = $nextPageToken;
+            }
+
+            try {
+                $gCalendarEvents = $gScope->get_google_service()->events->listEvents(
+                    $gScope->google_client_calendar,
+                    $params
+                );
+            } catch (Google_Service_Exception $e) {
+		        $params = $showDeletedParams;
+                $gCalendarEvents = $gScope->get_google_service()->events->listEvents($gScope->google_client_calendar, $params);
+            }
+
+            $gEvents = $gCalendarEvents->getItems();
+
+            $this->printMsg(sprintf("Need to process %s events", count($gEvents)));
+
+            $this->importBookingsFromGoogleCalendarEvents($gEvents, $shop['post_id']);
+
+            $nextPageToken = $gCalendarEvents->getNextPageToken();
+
+            $this->printMsg(sprintf("Next page token '%s'", $nextPageToken));
+
+        } while ($nextPageToken);
+
+        $nextSyncToken = $gCalendarEvents->getNextSyncToken();
+
+        $this->printMsg(sprintf("Next sync token '%s'", $syncToken));
+
+        self::updateSyncToken($nextSyncToken);
+        }
+
+    }
+
+    private function importBookingsFromGoogleCalendarEvents($gEvents, $shop_id = false)
     {
         if (empty($gEvents)) {
             return;
@@ -130,7 +215,7 @@ class SLN_Third_GoogleCalendarImport
         foreach ($gEvents as $gEvent) {
             $this->eventError = '';
             $this->printMsg(str_repeat('*', 100));
-            $this->importBookingFromGoogleCalendarEvent($gEvent);
+            $this->importBookingFromGoogleCalendarEvent($gEvent, $shop_id);
             $this->printMsg(str_repeat('*', 100));
         }
     }
@@ -138,7 +223,7 @@ class SLN_Third_GoogleCalendarImport
     /**
      * @param Google_Service_Calendar_Event $gEvent
      */
-    private function importBookingFromGoogleCalendarEvent($gEvent)
+    private function importBookingFromGoogleCalendarEvent($gEvent, $shop_id = false)
     {
         $this->printMsg(sprintf("Start processing event '%s' with title '%s'", $gEvent->getId(), $gEvent->getSummary()));
 
@@ -163,7 +248,9 @@ class SLN_Third_GoogleCalendarImport
                 $this->printMsg("Event parsed details:");
                 $this->printMsg(print_r($bookingDetails, true));
                 $this->printMsg("Start creating booking");
-
+                if($shop_id){
+                    $bookingDetails['shop_id'] = $shop_id;
+                }
                 $this->importNewBookingFromGoogleCalendarEvent($gEvent, $bookingDetails);
 
                 $gEvent = $this->gScope->get_google_service()->events->get(
@@ -280,7 +367,9 @@ class SLN_Third_GoogleCalendarImport
 	    remove_action('save_post', 'synch_a_booking', 12);
 
 	    $postId  = wp_insert_post($postArr);
-
+	    if(isset($bookingDetails['shop_id'])){
+	        add_post_meta($postId,'_sln_booking_shop', $bookingDetails['shop_id'], true);
+        }
 	    add_action('save_post', 'synch_a_booking', 12, 2);
 
         if ($postId instanceof WP_Error) {

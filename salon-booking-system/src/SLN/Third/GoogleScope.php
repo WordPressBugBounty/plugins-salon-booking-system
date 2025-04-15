@@ -1,4 +1,19 @@
 <?php
+use Google\Client as Google_Client;
+use Google\Service\Calendar as Google_Service_Calendar;
+use Google\Service\Calendar\Event as Google_Service_Calendar_Event;
+use Google\Service\Calendar\EventDateTime as Google_Service_Calendar_EventDateTime;
+use Google\Service\Calendar\EventAttendee as Google_Service_Calendar_EventAttendee;
+if (!function_exists('\GuzzleHttp\choose_handler')) {
+    require_once SLN_PLUGIN_DIR . '/src/SLN/Third/google-api-php-client/vendor/guzzlehttp/guzzle/src/functions.php';
+    require_once SLN_PLUGIN_DIR . '/src/SLN/Third/google-api-php-client/vendor/guzzlehttp/guzzle/src/functions_include.php';
+}
+if (!function_exists('\GuzzleHttp\Promise\promise_for')) {
+    require_once SLN_PLUGIN_DIR . '/src/SLN/Third/google-api-php-client/vendor/guzzlehttp/promises/src/functions_include.php';
+}
+if (!function_exists('\GuzzleHttp\choose_handler')) {
+    require_once SLN_PLUGIN_DIR . '/src/SLN/Third/google-api-php-client/vendor/guzzlehttp/guzzle/src/functions_include.php';
+}
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 function _pre($m) {
     echo "<pre>";
@@ -119,8 +134,18 @@ class SLN_GoogleScope {
         </script>
         <?php
     }
+    public function check_role(){
+        $user = wp_get_current_user();
 
+        // List of allowed roles
+        $allowed_roles = ['administrator', 'sln_staff', 'sln_shop_manager'];
+
+        if (array_intersect($allowed_roles, $user->roles) === []) {
+            wp_send_json_error('Unauthorized', 403);
+        }
+    }
     public function start_synch() {
+        $this->check_role();
         if (!$this->is_connected()) {
             echo "KO|" . esc_html__("Google Client is not connected!", 'salon-booking-system');
         }
@@ -143,6 +168,7 @@ class SLN_GoogleScope {
     }
 
     public function delete_all_bookings_event($bookings = "") {
+        $this->check_role();
         $now = new SLN_DateTime();
         $booking_handler = new SLN_Bookings_Handle($now);
         $bookings = $booking_handler->getBookings();
@@ -935,11 +961,13 @@ class SLN_GoogleCalendarEventFactory extends Google_Service_Calendar_Event {
 
 }
 
-function synch_a_booking(SLN_Wrapper_Booking $booking, $sync = false) {
+function synch_a_booking($booking, $sync = false) {
     if (!$sync)
         remove_action('save_post', 'test_booking', 12, 2);
 
-
+    if(is_int($booking)){
+        $booking = new SLN_Wrapper_Booking($booking);
+    }
     sln_my_wp_log("############################################################################");
     $statusForPublish = array(
         SLN_Enum_BookingStatus::PAID,
@@ -981,6 +1009,11 @@ function synch_a_booking(SLN_Wrapper_Booking $booking, $sync = false) {
 		}
         if (isset($b_event_id) && !empty($b_event_id)) {
             sln_my_wp_log("update");
+            if(get_post_meta($booking->getId(),'_sln_booking_shop',true)){
+                $shop_id = get_post_meta($booking->getId(),'_sln_booking_shop',true);
+                $shop_calendar = get_post_meta($shop_id,'_sln_shop_google_client_calendar',true);
+                $GLOBALS['sln_googlescope']->google_client_calendar = $shop_calendar;
+            }
             try {
 			    $event_id = $GLOBALS['sln_googlescope']->update_event_from_booking($booking, $b_event_id, false, $error);
             } catch (Exception $e) {
@@ -990,6 +1023,11 @@ function synch_a_booking(SLN_Wrapper_Booking $booking, $sync = false) {
         }
         if (!(isset($b_event_id) && !empty($b_event_id))) {
             sln_my_wp_log("create");
+            if(get_post_meta($booking->getId(),'_sln_booking_shop',true)){
+                $shop_id = get_post_meta($booking->getId(),'_sln_booking_shop',true);
+                $shop_calendar = get_post_meta($shop_id,'_sln_shop_google_client_calendar',true);
+                $GLOBALS['sln_googlescope']->google_client_calendar = $shop_calendar;
+            }
             try {
                 $event_id = $GLOBALS['sln_googlescope']->create_event_from_booking($booking, false, $error);
                 update_post_meta($booking->getId(), '_sln_calendar_event_id', $event_id);

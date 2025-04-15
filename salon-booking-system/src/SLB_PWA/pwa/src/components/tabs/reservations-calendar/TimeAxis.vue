@@ -1,7 +1,7 @@
 <template>
   <div class="time-axis">
     <div
-        v-for="(timeslot, index) in timeslots"
+        v-for="(timeslot, index) in formattedTimeslots"
         :key="'axis-' + index"
         class="time-axis-item"
         :style="{ height: slotHeight + 'px' }"
@@ -22,6 +22,20 @@ export default {
     slotHeight: {
       type: Number,
       required: true
+    },
+    timeFormatNew: {
+      type: String,
+      required: false,
+    }
+  },
+  computed: {
+    formattedTimeslots() {
+      return this.timeslots.map(time => this.formatTime(time, this.timeFormatNew));
+    }
+  },
+  methods: {
+    formatTime(timeString) {
+      return this.timeFormat(timeString);
     }
   }
 };

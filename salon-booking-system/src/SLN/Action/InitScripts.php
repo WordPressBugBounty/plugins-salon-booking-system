@@ -390,7 +390,7 @@ class SLN_Action_InitScripts
 			// require_once SLN_PLUGIN_DIR.'/views/js/calendar_language/datepicker.php';
 			wp_localize_script(
 				'smalot-datepicker-lang',
-				'sln_datepicker_calendar',
+				'sln_calendar_languages',
 				SLN_TimeFunc::wpLocale2DatepickerLocale(SLN_TimeFunc::getWpLocale())
 			);
 

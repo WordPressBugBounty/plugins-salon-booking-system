@@ -29,6 +29,7 @@
         <TimeAxis
             :timeslots="timeslots"
             :slot-height="slotHeight"
+            :time-format-new="timeFormatNew"
         />
         <div
             class="slots-content"
@@ -54,6 +55,7 @@
                   :slot-height="slotHeight"
                   :selected-slots="selectedTimeSlots"
                   :processed-bookings="processedBookings"
+                  :availability-intervals="availabilityIntervals"
                   v-model:lockedTimeslots="lockedTimeslots"
                   @lock="handleAttendantLock"
                   @unlock="handleAttendantUnlock"
@@ -69,8 +71,9 @@
                     :booking="booking"
                     :style="getBookingStyle(booking)"
                     :class="{ 'booking-card--default-duration': booking._isDefaultDuration }"
-                    @delete="deleteItem"
-                    @show-details="showDetails"
+                    @deleteItem="deleteItem"
+                    @showDetails="showDetails"
+                    @viewCustomerProfile="viewCustomerProfile"
                 />
               </template>
             </div>
@@ -109,8 +112,9 @@
                 <BookingCard
                     :booking="booking"
                     :style="getBookingStyle(booking)"
-                    @delete="deleteItem"
-                    @show-details="showDetails"
+                    @deleteItem="deleteItem"
+                    @showDetails="showDetails"
+                    @viewCustomerProfile="viewCustomerProfile"
                 />
               </template>
             </div>
@@ -139,9 +143,11 @@ import SearchInput from './SearchInput.vue';
 import BookingCalendar from './BookingCalendar.vue';
 import BookingCard from "./BookingCard.vue";
 import AttendantTimeSlots from './AttendantTimeSlots.vue';
+import mixins from '@/mixin';
 
 export default {
   name: "ReservationsCalendar",
+  mixins: [mixins],
   components: {
     TimeAxis,
     AttendantsList,
@@ -172,7 +178,6 @@ export default {
       availabilityStats: [],
       bookingsList: [],
       availabilityIntervals: {},
-      processingSlots: [],
 
       // UI state
       search: "",
@@ -184,6 +189,7 @@ export default {
       isLoadingTimeslots: false,
       isLoadingCalendar: false,
       isLoading: false,
+      loadingQueue: [],
 
       // layout configuration
       slotHeight: 110,
@@ -207,6 +213,7 @@ export default {
       attendantColumnGap: 8,
       attendants: [],
       attendantsLoaded: false,
+      timeFormatNew: 'simple',
 
       // slot data
       slotProcessingStates: new Map(),
@@ -370,7 +377,7 @@ export default {
       return widths;
     },
     isReadyToRender() {
-      if (this.bookingsList.length > 0 && this.timeslots.length > 0) {
+      if (this.bookingsList.length > 0 && this.timeslots.length > 0 && this.availabilityIntervals.length > 0) {
         this.bookingsList.forEach(booking => {
           let bookingTime = booking.time;
           if (!this.timeslots.includes(bookingTime) && bookingTime < this.timeslots[0]) {
@@ -378,7 +385,25 @@ export default {
           }
         });
       }
-      return !this.isLoadingTimeslots && this.attendantsLoaded && this.timeslots.length > 0;
+
+      if (this.isAttendantView) {
+        if (!this.attendantsLoaded) {
+          return false;
+        }
+
+        if (this.attendants.length === 0) {
+          return false;
+        }
+
+        if (!this.availabilityIntervals ||
+            Object.keys(this.availabilityIntervals).length === 0) {
+          return false;
+        }
+      }
+
+      return !this.isLoadingTimeslots &&
+          this.attendantsLoaded &&
+          this.timeslots.length > 0;
     },
     validatedHolidayRule() {
       return (rule) => {
@@ -394,22 +419,20 @@ export default {
     }
   },
   watch: {
+    shop: {
+      handler(newVal, oldVal) {
+        if (newVal?.id !== oldVal?.id) {
+          this.activeSlotIndex = -1;
+          this.loadAllData();
+        }
+      },
+      deep: true
+    },
     bookingsList() {
       this.arrangeBookings();
       this.$nextTick(() => {
         this.$forceUpdate();
       });
-    },
-    modelValue(newVal, oldVal) {
-      if (newVal.getTime() !== oldVal?.getTime()) {
-        this.activeSlotIndex = -1;
-        this.loadLockedTimeslots();
-        this.loadBookingsList();
-        this.loadAvailabilityIntervals();
-        this.$nextTick(() => {
-          this.updateCurrentTimeLinePosition();
-        });
-      }
     },
     attendantsLoaded(newVal) {
       if (newVal) {
@@ -418,15 +441,6 @@ export default {
         });
       }
     },
-    shop: {
-      handler(newVal, oldVal) {
-        if (newVal?.id !== oldVal?.id) {
-          this.activeSlotIndex = -1;
-          this.load();
-        }
-      },
-      deep: true
-    },
     "$root.settings": {
       handler(newSettings) {
         if (newSettings?.attendant_enabled) {
@@ -434,38 +448,25 @@ export default {
         } else {
           this.attendantsLoaded = true;
           this.isAttendantView = false;
-
         }
+        this.timeFormatNew = newSettings?.time_format.js_format === 'H:iip' ? 'am' : 'simple';
+        this.dateFormat = newSettings?.date_format || 'YYYY-MM-DD';
       },
       deep: true
     },
     isAttendantView(newValue) {
       localStorage.setItem('isAttendantView', newValue);
-      this.isLoading = true;
-
-      Promise.all([
-        this.loadTimeslots(),
-        this.loadLockedTimeslots(),
-        this.loadBookingsList(),
-      ]).then(() => {
-        this.$nextTick(() => {
-          this.arrangeBookings();
-          this.$forceUpdate();
-        });
-      }).finally(() => {
-        this.isLoading = false;
-      });
+      this.loadAllData();
     },
     date(newVal, oldVal) {
       if (newVal.getTime() !== oldVal?.getTime()) {
-        this.loadTimeslots();
-        this.loadLockedTimeslots();
-        this.loadBookingsList();
+        this.loadAllData();
       }
     },
   },
   mounted() {
-    this.load();
+    this.loadAllData();
+
     setTimeout(() => {
       const cals = window.document.querySelectorAll(".dp__calendar");
       if (cals[0]) {
@@ -475,18 +476,20 @@ export default {
         if (spinBorder) cals[0].appendChild(spinBorder);
       }
     }, 0);
+
     setInterval(() => this.update(), 60000);
     this.intervalId = setInterval(() => {
       this.updateCurrentTimeLinePosition();
     }, 60000);
+
     this.$nextTick(() => {
       this.updateCurrentTimeLinePosition();
-
       const container = this.$refs.dragScrollContainer;
       if (container) {
         container.addEventListener("touchmove", this.onTouchMove, {passive: false});
       }
-    })
+    });
+
     if (this.$refs.slotsContainer) {
       this.$refs.slotsContainer.addEventListener("click", (e) => {
         if (e.target === this.$refs.slotsContainer) {
@@ -494,12 +497,6 @@ export default {
         }
       });
     }
-    if (this.$root.settings?.attendant_enabled) {
-      this.loadAttendants();
-    } else {
-      this.attendantsLoaded = true;
-    }
-
   },
   beforeUnmount() {
     if (this.intervalId) clearInterval(this.intervalId);
@@ -512,94 +509,148 @@ export default {
     }
   },
   methods: {
-    updateSlotProcessing({slot, status}) {
-      this.slotProcessing = {
-        ...this.slotProcessing,
-        [slot]: status,
+    loadAllData() {
+      this.cancelPendingLoads();
+      this.isLoading = true;
+
+      const loadSettings = () => {
+        if (this.shop?.id) {
+          return this.axios.get('app/settings', {
+            params: {shop: this.shop.id}
+          }).then(response => {
+            if (response.data?.settings) {
+              this.$root.settings = response.data.settings;
+            }
+            return response;
+          });
+        } else {
+          return this.axios.get('app/settings').then(response => {
+            if (response.data?.settings) {
+              this.$root.settings = response.data.settings;
+            }
+            return response;
+          });
+        }
       };
+
+      loadSettings()
+          .then(() => this.loadTimeslots())
+          .then(() => {
+            const additionalTasks = [
+              this.loadLockedTimeslots(),
+              this.loadBookingsList(),
+              this.loadAvailabilityIntervals()
+            ];
+
+            const d = this.date;
+            const y = d.getFullYear();
+            const m = d.getMonth();
+            const firstDate = new Date(y, m, 1);
+            const lastDate = new Date(y, m + 1, 0);
+
+            additionalTasks.push(this.loadAvailabilityStats(firstDate, lastDate));
+
+            if (this.isAttendantView && this.$root.settings?.attendant_enabled && !this.attendantsLoaded) {
+              additionalTasks.push(this.loadAttendants());
+            }
+
+            this.loadingQueue = additionalTasks;
+
+            return Promise.all(additionalTasks);
+          })
+          .then(() => {
+            this.$nextTick(() => {
+              this.arrangeBookings();
+              this.$forceUpdate();
+            });
+          })
+          .catch(error => {
+            console.error('Error loading calendar data:', error);
+          })
+          .finally(() => {
+            this.isLoading = false;
+          });
     },
-    handleAttendantLock(payload) {
-      console.log('Lock payload:', payload);
-    },
-    handleAttendantUnlock(payload) {
-      console.log('Unlock payload:', payload);
-    },
-    load() {
-      this.loadTimeslots();
-      this.loadLockedTimeslots();
-      this.loadBookingsList();
-      const d = this.date;
-      const y = d.getFullYear();
-      const m = d.getMonth();
-      const firstDate = new Date(y, m, 1);
-      const lastDate = new Date(y, m + 1, 0);
-      this.loadAvailabilityStats(firstDate, lastDate);
-    },
-    update() {
-      this.loadBookingsList();
+    cancelPendingLoads() {
+      this.loadingQueue = [];
     },
     async loadTimeslots() {
       this.isLoadingTimeslots = true;
-      try {
-        const response = await this.axios.get('calendar/intervals', {
-          params: {shop: this.shop?.id || null},
-        });
+      return this.axios.get('calendar/intervals', {
+        params: {shop: this.shop?.id || null},
+      }).then(response => {
         this.timeslots = response.data.items || [];
-        this.updateCurrentTimeLinePosition()
-      } catch (error) {
-        console.error('error loading timeslots:', error);
-      } finally {
+        this.updateCurrentTimeLinePosition();
+        return response;
+      }).catch(error => {
+        console.error('Error loading timeslots:', error);
+        throw error;
+      }).finally(() => {
         this.isLoadingTimeslots = false;
-      }
+      });
     },
     async loadLockedTimeslots() {
-      this.isLoading = true;
       try {
-        const formattedDate = this.moment(this.date).format('YYYY-MM-DD');
-        const response = await this.axios.get('holiday-rules', {
+        const salonRulesResponse = await this.axios.get('holiday-rules', {
           params: {
-            assistants_mode: this.isAttendantView ? 'true' : 'false',
-            date: formattedDate,
+            assistants_mode: 'false',
+            date: this.moment(this.date).format('YYYY-MM-DD'),
           },
         });
 
-        if (response.data?.status === 'OK') {
-          if (this.isAttendantView) {
-            const assistantsRules = response.data.assistants_rules || {};
-            this.lockedTimeslots = Object.entries(assistantsRules).flatMap(([assistantId, rules]) =>
+        let salonRules = [];
+        if (salonRulesResponse.data?.status === 'OK') {
+          salonRules = salonRulesResponse.data.items || [];
+        }
+
+        if (this.isAttendantView) {
+          const assistantsResponse = await this.axios.get('holiday-rules', {
+            params: {
+              assistants_mode: 'true',
+              date: this.moment(this.date).format('YYYY-MM-DD'),
+            },
+          });
+
+          if (assistantsResponse.data?.status === 'OK') {
+            const assistantsRules = assistantsResponse.data.assistants_rules || {};
+            const formattedAssistantRules = Object.entries(assistantsRules).flatMap(([assistantId, rules]) =>
                 rules.map(rule => ({
                   ...rule,
                   assistant_id: Number(assistantId) || null,
                 }))
             );
-          } else {
-            this.lockedTimeslots = response.data.items || [];
+
+            const formattedSalonRules = salonRules.map(rule => ({
+              ...rule,
+              assistant_id: null,
+            }));
+
+            this.lockedTimeslots = [...formattedSalonRules, ...formattedAssistantRules];
           }
         } else {
-          console.error('unexpected response:', response.data);
+          this.lockedTimeslots = salonRules;
         }
+
+        return {data: {status: 'OK'}};
       } catch (error) {
-        console.error('error loading locked timeslots:', error.response?.data || error.message);
-      } finally {
-        this.isLoading = false;
+        console.error('Error loading locked timeslots:', error.response?.data || error.message);
+        throw error;
       }
     },
     async loadBookingsList() {
-      try {
-        const response = await this.axios.get('bookings', {
-          params: {
-            start_date: this.moment(this.date).format('YYYY-MM-DD'),
-            end_date: this.moment(this.date).format('YYYY-MM-DD'),
-            per_page: -1,
-            statuses: [
-              'sln-b-pendingpayment', 'sln-b-pending', 'sln-b-paid',
-              'sln-b-paylater',
-              'sln-b-confirmed',
-            ],
-            shop: this.shop?.id || null,
-          },
-        });
-
+      return this.axios.get('bookings', {
+        params: {
+          start_date: this.moment(this.date).format('YYYY-MM-DD'),
+          end_date: this.moment(this.date).format('YYYY-MM-DD'),
+          per_page: -1,
+          statuses: [
+            'sln-b-pendingpayment', 'sln-b-pending', 'sln-b-paid',
+            'sln-b-paylater',
+            'sln-b-confirmed',
+          ],
+          shop: this.shop?.id || null,
+        },
+      }).then(response => {
         const newBookings = response.data.items || [];
         const newBookingsMap = new Map(newBookings.map(b => [b.id, b]));
         this.bookingsList = [];
@@ -614,28 +665,75 @@ export default {
             this.bookingsList.push(newBooking);
           }
         });
-
-        this.arrangeBookings();
+        return response;
+      }).catch(error => {
+        console.error('Error loading bookings list:', error);
+        throw error;
+      });
+    },
+    updateSlotProcessing({slot, status}) {
+      this.slotProcessing = {
+        ...this.slotProcessing,
+        [slot]: status,
+      };
+    },
+    handleAttendantLock(payload) {
+      console.log('Lock payload:', payload);
+    },
+    handleAttendantUnlock(payload) {
+      console.log('Unlock payload:', payload);
+    },
+    async loadAvailabilityStats(fd, td) {
+      this.isLoadingCalendar = true;
+      try {
+        const response = await this.axios.get("availability/stats", {
+          params: {
+            from_date: this.moment(fd).format("YYYY-MM-DD"),
+            to_date: this.moment(td).format("YYYY-MM-DD"),
+            shop: this.shop?.id || null
+          },
+        });
+        this.availabilityStats = response.data.stats;
+        return response;
       } catch (error) {
-        console.error('error loading bookings list:', error);
+        console.error('Error loading availability stats:', error);
+        throw error;
+      } finally {
+        this.isLoadingCalendar = false;
       }
     },
-    loadAvailabilityStats(fd, td) {
-      this.isLoadingCalendar = true;
-      this.axios
-          .get("availability/stats", {
-            params: {
-              from_date: this.moment(fd).format("YYYY-MM-DD"),
-              to_date: this.moment(td).format("YYYY-MM-DD"),
-              shop: this.shop?.id || null
-            },
-          })
-          .then((r) => {
-            this.availabilityStats = r.data.stats;
-          })
-          .finally(() => {
-            this.isLoadingCalendar = false;
-          });
+    async loadAvailabilityIntervals() {
+      const timeParam = this.timeslots.length > 0 ? this.timeslots[0] : '09:00';
+
+      try {
+        const response = await this.axios.post("availability/intervals", {
+          date: this.moment(this.date).format("YYYY-MM-DD"),
+          time: timeParam,
+          shop: this.shop?.id || 0
+        });
+        this.availabilityIntervals = response.data.intervals;
+        return response;
+      } catch (error) {
+        console.error('Error loading availability intervals:', error);
+        throw error;
+      }
+    },
+    async loadAttendants() {
+      try {
+        const response = await this.axios.get("assistants", {
+          params: {shop: this.shop?.id || null, per_page: -1}
+        });
+        this.attendants = response.data.items;
+        this.attendantsLoaded = true;
+        return response;
+      } catch (error) {
+        console.error("Error loading attendants:", error);
+        this.attendantsLoaded = true;
+        throw error;
+      }
+    },
+    update() {
+      return this.loadBookingsList();
     },
     addBookingForAttendant({timeslot, attendantId}) {
       const selectedDate = this.modelValue;
@@ -649,64 +747,41 @@ export default {
         this.loadBookingsList();
       }
     },
-    loadFilteredBookings(searchQuery) {
+    async loadFilteredBookings(searchQuery) {
       this.isLoadingTimeslots = true;
       this.bookingsList = [];
       const currentView = this.isAttendantView;
 
-      return this.axios
-          .get("bookings", {
-            params: {
-              start_date: this.moment(this.date).format("YYYY-MM-DD"),
-              end_date: this.moment(this.date).format("YYYY-MM-DD"),
-              search: searchQuery,
-              per_page: -1,
-              statuses: [
-                "sln-b-pendingpayment",
-                "sln-b-pending",
-                "sln-b-paid",
-                "sln-b-paylater",
-                "sln-b-confirmed",
-              ],
-              shop: this.shop?.id || null,
-            },
-          })
-          .then((r) => {
-            this.bookingsList = r.data.items;
-            this.arrangeBookings();
-            this.isAttendantView = currentView;
-          })
-          .finally(() => {
-            this.isLoadingTimeslots = false;
-          });
-    },
-    loadAvailabilityIntervals() {
-      if (!this.timeslots.length) return;
-      this.axios
-          .post("availability/intervals", {
-            date: this.moment(this.date).format("YYYY-MM-DD"),
-            time: this.timeslots[0],
-            shop: this.shop?.id || 0
-          })
-          .then((r) => {
-            this.availabilityIntervals = r.data.intervals;
-          });
-    },
-    loadAttendants() {
-      this.axios
-          .get("assistants", {params: {shop: this.shop?.id || null, per_page: -1}})
-          .then((response) => {
-            this.attendants = response.data.items;
-            this.attendantsLoaded = true;
-          })
-          .catch((error) => {
-            console.error("Error loading attendants:", error);
-            this.attendantsLoaded = true;
-          });
+      try {
+        const response = await this.axios.get("bookings", {
+          params: {
+            start_date: this.moment(this.date).format("YYYY-MM-DD"),
+            end_date: this.moment(this.date).format("YYYY-MM-DD"),
+            search: searchQuery,
+            per_page: -1,
+            statuses: [
+              "sln-b-pendingpayment",
+              "sln-b-pending",
+              "sln-b-paid",
+              "sln-b-paylater",
+              "sln-b-confirmed",
+            ],
+            shop: this.shop?.id || null,
+          },
+        });
+
+        this.bookingsList = response.data.items;
+        this.arrangeBookings();
+        this.isAttendantView = currentView;
+      } finally {
+        this.isLoadingTimeslots = false;
+      }
     },
     handleSlotLock(holidayRule) {
+      // validate holiday rule format
       if (!this.validatedHolidayRule(holidayRule)) return;
 
+      // check if this exact rule already exists
       const exists = this.lockedTimeslots.some(locked =>
           locked.from_time === holidayRule.from_time &&
           locked.to_time === holidayRule.to_time &&
@@ -715,6 +790,7 @@ export default {
           locked.assistant_id === holidayRule.assistant_id
       );
 
+      // add rule if it doesn't exist yet
       if (!exists) {
         this.lockedTimeslots = [...this.lockedTimeslots, holidayRule];
       } else {
@@ -722,6 +798,7 @@ export default {
       }
     },
     handleSlotUnlock(holidayRule) {
+      // filter out the rule that matches the parameters
       const newLockedTimeslots = this.lockedTimeslots.filter(locked =>
           !(locked.from_time === holidayRule.from_time &&
               locked.to_time === holidayRule.to_time &&
@@ -730,6 +807,7 @@ export default {
               locked.assistant_id === holidayRule.assistant_id)
       );
 
+      // update the locked timeslots array
       if (newLockedTimeslots.length > 0) {
         this.lockedTimeslots = newLockedTimeslots;
       } else {
@@ -742,43 +820,285 @@ export default {
       const td = new Date(year, month + 1, 0);
       this.loadAvailabilityStats(fd, td);
     },
-    isHoliday(date) {
-      return this.availabilityStats.some(
-          (stat) =>
-              stat.date === this.moment(date).format("YYYY-MM-DD") &&
-              stat.error &&
-              stat.error.type === "holiday_rules"
-      );
+    isSlotLocked(currentSlot) {
+      try {
+        // if no availability data, consider slot as available
+        if (!this.availabilityIntervals || Object.keys(this.availabilityIntervals).length === 0) {
+          return false;
+        }
+
+        const formattedDate = this.moment(this.date).format("YYYY-MM-DD");
+        const currentDate = this.moment(formattedDate, "YYYY-MM-DD");
+
+        // check if salon is open on this day of week
+        const weekday = currentDate.day() + 1; // 1=Sunday, 2=Monday...
+        if (this.$root.settings?.available_days &&
+            !this.$root.settings.available_days[weekday]) {
+          return true; // ==> salon is closed on this day
+        }
+
+        const slotMinutes = this.timeToMinutes(currentSlot);
+
+        // check if slot is in salon holiday period
+        const holidayPeriod = this.$root.settings?.holidays?.find(holiday => {
+          if (!holiday || !holiday.from_date || !holiday.to_date) return false;
+
+          const holidayFromDate = this.moment(holiday.from_date, "YYYY-MM-DD");
+          const holidayToDate = this.moment(holiday.to_date, "YYYY-MM-DD");
+
+          if (currentDate.isSameOrAfter(holidayFromDate, 'day') &&
+              currentDate.isSameOrBefore(holidayToDate, 'day')) {
+
+            // handle single-day holiday (same start and end date)
+            if (currentDate.isSame(holidayFromDate, 'day') && currentDate.isSame(holidayToDate, 'day')) {
+              const fromTimeMinutes = this.timeToMinutes(holiday.from_time);
+              const toTimeMinutes = this.timeToMinutes(holiday.to_time);
+              return slotMinutes >= fromTimeMinutes && slotMinutes < toTimeMinutes;
+            }
+            // first day of multi-day holiday
+            else if (currentDate.isSame(holidayFromDate, 'day')) {
+              const fromTimeMinutes = this.timeToMinutes(holiday.from_time);
+              return slotMinutes >= fromTimeMinutes;
+            }
+            // last day of multi-day holiday
+            else if (currentDate.isSame(holidayToDate, 'day')) {
+              const toTimeMinutes = this.timeToMinutes(holiday.to_time);
+              return slotMinutes < toTimeMinutes;
+            }
+            // day in between first and last days
+            else {
+              return true; // ==> entire day is blocked
+            }
+          }
+
+          return false;
+        });
+        if (holidayPeriod) return true;
+
+        // check if slot is in daily holiday rule
+        const dailyHoliday = this.$root.settings?.holidays_daily?.find(rule => {
+          if (rule.assistant_id !== null) return false;
+
+          if (formattedDate === rule.from_date && formattedDate === rule.to_date) {
+            const ruleFromTime = this.normalizeTime(rule.from_time);
+            const ruleToTime = this.normalizeTime(rule.to_time);
+            const ruleFromMinutes = this.timeToMinutes(ruleFromTime);
+            const ruleToMinutes = this.timeToMinutes(ruleToTime);
+
+            return slotMinutes >= ruleFromMinutes && slotMinutes < ruleToMinutes;
+          }
+          return false;
+        });
+        if (dailyHoliday) return true;
+
+        // check if slot is in manual locks (holiday rules)
+        const dayHoliday = this.lockedTimeslots.find(rule => {
+          const currentDate = this.moment(formattedDate, "YYYY-MM-DD").startOf('day');
+          const fromDate = this.moment(rule.from_date, "YYYY-MM-DD").startOf('day');
+          const toDate = this.moment(rule.to_date, "YYYY-MM-DD").startOf('day');
+
+          // handle different date scenarios for manual locks
+          if (currentDate.isSame(fromDate, 'day') && currentDate.isSame(toDate, 'day')) {
+            const ruleFromMinutes = this.timeToMinutes(rule.from_time);
+            const ruleToMinutes = this.timeToMinutes(rule.to_time);
+            return slotMinutes >= ruleFromMinutes && slotMinutes < ruleToMinutes;
+          } else if (currentDate.isSame(fromDate, 'day')) {
+            const ruleFromMinutes = this.timeToMinutes(rule.from_time);
+            return slotMinutes >= ruleFromMinutes;
+          } else if (currentDate.isSame(toDate, 'day')) {
+            const ruleToMinutes = this.timeToMinutes(rule.to_time);
+            return slotMinutes < ruleToMinutes;
+          } else if (currentDate.isAfter(fromDate, 'day') && currentDate.isBefore(toDate, 'day')) {
+            return true;
+          }
+
+          return false;
+        });
+        if (dayHoliday) return true;
+
+        // check salon working hours
+        const availabilities = this.$root.settings?.availabilities || [];
+        if (availabilities.length > 0) {
+          // find rule for current day
+          const availabilityRule = availabilities.find(rule =>
+              rule.days && rule.days[weekday]
+          );
+
+          if (availabilityRule) {
+            const shifts = availabilityRule.shifts || [];
+            // check if slot is in any of the salon's shifts
+            const isInShift = shifts.some(shift => {
+              if (!shift.from || !shift.to || shift.disabled) return false;
+
+              const shiftFromMinutes = this.timeToMinutes(shift.from);
+              const shiftToMinutes = this.timeToMinutes(shift.to);
+
+              return slotMinutes >= shiftFromMinutes && slotMinutes < shiftToMinutes;
+            });
+            if (!isInShift) return true; // ==> not in salon working hours
+          } else {
+            return true;
+          }
+        }
+
+        // check API-provided available times
+        const workTimes = this.availabilityIntervals?.workTimes || {};
+        const times = this.availabilityIntervals?.times || {};
+        const allowedTimes = Object.keys(workTimes).length ? workTimes : times;
+
+        const currentSlotMinutes = this.timeToMinutes(currentSlot);
+
+        const isAllowed = Object.values(allowedTimes).some(time => {
+          const timeMinutes = this.timeToMinutes(time);
+          return currentSlotMinutes === timeMinutes;
+        });
+
+        return !isAllowed;
+      } catch (error) {
+        console.error('error isSlotLocked:', error);
+        return true;
+      }
     },
     isAvailable(start) {
-      if (this.isHoliday(this.date)) return false;
-
-      if (
-          this.availabilityIntervals.universalSuggestedDate !==
-          this.moment(this.date).format("YYYY-MM-DD")
-      ) {
-        return false;
-      }
-      return Object.values(this.availabilityIntervals.times).indexOf(start) > -1;
-    },
-    isSlotLocked(currentSlot, nextSlot) {
-      if (this.isHoliday(this.date)) {
+      if (!this.availabilityIntervals || Object.keys(this.availabilityIntervals).length === 0) {
         return true;
       }
 
-      if (!Array.isArray(this.lockedTimeslots)) {
-        console.error('lockedTimeslots is not an array:', this.lockedTimeslots);
-        return false;
+      const formattedDate = this.moment(this.date).format("YYYY-MM-DD");
+      const currentDate = this.moment(formattedDate, "YYYY-MM-DD");
+
+      // check if day is in salon working days
+      const weekday = currentDate.day() + 1;
+      if (this.$root.settings?.available_days &&
+          !this.$root.settings.available_days[weekday]) {
+        return false; // ==> salon is closed on this day
       }
 
-      return this.lockedTimeslots.some(locked => {
-        const timeMatch = locked.from_time === currentSlot &&
-            locked.to_time === nextSlot;
-        const dateMatch = locked.from_date === this.moment(this.date).format("YYYY-MM-DD");
-        const processingCheck = !this.isSlotProcessing(currentSlot, nextSlot);
+      const slotMinutes = this.timeToMinutes(start);
 
-        return timeMatch && dateMatch && processingCheck;
+      // check salon holiday periods
+      const holidayPeriod = this.$root.settings?.holidays?.find(holiday => {
+        if (!holiday || !holiday.from_date || !holiday.to_date) return false;
+
+        const holidayFromDate = this.moment(holiday.from_date, "YYYY-MM-DD");
+        const holidayToDate = this.moment(holiday.to_date, "YYYY-MM-DD");
+
+        if (currentDate.isSameOrAfter(holidayFromDate, 'day') &&
+            currentDate.isSameOrBefore(holidayToDate, 'day')) {
+
+          // handle single-day holiday
+          if (currentDate.isSame(holidayFromDate, 'day') && currentDate.isSame(holidayToDate, 'day')) {
+            const fromTimeMinutes = this.timeToMinutes(holiday.from_time);
+            const toTimeMinutes = this.timeToMinutes(holiday.to_time);
+            return slotMinutes >= fromTimeMinutes && slotMinutes < toTimeMinutes;
+          }
+          // first day of multi-day holiday
+          else if (currentDate.isSame(holidayFromDate, 'day')) {
+            const fromTimeMinutes = this.timeToMinutes(holiday.from_time);
+            return slotMinutes >= fromTimeMinutes;
+          }
+          // last day of multi-day holiday
+          else if (currentDate.isSame(holidayToDate, 'day')) {
+            const toTimeMinutes = this.timeToMinutes(holiday.to_time);
+            return slotMinutes < toTimeMinutes;
+          }
+
+          return true; // ==> day between start and end dates
+        }
+
+        return false;
       });
+      if (holidayPeriod) return false; // ==> slot not available during holiday
+
+      // check daily holiday rules
+      const dailyHoliday = this.$root.settings?.holidays_daily?.find(rule => {
+        if (rule.assistant_id !== null) return false;
+
+        if (formattedDate === rule.from_date && formattedDate === rule.to_date) {
+          const ruleFromTime = this.normalizeTime(rule.from_time);
+          const ruleToTime = this.normalizeTime(rule.to_time);
+          const ruleFromMinutes = this.timeToMinutes(ruleFromTime);
+          const ruleToMinutes = this.timeToMinutes(ruleToTime);
+
+          return slotMinutes >= ruleFromMinutes && slotMinutes < ruleToMinutes;
+        }
+        return false;
+      });
+      if (dailyHoliday) return false; // ==> slot not available during daily holiday
+
+      // check manual locks
+      const dayHoliday = this.lockedTimeslots.find(rule => {
+        if (formattedDate >= rule.from_date && formattedDate <= rule.to_date) {
+          if (formattedDate === rule.from_date) {
+            return slotMinutes >= this.timeToMinutes(rule.from_time);
+          } else if (formattedDate === rule.to_date) {
+            return slotMinutes < this.timeToMinutes(rule.to_time);
+          } else {
+            return true;
+          }
+        }
+        return false;
+      });
+      if (dayHoliday) return false; // ==> slot not available during locked period
+
+      // check if day is marked as full holiday in stats
+      const fullDayHoliday = this.availabilityStats.find(
+          stat => stat.date === formattedDate && stat.error?.type === "holiday_rules"
+      );
+      if (fullDayHoliday) return false; // ==> full day holiday
+
+      // check salon shifts
+      const availabilities = this.$root.settings?.availabilities || [];
+      if (availabilities.length > 0) {
+        const availabilityRule = availabilities.find(rule =>
+            rule.days && rule.days[weekday]
+        );
+
+        if (availabilityRule) {
+          const shifts = availabilityRule.shifts || [];
+          // check if slot is in any working shift
+          const isInShift = shifts.some(shift => {
+            if (!shift.from || !shift.to || shift.disabled) return false;
+
+            const shiftFromMinutes = this.timeToMinutes(shift.from);
+            const shiftToMinutes = this.timeToMinutes(shift.to);
+
+            return slotMinutes >= shiftFromMinutes && slotMinutes < shiftToMinutes;
+          });
+
+          if (!isInShift) return false; // ==> not in any working shift
+        } else {
+          return false; // ==> no rule for this day
+        }
+      }
+
+      // final check against API-provided allowed times
+      const workTimes = this.availabilityIntervals?.workTimes || {};
+      const times = this.availabilityIntervals?.times || {};
+      const allowedTimes = Object.keys(workTimes).length ? workTimes : times;
+
+      const startMinutes = this.timeToMinutes(start);
+
+      return Object.values(allowedTimes).some(time => {
+        const timeMinutes = this.timeToMinutes(time);
+        return startMinutes === timeMinutes;
+      });
+    },
+    normalizeTime(time) {
+      if (!time) return time;
+
+      if (this.$root.settings?.time_format?.js_format === 'h:iip') {
+        const momentTime = this.moment(time, 'h:mm A');
+        return momentTime.format('HH:mm');
+      }
+
+      const momentFormat = this.getTimeFormat();
+      return this.moment(time, momentFormat).format('HH:mm');
+    },
+    timeToMinutes(time) {
+      if (!time) return 0;
+      const [hours, minutes] = time.split(':').map(Number);
+      return hours * 60 + minutes;
     },
     setSlotProcessing(slotKey, isProcessing) {
       if (isProcessing) {
@@ -786,9 +1106,6 @@ export default {
       } else {
         this.slotProcessingStates.delete(slotKey);
       }
-    },
-    isSlotProcessing(slotKey) {
-      return this.slotProcessingStates.has(slotKey);
     },
     toggleSlotActions(idx) {
       if (!this.isDragging && !this.wasRecentlyDragging) {
@@ -869,13 +1186,13 @@ export default {
           booking._column = this.findFreeColumn(booking);
         }
       });
-      if(document.querySelector('.dp__active_date.dp__today') !== null){
-        if(document.querySelector('.current-time-line') !== null){
+      if (document.querySelector('.dp__active_date.dp__today') !== null) {
+        if (document.querySelector('.current-time-line') !== null) {
           document.querySelector('.current-time-line').style.display = 'block';
-          document.querySelector('.current-time-line').scrollIntoView({ behavior: 'smooth', block: 'center' })
+          document.querySelector('.current-time-line').scrollIntoView({behavior: 'smooth', block: 'center'})
         }
       } else {
-        if(document.querySelector('.current-time-line') !== null)
+        if (document.querySelector('.current-time-line') !== null)
           document.querySelector('.current-time-line').style.display = 'none';
       }
     },
@@ -1056,12 +1373,13 @@ export default {
       return this.getDisplayDuration(booking, 30);
     },
     getDisplayDuration(booking, realDuration) {
-      if (booking.services?.length === 1 && realDuration === 15) {
-        return 30;
-      }
-      if (realDuration <= 30) return 30;
-      if (realDuration <= 45) return 60;
-      return Math.ceil(realDuration / 30) * 30;
+      /* if (booking.services?.length === 1 && realDuration === 15) {
+         return 30;
+       }*/
+      /*if (realDuration <= 30) return 30;
+      if (realDuration <= 45) return 45;*/
+      //return Math.ceil(realDuration / 30) * 30;
+      return realDuration;
     },
     calculateEndTime(startTime, durationMinutes) {
       const [hours, minutes] = startTime.split(":").map(Number);
@@ -1145,6 +1463,9 @@ export default {
       if (!this.isDragging && !this.wasRecentlyDragging) {
         this.activeSlotIndex = -1;
       }
+    },
+    viewCustomerProfile(customer) {
+      this.$emit("viewCustomerProfile", customer);
     }
   },
   emits: [
@@ -1152,6 +1473,7 @@ export default {
     'update:lockedTimeslots',
     "add",
     "showItem",
+    "viewCustomerProfile",
     "lock",
     "unlock",
     "lock-start",

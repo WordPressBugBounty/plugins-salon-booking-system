@@ -12552,8 +12552,8 @@ body:not(.sln-salon-page)
   }
 }
 
-.sln-salon-page.elementor-page .elementor.elementor .e-con > .elementor-widget,
-.sln-salon-page.elementor-page .e-con.e-con > .e-con-inner > .elementor-widget {
+.sln-salon-page.elementor-page .elementor.elementor .e-con > .elementor-widget.elementor-widget-shortcode,
+.sln-salon-page.elementor-page .e-con.e-con > .e-con-inner > .elementor-widget.elementor-widget-shortcode {
   width: 100%;
 }
 
