@@ -729,7 +729,7 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
                 $attendant = sanitize_text_field(wp_unslash($_GET['attendant']));
                 $meta_queries[] = array(
                     'key'     => '_sln_booking_services',
-                    'value'   => "\"attendant\";i:{$_GET['attendant']};",
+                    'value'   => "i:{$_GET['attendant']};",
                     'compare' => 'LIKE',
                 );
             }

@@ -63,18 +63,9 @@ class SLN_Action_Ajax_CalcBookingTotal extends SLN_Action_Ajax_Abstract
 	return $total;
     }
 
-    protected function getDeposit($total, $settings, $booking) {
-
-        $depositAmount = $settings->getPaymentDepositAmount();
-
-        if ($settings->isPaymentDepositFixedAmount()) {
-	    $deposit = min($total, $depositAmount);
-        }
-        else {
-            $deposit = ($total / 100) * $depositAmount;
-        }
-
-        return $deposit;
+    protected function getDeposit($total, $settings, $booking)
+    {
+        return SLN_Helper_PayDepositAdvancedRules::getDeposit($total, $settings);
     }
 
     protected function getDuration($bookingServices) {

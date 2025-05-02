@@ -33,10 +33,10 @@
 
             <template v-else>
               <template v-if="isSlotLockedForAttendant(timeslot, getNextTimeslot(index), attendant.id)">
-                <div class="slot-actions slot-actions--locked"
-                     v-if="isSlotCenterOfLock(timeslot, attendant.id)">
-                  <button @click.stop="unlockSlot(timeslot, attendant, index)"
-                          class="unlock-button">
+                <div
+                    class="slot-actions slot-actions--locked"
+                    v-if="isSlotCenterOfLock(timeslot, attendant.id) && isSlotManuallyLockable(timeslot, attendant.id)">
+                  <button @click.stop="unlockSlot(timeslot, attendant, index)" class="unlock-button">
                     <font-awesome-icon icon="fa-solid fa-lock"/>
                   </button>
                 </div>
@@ -186,8 +186,12 @@ export default {
         return this.isTimeInShifts(availability.shifts, minutes);
       }
       // check using from/to (old format)
-      else if (availability.from && availability.to) {
+      else if (Array.isArray(availability.from) && Array.isArray(availability.to)) {
         return this.isTimeInFromToFormat(availability.from, availability.to, minutes);
+      }
+      // handle always: true case
+      else if (availability.always) {
+        return true;
       }
 
       return false;
@@ -236,12 +240,35 @@ export default {
 
         if (updatedRules.data?.assistants_rules) {
           const assistantsRules = updatedRules.data.assistants_rules;
-          this.$emit('update:lockedTimeslots', Object.entries(assistantsRules).flatMap(([assistantId, rules]) =>
+          const newLockedTimeslots = Object.entries(assistantsRules).flatMap(([assistantId, rules]) =>
               rules.map(rule => ({
                 ...rule,
                 assistant_id: Number(assistantId) || null,
+                is_manual: rule.is_manual !== false ? true : false,
               }))
-          ));
+          );
+          this.$emit('update:lockedTimeslots', newLockedTimeslots);
+          this.sortedAttendants.forEach(attendant => {
+            const attendantRules = newLockedTimeslots.filter(rule => rule.assistant_id === attendant.id);
+            attendant.holidays = attendantRules.map(rule => ({
+              from_date: rule.from_date,
+              to_date: rule.to_date,
+              from_time: rule.from_time,
+              to_time: rule.to_time,
+              is_manual: rule.is_manual !== false ? true : false
+            }));
+            if (this.shop?.id) {
+              const shopData = attendant.shops?.find(shop => shop.id === this.shop.id);
+              if (shopData) {
+                shopData.holidays = attendantRules.map(rule => ({
+                  from_date: rule.from_date,
+                  to_date: rule.to_date,
+                  from_time: rule.from_time,
+                  to_time: rule.to_time,
+                }));
+              }
+            }
+          });
         }
 
         return updatedRules;
@@ -249,6 +276,21 @@ export default {
         console.error('Error updating locked timeslots:', error);
         throw error;
       }
+    },
+    isSlotManuallyLockable(timeslot, attendantId) {
+      const formattedDate = this.getFormattedDate();
+      const slotMinutes = this.getTimeInMinutes(timeslot);
+
+      const relevantLock = this.lockedTimeslots.find(slot => {
+        const isCorrect = slot.assistant_id === attendantId &&
+            slot.from_date === formattedDate &&
+            slotMinutes >= this.getTimeInMinutes(slot.from_time) &&
+            slotMinutes < this.getTimeInMinutes(slot.to_time);
+
+        return isCorrect;
+      });
+
+      return !!(relevantLock?.is_manual);
     },
     /** main ***/
     async lockSlot(timeslot, attendant, index) {
@@ -451,7 +493,7 @@ export default {
         return slotMinutes >= lockStart && slotMinutes < lockEnd;
       });
 
-      if (!currentLock) return false;
+      if (!currentLock?.is_manual) return false;
 
       // find the center slot in the lock period
       const lockStart = this.getTimeInMinutes(currentLock.from_time);
@@ -499,6 +541,72 @@ export default {
     getSlotKey(timeslot, nextTimeslot, attendantId) {
       return `${attendantId}-${timeslot}-${nextTimeslot}`;
     },
+    isTimeSlotAllowedByRule(rule, slotMinutes, currentDate) {
+      /* check for specific dates */
+      if (rule.select_specific_dates && rule.specific_dates) {
+        const specificDates = rule.specific_dates.split(',');
+        const currentDateStr = this.getFormattedDate(currentDate);
+        if (!specificDates.includes(currentDateStr)) {
+          return false;
+        }
+        // check time intervals if available
+        if (Array.isArray(rule.from) && Array.isArray(rule.to) && rule.from.length > 0 && rule.to.length > 0) {
+          return Object.keys(rule.from).some(index => {
+            if (index > 0 && rule.disable_second_shift) {
+              return false;
+            }
+            const fromMin = this.getTimeInMinutes(rule.from[index]);
+            const toMin = this.getTimeInMinutes(rule.to[index]);
+            return slotMinutes >= fromMin && slotMinutes < toMin;
+          });
+        }
+        // fallback for always ==> true with no time intervals
+        if (rule.always) {
+          return true;
+        }
+        return false;
+      }
+
+      /* check for date range limits */
+      if (!rule.always && (rule.from_date || rule.to_date)) {
+        const ruleFromDate = rule.from_date ? this.moment(rule.from_date, 'YYYY-MM-DD') : null;
+        const ruleToDate = rule.to_date ? this.moment(rule.to_date, 'YYYY-MM-DD') : null;
+        if (ruleFromDate && currentDate.isBefore(ruleFromDate, 'day')) {
+          return false;
+        }
+        if (ruleToDate && currentDate.isAfter(ruleToDate, 'day')) {
+          return false;
+        }
+      }
+
+      /* check shifts */
+      if (rule.shifts && rule.shifts.length) {
+        return this.isTimeInShifts(rule.shifts, slotMinutes);
+      }
+
+      /* check time intervals (from/to pairs) */
+      if (Array.isArray(rule.from) && Array.isArray(rule.to)) {
+        // check if current day is allowed
+        if (!rule.days || rule.days[currentDate.isoWeekday()] !== 1) {
+          return false;
+        }
+        return Object.keys(rule.from).some(index => {
+          if (index > 0 && rule.disable_second_shift) {
+            return false;
+          }
+          const fromMin = this.getTimeInMinutes(rule.from[index]);
+          const toMin = this.getTimeInMinutes(rule.to[index]);
+          return slotMinutes >= fromMin && slotMinutes < toMin;
+        });
+      }
+
+      /* true for non-specific dates */
+      if (rule.always && rule.days && rule.days[currentDate.isoWeekday()] === 1) {
+        return true;
+      }
+
+      return false;
+    },
     isSlotLockedForAttendant(timeslot, nextSlot, attendantId) {
       try {
         if (!timeslot) return true;
@@ -506,176 +614,98 @@ export default {
         // get date and weekday info
         const formattedDate = this.getFormattedDate();
         const currentDate = this.moment(formattedDate, 'YYYY-MM-DD');
-        const globalWeekday = currentDate.day() + 1; // 1=Sunday, 2=Monday...
-        const assistantWeekday = currentDate.isoWeekday(); // 1=Monday, 7=Sunday
+        const weekdaySalon = currentDate.day() + 1; // 1=Sunday, 2=Monday...
+        const weekdayAssistant = currentDate.isoWeekday(); // 1=Monday, 7=Sunday
 
         // get attendant data
         const attendant = this.sortedAttendants.find(a => a.id === attendantId);
         if (!attendant) return true;
-
         // convert time to comparable format
         const slotMinutes = this.getTimeInMinutes(timeslot);
 
         /* PART 1: CHECK SALON AVAILABILITY */
-        // 1: first check: is salon open on this day? If not, all slots are locked
+        /* -- step 1: salon working day -- */
         const availableDays = this.$root.settings?.available_days || {};
-        const isSalonWorkingDay = availableDays[globalWeekday] === "1";
-        if (!isSalonWorkingDay) return true;
+        if (availableDays[weekdaySalon] !== '1') return true;
 
-        /* PART 2: CHECK REQUIRED BLOCKS */
-        // 2.1: check if attendant has specific locks for this slot
+        /* -- step 2: hard blocks -- */
+        // 2.1: assistant‑specific holiday rule
         const assistantHoliday = this.lockedTimeslots.find(slot =>
             slot.assistant_id === attendantId &&
             this.isBlockedByHolidayRule(slot, attendantId, currentDate, slotMinutes)
         );
         if (assistantHoliday) return true;
 
-        // 2.2: check salon-wide blocks
-        const globalHoliday = this.lockedTimeslots.find(slot =>
-            slot.assistant_id === null &&
-            this.isBlockedByHolidayRule(slot, null, currentDate, slotMinutes)
-        );
-        if (globalHoliday) return true;
-
-        // 2.3: check salon holiday periods
-        const holidayPeriod = this.$root.settings?.holidays?.find(holiday => {
-          if (!holiday || !holiday.from_date || !holiday.to_date) return false;
+        // 2.2: check salon holiday periods
+        const holidayPeriod = this.$root.settings?.holidays?.some(holiday => {
+          if (!holiday.from_date || !holiday.to_date) return false;
 
           const holidayFromDate = this.moment(holiday.from_date, "YYYY-MM-DD");
           const holidayToDate = this.moment(holiday.to_date, "YYYY-MM-DD");
 
-          if (currentDate.isSameOrAfter(holidayFromDate, 'day') &&
-              currentDate.isSameOrBefore(holidayToDate, 'day')) {
-            if (currentDate.isSame(holidayFromDate, 'day') && currentDate.isSame(holidayToDate, 'day')) {
-              const fromTimeMinutes = this.getTimeInMinutes(holiday.from_time);
-              const toTimeMinutes = this.getTimeInMinutes(holiday.to_time);
-              return slotMinutes >= fromTimeMinutes && slotMinutes < toTimeMinutes;
-            } else if (currentDate.isSame(holidayFromDate, 'day')) {
-              const fromTimeMinutes = this.getTimeInMinutes(holiday.from_time);
-              return slotMinutes >= fromTimeMinutes;
-            } else if (currentDate.isSame(holidayToDate, 'day')) {
-              const toTimeMinutes = this.getTimeInMinutes(holiday.to_time);
-              return slotMinutes < toTimeMinutes;
-            } else {
-              return true;
-            }
+          if (!currentDate.isBetween(holidayFromDate, holidayToDate, 'day', '[]')) return false;
+
+          /* same‑day holiday */
+          if (currentDate.isSame(holidayFromDate, 'day') && currentDate.isSame(holidayToDate, 'day')) {
+            const fromTimeMinutes = this.getTimeInMinutes(holiday.from_time);
+            const toTimeMinutes = this.getTimeInMinutes(holiday.to_time);
+            return slotMinutes >= fromTimeMinutes && slotMinutes < toTimeMinutes;
           }
 
-          return false;
+          /* first or last day of multi‑day holiday */
+          if (currentDate.isSame(holidayFromDate, 'day')) return slotMinutes >= this.getTimeInMinutes(holiday.from_time);
+          if (currentDate.isSame(holidayToDate, 'day')) return slotMinutes < this.getTimeInMinutes(holiday.to_time);
+          return true; // ==> fully inside range
         });
-        if (holidayPeriod) return true;
+        if (holidayPeriod) return true
 
-        // 2.4: check daily holiday rules
-        const dailyHoliday = this.$root.settings?.holidays_daily?.find(rule => {
-          if (rule.assistant_id !== null) return false;
-
-          if (formattedDate === rule.from_date && formattedDate === rule.to_date) {
-            const ruleFromMinutes = this.getTimeInMinutes(rule.from_time);
-            const ruleToMinutes = this.getTimeInMinutes(rule.to_time);
-
-            return slotMinutes >= ruleFromMinutes && slotMinutes < ruleToMinutes;
-          }
-          return false;
-        });
-        if (dailyHoliday) return true;
-
-        // 2.5: check attendants holiday periods
-        // 2.5.1: check shop-specific holidays for this attendant
-        const shopSpecificHolidays = this.getAssistantShopData(attendant, this.shop?.id, 'holidays');
-        if (this.isInHolidayPeriod(shopSpecificHolidays, formattedDate, timeslot, nextSlot)) return true;
-
-        // 2.5.2: then check general attendant holidays if no shop-specific ones found
-        if (!shopSpecificHolidays || shopSpecificHolidays.length === 0) {
-          if (this.isInHolidayPeriod(attendant.holidays, formattedDate, timeslot, nextSlot)) return true;
+        /* PART 2: CHECK ATTENDANT AVAILABILITY */
+        // if attendant has custom availability rules ==> use only them
+        if (attendant.availabilities?.length) {
+          const isSlotAllowed = attendant.availabilities.some(rule =>
+              this.isTimeSlotAllowedByRule(rule, slotMinutes, currentDate)
+          );
+          return !isSlotAllowed; // slot is locked if no rule allows it
         }
 
-        /* PART 3: CHECK WORKING HOURS (PRIORITY HIERARCHY) */
-        // 3: order of priority: shop-specific attendant schedule -> general attendant schedule -> salon schedule
-
-        // 3.1: check shop-specific schedule for this attendant
+        /* PART 3: FALLBACK TO SHOP RULES */
+        // if no custom rules ==> use shop-specific rules
         if (this.shop?.id) {
-          const shopSpecificAvailabilities = this.getAssistantShopData(attendant, this.shop.id, 'availabilities');
-          if (shopSpecificAvailabilities && shopSpecificAvailabilities.length > 0) {
-            // check if ANY availability rule explicitly marks this day as non-working (0)
-            const dayExplicitlyDisabled = shopSpecificAvailabilities.some(av =>
-                av.days && av.days[assistantWeekday] === 0
-            );
-
-            if (dayExplicitlyDisabled) return true; // ==> slot is locked if day is explicitly marked as non-working
-
-            // original logic for checking working hours if day is marked as working
-            if (this.hasWorkingDay(shopSpecificAvailabilities, assistantWeekday)) {
-              // if shop-specific schedule exists, use it and stop checking others
-              const isInWorkingHours = shopSpecificAvailabilities.some(av =>
-                  this.isTimeInAvailability(av, slotMinutes, assistantWeekday)
-              );
-              return !isInWorkingHours;
-            }
+          const shopAvail = this.getAssistantShopData(attendant, this.shop.id, 'availabilities') || [];
+          const dayRules = shopAvail.filter(av => av.days?.[weekdayAssistant] === 1);
+          if (dayRules.length) {
+            const allowed = dayRules.some(av => this.isTimeInAvailability(av, slotMinutes, weekdayAssistant));
+            return !allowed;
           }
+          return true; // ==> no rule = day off
         }
 
-        // 3.2: check general attendant schedule if no shop-specific schedule
-        if (attendant.availabilities && attendant.availabilities.length > 0) {
-          // check if ANY availability rule explicitly marks this day as non-working
-          const dayExplicitlyDisabled = false;//attendant.availabilities.some(av => av.days && av.days[assistantWeekday] === 0);
+        /* PART 4: FALLBACK TO SALON SCHEDULE */
+        const salonAvail = this.$root.settings?.availabilities || [];
+        if (salonAvail.length) {
+          const rule = salonAvail.find(r => r.days?.[weekdaySalon]);
+          if (!rule) return true;
 
-          if (dayExplicitlyDisabled) return true; // ==> slot is locked if day is explicitly marked as non-working
-
-          // original logic for checking working hours if day is marked as working
-          if (this.hasWorkingDay(attendant.availabilities, assistantWeekday)) {
-            // console.log(attendant.name)
-            // if general schedule exists, use it and stop checking salon schedule
-            const isInWorkingHours = attendant.availabilities.some(av =>
-                this.isTimeInAvailability(av, slotMinutes, assistantWeekday)
-            );
-            return !isInWorkingHours;
+          if (rule.shifts?.length) {
+            if (!this.isTimeInShifts(rule.shifts, slotMinutes)) return true;
+          } else if (Array.isArray(rule.from) && Array.isArray(rule.to)) {
+            if (!this.isTimeInFromToFormat(rule.from, rule.to, slotMinutes)) return true;
+          } else if (rule.always) {
+            return false;
           } else {
             return true;
           }
-        }
-
-        // 3.3: fall back to salon schedule if no attendant schedules exist
-        const availabilities = this.$root.settings?.availabilities || [];
-
-        if (availabilities.length > 0) {
-          // find rule for current day
-          const availabilityRule = availabilities.find(rule =>
-              rule.days && rule.days[globalWeekday]
-          );
-
-          if (!availabilityRule) {
-            return true; // ==> no salon rule for this day
-          }
-
-          // check salon shifts
-          if (availabilityRule.shifts && availabilityRule.shifts.length > 0) {
-            if (!this.isTimeInShifts(availabilityRule.shifts, slotMinutes)) {
-              return true; // ==> time not in salon shifts
-            }
-          }
-          // check old format salon schedule
-          else if (availabilityRule.from && availabilityRule.to) {
-            if (!this.isTimeInFromToFormat(availabilityRule.from, availabilityRule.to, slotMinutes)) {
-              return true; // ==> time not in salon working hours
-            }
-          } else {
-            return true; // ==> no working hours defined
-          }
         } else {
-          return true; // ==> no salon availability rules
+          return true;
         }
 
-        /* PART 4: FINAL API CHECK */
-        // check time is allowed by API
+        /* PART 5: API-PROVIDED ALLOWED TIMES */
         const workTimes = this.availabilityIntervals?.workTimes || {};
         const times = this.availabilityIntervals?.times || {};
         const allowedTimes = Object.keys(workTimes).length ? workTimes : times;
 
-        if (Object.keys(allowedTimes).length > 0) {
-          const isTimeAllowed = Object.values(allowedTimes).some(time => {
-            return this.getTimeInMinutes(time) === slotMinutes;
-          });
-
+        if (Object.keys(allowedTimes).length) {
+          const isTimeAllowed = Object.values(allowedTimes).some(time => this.getTimeInMinutes(time) === slotMinutes);
           if (!isTimeAllowed) return true; // ==> time not found in allowed times
         }
 

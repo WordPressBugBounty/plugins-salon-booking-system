@@ -173,6 +173,16 @@ class SLN_Settings {
 		return isset($val) ? $val : 'paypal';
 	}
 
+    public function isPaymentDepositAdvancedRules(): bool
+    {
+        return (bool) $this->get('enable_pay_deposit_advanced_rules');
+    }
+
+    public function getPaymentDepositAdvancedRules(): array
+    {
+        return (array) $this->get('pay_deposit_advanced_rules');
+    }
+
 	public function getPaymentDepositAmount() {
 		return $this->isPaymentDepositFixedAmount() ? $this->getPaymentDepositFixedValue() : $this->getPaymentDepositValue();
 	}

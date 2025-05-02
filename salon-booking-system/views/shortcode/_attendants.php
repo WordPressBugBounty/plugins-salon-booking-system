@@ -61,6 +61,11 @@ foreach ($attendants as $attendant) {
     if(get_post_status($attendant->getId()) == 'private'){
         continue;
     }
+    if(class_exists('\SalonMultishop\Addon')){
+        if(get_user_meta($attendant->getId(),'_sln_booking_shop', true) == 'private'){
+            continue;
+        }
+    }
     if ($attendant->hasServices($services)) {
         $errors = SLN_Shortcode_Salon_AttendantHelper::validateItem($bookingServices->getItems(), $ah, $attendant);
     if($plugin->getSettings()->get('hide_invalid_attendants_enabled') && !empty($errors)){

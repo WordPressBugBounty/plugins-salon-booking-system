@@ -96,6 +96,7 @@ class SLN_Currency
         'RUB' => array('name' => 'Russian Ruble', 'symbol' => 'РУБ', 'ASCII' => '&#8381;'),
         'RSD' => array('name' => 'Serbian Dinar', 'symbol' => 'din', 'ASCII' => ''),
         'ZAR' => array('name' => 'South African rand', 'symbol' => 'R', 'ASCII' => '&#x52;'),
+        'XCG' => array('name' => 'Caribbean guilder', 'symbol' => 'Cg', 'ASCII' => ''),
     );
 
     public static function getSymbol($code = 'USD')

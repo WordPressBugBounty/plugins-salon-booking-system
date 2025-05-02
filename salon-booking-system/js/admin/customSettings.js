@@ -92,6 +92,14 @@ function sln_settingsPayment($) {
             );
         })
         .trigger("change");
+
+    $("#salon_settings_enable_pay_deposit_advanced_rules").on("change", function () {
+        if ($(this).is(':checked')) {
+            $('#sln-pay_deposit_advanced_rules').removeClass('hide');
+        } else {
+            $('#sln-pay_deposit_advanced_rules').addClass('hide');
+        }
+    });
 }
 
 function sln_settingsCheckout($) {

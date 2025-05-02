@@ -68,7 +68,7 @@ class SLN_Admin_Reports_RevenuesByAssistantsReport extends SLN_Admin_Reports_Abs
                                                             $attWasAdded[] = $attendant->getId();
                                                     }
                                                     if (isset($ret['data'][$attendant->getId()])) {
-                                                        $ret['data'][$attendant->getId()][1] += $bookingService->getPrice();
+                                                        $ret['data'][$attendant->getId()][1] += $booking->getAmount() > 0 ? $booking->getAmount() : 0;
                                                     }
                                             }
 					}

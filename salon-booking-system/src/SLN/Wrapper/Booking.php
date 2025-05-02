@@ -218,32 +218,31 @@ class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
 
     function evalTotal()
     {
-	    $settings = SLN_Plugin::getInstance()->getSettings();
+        $settings = SLN_Plugin::getInstance()->getSettings();
 
         $amount = 0;
-        SLN_Plugin::addLog(__CLASS__.' eval total of'.$this->getId());
+
+        SLN_Plugin::addLog(__CLASS__ . ' eval total of' . $this->getId());
+
         foreach ($this->getBookingServices()->getItems() as $bookingService) {
-            $price   = $bookingService->getPrice() * $bookingService->getCountServices();
+            $price = $bookingService->getPrice() * $bookingService->getCountServices();
             $amount += $price;
-            SLN_Plugin::addLog(' - service '.$bookingService->getService().' +'.$price);
+            SLN_Plugin::addLog(' - service ' . $bookingService->getService() . ' +' . $price);
         }
-        $settings = SLN_Plugin::getInstance()->getSettings();
-        if($settings->get('enable_booking_tax_calculation') && 'inclusive' !== $settings->get('enter_tax_price')){
+
+        if ($settings->get('enable_booking_tax_calculation') && 'inclusive' !== $settings->get('enter_tax_price')) {
             $amount = $amount * (1 + floatval($settings->get('tax_value')) / 100);
         }
 
         $amount += $this->getTips();
-        SLN_Plugin::addLog(' - tips +'.$this->getTips());
+
+        SLN_Plugin::addLog(' - tips +' . $this->getTips());
+
         $amount = apply_filters('sln.booking.getTotal', $amount, $this);
+
         $this->setMeta('amount', $amount);
 
-        $depositAmount = $settings->getPaymentDepositAmount();
-        if ($settings->isPaymentDepositFixedAmount()) {
-                $deposit = min($amount, $depositAmount);
-        }
-        else {
-                $deposit = ($amount / 100) * $depositAmount;
-        }
+        $deposit = SLN_Helper_PayDepositAdvancedRules::getDeposit($amount, $settings);
 
         $this->setMeta('deposit', $deposit);
 

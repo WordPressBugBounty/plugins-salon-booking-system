@@ -265,12 +265,16 @@ class HolidayRules_Controller extends REST_Controller
         $holidays_assistants_rules = array();
         foreach ($assistants as $att) {
             $holidays_daily = $att->getMeta('holidays_daily') ?: array();
+            foreach ($holidays_daily as &$rule) {
+                $rule['is_manual'] = true;
+            }
             $holidays = $att->getMeta('holidays') ?: array();
 
-            foreach ($holidays as &$holiday) {
-                if (!isset($holiday['daily'])) {
-                    $holiday['daily'] = true;
+            foreach ($holidays as &$rule) {
+                if (!isset($rule['daily'])) {
+                    $rule['daily'] = true;
                 }
+                $rule['is_manual'] = false;
             }
 
             $holidays_assistants_rules[$att->getId()] = array_merge($holidays_daily, $holidays);

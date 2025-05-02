@@ -118,6 +118,14 @@ class SLN_Admin_Settings {
 			true
 		);
 
+        wp_enqueue_script(
+            'salon-payDepositAdvancedRules',
+            SLN_PLUGIN_URL . '/js/admin/payDepositAdvancedRules.js',
+            array('jquery'),
+            SLN_Action_InitScripts::ASSETS_VERSION,
+            true
+        );
+
 		if (isset($_GET['tab']) && $_GET['tab'] == 'style') {
 			SLN_Action_InitScripts::enqueueColorPicker();
 			wp_enqueue_script(

@@ -45,7 +45,7 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
     }else{
       $this->intervalName = 'day';
     }
-    //var_dump(123123);die;
+
     $this->buildBookings();
     $this->buildAssistants();
     $this->saveAttendantPositions($_GET['assistant_position']);
@@ -643,6 +643,36 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
     }
   }
 
+    public function isLineInWorkingSchedule(int $line): bool
+    {
+        $settings = $this->plugin->getSettings();
+        $interval = $settings->getInterval();
+        $time = (clone $this->startTime)->modify($line * $interval . ' minutes');
+
+        foreach ($settings->get('availabilities') as $rule) {
+            $weekday = (int)$time->format('w') + 1;
+            if (empty($rule['days'][$weekday])) {
+                continue;
+            }
+            foreach (array_map(null, $rule['from'], $rule['to']) as list($from, $to)) {
+                $start = DateTime::createFromFormat(
+                    'Y-m-d H:i',
+                    $time->format('Y-m-d') . " $from",
+                    $time->getTimezone()
+                );
+                $end = DateTime::createFromFormat(
+                    'Y-m-d H:i',
+                    $time->format('Y-m-d') . " $to",
+                    $time->getTimezone()
+                );
+                if ($start <= $time && $time < $end) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
   private function bookingOrderByAssistant($bookings){
     $orderedBookings = array();
     foreach($this->getAssistantsOrder() as $att){
@@ -709,6 +739,21 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
             $this->assistants = $repo->get($prepared_args);
         // }
 
+        if(class_exists('\SalonMultishop\Addon')){
+            $shop = isset($_GET['shop']) ? (int)($_GET['shop'])  : 0;
+            if($shop > 0) {
+                foreach ($this->assistants as $key=>$attendant){
+                    $attendant_shops = $attendant->getMeta('shops');
+                    if(!is_array($attendant_shops)){
+                        unset($this->assistants[$key]);
+                    } else {
+                        if(!in_array($shop,$attendant_shops)){
+                            unset($this->assistants[$key]);
+                        }
+                    }
+                }
+            }
+        }
         $this->assistants = apply_filters('sln.action.calendar.assistants', $this->assistants);
     }
 

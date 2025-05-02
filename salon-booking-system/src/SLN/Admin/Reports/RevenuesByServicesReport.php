@@ -55,7 +55,7 @@ class SLN_Admin_Reports_RevenuesByServicesReport extends SLN_Admin_Reports_Abstr
 			foreach($bookings as $booking) {
 				foreach($booking->getBookingServices()->getItems() as $bookingService) {
 					if (array_key_exists($bookingService->getService()->getId(), $ret['data'])) {
-						$ret['data'][$bookingService->getService()->getId()][1] += $bookingService->getPrice();
+						$ret['data'][$bookingService->getService()->getId()][1] += $bookingService->getService()->getPrice();
 						$ret['data'][$bookingService->getService()->getId()][2] ++;
 					}
 				}

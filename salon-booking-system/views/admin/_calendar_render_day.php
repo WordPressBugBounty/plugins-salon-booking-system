@@ -1,7 +1,7 @@
 <?php
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 /**
- * 
+ *
 */
 
 $isPro = defined('SLN_VERSION_PAY') && SLN_VERSION_PAY;
@@ -196,30 +196,45 @@ $isPro = defined('SLN_VERSION_PAY') && SLN_VERSION_PAY;
 				</div>
 			<?php endforeach; ?>
 
-			<div id="cal-day-panel-hour">
-				<?php for($line = 0; $line < $lines; $line++): ?>
-					<div class="row-fluid cal-day-hour-part <?php echo ($calendar->hasHolidaysByLine($line) || $calendar->hasHolidaysDaylyByLine($line)) && !$calendar->getAttendantMode() ? 'blocked' : '' ?>" <?php echo $calendar->hasHolidaysByLine($line) ? 'title="'.__('Holiday rule', 'salon-booking-system').'"':'' ?>>
-						<div class="span1 col-xs-1"><b><?php echo $calendar->getTimeByLine($line); ?></b></div>
-						<div class="span1 col-xs-3 cal-day-hour-part-first-column"></div>
-						<div class="span10 col-xs-8"></div>
-						<button type="button" class="sln-btn sln-btn--cal-day-select sln-btn--icon sln-icon--checkmark"><?php esc_html_e('SELECT', 'salon-booking-system'); ?></button>
-						<div class="cal-day-hour-part__rowactions">
-							<span class="cal-day-click-tip"><?php esc_html_e('Click on the "ending time" row', 'salon-booking-system')?></span>
-							<button
-								type="button"
-								class="sln-btn sln-btn--cal-day sln-btn--cal-day--add sln-btn--icon sln-icon--plus"
-								data-action="add-event-by-date"
-								data-event-date="<?php echo $start->format('Y-m-d'); ?>"
-								data-event-time="<?php echo $calendar->getTimeByLine($line); ?>"
-							></button>
-							<button
-								type="button"
-								class="block_date sln-btn sln-btn--cal-day sln-btn--cal-day--lock sln-btn--icon sln-icon--lock"
-							></button>
-						</div>
-					</div>
-				<?php endfor; ?>
-			</div>
+            <div id="cal-day-panel-hour">
+                <?php for ($line = 0; $line < $lines; $line++): ?>
+                    <?php
+                    $isHoliday = $calendar->hasHolidaysByLine($line)
+                        || $calendar->hasHolidaysDaylyByLine($line);
+                    $isOutOfSchedule = !$calendar->isLineInWorkingSchedule($line);
+                    $locked = (!$calendar->getAttendantMode() && ($isHoliday || $isOutOfSchedule)) ? 'blocked' : '';
+                    if ($isHoliday) {
+                        $title = __('Holiday rule', 'salon-booking-system');
+                    } elseif ($isOutOfSchedule) {
+                        $title = __('Outside of working hours', 'salon-booking-system');
+                    } else {
+                        $title = '';
+                    }
+                    ?>
+                    <div class="row-fluid cal-day-hour-part <?= $locked ?>"
+                        <?= $title ? 'title="' . $title . '"' : '' ?>>
+                        <div class="span1 col-xs-1"><b><?= $calendar->getTimeByLine($line) ?></b></div>
+                        <div class="span1 col-xs-3 cal-day-hour-part-first-column"></div>
+                        <div class="span10 col-xs-8"></div>
+                        <button type="button"
+                                class="sln-btn sln-btn--cal-day-select sln-btn--icon sln-icon--checkmark"><?php esc_html_e('SELECT', 'salon-booking-system'); ?></button>
+                        <div class="cal-day-hour-part__rowactions">
+                            <span class="cal-day-click-tip"><?php esc_html_e('Click on the "ending time" row', 'salon-booking-system') ?></span>
+                            <button
+                                    type="button"
+                                    class="sln-btn sln-btn--cal-day sln-btn--cal-day--add sln-btn--icon sln-icon--plus"
+                                    data-action="add-event-by-date"
+                                    data-event-date="<?php echo $start->format('Y-m-d'); ?>"
+                                    data-event-time="<?php echo $calendar->getTimeByLine($line); ?>"
+                            ></button>
+                            <button
+                                    type="button"
+                                    class="block_date sln-btn sln-btn--cal-day sln-btn--cal-day--lock sln-btn--icon sln-icon--lock"
+                            ></button>
+                        </div>
+                    </div>
+                <?php endfor; ?>
+            </div>
 		</div>
 	</div>
 </div>

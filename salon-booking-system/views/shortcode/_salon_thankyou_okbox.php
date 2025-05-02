@@ -46,3 +46,22 @@ if ($pendingPayment): ?>
 		    <h3 class="sln-thankyou__id"><?php echo $booking->getId() ?></h3>
 </div>
 <?php endif; ?>
+<?php
+$services_data = $attendants_data = array();
+foreach ($booking->getServices() as $service){
+    $services_data[] = $service->getTitle();
+}
+foreach ($booking->getAttendants() as $attendant){
+    $attendants_data[] = $attendant->getName();
+}
+?>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+        event: 'salonBookingComplete',
+        serviceName: '<?php echo implode(',',$services_data); ?>',
+        bookedAssistantName: '<?php echo implode(',',$attendants_data); ?>',
+        totalAmount: '<?php echo number_format($booking->getAmount(), 2); ?>',
+        bookingId: '<?php echo $booking->getId() ?>'
+    });
+</script>

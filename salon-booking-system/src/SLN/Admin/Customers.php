@@ -33,6 +33,7 @@ class SLN_Admin_Customers extends SLN_Admin_AbstractPage {
 
 	public function show_customer_page($user_id) {
 
+
             $customer = new SLN_Wrapper_Customer(new WP_User($user_id));
 
             if (!empty($user_id) && $customer->isEmpty()) {
@@ -66,6 +67,7 @@ class SLN_Admin_Customers extends SLN_Admin_AbstractPage {
     }
 
 	private function save_customer($user_id) {
+
         check_admin_referer('sln_update_user_'.$user_id);
 		$customer = [];
         $email = isset($_POST['sln_customer_meta']['_sln_email']) ? sanitize_email( wp_unslash($_POST['sln_customer_meta']['_sln_email']) ) : false;
@@ -95,9 +97,8 @@ class SLN_Admin_Customers extends SLN_Admin_AbstractPage {
         if(isset($_POST['sln_customer_meta']['_sln_firstname'])) $customer['first_name'] = sanitize_text_field(wp_unslash( $_POST['sln_customer_meta']['_sln_firstname'] ));
         if(isset($_POST['sln_customer_meta']['_sln_lastname'])) $customer['last_name'] = sanitize_text_field(wp_unslash( $_POST['sln_customer_meta']['_sln_lastname'] ));
         wp_update_user($customer);
-
         foreach ($_POST['sln_customer_meta'] as $k => $value) {
-            if(strpos($k, 'wp') == 0){
+            if(strpos($k, 'wp') === 0){
                 continue;
             }
             $value = is_array($value) ? array_map('sanitize_textarea_field', $value) : sanitize_textarea_field($value);

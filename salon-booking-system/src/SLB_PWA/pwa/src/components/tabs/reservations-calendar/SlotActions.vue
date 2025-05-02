@@ -9,6 +9,9 @@
     <BookingBlockSlot
         v-if="!hasOverlapping(index) || isLocked(timeSlot, getNextSlot())"
         :is-lock="isLocked(timeSlot, getNextSlot())"
+        :is-system-locked="isSystemLocked(timeSlot)"
+        :is-manual-locked="isManualLocked(timeSlot, getNextSlot())"
+        :is-disabled="isDisabled"
         :start="timeSlot"
         :shop="shop"
         :end="getNextSlot()"
@@ -69,7 +72,19 @@ export default {
     assistantId: {
       type: Number,
       default: null
-    }
+    },
+    isSystemLocked: {
+      type: Function,
+      required: true
+    },
+    isManualLocked: {
+      type: Function,
+      required: true
+    },
+    isDisabled: {
+      type: Boolean,
+      default: false
+    },
   },
   methods: {
     getNextSlot() {
@@ -79,24 +94,22 @@ export default {
       return this.dateFormat(this.date, 'YYYY-MM-DD');
     },
     handleLockStart() {
-      const slotKey = `${this.timeSlot}-${this.getNextSlot()}`;
-      this.$emit('update-processing', {slot: slotKey, status: true});
+      this.$emit('update-processing', {slot: `${this.timeSlot}-${this.getNextSlot()}`, status: true});
     },
     handleLockEnd() {
-      const slotKey = `${this.timeSlot}-${this.getNextSlot()}`;
-      this.$emit('update-processing', {slot: slotKey, status: false});
+      this.$emit('update-processing', {slot: `${this.timeSlot}-${this.getNextSlot()}`, status: false});
     },
     handleUnlockStart() {
-      const slotKey = `${this.timeSlot}-${this.getNextSlot()}`;
-      this.$emit('update-processing', {slot: slotKey, status: true});
+      this.$emit('update-processing', {slot: `${this.timeSlot}-${this.getNextSlot()}`, status: true});
+      this.$emit('unlock-start');
     },
     handleUnlockEnd() {
-      const slotKey = `${this.timeSlot}-${this.getNextSlot()}`;
-      this.$emit('update-processing', {slot: slotKey, status: false});
-    },
+      this.$emit('update-processing', {slot: `${this.timeSlot}-${this.getNextSlot()}`, status: false});
+      this.$emit('unlock-end');
+    }
   },
-  emits: ['add', 'lock', 'unlock', 'lock-start', 'unlock-start', 'update-processing', 'refresh-rules'],
-};
+  emits: ['add', 'lock', 'unlock', 'lock-start', 'lock-end', 'unlock-start', 'unlock-end', 'update-processing']
+}
 </script>
 
 <style scoped>

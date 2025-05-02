@@ -64,7 +64,7 @@ class Assistants_Controller extends REST_Controller
                 'methods'             => WP_REST_Server::READABLE,
                 'callback'            => array( $this, 'get_items' ),
                 'permission_callback' => array( $this, 'get_items_permissions_check' ),
-		'args'		      => apply_filters('sln_api_assistants_register_routes_get_items_args', array(
+                'args'		      => apply_filters('sln_api_assistants_register_routes_get_items_args', array(
                     'order'      => array(
                         'description' => __('Order.', 'salon-booking-system'),
                         'type'        => 'string',
@@ -232,20 +232,37 @@ class Assistants_Controller extends REST_Controller
 
             $avDays = array();
 
-	    for ($i = 1; $i <= 7; $i++) {
-		$apiDayKey    = $i; //1-7 (Mon-Sun)
-		$pluginDayKey = $i + 1 > 7 ? ($i + 1) % 7 : $i + 1; //1-7 (Sun-Sat)
-		$avDays[$apiDayKey] = empty( $data['days'][$pluginDayKey] ) ? 0 : 1;
+            for ($i = 1; $i <= 7; $i++) {
+                $apiDayKey = $i; // 1-7 (Mon-Sun)
+                $pluginDayKey = $i + 1 > 7 ? ($i + 1) % 7 : $i + 1; // 1-7 (Sun-Sat)
+                $avDays[$apiDayKey] = empty($data['days'][$pluginDayKey]) ? 0 : 1;
             }
 
-            $availabilities[] = array(
-                'days'      => $avDays,
-                'from'      => (object)$data['from'],
-                'to'        => (object)$data['to'],
-                'always'    => $data['always'],
-                'from_date' => $data['from_date'],
-                'to_date'   => $data['to_date'],
+            $availabilityItem = array(
+                'days'                  => $avDays,
+                'from'                  => isset($data['from']) && is_array($data['from']) ? $data['from'] : [],
+                'to'                    => isset($data['to']) && is_array($data['to']) ? $data['to'] : [],
+                'always'                => !empty($data['always']),
+                'from_date'             => !empty($data['from_date']) ? $data['from_date'] : null,
+                'to_date'               => !empty($data['to_date']) ? $data['to_date'] : null,
+                'disable_second_shift'  => !empty($data['disable_second_shift']),
+                'day_specific_service'  => !empty($data['day_specific_service']) ? $data['day_specific_service'] : '0'
             );
+
+            if (!empty($data['select_specific_dates'])) {
+                $availabilityItem['select_specific_dates'] = true;
+                $availabilityItem['specific_dates'] = !empty($data['specific_dates']) ? $data['specific_dates'] : '';
+                if ($availabilityItem['always'] && empty($availabilityItem['from']) && empty($availabilityItem['to'])) {
+                    $settings = SLN_Plugin::getInstance()->getSettings();
+                    $defaultAvailabilities = $settings->get('availabilities') ?: [];
+                    if (!empty($defaultAvailabilities)) {
+                        $availabilityItem['from'] = $defaultAvailabilities[0]['from'];
+                        $availabilityItem['to'] = $defaultAvailabilities[0]['to'];
+                    }
+                }
+            }
+
+            $availabilities[] = $availabilityItem;
         }
 
         $holidays = array();
@@ -263,21 +280,22 @@ class Assistants_Controller extends REST_Controller
                 'to_date'   => $data['to_date'],
                 'from_time' => $data['from_time'],
                 'to_time'   => $data['to_time'],
+                'is_manual' => !empty($data['is_manual'])
             );
         }
 
-	$response = array(
-            'id'             => $attendant->getId(),
-            'name'           => $attendant->getName(),
-            'services'       => $attendant->getServicesIds(),
-            'email'          => $attendant->getEmail(),
-            'phone_country_code' => $attendant->getSmsPrefix(),
-            'phone'          => $attendant->getPhone(),
-            'description'    => $attendant->getContent(),
-            'availabilities' => $availabilities,
-            'holidays'       => $holidays,
-            'image_url'      => (string) wp_get_attachment_url(get_post_thumbnail_id($attendant->getId())),
-            'currency'       => SLN_Plugin::getInstance()->getSettings()->getCurrencySymbol(),
+        $response = array(
+            'id'                    => $attendant->getId(),
+            'name'                  => $attendant->getName(),
+            'services'              => $attendant->getServicesIds(),
+            'email'                 => $attendant->getEmail(),
+            'phone_country_code'    => $attendant->getSmsPrefix(),
+            'phone'                 => $attendant->getPhone(),
+            'description'           => $attendant->getContent(),
+            'availabilities'        => $availabilities,
+            'holidays'              => $holidays,
+            'image_url'             => (string) wp_get_attachment_url(get_post_thumbnail_id($attendant->getId())),
+            'currency'              => SLN_Plugin::getInstance()->getSettings()->getCurrencySymbol(),
         );
 
         return apply_filters('sln_api_assistants_prepare_response_for_collection', $response, $attendant);
@@ -444,7 +462,7 @@ class Assistants_Controller extends REST_Controller
 
         $this->save_item_image($request->get_param('image_url'), $id);
 
-	do_action('sln_api_assistants_save_item_post', $id, $request);
+        do_action('sln_api_assistants_save_item_post', $id, $request);
 
         return $id;
     }

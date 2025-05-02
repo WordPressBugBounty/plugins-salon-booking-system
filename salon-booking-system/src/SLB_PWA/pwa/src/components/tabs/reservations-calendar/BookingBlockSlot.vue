@@ -9,14 +9,19 @@
           v-if="!isLock"
           @click="lock"
           class="icon"
-          :class="{ 'disabled': isDisabled }"
+          :class="{ disabled: isDisabled }"
       />
       <font-awesome-icon
           icon="fa-solid fa-lock"
-          v-else
+          v-else-if="isManualLocked"
           @click="unlock"
           class="icon"
-          :class="{ 'disabled': isDisabled }"
+          :class="{ disabled: isDisabled }"
+      />
+      <font-awesome-icon
+          v-else-if="isSystemLocked"
+          icon="fa-solid fa-lock"
+          class="icon system-locked"
       />
     </template>
   </div>
@@ -49,6 +54,14 @@ export default {
       type: Number,
       required: true,
     },
+    isSystemLocked: {
+      type: Boolean,
+      default: false
+    },
+    isManualLocked: {
+      type: Boolean,
+      default: false
+    },
     isDisabled: {
       type: Boolean,
       default: false
@@ -61,7 +74,6 @@ export default {
   data() {
     return {
       isLoading: false,
-      operationTimeout: null
     };
   },
   computed: {
@@ -74,7 +86,7 @@ export default {
         daily: true
       };
 
-      if (this.assistantId !== null) {
+      if (this.assistantId != null) {
         rule.assistant_id = this.assistantId;
       }
 
@@ -82,78 +94,33 @@ export default {
     },
   },
   methods: {
-    async lock() {
+    lock() {
       if (this.isLoading || this.isDisabled) return;
-
       this.isLoading = true;
       this.$emit("lock-start", this.holidayRule);
+      this.$emit("lock", this.holidayRule);
 
-      try {
-        const response = await this.axios.post('holiday-rules', this.holidayRule);
-
-        if (response.data?.status === "OK") {
-          this.$emit("lock", this.holidayRule);
-        } else {
-          console.error('lock operation failed');
-        }
-      } catch (error) {
-        console.error('Lock error:', error?.response?.data || error);
-      } finally {
-        this.operationTimeout = setTimeout(() => {
-          this.isLoading = false;
-          this.$emit("lock-end", this.holidayRule);
-        }, 300);
-      }
+      setTimeout(() => {
+        this.$emit("lock-end", this.holidayRule);
+        this.isLoading = false;
+      }, 300);
     },
-
-    async unlock() {
+    unlock() {
       if (this.isLoading || this.isDisabled) return;
       this.isLoading = true;
       this.$emit("unlock-start", this.holidayRule);
+      this.$emit("unlock", this.holidayRule);
 
-      try {
-        const deletePayload = {
-          from_date: this.date,
-          to_date: this.date,
-          from_time: this.moment(this.start, "HH:mm").format("HH:mm"),
-          to_time: this.moment(this.end, "HH:mm").format("HH:mm"),
-          daily: true
-        };
-
-        if (this.assistantId !== null) {
-          deletePayload.assistant_id = this.assistantId;
-        }
-
-        const response = await this.axios.delete('holiday-rules', {
-          data: deletePayload
-        });
-
-        if (response.data?.status === "OK") {
-          this.$emit("unlock", this.holidayRule);
-          this.$emit("refresh-rules");
-        } else {
-          console.error('unlock operation failed');
-        }
-      } catch (error) {
-        console.error('Unlock error:', error?.response?.data || error);
-      } finally {
-        this.operationTimeout = setTimeout(() => {
-          this.isLoading = false;
-          this.$emit("unlock-end", this.holidayRule);
-        }, 300);
-      }
+      setTimeout(() => {
+        this.$emit("unlock-end", this.holidayRule);
+        this.isLoading = false;
+      }, 300);
     },
     normalizeTime(time) {
-      const momentFormat = this.getTimeFormat();
-      return this.moment(time, momentFormat).format('HH:mm');
+      return this.moment(time, this.getTimeFormat()).format('HH:mm');
     }
   },
-  unmounted() {
-    if (this.operationTimeout) {
-      clearTimeout(this.operationTimeout);
-    }
-  },
-  emits: ["lock", "unlock", "lock-start", "unlock-start", "lock-end", "unlock-end", "refresh-rules"],
+  emits: ["lock", "unlock", "lock-start", "unlock-start", "lock-end", "unlock-end"],
 };
 </script>
 
@@ -177,6 +144,11 @@ export default {
 .icon.disabled {
   cursor: not-allowed;
   opacity: 0.5;
+}
+
+.icon.system-locked {
+  cursor: default;
+  opacity: 0;
 }
 
 .spinner-border {

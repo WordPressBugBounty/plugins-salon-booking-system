@@ -7471,3 +7471,15 @@ msgstr ""
 #:views/shortcode/_form_actions.php:
 msgid "Start over"
 msgstr ""
+
+msgid "Client"
+msgstr ""
+
+msgid "Totals"
+msgstr ""
+
+msgid "Date"
+msgstr ""
+
+msgid "week %s of %s"
+msgstr ""
