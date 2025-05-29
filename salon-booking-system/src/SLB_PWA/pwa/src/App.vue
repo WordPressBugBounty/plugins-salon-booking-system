@@ -42,9 +42,10 @@ export default {
     },
     methods: {
         loadSettings() {
-            this.axios.get('app/settings', {params: {shop: this.shop ? this.shop.id : null}}).then((response) => {
-                this.settings = response.data.settings
-            })
+          this.axios.get('app/settings', {params: {shop: this.shop ? this.shop.id : null}}).then((response) => {
+            this.settings = response.data.settings;
+            this.$root.settings = {...this.$root.settings, ...this.settings};
+          })
         },
         applyShop(shop) {
             this.shop = shop

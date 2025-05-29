@@ -14,6 +14,12 @@ export default {
         },
         locale() {
             return window.slnPWA.locale
+        },
+        shouldHideEmail() {
+            return this.$root.settings && this.$root.settings.hide_customers_email;
+        },
+        shouldHidePhone() {
+            return this.$root.settings && this.$root.settings.hide_customers_phone;
         }
     },
     methods: {
@@ -68,6 +74,12 @@ export default {
         },
         getLabel(key) {
             return window.slnPWA.labels[key];
+        },
+        getDisplayEmail(email) {
+            return this.shouldHideEmail ? '***@***' : email;
+        },
+        getDisplayPhone(phone) {
+            return this.shouldHidePhone ? '*******' : phone;
         }
     },
 }

@@ -68,6 +68,8 @@ class SLN_Service_Messages
     public function sendConfirmedmation($booking, $oldStatus, $newStatus){
         if($oldStatus == SLN_Enum_BookingStatus::PENDING && $newStatus == SLN_Enum_BookingStatus::CONFIRMED){
             if ($this->plugin->getSettings()->get('confirmation')) {
+                $sendToAdmin = $this->sendToAdmin;
+                $sendToCustomer = $this->sendToCustomer;
                 $this->plugin->sendMail('mail/status_confirmed', compact('booking', 'sendToAdmin', 'sendToCustomer'));
                 $this->sendSmsBooking($booking, $sendToAdmin, $sendToCustomer);
             }

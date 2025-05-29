@@ -6,7 +6,7 @@
  */
 
 $default_template = SLN_Admin_SettingTabs_GeneralTab::getDefaultSmsNotificationMessage();
-$template	  = $plugin->getSettings()->get('sms_notification_message') ? $plugin->getSettings()->get('sms_notification_message') : $default_template;
+$template	  = __(($plugin->getSettings()->get('sms_notification_message') ? $plugin->getSettings()->get('sms_notification_message') : $default_template), "salon-booking-system");
 
 $bookingDateTime = $plugin->getSettings()->isDisplaySlotsCustomerTimezone() && $booking->getCustomerTimezone() ? (new SLN_DateTime($booking->getDate()->format('Y-m-d') . ' ' . $booking->getTime()->format('H:i')))->setTimezone(new DateTimeZone($booking->getCustomerTimezone())) : new SLN_DateTime($booking->getDate()->format('Y-m-d') . ' ' . $booking->getTime()->format('H:i'));
 

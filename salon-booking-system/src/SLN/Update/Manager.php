@@ -14,6 +14,7 @@ class SLN_Update_Manager
         add_action('init', array($this, 'hook_init'));
         add_action('sln_update_check', array($this,'checkLicense'));
         add_action('sln_update_subscription', array($this,'checkSubscription'));
+        add_action('wp_ajax_sln_refresh_license_status', array($this, 'refreshLicense'));
     }
 
     public function hook_init(){
@@ -41,7 +42,7 @@ class SLN_Update_Manager
     public function get($k)
     {
         if ($k == 'license_key') {
-            return get_option($this->data['slug'].'_license_key');
+            return (isset($_REQUEST['key']) ? $_REQUEST['key'] : get_option($this->data['slug'].'_license_key') );
         }
         if ($k == 'license_status') {
             return get_option($this->data['slug'].'_license_status');
@@ -65,7 +66,7 @@ class SLN_Update_Manager
     {
         SLN_Func::updateOption($this->get('slug').'_license_key', $key);
         $response = $this->doCall('activate_license');
-        $response->license = 'valid';
+        //$response->license = 'valid';
         if (is_wp_error($response)) {
             SLN_Func::updateOption($this->get('slug').'_license_status', $response->get_error_message());
         } else {
@@ -122,6 +123,76 @@ class SLN_Update_Manager
             SLN_Func::updateOption($this->get('slug').'_license_status', $response->license, true);
             SLN_Func::updateOption($this->get('slug').'_license_data', $response, true);
         }
+
+        return $response;
+    }
+
+    public function getEddProducts($productID = false) {
+        $productsKey = $this->get('slug').'_products_data';
+        if ($productID && ($products = get_option($productsKey))) {
+            $match = array_values(array_filter($products, fn($p) => isset($p->info->id) && $p->info->id == $productID));
+            if ($match)
+                return $match;
+        }
+
+        $transientKey = $this->get('slug').'_products_cache';
+        if (!$productID && ($cached = get_transient($transientKey)))
+            return $cached;
+
+        $request = [
+            'key'	=> $this->get('api_key'),
+            'token'	=> $this->get('api_token'),
+            'number'  => $productID ? 1 : -1,
+        ];
+
+        if ($productID)
+            $request['product'] = $productID;
+
+        $response = wp_remote_get(
+            add_query_arg($request, $this->get('store') . '/edd-api/products'),
+            ['timeout' => 15, 'sslverify' => false]
+        );
+
+        if (is_wp_error($response)) {
+            error_log("Error fetching EDD products: {$response->get_error_message()}");
+            return [];
+        }
+
+        $data = json_decode(wp_remote_retrieve_body($response));
+        $products = isset($data->products) ? $data->products : [];
+        SLN_Func::updateOption($productsKey, $products, true);
+
+        if (!$productID)
+            set_transient($transientKey, $products, HOUR_IN_SECONDS);
+
+        return $products;
+    }
+
+    public function refreshLicense(){
+        $response = $this->doCall('check_license');
+        $response = (array)$response;
+        $this->activateLicense($_REQUEST['key']);
+
+        if($response['success']){
+            wp_send_json_success([
+                'status' => true,
+                'status_title' => __('active', 'salon-booking-system'),
+                'payment_id' => $response['payment_id'],
+                'customer_name' => $response['customer_name'],
+                'customer_email' => $response['customer_email'],
+                'expires' => $response['expires'],
+            ]);
+        } else {
+            wp_send_json_success([
+                'status' => false,
+                'status_title' => __('invalid', 'salon-booking-system'),
+                'payment_id' => '',
+                'customer_name' => '',
+                'customer_email' => '',
+                'expires' => '',
+            ]);
+        }
+
 
         return $response;
     }

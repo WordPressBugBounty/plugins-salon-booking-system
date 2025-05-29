@@ -18,8 +18,8 @@ $currentTab = $_SESSION['currentTab'] ?? 'services';
             <?php if (class_exists('SalonPackages\Addon') && slnpackages_is_pro_version_salon() && slnpackages_is_license_active()): ?>
                 <?php
                 $tabs = [
-                    ['name' => 'services', 'shortcode' => '[salon_booking/]'],
-                    ['name' => 'packages', 'shortcode' => '[salon_packages/]'],
+                    ['name' => 'services', 'shortcode' => $salon->getShortcodeStringWithAttrs('salon_booking')],
+                    ['name' => 'packages', 'shortcode' => $salon->getShortcodeStringWithAttrs('salon_packages')],
                 ];
                 ?>
                 <ul class="nav nav-tabs sln-content__tabs__nav">
@@ -66,7 +66,7 @@ $currentTab = $_SESSION['currentTab'] ?? 'services';
                 //});
                 </script>
             <?php else: ?>
-                <?php echo do_shortcode('[salon_booking/]') ?>
+                <?php echo do_shortcode($salon->getShortcodeStringWithAttrs('salon_booking')) ?>
             <?php endif; ?>
         </div>
     </div>

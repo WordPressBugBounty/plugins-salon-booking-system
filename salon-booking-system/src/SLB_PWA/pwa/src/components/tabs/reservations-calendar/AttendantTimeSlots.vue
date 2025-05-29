@@ -324,6 +324,7 @@ export default {
           from_time: formattedFromTime,
           to_time: formattedToTime,
           daily: true,
+          shop: this.shop?.id || null,
         };
 
         // send lock request
@@ -615,7 +616,7 @@ export default {
         const formattedDate = this.getFormattedDate();
         const currentDate = this.moment(formattedDate, 'YYYY-MM-DD');
         const weekdaySalon = currentDate.day() + 1; // 1=Sunday, 2=Monday...
-        const weekdayAssistant = currentDate.isoWeekday(); // 1=Monday, 7=Sunday
+        // const weekdayAssistant = currentDate.isoWeekday(); // 1=Monday, 7=Sunday
 
         // get attendant data
         const attendant = this.sortedAttendants.find(a => a.id === attendantId);
@@ -639,7 +640,6 @@ export default {
         // 2.2: check salon holiday periods
         const holidayPeriod = this.$root.settings?.holidays?.some(holiday => {
           if (!holiday.from_date || !holiday.to_date) return false;
-
           const holidayFromDate = this.moment(holiday.from_date, "YYYY-MM-DD");
           const holidayToDate = this.moment(holiday.to_date, "YYYY-MM-DD");
 
@@ -668,7 +668,7 @@ export default {
           return !isSlotAllowed; // slot is locked if no rule allows it
         }
 
-        /* PART 3: FALLBACK TO SHOP RULES */
+        /*/!* PART 3: FALLBACK TO SHOP RULES *!/
         // if no custom rules ==> use shop-specific rules
         if (this.shop?.id) {
           const shopAvail = this.getAssistantShopData(attendant, this.shop.id, 'availabilities') || [];
@@ -678,23 +678,28 @@ export default {
             return !allowed;
           }
           return true; // ==> no rule = day off
-        }
+        }*/
 
         /* PART 4: FALLBACK TO SALON SCHEDULE */
         const salonAvail = this.$root.settings?.availabilities || [];
         if (salonAvail.length) {
-          const rule = salonAvail.find(r => r.days?.[weekdaySalon]);
-          if (!rule) return true;
+          // get all applicable rules for this day
+          const rule = salonAvail.filter(r => r.days?.[weekdaySalon] === '1');
+          if (rule.length === 0) return true; // ==> no rules for this day = day off
 
-          if (rule.shifts?.length) {
-            if (!this.isTimeInShifts(rule.shifts, slotMinutes)) return true;
-          } else if (Array.isArray(rule.from) && Array.isArray(rule.to)) {
-            if (!this.isTimeInFromToFormat(rule.from, rule.to, slotMinutes)) return true;
-          } else if (rule.always) {
+          // check if time is in ANY shift of ANY applicable rule
+          const isInAnyShift = rule.some(rule => {
+            if (rule.shifts?.length) {
+              return this.isTimeInShifts(rule.shifts, slotMinutes);
+            } else if (Array.isArray(rule.from) && Array.isArray(rule.to)) {
+              return this.isTimeInFromToFormat(rule.from, rule.to, slotMinutes);
+            } else if (rule.always) {
+              return true;
+            }
             return false;
-          } else {
-            return true;
-          }
+          });
+
+          if (!isInAnyShift) return true; // ==> time not in any active shift
         } else {
           return true;
         }

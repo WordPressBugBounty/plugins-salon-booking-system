@@ -13,10 +13,10 @@
                             </span>
                         </div>
                         <div class="customer-email">
-                            {{ customerEmail }}
+                            {{ getDisplayEmail(customerEmail) }}
                         </div>
                         <div class="customer-phone" v-if="customerPhone">
-                            {{ customerPhone }}
+                            {{ getDisplayPhone(customerPhone) }}
                         </div>
                     </b-col>
                     <b-col sm="4" class="total-order-wrapper">
@@ -42,7 +42,7 @@
                             </div>
                         </div>
                         <div class="customer-phone-wrapper">
-                            <span v-if="customerPhone">
+                            <span v-if="customerPhone && !shouldHidePhone">
                                 <a target="_blank" :href="'tel:' + customerPhone" class="phone">
                                     <font-awesome-icon icon="fa-solid fa-phone" />
                                 </a>
@@ -62,8 +62,11 @@
 </template>
 
 <script>
+    import mixins from "@/mixin";
+
     export default {
         name: 'CustomerItem',
+        mixins: [mixins],
         props: {
             customer: {
                 default: function () {
@@ -84,10 +87,12 @@
                 return this.customer.last_name
             },
             customerEmail() {
-                return this.customer.email
+                return this.getDisplayEmail(this.customer.email);
             },
             customerPhone() {
-                return this.customer.phone ? this.customer.phone_country_code + this.customer.phone : ''
+                const phone = this.customer.phone ?
+                    this.customer.phone_country_code + this.customer.phone : '';
+                return this.getDisplayPhone(phone);
             },
             customerScore() {
                 return this.customer.score

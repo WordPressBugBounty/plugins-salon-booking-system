@@ -15,7 +15,7 @@ abstract class ConsumerStrategies_AbstractConsumer extends Base_MixpanelBase {
         parent::__construct($options);
 
         if ($this->_debug()) {
-            $this->_log("Instantiated new Consumer");
+            //$this->_log("Instantiated new Consumer");
         }
 
     }

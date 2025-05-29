@@ -1,6 +1,8 @@
 <?php
 // phpcs:ignoreFile WordPress.DB.PreparedSQL.NotPrepared
 // phpcs:ignoreFile WordPress.Security.NonceVerification.Recommended
+use SLB_API_Mobile\Helper\UserRoleHelper;
+
 
 if (!class_exists('WP_Users_List_Table')) {
 	_get_list_table('WP_Users_List_Table');
@@ -9,13 +11,16 @@ if (!class_exists('WP_Users_List_Table')) {
 use SLN_Plugin;
 class SLN_Admin_Customers_List extends WP_Users_List_Table {
 
-
+    public $hide_email;
+    public $hide_phone;
 	/**
 	 * SLN_Admin_Customers_List constructor.
 	 */
 	public function __construct($args = array()) {
 		parent::__construct($args);
-
+        $user_role_helper = new UserRoleHelper();
+        $this->hide_email = $user_role_helper->is_hide_customer_phone();
+        $this->hide_phone = $user_role_helper->is_hide_customer_email();
 		add_filter('manage_users_custom_column', array($this, 'manage_users_custom_column'), 10, 3);
 	}
 
@@ -46,7 +51,6 @@ class SLN_Admin_Customers_List extends WP_Users_List_Table {
 
 		$user_object = get_userdata((int) $user_id);
 		$customer_object = new SLN_Wrapper_Customer($user_object);
-
 		switch ($column_name) {
 			case 'total_bookings':
 				$html = $customer_object->getCountOfReservations();
@@ -54,9 +58,24 @@ class SLN_Admin_Customers_List extends WP_Users_List_Table {
 			case 'total_amount':
 				$html = SLN_Plugin::getInstance()->format()->money($customer_object->getAmountOfReservations(), false);
 				break;
+            case 'user_email':
+                if($this->hide_email){
+                    $html = '*******';
+                } else {
+                    $html = esc_html($user_object->get($column_name));
+                }
+                break;
+            case '_sln_phone':
+                if($this->hide_phone){
+                    $html = '*******';
+                } else {
+                    $html = esc_html($user_object->get($column_name));
+                }
+                break;
 			case 'first_name':
 			case 'last_name':
-			case 'ID':
+
+            case 'ID':
 				$link = esc_url( add_query_arg( 'wp_http_referer', urlencode( esc_url(wp_unslash( $_SERVER['REQUEST_URI']) ) ), SLN_Admin_Customers::get_edit_customer_link($user_id) ) );
 				$html = '<strong><a href="' . $link . '">' . esc_html($user_object->get($column_name)) . '</a></strong><br />';
 				break;

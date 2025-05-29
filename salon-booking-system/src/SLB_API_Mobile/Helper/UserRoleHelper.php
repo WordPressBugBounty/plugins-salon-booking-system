@@ -31,4 +31,33 @@ class UserRoleHelper {
 	return SLN_Plugin::getInstance()->getSettings()->get('editors_manage_cap');
     }
 
+    public function is_hide_customer_email() {
+        $current_user = wp_get_current_user();
+
+        if ( in_array( 'administrator', (array) $current_user->roles ) ) {
+            return 0;
+        } else {
+            return SLN_Plugin::getInstance()->getSettings()->get('hide_customers_email');
+        }
+    }
+
+    public function is_hide_customer_email_mail() {
+        return SLN_Plugin::getInstance()->getSettings()->get('hide_customers_email');
+
+    }
+
+    public function is_hide_customer_phone() {
+        $current_user = wp_get_current_user();
+
+        if ( in_array( 'administrator', (array) $current_user->roles ) ) {
+            return 0;
+        } else {
+            return SLN_Plugin::getInstance()->getSettings()->get('hide_customers_phone');
+        }
+    }
+
+    public function is_hide_customer_phone_mail() {
+        return SLN_Plugin::getInstance()->getSettings()->get('hide_customers_phone');
+    }
+
 }

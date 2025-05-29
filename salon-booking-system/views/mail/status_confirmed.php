@@ -4,10 +4,10 @@
  * @var SLN_Plugin                $plugin
  * @var SLN_Wrapper_Booking       $booking
  */
-if(!isset($data['to']) && $booking->getNotifyCustomer() && $sendToCustomer){
+if(!isset($data['to']) && $booking->getNotifyCustomer() && isset($sendToCustomer) && $sendToCustomer){
     $data['to'] = $booking->getEmail();
 }
-if($sendToAdmin){
+if(isset($sendToAdmin) && $sendToAdmin){
 	if(!is_array($data['to'])){
 		$data['to'] = array($data['to'], $plugin->getSettings()->getSalonemail());
 	}else{

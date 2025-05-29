@@ -100,7 +100,7 @@ class SLN_GoogleScope {
                     var $button = jQuery(this);
                     $button.addClass('disabled').after('<div class="load-spinner"><img src="<?php echo get_site_url() . '/wp-admin/images/wpspin_light.gif'; ?>" /></div>');
                     var ajaxurl = '<?php echo admin_url('admin-ajax.php'); ?>';
-                    var data = <?php echo wp_json_encode(apply_filters('sln.google-scope.ajax-events.synch.data', array('action' => 'startsynch'))) ?>;
+                    var data = <?php echo wp_json_encode(apply_filters('sln.google-scope.ajax-events.synch.data', array('action' => 'startsynch','nonce'=> wp_create_nonce('google_calendar')))) ?>;
                     jQuery.post(ajaxurl, data, function (response) {
                         if (response == 'OK') {
                             alert("<?php echo esc_html__('Operation completed!', 'salon-booking-system'); ?>");
@@ -117,7 +117,7 @@ class SLN_GoogleScope {
                     var $button = jQuery(this);
                     $button.addClass('disabled').after('<div class="load-spinner"><img src="<?php echo get_site_url() . '/wp-admin/images/wpspin_light.gif'; ?>" /></div>');
                     var ajaxurl = '<?php echo admin_url('admin-ajax.php'); ?>';
-                    var data = <?php echo wp_json_encode(apply_filters('sln.google-scope.ajax-events.delete.data', array('action' => 'deleteallevents'))) ?>;
+                    var data = <?php echo wp_json_encode(apply_filters('sln.google-scope.ajax-events.delete.data', array('action' => 'deleteallevents','nonce'=> wp_create_nonce('google_calendar')))) ?>;
                     jQuery.post(ajaxurl, data, function (response) {
                         if (response == 'OK') {
                             alert("<?php echo esc_html__('Operation completed!', 'salon-booking-system'); ?>");
@@ -142,6 +142,11 @@ class SLN_GoogleScope {
 
         if (array_intersect($allowed_roles, $user->roles) === []) {
             wp_send_json_error('Unauthorized', 403);
+        }
+        $nonce = $_POST['nonce'] ?? '';
+
+        if ( ! wp_verify_nonce( $nonce, 'my_ajax_action' ) ) {
+            wp_send_json_error( [ 'message' => 'Invalid nonce' ], 403 );
         }
     }
     public function start_synch() {

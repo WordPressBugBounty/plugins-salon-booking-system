@@ -3,6 +3,11 @@
 /**
  * @var WP_Error|null $error
  */
+use SLB_API_Mobile\Helper\UserRoleHelper;
+$user_role_helper = new UserRoleHelper();
+
+$hide_phone = $user_role_helper->is_hide_customer_phone();
+$hide_email = $user_role_helper->is_hide_customer_email();
 ?>
 <div class="wrap sln-bootstrap" id="sln-salon--admin">
 	<h1>
@@ -56,7 +61,16 @@
                             );
 							if($key == 'phone'){
 								$additional_opts[2]['type'] = 'tel';
+                                if($hide_phone){
+                                    $additional_opts[2]['type'] = 'password';
+                                }
 							}
+                            if ($key === 'email') {
+                                if($hide_email){
+                                    $additional_opts[2]['type'] = 'password';
+                                }
+
+                            }
                             if($field['type'] === 'checkbox'){
 
 								echo '<input type=\'hidden\' value=\'0\' name=\'sln_customer_meta[_sln_'. $key. ']\'>';

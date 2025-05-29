@@ -1,6 +1,7 @@
 <?php
 // phpcs:ignoreFile WordPress.DB.PreparedSQL.NotPrepared
 // phpcs:ignoreFile WordPress.Security.NonceVerification.Recommended
+use SLB_API_Mobile\Helper\UserRoleHelper;
 
 class SLN_Action_Ajax_SearchUser extends SLN_Action_Ajax_Abstract
 {
@@ -28,6 +29,8 @@ class SLN_Action_Ajax_SearchUser extends SLN_Action_Ajax_Abstract
     }
     private function getResult($search)
     {
+        $user_role_helper = new UserRoleHelper();
+        $hide_email = $user_role_helper->is_hide_customer_email();
         $include = $this->userSearch($search);
         $number = 10;
         if(!$include)
@@ -42,7 +45,7 @@ class SLN_Action_Ajax_SearchUser extends SLN_Action_Ajax_Abstract
         foreach($results as $u){
             $values[] = array(
                 'id' => $u->ID,
-                'text' => $u->user_firstname.' '.$u->user_lastname.' ('.$u->user_email.')',
+                'text' => $u->user_firstname.' '.$u->user_lastname.' ('.($hide_email ? '*******' : $u->user_email).')',
             );
         }
         return $values;

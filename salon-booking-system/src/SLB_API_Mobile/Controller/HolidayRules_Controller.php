@@ -260,15 +260,33 @@ class HolidayRules_Controller extends REST_Controller
     protected function get_assistants_rules()
     {
         $plugin = SLN_Plugin::getInstance();
+
+        if (class_exists('\SalonMultishop\Addon')) {
+            $addon = \SalonMultishop\Addon::getInstance();
+            $currentShop = $addon->getCurrentShop();
+        }
         $assistants = $plugin->getRepository(SLN_Plugin::POST_TYPE_ATTENDANT)->getAll();
 
         $holidays_assistants_rules = array();
         foreach ($assistants as $att) {
-            $holidays_daily = $att->getMeta('holidays_daily') ?: array();
+            $current_attendant = $att;
+            if (class_exists('\SalonMultishop\Addon')) {
+                $addon = \SalonMultishop\Addon::getInstance();
+                $currentShop = $addon->getCurrentShop();
+                if ($currentShop) {
+                    try {
+                        $current_attendant = $currentShop->getAttendantWrapper($att);
+                    } catch (\Exception $e) {
+                        var_dump('$e',$e);
+                    }
+                }
+            }
+
+            $holidays_daily = $current_attendant->getMeta('holidays_daily') ?: array();
             foreach ($holidays_daily as &$rule) {
                 $rule['is_manual'] = true;
             }
-            $holidays = $att->getMeta('holidays') ?: array();
+            $holidays = $current_attendant->getMeta('holidays') ?: array();
 
             foreach ($holidays as &$rule) {
                 if (!isset($rule['daily'])) {

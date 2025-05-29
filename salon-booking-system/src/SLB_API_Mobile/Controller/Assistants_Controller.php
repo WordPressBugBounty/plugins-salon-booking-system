@@ -58,7 +58,6 @@ class Assistants_Controller extends REST_Controller
     }
 
     public function register_routes() {
-
         register_rest_route( $this->namespace, '/' . $this->rest_base, array(
             array(
                 'methods'             => WP_REST_Server::READABLE,
@@ -90,6 +89,11 @@ class Assistants_Controller extends REST_Controller
                     'offset'      => array(
                         'description' => __('Offset.', 'salon-booking-system'),
                         'type'        => 'integer',
+                    ),
+                    'shop'      => array(
+                        'description' => __('Shop ID.', 'salon-booking-system'),
+                        'type'        => 'integer',
+                        'default'     => null,
                     ),
                 )),
             ),
@@ -166,8 +170,18 @@ class Assistants_Controller extends REST_Controller
 
         $assistants = array();
         foreach ( $query->posts as $assistant ) {
-            $data         = $this->prepare_item_for_response( $assistant, $request );
-            $assistants[] = $this->prepare_response_for_collection( $data );
+            $data = $this->prepare_item_for_response( $assistant, $request );
+
+            $shop_id = $request->get_param('shop');
+            if ($shop_id && class_exists('\SalonMultishop\Addon')) {
+                $attendant = SLN_Plugin::getInstance()->createAttendant($assistant->ID);
+                $attendant_shops = $attendant->getMeta('shops');
+                if (!is_array($attendant_shops) || !in_array($shop_id, $attendant_shops)) {
+                    continue;
+                }
+            }
+
+            $assistants[] = $this->prepare_response_for_collection( $data, $request );
         }
 
         // Store pagination values for headers then unset for count query.
@@ -218,20 +232,31 @@ class Assistants_Controller extends REST_Controller
         return SLN_Plugin::getInstance()->createAttendant($assistant);
     }
 
-    public function prepare_response_for_collection($attendant)
+    public function prepare_response_for_collection($attendant, $request = null)
     {
-        $availabilities = array();
+        $shop_id = $request ? $request->get_param('shop') : null;
 
-        foreach ($attendant->getAvailabilityItems()->toArray() as $availability) {
+        $current_attendant = $attendant;
+        $shop_attendant = null;
 
-            $data = $availability->getData();
+        if ($shop_id && class_exists('\SalonMultishop\Addon')) {
+            try {
+                $plugin = SLN_Plugin::getInstance();
+                $shop = $plugin->createFromPost($shop_id);
+                $shop_attendant = $shop->getAttendantWrapper($attendant);
+                $current_attendant = $shop_attendant;
+            } catch (\Exception $e) {
 
-            if (!$data) {
-                continue;
             }
+        }
+
+
+        $availabilities = array();
+        foreach ($current_attendant->getAvailabilityItems()->toArray() as $availability) {
+            $data = $availability->getData();
+            if (!$data) continue;
 
             $avDays = array();
-
             for ($i = 1; $i <= 7; $i++) {
                 $apiDayKey = $i; // 1-7 (Mon-Sun)
                 $pluginDayKey = $i + 1 > 7 ? ($i + 1) % 7 : $i + 1; // 1-7 (Sun-Sat)
@@ -266,14 +291,9 @@ class Assistants_Controller extends REST_Controller
         }
 
         $holidays = array();
-
-        foreach ($attendant->getHolidayItems()->toArray() as $holiday) {
-
+        foreach ($current_attendant->getHolidayItems()->toArray() as $holiday) {
             $data = $holiday->getData();
-
-            if (!$data) {
-                continue;
-            }
+            if (!$data) continue;
 
             $holidays[] = array(
                 'from_date' => $data['from_date'],
@@ -287,15 +307,19 @@ class Assistants_Controller extends REST_Controller
         $response = array(
             'id'                    => $attendant->getId(),
             'name'                  => $attendant->getName(),
-            'services'              => $attendant->getServicesIds(),
-            'email'                 => $attendant->getEmail(),
+            'services'              => $current_attendant->getServicesIds(),
+            'email'                 => $current_attendant->getEmail(),
             'phone_country_code'    => $attendant->getSmsPrefix(),
-            'phone'                 => $attendant->getPhone(),
+            'phone'                 => $current_attendant->getPhone(),
             'description'           => $attendant->getContent(),
             'availabilities'        => $availabilities,
             'holidays'              => $holidays,
             'image_url'             => (string) wp_get_attachment_url(get_post_thumbnail_id($attendant->getId())),
             'currency'              => SLN_Plugin::getInstance()->getSettings()->getCurrencySymbol(),
+
+            'shops'                 => $shop_id ? array($shop_id) : $attendant->getMeta('shops'),
+            'current_shop_id'       => $shop_id,
+            'is_shop_specific'      => !is_null($shop_attendant),
         );
 
         return apply_filters('sln_api_assistants_prepare_response_for_collection', $response, $attendant);

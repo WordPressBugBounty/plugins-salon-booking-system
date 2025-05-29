@@ -1,0 +1,268 @@
+@font-face {
+    font-family: 'Avenir';
+    src: url('../fonts/avenir/Avenir-Medium.woff2') format('woff2'), url('../fonts/avenir/Avenir-Medium.woff') format('woff'), url('../fonts/avenir/Avenir-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Avenir Book';
+    src: url('../fonts/avenir/Avenir-Book.woff2') format('woff2'), url('../fonts/avenir/Avenir-Book.woff') format('woff'), url('../fonts/avenir/Avenir-Book.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Avenir Heavy';
+    src: url('../fonts/avenir/Avenir-Heavy.woff2') format('woff2'), url('../fonts/avenir/Avenir-Heavy.woff') format('woff'), url('../fonts/avenir/Avenir-Heavy.ttf') format('truetype');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+.extensions-button .loader {
+    display: inline-block;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.extensions-section .extensions-inner .extensions-wrap .extensions-error {
+    /*min-height: 40px;*/
+    display: flex;
+    align-items: flex-end;
+}
+
+.extensions-section .extensions-inner .extensions-wrap {
+    color: red;
+    padding: 3px 0 10px 5px;
+}
+
+.extensions-section .extensions-inner .extensions-action {
+    display: flex;
+    align-items: center;
+}
+
+.extensions-section {
+    width: 100%;
+    max-width: 1210px;
+    margin: 30px auto 75px;
+    padding: 0 78px;
+}
+
+@media (max-width: 767px) {
+    .extensions-section {
+        padding: 0 50px;
+    }
+}
+
+.extensions-section h2 {
+    font-family: 'Avenir', sans-serif;
+    font-style: normal;
+    font-weight: 800;
+    font-size: 30px;
+    line-height: 100%;
+    color: #000000;
+    margin: 0 0 9px;
+}
+
+.extensions-section h5 {
+    font-family: 'Avenir', sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 112%;
+    color: #707070;
+    margin: 0;
+}
+
+.extensions-wrapper {
+    display: flex;
+    margin: 29px -78px 0;
+    padding: 0 60px;
+    position: relative;
+}
+
+@media (max-width: 767px) {
+    .extensions-wrapper {
+        margin: 29px -50px 0;
+        padding: 0 32px;
+    }
+}
+
+.extensions-wrapper .slick-track {
+    display: flex;
+}
+
+.extensions-wrapper .slick-prev,
+.extensions-wrapper .slick-next {
+    position: absolute;
+    top: 50%;
+    width: 23px;
+    height: 35px;
+    border: 0;
+    background: url("../img/icon.svg") no-repeat 50% 50%;
+    background-size: contain;
+    font-size: 0;
+    cursor: pointer;
+}
+
+.extensions-wrapper .slick-prev {
+    left: 0;
+    transform: translateY(-50%);
+}
+
+.extensions-wrapper .slick-next {
+    right: 0;
+    transform: translateY(-50%) scale(-1);
+}
+
+.extensions-item {
+    width: 25%;
+    padding: 10px 18px 18px;
+    display: flex;
+}
+
+.extensions-wrapper .extensions-item.slick-slide {
+    display: flex;
+    height: auto;
+}
+
+.extensions-item .extensions-inner {
+    background: #E5E5E5;
+    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
+    border-radius: 15px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+@media (max-width: 550px) {
+    .extensions-item .extensions-inner {
+        max-width: 236px;
+        margin: 0 auto;
+    }
+}
+
+.extensions-item.disabled .extensions-inner {
+    box-shadow: none;
+}
+
+.extensions-item .extensions-thumb {
+    width: 100%;
+    height: 175px;
+    border-radius: 15px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #30548e;
+    margin-bottom: 19px;
+}
+
+.extensions-item .extensions-thumb img {
+    display: block;
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: cover;
+}
+
+.extensions-item .extensions-name {
+    font-family: 'Avenir', sans-serif;
+    font-size: 25px;
+    line-height: 1;
+    font-weight: 500;
+    margin-bottom: 9px;
+    padding: 0 14px;
+}
+
+.extensions-item .extensions-descr {
+    padding: 0 14px;
+    font-family: 'Avenir', sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 112%;
+    color: #707070;
+}
+
+.extensions-item .extensions-bottom {
+    padding: 0 8px 8px 10px;
+    margin-top: auto;
+}
+
+.extensions-item .extensions-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 108px;
+    height: 33px;
+    background: #D9D9D9;
+    border-radius: 40px;
+    font-family: 'Avenir', sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 15px;
+    line-height: 100%;
+    color: #FFFFFF;
+    margin-right: 10px;
+    padding: 5px 10px;
+    text-align: center;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.extensions-item .extensions-button.loading {
+    pointer-events: none;
+}
+
+.extensions-item .extensions-button.blue {
+    background: #3574CB;
+}
+
+.extensions-item .extensions-button.blue:hover {
+    background: #26589B;
+}
+
+.extensions-item .extensions-button.green {
+    background: #24C239;
+}
+
+.extensions-item .extensions-button.green:hover {
+    background: #1f8f2b;
+}
+.extensions-item.disabled .extensions-button,
+.extensions-item.disabled .extensions-button:hover {
+    background: #D9D9D9;
+    cursor: default;
+}
+
+.extensions-item .extensions-version {
+    font-family: 'Avenir', sans-serif;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 100%;
+    color: #000000;
+    margin-right: 10px;
+}
+
+.extensions-item .extensions-price {
+    font-family: 'Avenir', sans-serif;
+    font-style: normal;
+    font-weight: 800;
+    font-size: 15px;
+    line-height: 100%;
+    color: #000000;
+    margin-left: auto;
+}
+
+.extensions-item .extensions-price img {
+    width: 33px;
+    height: auto;
+}

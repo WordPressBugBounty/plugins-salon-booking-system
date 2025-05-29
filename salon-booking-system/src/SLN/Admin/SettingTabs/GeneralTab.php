@@ -10,6 +10,8 @@ class SLN_Admin_SettingTabs_GeneralTab extends SLN_Admin_SettingTabs_AbstractTab
 		'gen_address',
 		'gen_logo',
 		'editors_manage_cap',
+		'hide_customers_email',
+		'hide_customers_phone',
 		'attendant_enabled',
 		'only_from_backend_attendant_enabled',
 		'm_attendant_enabled',
@@ -231,11 +233,11 @@ class SLN_Admin_SettingTabs_GeneralTab extends SLN_Admin_SettingTabs_AbstractTab
 
     public static function getDefaultSmsNotificationMessage()
     {
-		return "Hi [NAME],\r\ntake note of your reservation at [SALON NAME] on [DATE] at [TIME].\r\nSee you soon.";
+        return __("Hi [NAME],\r\ntake note of your reservation at [SALON NAME] on [DATE] at [TIME].\r\nSee you soon.","salon-booking-system");
 	}
 
 	public static function getDefaultSmsNotificationMessageModified() {
-		return "Hi [NAME],\r\nyour reservation at [SALON NAME], has been updated.\r\nWe've sent you an email with the details.";
+        return __("Hi [NAME],\r\nyour reservation at [SALON NAME], has been updated.\r\nWe've sent you an email with the details.","salon-booking-system");
 	}
 
     public static function getDefaultOnesignalNotificationMessage()

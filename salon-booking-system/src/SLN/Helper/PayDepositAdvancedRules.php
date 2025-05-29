@@ -12,10 +12,23 @@ class SLN_Helper_PayDepositAdvancedRules
     public static function getDeposit(float $amount, SLN_Settings $settings): float
     {
         if ($settings->isPaymentDepositAdvancedRules()) {
-            return self::getAdvancedDeposit($amount, $settings);
+            return self::getDepositWithFee(self::getAdvancedDeposit($amount, $settings));
         } else {
-            return self::getSimpleDeposit($amount, $settings);
+            return self::getDepositWithFee(self::getSimpleDeposit($amount, $settings));
         }
+    }
+
+    /**
+     * Calculate the deposit amount including transaction fees.
+     *
+     * @param float $amount The base deposit amount before fees.
+     * @return float The total deposit amount including applicable transaction fees.
+     */
+    public static function getDepositWithFee(float $amount): float
+    {
+        $fee = SLN_Helper_TransactionFee::getFee($amount);
+
+        return $amount + $fee;
     }
 
     /**

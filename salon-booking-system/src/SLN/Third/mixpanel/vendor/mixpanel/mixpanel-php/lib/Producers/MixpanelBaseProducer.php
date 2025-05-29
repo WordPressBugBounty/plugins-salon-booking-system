@@ -73,7 +73,7 @@ abstract class Producers_MixpanelBaseProducer extends Base_MixpanelBase {
         $this->_token = $token;
 
         if ($this->_debug()) {
-            $this->_log("Using token: ".$this->_token);
+            //$this->_log("Using token: ".$this->_token);
         }
 
         // instantiate the chosen consumer
@@ -91,7 +91,7 @@ abstract class Producers_MixpanelBaseProducer extends Base_MixpanelBase {
         $success = false;
         while (!$success && $attempts < $max_attempts) {
             if ($this->_debug()) {
-                $this->_log("destruct flush attempt #".($attempts+1));
+                //$this->_log("destruct flush attempt #".($attempts+1));
             }
             $success = $this->flush();
             $attempts++;
@@ -110,7 +110,7 @@ abstract class Producers_MixpanelBaseProducer extends Base_MixpanelBase {
         $num_threads = $this->_consumer->getNumThreads();
 
         if ($this->_debug()) {
-            $this->_log("Flush called - queue size: ".$queue_size);
+            //$this->_log("Flush called - queue size: ".$queue_size);
         }
 
         while($queue_size > 0 && $succeeded) {
@@ -172,7 +172,7 @@ abstract class Producers_MixpanelBaseProducer extends Base_MixpanelBase {
         $key = $this->_options['consumer'];
         $Strategy = $this->_consumers[$key];
         if ($this->_debug()) {
-            $this->_log("Using consumer: " . $key . " -> " . $Strategy);
+            //$this->_log("Using consumer: " . $key . " -> " . $Strategy);
         }
         $this->_options['endpoint'] = $this->_getEndpoint();
 

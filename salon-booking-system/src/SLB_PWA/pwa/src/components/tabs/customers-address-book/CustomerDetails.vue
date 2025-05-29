@@ -19,7 +19,10 @@
             <b-row>
                 <b-col sm="12">
                     <div class="customer-email">
-                        <b-form-input :placeholder="this.getLabel('customerEmailPlaceholder')" v-model="elCustomerEmail"/>
+                        <b-form-input
+                            :type="shouldHideEmail ? 'password' : 'text'"
+                            :placeholder="this.getLabel('customerEmailPlaceholder')"
+                            v-model="elCustomerEmail"/>
                     </div>
                 </b-col>
             </b-row>
@@ -33,7 +36,11 @@
             <b-row>
                 <b-col sm="12">
                     <div class="customer-phone">
-                        <vue-tel-input :inputOptions="vueTelInputOptions" v-model="elCustomerPhone"></vue-tel-input>
+                        <b-form-input
+                            :type="shouldHidePhone ? 'password' : 'tel'"
+                            :placeholder="this.getLabel('customerPhonePlaceholder')"
+                            v-model="elCustomerPhone"
+                        />
                     </div>
                 </b-col>
             </b-row>
@@ -107,10 +114,12 @@
 
 <script>
 import CustomField from "@/components/tabs/upcoming-reservations/CustomField.vue";
+import mixins from "@/mixin";
 
 export default {
     name: 'CustomerDetails',
     components: {CustomField},
+    mixins: [mixins],
     props: {
         customerID: {
             default: function () {
@@ -155,9 +164,11 @@ export default {
         return {
             elCustomerFirstname: this.customerFirstname,
             elCustomerLastname: this.customerLastname,
-            elCustomerEmail: this.customerEmail,
             elCustomerAddress: this.customerAddress,
-            elCustomerPhone: this.customerPhone,
+            originalEmail: this.customerEmail,
+            originalPhone: this.customerPhone,
+            elCustomerEmail: this.shouldHideEmail ? '***@***' : this.customerEmail,
+            elCustomerPhone: this.shouldHidePhone ? '*******' : this.customerPhone,
             elCustomerPersonalNotes: this.customerPersonalNotes,
             isValid: true,
             requiredFields: [],
@@ -186,8 +197,8 @@ export default {
                 id: this.customerID ? this.customerID : 0,
                 first_name: this.elCustomerFirstname,
                 last_name: this.elCustomerLastname,
-                email: this.elCustomerEmail,
-                phone: this.elCustomerPhone,
+                email: this.originalEmail,
+                phone: this.originalPhone,
                 address: this.elCustomerAddress,
                 note: this.elCustomerPersonalNotes,
                 custom_fields: this.customFieldsList,

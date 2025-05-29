@@ -89,6 +89,8 @@ class SLN_Action_Reminder
     private function sendEmail($booking){
         $this->plugin->addLog('email reminder started to be sent to '.$booking->getId());
         $args = array('booking' => $booking, 'remind' => true);
+        $booking->setMeta('email_remind', true);
+
         $this->plugin->sendMail('mail/summary', $args);
     }
 

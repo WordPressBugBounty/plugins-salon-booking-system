@@ -32,6 +32,21 @@ class App_Controller extends REST_Controller
                 'args'     => apply_filters('sln_api_app_register_routes_get_settings_args', array()),
             ),
         ) );
+
+        register_rest_route( $this->namespace, '/' . $this->rest_base . '/settings', array(
+            array(
+                'methods'  => WP_REST_Server::READABLE,
+                'callback' => array( $this, 'get_settings' ),
+                'permission_callback' => '__return_true',
+                'args'     => apply_filters('sln_api_app_register_routes_get_settings_args', array(
+                    'shop' => array(
+                        'description' => __('Shop ID.', 'salon-booking-system'),
+                        'type'        => 'integer',
+                        'default'     => null,
+                    ),
+                )),
+            ),
+        ) );
     }
 
     public function get_about_info() {
@@ -71,6 +86,16 @@ class App_Controller extends REST_Controller
             $plugin = SLN_Plugin::getInstance();
             $s = $plugin->getSettings();
 
+            $shop_id = $request->get_param('shop');
+            if ($shop_id && class_exists('\SalonMultishop\Addon')) {
+                try {
+                    $addon = \SalonMultishop\Addon::getInstance();
+                    $addon->setCurrentShop($shop_id);
+                } catch (\Exception $e) {
+                    var_dump("API: Failed to set shop context: " . $e->getMessage());
+                }
+            }
+
             $availabilities = $s->get('availabilities');
             $holidays = $s->get('holidays');
             $holidays_daily = $s->get('holidays_daily');
@@ -105,6 +130,8 @@ class App_Controller extends REST_Controller
             $date_format = $s->get('date_format');
             $time_format = $s->get('time_format');
 
+            $userRoleHelper = new \SLB_API_Mobile\Helper\UserRoleHelper();
+
             $settings = array(
                 'attendant_enabled' => (bool)$s->get('attendant_enabled'),
                 'date_format' => array(
@@ -127,8 +154,11 @@ class App_Controller extends REST_Controller
                 'availabilities' => $rulesData,
                 'holidays' => is_array($holidays) ? $holidays : array(),
                 'holidays_daily' => is_array($holidays_daily) ? $holidays_daily : array(),
+                'hide_customers_email' => (bool)$userRoleHelper->is_hide_customer_email(),
+                'hide_customers_phone' => (bool)$userRoleHelper->is_hide_customer_phone(),
+                'current_shop_id' => $shop_id,
+                'multishop_enabled' => class_exists('\SalonMultishop\Addon'),
             );
-
             return $this->success_response(array('settings' => $settings));
         } catch (\Exception $ex) {
             return new \WP_Error('salon_rest_cannot_view', $ex->getMessage(), array('status' => $ex->getCode() ? $ex->getCode() : 500));

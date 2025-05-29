@@ -47,15 +47,15 @@
                     <b-row>
                         <b-col sm="12">
                             <div class="customer-email">
-                                {{ customerEmail }}
+                                {{ getDisplayEmail(customerEmail) }}
                             </div>
                         </b-col>
                     </b-row>
                     <b-row>
                         <b-col sm="12">
                             <div class="customer-phone">
-                                {{ customerPhone }}
-                                <span class="customer-phone-actions" v-if="customerPhone">
+                                {{ getDisplayPhone(customerPhone) }}
+                                <span class="customer-phone-actions" v-if="customerPhone && !shouldHidePhone">
                                     <a target="_blank" :href="'tel:' + customerPhone" class="phone">
                                         <font-awesome-icon icon="fa-solid fa-phone" />
                                     </a>
@@ -223,11 +223,12 @@
 </template>
 
 <script>
-
     import PayRemainingAmount from './PayRemainingAmount.vue'
+    import mixins from "@/mixin";
 
     export default {
         name: 'BookingDetails',
+        mixins: [mixins],
         props: {
             booking: {
                 default: function () {
@@ -249,10 +250,12 @@
                 return this.bookingData.customer_last_name
             },
             customerEmail() {
-                return this.bookingData.customer_email
+                return this.getDisplayEmail(this.bookingData.customer_email);
             },
             customerPhone() {
-                return this.bookingData.customer_phone ? this.bookingData.customer_phone_country_code + this.bookingData.customer_phone : ''
+                const phone = this.bookingData.customer_phone ?
+                    this.bookingData.customer_phone_country_code + this.bookingData.customer_phone : '';
+                return this.getDisplayPhone(phone);
             },
             customerNote() {
                 return this.bookingData.note

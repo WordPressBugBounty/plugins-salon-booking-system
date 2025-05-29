@@ -529,6 +529,16 @@ sum(
                 <p><?php esc_html_e('This allows Wordpress users with Salon Staff role to export the bookings to CSV.', 'salon-booking-system') ?></p>
             </div>
         </div>
+        <div class="row">
+            <div class="col-xs-12 col-sm-6 sln-checkbox">
+                <?php $this->row_input_checkbox('hide_customers_email', __('Hide customer email address to assistants', 'salon-booking-system')); ?>
+                <p><?php esc_html_e('This allows will hide customer emails for Salon Staff.', 'salon-booking-system') ?></p>
+            </div>
+            <div class="col-xs-12 col-sm-6 sln-checkbox">
+                <?php $this->row_input_checkbox('hide_customers_phone', __('Hide customer telephone number to assistant', 'salon-booking-system')); ?>
+                <p><?php esc_html_e('This allows will hide customer phone for Salon Staff.', 'salon-booking-system') ?></p>
+            </div>
+        </div>
     </div>
 </div>
 <?php echo $plugin->loadView('settings/_tab_general_pages', array('helper' => $this)); ?>

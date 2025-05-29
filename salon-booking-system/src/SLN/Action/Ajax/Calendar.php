@@ -192,6 +192,10 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
       'day@max' => date_modify(clone $this->from, ($month+1) . ' month')
     ));
   }
+    private function getAvailabilityIndex($w) {
+        $weekStart = $this->plugin->getSettings()->get('week_start');
+        return (($w - $weekStart + 7) % 7) + 1;
+    }
 
   public function renderMonthDay($week_number, $day, $stats){
     $settings = $this->plugin->getSettings();
@@ -254,7 +258,7 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
     $bookingEndAt = new DateTime($booking->getEndsAt('UTC'));
 
     foreach ($settings->get('availabilities') as $date) {
-      if (!isset($date['days'][$bookingStartAt->format('w') + 1])) {
+      if (!isset($date['days'][$this->getAvailabilityIndex((int)$bookingStartAt->format('w'))])) {
         continue;
       }
       foreach (array_map(null, $date['from'], $date['to']) as $interval) {
@@ -329,241 +333,253 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
       return $time;
     }
 
-  protected function renderDay(){
-    $format = $this->plugin->format();
-    $settings = $this->plugin->getSettings();
-    $interval = $settings->getInterval();
-    $dtInterval = new DateTime('@'. $interval*60);
-    $msPerLine = 60000 * $interval;
-    $ai = $settings->getAvailabilityItems();
-    $on_page = $settings->get('parallels_hour') * 2 + 1;
-    list($start, $end) = $ai->getTimeMinMax();
-    $start = explode(':', $start);
-    $end = explode(':', $end);
-    $start = $this->getFrom()->setTime($start[0], $start[1]);
-    $end = $this->getFrom()->setTime($end[0], $end[1]);
-    usort($this->bookings, function($a, $b) {
-        return $a->getStartsAt() <=> $b->getStartsAt();
-    });
+    protected function renderDay(){
+        $format = $this->plugin->format();
+        $settings = $this->plugin->getSettings();
+        $interval = $settings->getInterval();
+        $dtInterval = new DateTime('@'. $interval*60);
+        $msPerLine = 60000 * $interval;
+        $ai = $settings->getAvailabilityItems();
+        $on_page = $settings->get('parallels_hour') * 2 + 1;
+        list($start, $end) = $ai->getTimeMinMax();
+        $start = explode(':', $start);
+        $end = explode(':', $end);
+        $start = $this->getFrom()->setTime($start[0], $start[1]);
+        $end = $this->getFrom()->setTime($end[0], $end[1]);
+        usort($this->bookings, function($a, $b) {
+            return $a->getStartsAt() <=> $b->getStartsAt();
+        });
 
-     if(isset($this->bookings[0])){
-        $hours = $start->format('H');
-        $minutes = $start->format('i');
-        $start->setTimezone($this->bookings[0]->getStartsAt()->getTimezone())->setTime($hours, $minutes);
-        $hours = $end->format('H');
-        $minutes = $end->format('i');
-        $end->setTimezone($this->bookings[0]->getStartsAt()->getTimezone())->setTime($hours, $minutes);
-    }
-    foreach($this->bookings as $booking){
-      if($booking->getStartsAt() < $start){
-        $start = $booking->getStartsAt();
-      }
-      if($booking->getEndsAt() > $end){
-        $end = $booking->getEndsAt();
-      }
-    }
-    $this->startTime = $start;
-    $this->endTime = $end;
-
-    $timeDiff = $end->diff($start);
-    $lines = ($timeDiff->h*60 + $timeDiff->i) / $interval;
-    if ($start->format('H:i') === '00:00' && $end->format('H:i') === '00:00'){
-        $lines = (24 * 60) / $interval;
-    }
-    $by_hour = array();
-
-    foreach($this->bookings as $booking){
-      $wrappedBooking = array();
-      $isMain = true;
-      $currBsServices = array();
-      foreach($booking->getBookingServices()->getItems() as $bookingService){
-        $isParallelServiceProcess = $bookingService->getParallelExec();
-        $breakDurationMs = SLN_Func::getMinutesFromDuration($bookingService->getBreakDuration());
-        if($breakDurationMs){
-          $currServiceStart = SLN_Helper_CalendarEvent::buildForDay( // add before break part
-            $booking,
-            $this,
-            $bookingService,
-            $start->diff($bookingService->getStartsAt()),
-            $bookingService->getStartsAt()->diff($bookingService->getBreakStartsAt()),
-            $isMain,
-            $interval,
-            $lines,
-            'block',
-            ' break-down no-border-top'
-          );
-
-          $currServiceEnd = SLN_Helper_CalendarEvent::buildForDay( // add after break part
-            $booking,
-            $this,
-            $bookingService,
-            $start->diff($bookingService->getBreakEndsAt()),
-            $bookingService->getBreakEndsAt()->diff($bookingService->getEndsAt()),
-            $isMain,
-            $interval,
-            $lines,
-            'none',
-            ' break-up no-border-top'
-          );
-          if(empty($currBsServices) || $this->getAttendantMode()){
-            $currBsServices[] = $currServiceStart;
-          }else{
-            $currBsServices[array_key_last($currBsServices)]->lines += $currServiceStart->lines;
-            $currBsServices[array_key_last($currBsServices)]->displayClass .= $currServiceStart->displayClass;
-          }
-          $currBsServices[] = $currServiceEnd;
-        }else{
-          $currService = SLN_Helper_CalendarEvent::buildForDay(
-            $booking,
-            $this,
-            $bookingService,
-            $start->diff($bookingService->getStartsAt()),
-            $bookingService->getStartsAt()->diff($bookingService->getEndsAt()),
-            $isMain,
-            $interval,
-            $lines,
-            'block',
-            ' no-border-top'
-          );
-          if(empty($currBsServices) || $this->getAttendantMode()){
-            $currBsServices[] = $currService;
-          }else{
-            $currBsServices[array_key_last($currBsServices)]->lines += $currService->lines;
-          }
+        if(isset($this->bookings[0])){
+            $hours = $start->format('H');
+            $minutes = $start->format('i');
+            $start->setTimezone($this->bookings[0]->getStartsAt()->getTimezone())->setTime($hours, $minutes);
+            $hours = $end->format('H');
+            $minutes = $end->format('i');
+            $end->setTimezone($this->bookings[0]->getStartsAt()->getTimezone())->setTime($hours, $minutes);
         }
-
-        $isMain = false;
-      }
-      if(!$this->attendantMode){
-        $offset = array();
-        foreach($currBsServices as $currBsService){
-          foreach($by_hour as $bsService){
-            if($currBsService->isCollide($bsService)){
-              if(!is_null($bsService->left)){
-                $offset[$bsService->left] = $bsService->left;
-              }
+        foreach($this->bookings as $booking){
+            if($booking->getStartsAt() < $start){
+                $start = $booking->getStartsAt();
             }
-          }
+            if($booking->getEndsAt() > $end){
+                $end = $booking->getEndsAt();
+            }
         }
-        for($index = 0; ; $index++){
-          if(!isset($offset[$index])){
-            $offset = $index;
-            break;
-          }
-        }
-        foreach($currBsServices as $bs){
-          $bs->left = $offset;
-        }
-      }
-      $by_hour = array_merge($by_hour, $currBsServices);
-    }
+        $this->startTime = $start;
+        $this->endTime = $end;
 
-
-    $headers = array();
-
-    if($this->attendantMode){
-      $times = SLN_Func::getMinutesIntervals();
-      $eventsByAttAndId = array();
-      $att_col = 0;
-      foreach($this->getAssistantsOrder() as $attId){
-        $attendantsEvent = array();
-        $eventsByAttAndId[$attId] = array();
-        foreach($by_hour as $bsEvent){
-          if(in_array($attId, $bsEvent->attendant)){
-              $attendantsEvent[] = $bsEvent;
-              $bsEvent->left = null;
-              if(count($bsEvent->attendant) > 1){
-                $bsEvent = clone $bsEvent;
-              }
-              if(isset($eventsByAttAndId[$attId][$bsEvent->id])){
-                $eventsByAttAndId[$attId][$bsEvent->id][] = $bsEvent;
-              }else{
-                $eventsByAttAndId[$attId][$bsEvent->id] = array($bsEvent);
-              }
-          }
+        $timeDiff = $end->diff($start);
+        $lines = ($timeDiff->h*60 + $timeDiff->i) / $interval;
+        if ($start->format('H:i') === '00:00' && $end->format('H:i') === '00:00'){
+            $lines = (24 * 60) / $interval;
         }
-        $att_offset = 0;
-        foreach($eventsByAttAndId[$attId] as $bookingId => $currBsServices){
-          $offset = array();
-          foreach($currBsServices as $currBsService){
-            foreach($attendantsEvent as $bsService){
-              if($currBsService->id == $bsService->id){
-                continue;
-              }
-              if($currBsService->isCollide($bsService)){
-                if(!is_null($bsService->left)){
-                  $offset[$bsService->left] = $bsService->left;
+        $by_hour = array();
+
+        foreach($this->bookings as $booking){
+            $wrappedBooking = array();
+            $isMain = true;
+            $currBsServices = array();
+            foreach($booking->getBookingServices()->getItems() as $bookingService){
+                $isParallelServiceProcess = $bookingService->getParallelExec();
+                $breakDurationMs = SLN_Func::getMinutesFromDuration($bookingService->getBreakDuration());
+                if($breakDurationMs){
+                    $currServiceStart = SLN_Helper_CalendarEvent::buildForDay( // add before break part
+                        $booking,
+                        $this,
+                        $bookingService,
+                        $start->diff($bookingService->getStartsAt()),
+                        $bookingService->getStartsAt()->diff($bookingService->getBreakStartsAt()),
+                        $isMain,
+                        $interval,
+                        $lines,
+                        'block',
+                        ' break-down no-border-top'
+                    );
+
+                    $currServiceEnd = SLN_Helper_CalendarEvent::buildForDay( // add after break part
+                        $booking,
+                        $this,
+                        $bookingService,
+                        $start->diff($bookingService->getBreakEndsAt()),
+                        $bookingService->getBreakEndsAt()->diff($bookingService->getEndsAt()),
+                        $isMain,
+                        $interval,
+                        $lines,
+                        'none',
+                        ' break-up no-border-top'
+                    );
+                    if(empty($currBsServices) || $this->getAttendantMode()){
+                        $currBsServices[] = $currServiceStart;
+                    }else{
+                        $currBsServices[array_key_last($currBsServices)]->lines += $currServiceStart->lines;
+                        $currBsServices[array_key_last($currBsServices)]->displayClass .= $currServiceStart->displayClass;
+                    }
+                    $currBsServices[] = $currServiceEnd;
+                }else{
+                    $currService = SLN_Helper_CalendarEvent::buildForDay(
+                        $booking,
+                        $this,
+                        $bookingService,
+                        $start->diff($bookingService->getStartsAt()),
+                        $bookingService->getStartsAt()->diff($bookingService->getEndsAt()),
+                        $isMain,
+                        $interval,
+                        $lines,
+                        'block',
+                        ' no-border-top'
+                    );
+                    if(empty($currBsServices) || $this->getAttendantMode()){
+                        $currBsServices[] = $currService;
+                    }else{
+                        $currBsServices[array_key_last($currBsServices)]->lines += $currService->lines;
+                    }
                 }
-              }
-            }
-          }
-          for($ind = $att_col; ; $ind++){
-            if(!isset($offset[$ind])){
-              $offset = $ind;
-              break;
-            }
-          }
-          $prev = null;
-          foreach($currBsServices as $ind => $bs){
-            if(!empty($prev) && $prev->top == $bs->top){
-              $offset++;
-            }
-            $prev = $bs;
-            $eventsByAttAndId[$attId][$bookingId][$ind]->left = $offset;
-            $att_offset = max($offset-$att_col, $att_offset);
-          }
-        }
-        $att_col += $att_offset+1;
-      }
-      $by_hour = array();
-      foreach($this->getAssistantsOrder() as $attId){
-        $att_offset_max = 0;
-        $att_offset_min = $on_page * count($eventsByAttAndId);
-        $tmpBsEvent = null;
-        foreach($eventsByAttAndId[$attId] as $bsEventArray){
-          foreach($bsEventArray as $bsEvent) {
-            if (isset($tmpBsEvent) && $bsEvent->attendant == $tmpBsEvent->attendant) {
-              $att_offset_max = max($att_offset_max, $bsEvent->left, $tmpBsEvent->left);
-              $att_offset_min = min($att_offset_min, $bsEvent->left, $tmpBsEvent->left);
-            }
-            $tmpBsEvent = $bsEvent;
-            $by_hour[] = $bsEvent;
-          }
-        }
-        $att_offset = $att_offset_max - $att_offset_min;
-        $attendant = $this->plugin->createAttendant($attId);
-        $unavailableTimes = array();
-        foreach ($times as $time) {
-          $dateTime = new DateTime(Date::create($this->from)->toString() . ' ' . $time, new DateTimeZone('UTC'));
-          //TODO: add method isNotAvailableOnDateDuration and use here
-          if (!($attendant->getAvailabilityItems()->isValidDatetimeDuration($dateTime, $dtInterval) &&
-            $attendant->getNewHolidayItems()->isValidDatetimeDuration($dateTime, $dtInterval))) {
-            $unavailableTimes[] = $time;
-          }
-        }
-        $headers[] = array(
-          'id' => $attId,
-          'offset' => $att_col,
-          'name' => $attendant->getName(),
-          'unavailable_times' => $unavailableTimes,
-        );
-        for(; $att_offset > 0; $att_offset--){
-          $headers[] = null;
-        }
-      }
-    }
 
-    return $this->plugin->loadView('admin/_calendar_render_day', array(
-      'calendar' => $this,
-      'headers' => $headers,
-      'by_hour' => $by_hour,
-      'borders' => $on_page,
-      'start' => $start,
-      'lines' => $lines,
-      'format' => $format,
-      'stats' => $this->getStats(),
-    ));
-  }
+                $isMain = false;
+            }
+            if(!$this->attendantMode){
+                $offset = array();
+                foreach($currBsServices as $currBsService){
+                    foreach($by_hour as $bsService){
+                        if($currBsService->isCollide($bsService)){
+                            if(!is_null($bsService->left)){
+                                $offset[$bsService->left] = $bsService->left;
+                            }
+                        }
+                    }
+                }
+                for($index = 0; ; $index++){
+                    if(!isset($offset[$index])){
+                        $offset = $index;
+                        break;
+                    }
+                }
+                foreach($currBsServices as $bs){
+                    $bs->left = $offset;
+                }
+            }
+            $by_hour = array_merge($by_hour, $currBsServices);
+        }
+
+        $headers = array();
+
+        if($this->attendantMode){
+            $times = SLN_Func::getMinutesIntervals();
+            $eventsByAttAndId = array();
+            $att_col = 0;
+            foreach($this->getAssistantsOrder() as $attId){
+                $attendantsEvent = array();
+                $eventsByAttAndId[$attId] = array();
+                foreach($by_hour as $bsEvent){
+                    if(in_array($attId, $bsEvent->attendant)){
+                        $attendantsEvent[] = $bsEvent;
+                        $bsEvent->left = null;
+                        if(count($bsEvent->attendant) > 1){
+                            $bsEvent = clone $bsEvent;
+                        }
+                        if(isset($eventsByAttAndId[$attId][$bsEvent->id])){
+                            $eventsByAttAndId[$attId][$bsEvent->id][] = $bsEvent;
+                        }else{
+                            $eventsByAttAndId[$attId][$bsEvent->id] = array($bsEvent);
+                        }
+                    }
+                }
+                $att_offset = 0;
+                foreach($eventsByAttAndId[$attId] as $bookingId => $currBsServices){
+                    $offset = array();
+                    foreach($currBsServices as $currBsService){
+                        foreach($attendantsEvent as $bsService){
+                            if($currBsService->id == $bsService->id){
+                                continue;
+                            }
+                            if($currBsService->isCollide($bsService)){
+                                if(!is_null($bsService->left)){
+                                    $offset[$bsService->left] = $bsService->left;
+                                }
+                            }
+                        }
+                    }
+                    for($ind = $att_col; ; $ind++){
+                        if(!isset($offset[$ind])){
+                            $offset = $ind;
+                            break;
+                        }
+                    }
+                    $prev = null;
+                    foreach($currBsServices as $ind => $bs){
+                        if(!empty($prev) && $prev->top == $bs->top){
+                            $offset++;
+                        }
+                        $prev = $bs;
+                        $eventsByAttAndId[$attId][$bookingId][$ind]->left = $offset;
+                        $att_offset = max($offset-$att_col, $att_offset);
+                    }
+                }
+                $att_col += $att_offset+1;
+            }
+            $by_hour = array();
+            foreach($this->getAssistantsOrder() as $attId){
+                $att_offset_max = 0;
+                $att_offset_min = $on_page * count($eventsByAttAndId);
+                $tmpBsEvent = null;
+                foreach($eventsByAttAndId[$attId] as $bsEventArray){
+                    foreach($bsEventArray as $bsEvent) {
+                        if (isset($tmpBsEvent) && $bsEvent->attendant == $tmpBsEvent->attendant) {
+                            $att_offset_max = max($att_offset_max, $bsEvent->left, $tmpBsEvent->left);
+                            $att_offset_min = min($att_offset_min, $bsEvent->left, $tmpBsEvent->left);
+                        }
+                        $tmpBsEvent = $bsEvent;
+                        $by_hour[] = $bsEvent;
+                    }
+                }
+                $att_offset = $att_offset_max - $att_offset_min;
+
+                $attendant = $this->plugin->createAttendant($attId);
+
+                if(class_exists('\SalonMultishop\Addon')){
+                    $addon = \SalonMultishop\Addon::getInstance();
+                    $currentShop = $addon->getCurrentShop();
+                    if($currentShop) {
+                        try {
+                            $attendant = $currentShop->getAttendantWrapper($attendant);
+                        } catch (\Exception $e) {
+                            var_dump("Calendar: Failed to get shop wrapper for attendant $attId: " . $e->getMessage());
+                        }
+                    }
+                }
+                $unavailableTimes = array();
+                foreach ($times as $time) {
+                    $dateTime = new DateTime(\Salon\Util\Date::create($this->from)->toString() . ' ' . $time, new DateTimeZone('UTC'));
+                    //TODO: add method isNotAvailableOnDateDuration and use here
+                    if (!($attendant->getAvailabilityItems()->isValidDatetimeDuration($dateTime, $dtInterval) &&
+                        $attendant->getNewHolidayItems()->isValidDatetimeDuration($dateTime, $dtInterval))) {
+                        $unavailableTimes[] = $time;
+                    }
+                }
+                $headers[] = array(
+                    'id' => $attId,
+                    'offset' => $att_col,
+                    'name' => $attendant->getName(),
+                    'unavailable_times' => $unavailableTimes,
+                );
+                for(; $att_offset > 0; $att_offset--){
+                    $headers[] = null;
+                }
+            }
+        }
+
+        return $this->plugin->loadView('admin/_calendar_render_day', array(
+            'calendar' => $this,
+            'headers' => $headers,
+            'by_hour' => $by_hour,
+            'borders' => $on_page,
+            'start' => $start,
+            'lines' => $lines,
+            'format' => $format,
+            'stats' => $this->getStats(),
+        ));
+    }
 
   public function getTimeByLine($line){
     $start_time = clone $this->startTime;
@@ -610,38 +626,67 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
     return false;
   }
 
-  public function hasAttendantHoliday($line, $attId){
-    if(empty($attId)){
-      return false;
-    }
-    $interval = $this->plugin->getSettings()->getInterval();
+    public function hasAttendantHoliday($line, $attId){
+        if(empty($attId)){
+            return false;
+        }
 
-    $attendant = $this->plugin->createAttendant($attId);
-    $holidays = $attendant->getMeta('holidays') ?: array();
-    $holidays = array_merge($holidays, $attendant->getMeta('holidays_daily') ?: array());
-    $time = clone $this->startTime;
-    $time->modify($line*$interval. ' minutes');
-    foreach($holidays as $holidayRule){
-      $startTime = new DateTime($holidayRule['from_date'] . ' ' . $holidayRule['from_time'], $time->getTimezone());
-      $endTime = new DateTime($holidayRule['to_date'] . ' ' . $holidayRule['to_time'], $time->getTimezone());
-      if($startTime <= $time && $time < $endTime){
-        return true;
-      }
-    }
-    return false;
-  }
+        $attendant = $this->plugin->createAttendant($attId);
 
-  public function isAttendantAvailable($attendantId, $day, $isFullDay=false){
-    $currDay = $this->getFrom()->modify($day. ' day');
-    $interval = $this->plugin->getSettings()->getInterval();
-    $interval = new DateTime('@'. $interval * 60);
-    $att = $this->plugin->createAttendant($attendantId);
-    if($isFullDay){
-      return $att->getAvailabilityItems()->isValidDate(Date::create($currDay)) && $att->getNewHolidayItems()->isValidDate(Date::create($currDay));
-    }else{
-      return $att->getAvailabilityItems()->isValidDatetimeDuration($currDay, $interval) && $att->getNewHolidayItems()->isValidDatetimeDuration($currDay, $interval);
+        if(class_exists('\SalonMultishop\Addon')){
+            $addon = \SalonMultishop\Addon::getInstance();
+            $currentShop = $addon->getCurrentShop();
+            if($currentShop) {
+                try {
+                    $attendant = $currentShop->getAttendantWrapper($attendant);
+                } catch (\Exception $e) {
+                    var_dump("hasAttendantHoliday: Failed to get shop wrapper for attendant $attId: " . $e->getMessage());
+                }
+            }
+        }
+
+        $interval = $this->plugin->getSettings()->getInterval();
+
+        $holidays = $attendant->getMeta('holidays') ?: array();
+        $holidays = array_merge($holidays, $attendant->getMeta('holidays_daily') ?: array());
+
+        $time = clone $this->startTime;
+        $time->modify($line*$interval. ' minutes');
+
+        foreach($holidays as $holidayRule){
+            $startTime = new DateTime($holidayRule['from_date'] . ' ' . $holidayRule['from_time'], $time->getTimezone());
+            $endTime = new DateTime($holidayRule['to_date'] . ' ' . $holidayRule['to_time'], $time->getTimezone());
+            if($startTime <= $time && $time < $endTime){
+                return true;
+            }
+        }
+        return false;
     }
-  }
+
+    public function isAttendantAvailable($attendantId, $day, $isFullDay = false)
+    {
+        $currDay = $this->getFrom()->modify($day . ' day');
+        $interval = $this->plugin->getSettings()->getInterval();
+        $interval = new DateTime('@' . $interval * 60);
+
+        $att = $this->plugin->createAttendant($attendantId);
+
+        if (class_exists('\SalonMultishop\Addon')) {
+            $addon = \SalonMultishop\Addon::getInstance();
+            $currentShop = $addon->getCurrentShop();
+            if ($currentShop) {
+                $att = $currentShop->getAttendantWrapper($att);
+            }
+        }
+
+        if ($isFullDay) {
+            return $att->getAvailabilityItems()->isValidDate(Date::create($currDay)) &&
+                $att->getNewHolidayItems()->isValidDate(Date::create($currDay));
+        } else {
+            return $att->getAvailabilityItems()->isValidDatetimeDuration($currDay, $interval) &&
+                $att->getNewHolidayItems()->isValidDatetimeDuration($currDay, $interval);
+        }
+    }
 
     public function isLineInWorkingSchedule(int $line): bool
     {
@@ -650,7 +695,7 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
         $time = (clone $this->startTime)->modify($line * $interval . ' minutes');
 
         foreach ($settings->get('availabilities') as $rule) {
-            $weekday = (int)$time->format('w') + 1;
+            $weekday = $this->getAvailabilityIndex((int)$time->format('w'));
             if (empty($rule['days'][$weekday])) {
                 continue;
             }

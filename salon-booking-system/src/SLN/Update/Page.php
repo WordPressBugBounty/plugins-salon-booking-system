@@ -97,12 +97,15 @@ class SLN_Update_Page
                         <th scope="row" valign="top">
                             <?php esc_html_e('License State', 'salon-booking-system'); ?>
                         </th>
-                        <td>
+                        <td class="status">
                             <?php if ($status == 'valid') { ?>
-                                <span style="color:green;"><?php esc_html_e('active', 'salon-booking-system'); ?></span>
+                                <span class="title" style="color:green;position: relative; top: -10px;"><?php esc_html_e('active', 'salon-booking-system'); ?></span>
                                 <?php wp_nonce_field('nonce', 'nonce'); ?>&nbsp;
                                 <input type="submit" class="button-secondary" name="license_deactivate"
                                        value="<?php esc_html_e('Deactivate License', 'salon-booking-system'); ?>"/>
+                                <span class="check_license" style="margin-left: 10px;"><svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M30.6666 5.33335V13.3334M30.6666 13.3334H22.6666M30.6666 13.3334L24.4799 7.52002C23.0469 6.0863 21.2741 5.03896 19.3268 4.47572C17.3796 3.91247 15.3214 3.85169 13.3443 4.29903C11.3672 4.74637 9.53565 5.68726 8.02054 7.03391C6.50543 8.38056 5.35614 10.0891 4.67992 12M1.33325 26.6667V18.6667M1.33325 18.6667H9.33325M1.33325 18.6667L7.51992 24.48C8.95291 25.9137 10.7257 26.9611 12.673 27.5243C14.6202 28.0876 16.6784 28.1484 18.6555 27.701C20.6326 27.2537 22.4642 26.3128 23.9793 24.9661C25.4944 23.6195 26.6437 21.911 27.3199 20" stroke="#3574CB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg> </span>
                             <?php } elseif ($status == 'invalid') { ?>
                                 <span style="color:red;"><?php esc_html_e('invalid', 'salon-booking-system'); ?></span>
                                 <?php
@@ -118,15 +121,15 @@ class SLN_Update_Page
                         <th scope="row" valign="top">
                             <?php esc_html_e('Payment id', 'salon-booking-system'); ?>
                         </th>
-                        <td>
+                        <td class="payment_id" >
                             <?php echo $data->payment_id ?>
                         </td>
                     </tr>
-                    <tr valign="top">
+                    <tr valign="top" >
                         <th scope="row" valign="top">
                             <?php esc_html_e('Customer name', 'salon-booking-system'); ?>
                         </th>
-                        <td>
+                        <td class="customer_name">
                             <?php echo $data->customer_name ?>
                         </td>
                     </tr>
@@ -134,7 +137,7 @@ class SLN_Update_Page
                         <th scope="row" valign="top">
                             <?php esc_html_e('Customer email', 'salon-booking-system'); ?>
                         </th>
-                        <td>
+                        <td  class="customer_email">
                             <?php echo $data->customer_email ?>
                         </td>
                     </tr>
@@ -142,7 +145,7 @@ class SLN_Update_Page
                         <th scope="row" valign="top">
                             <?php esc_html_e('Expires', 'salon-booking-system'); ?>
                         </th>
-                        <td>
+                        <td class="expires">
                             <?php echo $data->expires ?>
                         </td>
                     </tr>
@@ -153,6 +156,59 @@ class SLN_Update_Page
                 <?php submit_button(); ?>
             <?php } ?>
         </form>
+        <style>
+            @keyframes rotate {
+                100% {
+                    transform: rotate(360deg);
+                }
+            }
+
+            .rotate {
+                animation: rotate 1s linear infinite;
+            }
+        </style>
+        <script>
+            jQuery('.check_license').on('click',function(){
+                var svg = jQuery(this).find('svg');
+                svg.addClass('rotate');
+                var license_key = jQuery('#license_key').val()
+                jQuery.ajax({
+                    url: ajaxurl, // Provided automatically by WordPress in admin
+                    method: 'POST',
+                    data: {
+                        action: 'sln_refresh_license_status', // This must match the PHP handler,
+                        key: license_key
+                        // You can add more data if needed
+                    },
+                    success: function (response) {
+                        if(response.data.status){
+                            jQuery('.status .title').replaceWith('<span class="title" style="color:green;position: relative; top: -10px;">'+response.data.status_title+'</span>')
+                            jQuery('.payment_id').text(response.data.payment_id)
+                            jQuery('.customer_name').text(response.data.customer_name)
+                            jQuery('.customer_email').text(response.data.customer_email)
+                            jQuery('.expires').text(response.data.expires)
+                        } else {
+                            jQuery('.status .title').replaceWith('<span class="title" style="color:red;position: relative; top: -10px;">'+response.data.status_title+'</span>')
+                            jQuery('.payment_id').text(response.data.payment_id)
+                            jQuery('.customer_name').text(response.data.customer_name)
+                            jQuery('.customer_email').text(response.data.customer_email)
+                            jQuery('.expires').text(response.data.expires)
+                        }
+                        ///jQuery('.status .title').replace('')
+                        // Optionally handle UI updates here
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('AJAX error:', error);
+                    },
+                    complete: function (data) {
+                        //jQuery('.status .title').replace('')
+                        svg.removeClass('rotate');
+                    }
+                });
+
+
+            })
+        </script>
         <?php
     }
 }

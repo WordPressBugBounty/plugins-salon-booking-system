@@ -225,7 +225,8 @@ class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
         SLN_Plugin::addLog(__CLASS__ . ' eval total of' . $this->getId());
 
         foreach ($this->getBookingServices()->getItems() as $bookingService) {
-            $price = $bookingService->getPrice() * $bookingService->getCountServices();
+            //$price = $bookingService->getPrice() * $bookingService->getCountServices();
+            $price = $bookingService->getPrice();
             $amount += $price;
             SLN_Plugin::addLog(' - service ' . $bookingService->getService() . ' +' . $price);
         }

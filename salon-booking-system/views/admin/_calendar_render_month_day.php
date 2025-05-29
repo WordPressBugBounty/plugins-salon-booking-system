@@ -14,7 +14,7 @@ if($today->format('dY-m-d') == $start->format('dY-m-d')){
 	$cur_date = ' cal-day-today';
 }
 ?>
-<div class="cal-month-day <?php echo $dayClass; echo count($booking) ? 'has-events' : ''; echo $cur_date;?>">
+<div class="cal-month-day <?php echo $dayClass; echo count($booking) ? ' has-events' : ''; echo $cur_date;?>">
 	<a class="calbar month-calbar" href="#" data-toggle="tooltip" data-day="<?php echo $day; ?>" data-html="true" data-original-title='<?php echo isset($stats['text']) ?? ''?>'>
 		<?php if(isset($stats['free'])): ?>
 			<span class="busy" style="width: <?php echo $stats['busy']; ?>%"></span>

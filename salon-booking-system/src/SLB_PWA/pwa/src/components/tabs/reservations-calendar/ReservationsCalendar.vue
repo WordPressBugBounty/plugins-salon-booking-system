@@ -949,15 +949,20 @@ export default {
         /* -- step 5: check working hours for the day -- */
         const avail = this.$root.settings.availabilities || [];
         if (avail.length) {
-          const rule = avail.find(availabilityRule => availabilityRule.days?.[weekday]);
-          if (!rule) return true; // ==> no rule for this day = day off
+          // get all rules applicable for this day
+          const rule = avail.filter(availabilityRule => availabilityRule.days?.[weekday] === '1');
+          if (rule.length === 0) return true; // ==> no rule for this day = day off
 
-          const inShift = rule.shifts?.some(shift => {
-            if (shift.disabled) return false;
-            const fromMinutes = this.timeToMinutes(shift.from);
-            const toMinutes = this.timeToMinutes(shift.to);
-            return slotMin >= fromMinutes && slotMin < toMinutes;
+          // check if time is in ANY shift of ANY applicable rule
+          const inShift = rule.some(rule => {
+            return rule.shifts?.some(shift => {
+              if (shift.disabled) return false;
+              const fromMinutes = this.timeToMinutes(shift.from);
+              const toMinutes = this.timeToMinutes(shift.to);
+              return slotMin >= fromMinutes && slotMin < toMinutes;
+            });
           });
+
           if (!inShift) return true; // ==> time not in any active shift
         }
 

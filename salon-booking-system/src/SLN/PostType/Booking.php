@@ -1,7 +1,11 @@
 <?php
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
+use SLB_API_Mobile\Helper\UserRoleHelper;
+
 class SLN_PostType_Booking extends SLN_PostType_Abstract
 {
+    public $hide_phone;
+    public $hide_email;
 
     public function init()
     {
@@ -27,6 +31,9 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
             add_filter( 'posts_search', [$this,'posts_search'], 10, 2 );
             add_filter('redirect_post_location', [$this, 'redirect_post_location'], 10, 2);
         }
+        $user_role_helper = new UserRoleHelper();
+        $this->hide_email = $user_role_helper->is_hide_customer_phone();
+        $this->hide_phone = $user_role_helper->is_hide_customer_email();
         $this->registerPostStatus();
     }
 
@@ -289,7 +296,9 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
             case 'myauthor':
 		        echo '<a href="'.esc_url(add_query_arg(array('page' => SLN_Admin_Customers::PAGE, 'id' => $customer ? $customer->getId() : null), admin_url('admin.php'))).'">'. esc_html($obj->getDisplayName()) .'</a>';
                 if($obj->getPhone()){
-                    echo '<div><a href="' . esc_html('https://wa.me/'. $obj->getSmsPrefix() . $obj->getPhone()) .'" target="_blank">Tel. '. esc_html($obj->getSmsPrefix() . $obj->getPhone()) .'</a></div>';
+                    if(!$this->hide_phone){
+                        echo '<div><a href="' . esc_html('https://wa.me/'. $obj->getSmsPrefix() . $obj->getPhone()) .'" target="_blank">Tel. '. esc_html($obj->getSmsPrefix() . $obj->getPhone()) .'</a></div>';
+                    }
                 }
                 break;
             case 'booking_status' :
@@ -314,6 +323,8 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
                         .' '.get_post_meta($post_id, '_sln_booking_time', true)
                     )
                 ));
+                echo '<span style="color:#969494;font-size: 10px;"><br>'.get_the_date('j F Y');
+                echo '<br>'.get_the_time('G:i').'</span>';
                 break;
             case 'booking_price' :
                 echo $this->getPlugin()->format()->money(get_post_meta($post_id, '_sln_booking_amount', true)); # not use esc_xxxx. When free money return html

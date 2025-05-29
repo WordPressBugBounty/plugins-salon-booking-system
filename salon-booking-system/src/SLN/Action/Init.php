@@ -81,6 +81,8 @@ class SLN_Action_Init
 
     private function initAdmin()
     {
+        global $sln_license;
+
         $p = $this->plugin;
         new SLN_Metabox_Service($p, SLN_Plugin::POST_TYPE_SERVICE);
         new SLN_Metabox_Attendant($p, SLN_Plugin::POST_TYPE_ATTENDANT);
@@ -93,6 +95,10 @@ class SLN_Action_Init
         new SLN_Admin_Customers($p);
         new SLN_Admin_Reports($p);
         new SLN_Admin_Settings($p);
+
+        if (isset($sln_license) && $sln_license->checkLicense()->license == 'valid') {
+            new SLN_Admin_Extensions($p);
+        }
 
         add_action('admin_init', array($this, 'hook_admin_init'));
         $this->initAjax();

@@ -9,6 +9,7 @@
  * @var SLN_DateTime|null $date
  * @var SLN_DateTime|null $time
  */
+use SLB_API_Mobile\Helper\UserRoleHelper;
 $helper->showNonce($postType);
 SLN_Action_InitScripts::enqueueCustomBookingUser();
 $additional_fields = SLN_Enum_CheckoutFields::forBooking();
@@ -167,6 +168,10 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
 
     $selectedDate = !empty($date) ? $date : $booking->getDate(SLN_TimeFunc::getWpTimezone());
     $selectedTime = !empty($time) ? $time : $booking->getTime(SLN_TimeFunc::getWpTimezone());
+    $user_role_helper = new UserRoleHelper();
+
+    $hide_phone = $user_role_helper->is_hide_customer_phone();
+    $hide_email = $user_role_helper->is_hide_customer_email();
 
     $intervalDate = clone $selectedDate;
     $intervals = $plugin->getIntervals($intervalDate);
@@ -245,9 +250,17 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                                     if ($key === 'email') {
                                         $additional_opts[2]['type'] = 'email';
                                         $additional_opts[2]['required'] = false;
+                                        if($hide_email){
+                                            $additional_opts[2]['type'] = 'password';
+                                        }
+
                                     }
                                     if ($key == 'phone') {
                                         $additional_opts[2]['type'] = 'tel';
+                                        if($hide_phone){
+                                            $additional_opts[2]['type'] = 'password';
+                                        }
+
                                     }
 
                                     if ($field['type'] === 'checkbox') {

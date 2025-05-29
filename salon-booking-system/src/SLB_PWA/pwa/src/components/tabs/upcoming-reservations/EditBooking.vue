@@ -85,8 +85,11 @@
           <b-row>
             <b-col sm="12">
               <div class="customer-email">
-                <b-form-input :placeholder="this.getLabel('customerEmailPlaceholder')" v-model="elCustomerEmail"
-                              @blur="loadDiscounts"/>
+                <b-form-input
+                    :type="shouldHideEmail ? 'password' : 'text'"
+                    :placeholder="getLabel('customerEmailPlaceholder')"
+                    v-model="elCustomerEmail"
+                />
               </div>
             </b-col>
           </b-row>
@@ -100,7 +103,11 @@
           <b-row>
             <b-col sm="12">
               <div class="customer-phone">
-                <vue-tel-input :inputOptions="vueTelInputOptions" v-model="elCustomerPhone"></vue-tel-input>
+                <b-form-input
+                    :type="shouldHidePhone ? 'password' : 'tel'"
+                    :placeholder="getLabel('customerPhonePlaceholder')"
+                    v-model="elCustomerPhone"
+                />
               </div>
             </b-col>
           </b-row>
@@ -422,6 +429,7 @@
 
 <script>
 import CustomField from './CustomField.vue'
+import mixins from "@/mixin";
 
 export default {
   name: 'EditBooking',
@@ -527,6 +535,7 @@ export default {
       },
     },
   },
+  mixins: [mixins],
   mounted() {
     this.loadDiscounts()
     this.loadAvailabilityIntervals()
@@ -548,15 +557,20 @@ export default {
     })
   },
   data: function () {
+    const originalEmail = this.customerEmail;
+    const originalPhone = this.customerPhone;
+
     return {
                 shopError: false,
       elDate: this.date,
       elTime: this.timeFormat(this.time),
       elCustomerFirstname: this.customerFirstname,
       elCustomerLastname: this.customerLastname,
-      elCustomerEmail: this.customerEmail,
+      elCustomerEmail: this.shouldHideEmail ? '***@***' : originalEmail,
+      elCustomerPhone: this.shouldHidePhone ? '*******' : originalPhone,
+      originalCustomerEmail: originalEmail,
+      originalCustomerPhone: originalPhone,
       elCustomerAddress: this.customerAddress,
-      elCustomerPhone: this.customerPhone,
       elCustomerNotes: this.customerNotes,
       elCustomerPersonalNotes: this.customerPersonalNotes,
       elServices: [...this.services].map(s => ({
@@ -898,8 +912,8 @@ export default {
         customer_id: this.customerID || 0,
         customer_first_name: this.elCustomerFirstname,
         customer_last_name: this.elCustomerLastname,
-        customer_email: this.elCustomerEmail,
-        customer_phone: this.elCustomerPhone,
+        customer_email: this.originalCustomerEmail,
+        customer_phone: this.originalCustomerPhone,
         customer_address: this.elCustomerAddress,
         services: this.bookingServices,
         discounts: this.elDiscounts,
@@ -908,6 +922,7 @@ export default {
         save_as_new_customer: this.saveAsNewCustomer,
         custom_fields: this.elCustomFields,
       }
+
 
       if (this.shop) {
         booking.shop = {id: this.shop.id};
