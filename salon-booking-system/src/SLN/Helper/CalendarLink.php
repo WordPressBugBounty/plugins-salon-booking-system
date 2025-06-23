@@ -33,7 +33,11 @@ class SLN_Helper_CalendarLink
 	return $fileurl;
     }
 
-    public static function cronUnlinkCall($calName){
+    public static function cronUnlinkCall($calName = ''){
+        if (!$calName) {
+            return;
+        }
+
         $filepath = WP_CONTENT_DIR . '/uploads/' . $calName;
         unlink($filepath);
         wp_clear_scheduled_hook('sln.helper.calendar_link.remove', $calName);

@@ -498,19 +498,66 @@ function sln_init($) {
             window.location.replace($("#sln-go-to-thankyou").attr("href"));
         }, countdown * 1000);
     }
-    $('#sln-salon-booking [data-salon-toggle="direct"]').on(
-        "click",
-        function (e) {
+
+    $('#sln-salon-booking [data-salon-toggle="direct"]').on("click", async function (e) {
             e.preventDefault();
-            var form = $(this).closest("form");
-            sln_loadStep(
-                $,
-                form.serialize() + "&" + $(this).data("salon-data")
-            );
+            const button = $(this);
+            const form = button.closest("form");
+
+            // Validate overbooking on "Pay later" (or similar) button click
+            if (button.attr('href').includes('submit_summary=next')) {
+                const isBookingValid = await sln_checkOverbooking(this);
+
+                if (!isBookingValid) {
+                    alert(salon.txt_overbooking);
+                    location.reload();
+                    return false;
+                }
+            }
+
+            sln_loadStep($, form.serialize() + "&" + $(this).data("salon-data"));
             chooseAsistentForMe = "0";
             return false;
         }
     );
+
+    // Validate overbooking on "Pay Now" (or similar) button click
+    $('a[href*="submit_summary=next"]:not([data-salon-toggle])').on('click', sln_validateOverbooking);
+
+    async function sln_validateOverbooking(e) {
+        e.preventDefault();
+
+        const button = $(this);
+        const isBookingValid = await sln_checkOverbooking(this);
+
+        if (!isBookingValid) {
+            alert(salon.txt_overbooking);
+            location.reload();
+            return;
+        }
+
+        window.location = button.attr('href');
+    }
+
+    async function sln_checkOverbooking(button) {
+        const form = $(button).closest('form');
+        let data = form.serialize();
+        data += "&action=salon&method=checkOverbooking&security=" + salon.ajax_nonce;
+
+        try {
+            const response = await $.ajax({
+                url: salon.ajax_url,
+                data: data,
+                method: "POST",
+                dataType: "json",
+            });
+
+            return Boolean(response.success);
+        } catch (error) {
+            console.error('sln_checkOverbooking AJAX error:', error);
+            return false;
+        }
+    }
 
     $('#sln-salon-booking #sln_note').on('change',
         function (e) {

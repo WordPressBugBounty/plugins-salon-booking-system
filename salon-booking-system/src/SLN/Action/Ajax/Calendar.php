@@ -193,8 +193,7 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
     ));
   }
     private function getAvailabilityIndex($w) {
-        $weekStart = $this->plugin->getSettings()->get('week_start');
-        return (($w - $weekStart + 7) % 7) + 1;
+        return ((int)$w) + 1;
     }
 
   public function renderMonthDay($week_number, $day, $stats){

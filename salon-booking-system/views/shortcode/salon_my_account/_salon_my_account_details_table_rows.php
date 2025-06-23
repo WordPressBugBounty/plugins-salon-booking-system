@@ -53,14 +53,26 @@
                         <div class="sln-btn sln-btn--emphasis sln-btn--medium sln-btn--borderonly sln-cancel-booking--button sln-account__btn--cancel">
                             <button onclick="sln_myAccount.cancelBooking(<?php echo $item['id']; ?>);" data-message="<?php esc_html_e('Booking cancelled', 'salon-booking-system');?>"><?php esc_html_e('Cancel', 'salon-booking-system');?></button>
                         </div>
-                    <?php endif;
-                    
-                    if(($item['status_code'] == SLN_Enum_BookingStatus::PENDING_PAYMENT || ($item['status_code'] == SLN_Enum_BookingStatus::PAID && ($deposit = $booking->getDeposit()))) && $data['pay_enabled']): 
-                        $price_to_pay = $item['status_code'] == SLN_Enum_BookingStatus::PENDING_PAYMENT ? $booking->getToPayAmount(false) : $deposit; ?>
-                        <div class="sln-btn sln-btn--emphasis sln-btn--medium sln-account__btn--pay">
-                            <a href="<?php echo $booking->getPayUrl(); ?>"><?php echo esc_html__('Pay', 'salon-booking-system') . ' '. $plugin->format()->moneyFormatted($price_to_pay); ?></a>
-                        </div>
                     <?php endif; ?>
+
+                    <?php if ($data['pay_enabled']) { ?>
+                        <?php if ($item['status_code'] == SLN_Enum_BookingStatus::PENDING_PAYMENT && $booking->getToPayAmount(false)) { ?>
+                            <div class="sln-btn sln-btn--emphasis sln-btn--medium sln-account__btn--pay">
+                                <a href="<?php echo $booking->getPayUrl(); ?>"><?php echo esc_html__('Pay', 'salon-booking-system') . ' ' . $plugin->format()->moneyFormatted($booking->getToPayAmount(false)); ?></a>
+                            </div>
+                        <?php } ?>
+
+                        <?php if ($item['status_code'] == SLN_Enum_BookingStatus::PAID && $booking->getRemaingAmountAfterPay(false)) { ?>
+                            <div class="sln-btn sln-btn--emphasis sln-btn--medium sln-account__btn--pay sln-account__btn--pay-remaining">
+                                <?php
+                                $paymentMethod = $plugin->getSettings()->isPayEnabled() ? SLN_Enum_PaymentMethodProvider::getService($plugin->getSettings()->getPaymentMethod(), $plugin) : false;
+                                $payUrl = $booking->getPayUrl(true) . "&mode={$paymentMethod->getMethodKey()}";
+                                echo $paymentMethod->renderPayButton(array('booking' => $booking, 'paymentMethod' => $paymentMethod, 'payUrl' => $payUrl, 'payRemainingAmount' => 1));
+                                ?>
+                            </div>
+                        <?php } ?>
+                    <?php } ?>
+
                     <?php if(!$plugin->getSettings()->get('rescheduling_disabled') && ($booking->getStartsAt()->getTimestamp() - time()) >= ($plugin->getSettings()->get('days_before_rescheduling') * 24 * 3600) && in_array($item['status_code'], array(SLN_Enum_BookingStatus::CONFIRMED, SLN_Enum_BookingStatus::PAY_LATER, SLN_Enum_BookingStatus::PAID,))):
                         $date = $plugin->getSettings()->isDisplaySlotsCustomerTimezone() && $data['customer_timezone']
                             ? $booking->getStartsAt()->setTimezone(new DateTimezone($data['customer_timezone']))
@@ -134,7 +146,7 @@
                             <div class="feedback sln-accout__feedback__text"><?php echo $item['feedback'] ?></div>
                             <input type="hidden" name="sln-rating" value="<?php echo $item['rating']; ?>">
                             <div class="rating sln-accout__feedback__rating" id="<?php echo $item['id']; ?>" style="display: none;"></div>
-                        </dev>
+                        </div>
                     <?php endif; ?>
             <?php endif; ?>
         </footer>

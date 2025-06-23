@@ -11,6 +11,7 @@ use WP_User;
 use SLN_Enum_BookingStatus;
 use SLN_Wrapper_Booking_Builder;
 use SLN_Metabox_Helper;
+use SLN_Wrapper_Booking;
 
 class Bookings_Controller extends REST_Controller
 {
@@ -180,6 +181,21 @@ class Bookings_Controller extends REST_Controller
                 'permission_callback' => array( $this, 'delete_item_permissions_check' ),
             ),
             'schema' => array( $this, 'get_public_item_schema' ),
+        ) );
+
+        register_rest_route( $this->namespace, '/' . $this->rest_base . '/(?P<id>[\d]+)/pay-remaining-amount', array(
+            'args' => array(
+                'id' => array(
+                    'description' => __( 'Unique identifier for the resource.', 'salon-booking-system' ),
+                    'type'        => 'integer',
+                    'required'    => true,
+                ),
+            ),
+            array(
+                'methods'             => WP_REST_Server::READABLE,
+                'callback'            => array( $this, 'pay_remaining_amount' ),
+                'permission_callback' => array( $this, 'get_item_permissions_check' ),
+            ),
         ) );
     }
 
@@ -854,6 +870,29 @@ class Bookings_Controller extends REST_Controller
         wp_trash_post($request->get_param('id'));
 
         return $this->success_response();
+    }
+
+    public function pay_remaining_amount($request)
+    {
+        $query = $this->get_item_query($request->get_param('id'), $request);
+
+        if (!$query->posts) {
+            return new WP_Error('salon_rest_cannot_pay_remaining_amount', __('Sorry, resource not found.', 'salon-booking-system'), array('status' => 404));
+        }
+
+        $booking = new SLN_Wrapper_Booking($request->get_param('id'));
+        $mail = $booking->getEmail();
+
+        if ($mail) {
+            $args = compact('booking');
+            $args['to'] = $mail;
+            SLN_Plugin::getInstance()->sendMail('mail/pay_remaining_amount', $args);
+            $data = array('success' => 1);
+        } else {
+            $data = array('error' => __('Please specify an email', 'salon-booking-system'));
+        }
+
+        return $this->success_response($data);
     }
 
     protected function create_item_post($request, $customer_id)

@@ -38,15 +38,13 @@ $isPro = defined('SLN_VERSION_PAY') && SLN_VERSION_PAY;
                             $holiday_by_line = $calendar->hasHolidaysByLine($line);
                             $attendant_holiday = $calendar->hasAttendantHoliday($line, $att['id']);
                             $time_unavailable = in_array($calendar->getTimeByLine($line), $att['unavailable_times']);
-                            $is_blocked = $holiday_by_line || $attendant_holiday || $time_unavailable;
-
+                            $is_blocked = $is_attendant_blocked || $holiday_by_line;
+                            $is_attendant_blocked = $attendant_holiday && !$time_unavailable;
                             $block_title = '';
                             if ($holiday_by_line) {
                                 $block_title = __('Holiday rule', 'salon-booking-system');
-                            } elseif ($attendant_holiday) {
+                            } elseif ($is_attendant_blocked) {
                                 $block_title = __('Attendant holiday', 'salon-booking-system');
-                            } elseif ($time_unavailable) {
-                                $block_title = __('Outside working hours', 'salon-booking-system');
                             }
                             ?>
                             <div style="margin-left: <?php echo ($attCol + 1) * 200; ?>px; top: <?php echo $line * 100; ?>px;"
@@ -73,7 +71,7 @@ $isPro = defined('SLN_VERSION_PAY') && SLN_VERSION_PAY;
                                     ></button>
                                 </div>
                             </div>
-                            <?php if ($time_unavailable): ?>
+                            <?php if ($calendar->isTimeUnavailable($line, $att['unavailable_times'])): ?>
                             <div style="margin-left: <?php echo ($attCol + 1) * 200; ?>px; top: <?php echo $line * 100; ?>px;"
                                  class="att-unavailable-highlight"></div>
                         <?php endif; ?>
@@ -106,7 +104,7 @@ $isPro = defined('SLN_VERSION_PAY') && SLN_VERSION_PAY;
 						<div class='head-info-tooltip'><?php echo $isPro ? $bsEvent->deposit : '- -'; ?></div>
 						<div class='title-info-tooltip'><?php esc_html_e('Deposit', 'salon-booking-system'); ?></div>
 					</span>
-					<span class='sln-value-tooltip' id='due-tooltip' style='text-align: left; margin-top:0.5rem; <?php echo $isPro ? '' : 'dosplay: none;'; ?>'>
+					<span class='sln-value-tooltip' id='due-tooltip' style='text-align: left; margin-top:0.5rem; <?php echo $isPro ? '' : 'display: none;'; ?>'>
 						<div class='head-info-tooltip'><?php echo $isPro ? $bsEvent->due : '- -'; ?></div>
 						<div class='title-info-tooltip'><?php esc_html_e('Due', 'salon-booking-system'); ?></div>
 					</span>

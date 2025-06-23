@@ -62,6 +62,8 @@ if ($errors && in_array(SLN_Shortcode_Salon_SummaryStep::SLOT_UNAVAILABLE, $erro
     include '_errors.php';
     include '_additional_errors.php';
     ?>
+    <input name="sln[date]" type="hidden" value="<?php echo $plugin->format()->date($datetime); ?>">
+    <input name="sln[time]" type="hidden" value="<?php echo $plugin->format()->time($datetime); ?>">
     <div class="row">
         <div class="col-xs-12 col-md-12">
             <p class="sln-text--dark sln-summary__intro">

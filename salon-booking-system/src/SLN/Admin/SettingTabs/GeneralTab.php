@@ -105,7 +105,7 @@ class SLN_Admin_SettingTabs_GeneralTab extends SLN_Admin_SettingTabs_AbstractTab
 		esc_html($this->submitted['sms_notification_message'])
 		:
 		self::getDefaultSmsNotificationMessage();
-		
+
 		$this->submitted['sms_remind_message'] = !empty($this->submitted['sms_remind_message']) ?
 			esc_html($this->submitted['sms_remind_message'])
 			:
@@ -190,7 +190,6 @@ class SLN_Admin_SettingTabs_GeneralTab extends SLN_Admin_SettingTabs_AbstractTab
 		} else {
 			wp_clear_scheduled_hook('sln_email_followup');
 		}
-
 		if ((isset($this->submitted['feedback_email']) && $this->submitted['feedback_email']) || (isset($this->submitted['feedback_sms']) && $this->submitted['feedback_sms'])) {
 			if (!wp_get_schedule('sln_email_feedback')) {
 				$cron_status = wp_schedule_event(time(), 'daily', 'sln_email_feedback');
@@ -201,19 +200,30 @@ class SLN_Admin_SettingTabs_GeneralTab extends SLN_Admin_SettingTabs_AbstractTab
 		} else {
 			wp_clear_scheduled_hook('sln_email_feedback');
 		}
-
-
 		if (isset($this->submitted['editors_manage_cap']) && $this->submitted['editors_manage_cap']) {
 			SLN_UserRole_SalonStaff::addCapabilitiesForRole('editor');
 		} else {
 			SLN_UserRole_SalonStaff::removeCapabilitiesFoRole('editor');
 		}
-
 		if (!empty($this->submitted['salon_staff_manage_cap_export_csv'])) {
 			SLN_UserRole_SalonStaff::addCapabilities(array('export_reservations_csv_sln_calendar'));
 		} else {
 			SLN_UserRole_SalonStaff::removeCapabilities(array('export_reservations_csv_sln_calendar'));
 		}
+        if (!empty($_POST['force_logout_staff'])) {
+            $count = 0;
+            $users = get_users(['role' => SLN_Plugin::USER_ROLE_STAFF]);
+            foreach ($users as $user) {
+                if ($user->ID != get_current_user_id()) {
+                    $sessions = get_user_meta($user->ID, 'session_tokens', true);
+                    if (!empty($sessions)) {
+                        WP_Session_Tokens::get_instance($user->ID)->destroy_all();
+                        $count++;
+                    }
+                }
+            }
+            $this->showAlert('success', "Logged out $count staff member(s).");
+        }
 	}
 
     protected function sendTestSms($number, $message)

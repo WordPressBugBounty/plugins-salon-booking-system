@@ -86,7 +86,7 @@
             <b-col sm="12">
               <div class="customer-email">
                 <b-form-input
-                    :type="shouldHideEmail ? 'password' : 'text'"
+                    :type="(this.bookingID && shouldHideEmail) ? 'password' : 'text'"
                     :placeholder="getLabel('customerEmailPlaceholder')"
                     v-model="elCustomerEmail"
                 />
@@ -104,7 +104,7 @@
             <b-col sm="12">
               <div class="customer-phone">
                 <b-form-input
-                    :type="shouldHidePhone ? 'password' : 'tel'"
+                    :type="(this.bookingID && shouldHidePhone) ? 'password' : 'tel'"
                     :placeholder="getLabel('customerPhonePlaceholder')"
                     v-model="elCustomerPhone"
                 />
@@ -557,24 +557,25 @@ export default {
     })
   },
   data: function () {
-    const originalEmail = this.customerEmail;
-    const originalPhone = this.customerPhone;
+    const originalEmail = this.customerEmail || '';
+    const originalPhone = this.customerPhone || '';
 
     return {
-                shopError: false,
+      shopError: false,
       elDate: this.date,
       elTime: this.timeFormat(this.time),
       elCustomerFirstname: this.customerFirstname,
       elCustomerLastname: this.customerLastname,
-      elCustomerEmail: this.shouldHideEmail ? '***@***' : originalEmail,
-      elCustomerPhone: this.shouldHidePhone ? '*******' : originalPhone,
+      elCustomerEmail: (this.bookingID && this.shouldHideEmail) ? '***@***' : originalEmail,
+      elCustomerPhone: (this.bookingID && this.shouldHidePhone) ? '*******' : originalPhone,
       originalCustomerEmail: originalEmail,
       originalCustomerPhone: originalPhone,
       elCustomerAddress: this.customerAddress,
       elCustomerNotes: this.customerNotes,
       elCustomerPersonalNotes: this.customerPersonalNotes,
       elServices: [...this.services].map(s => ({
-        service_id: s.service_id, assistant_id: s.assistant_id,
+        service_id: s.service_id,
+        assistant_id: s.assistant_id,
         resource_id: s.resource_id
       })),
       bookings: [],
@@ -605,8 +606,8 @@ export default {
       availabilityResources: [],
       vueTelInputOptions: {
         'placeholder': this.getLabel('customerPhonePlaceholder')
-                },
-                specificValidationMessage: this.getLabel('validationMessage'),
+      },
+      specificValidationMessage: this.getLabel('validationMessage'),
     };
   },
   watch: {
@@ -905,6 +906,14 @@ export default {
         }
         return
       }
+      const customerEmail = this.bookingID ?
+          (this.shouldHideEmail && this.elCustomerEmail === '***@***' ? this.originalCustomerEmail : this.elCustomerEmail) :
+          this.elCustomerEmail;
+
+      const customerPhone = this.bookingID ?
+          (this.shouldHidePhone && this.elCustomerPhone === '*******' ? this.originalCustomerPhone : this.elCustomerPhone) :
+          this.elCustomerPhone;
+
       const booking = {
         date: this.moment(this.elDate).format('YYYY-MM-DD'),
         time: this.moment(this.elTime, this.getTimeFormat()).format('HH:mm'),
@@ -912,8 +921,8 @@ export default {
         customer_id: this.customerID || 0,
         customer_first_name: this.elCustomerFirstname,
         customer_last_name: this.elCustomerLastname,
-        customer_email: this.originalCustomerEmail,
-        customer_phone: this.originalCustomerPhone,
+        customer_email: customerEmail,
+        customer_phone: customerPhone,
         customer_address: this.elCustomerAddress,
         services: this.bookingServices,
         discounts: this.elDiscounts,
@@ -922,7 +931,6 @@ export default {
         save_as_new_customer: this.saveAsNewCustomer,
         custom_fields: this.elCustomFields,
       }
-
 
       if (this.shop) {
         booking.shop = {id: this.shop.id};

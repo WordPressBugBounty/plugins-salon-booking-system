@@ -116,12 +116,12 @@ abstract class SLN_Shortcode_Salon_Step
                 break;
             }
             try{
-                if($service->getCountMultipleAttendants() != count($booking_attendants[$sId])){
+                if($service->isMultipleAttendantsForServiceEnabled() && $service->getCountMultipleAttendants() != count($booking_attendants[$sId])){
                     $attendantsNeeds = true;
                     break;
                 }
             }catch(TypeError $e){
-                if($service->getCountMultipleattendants() != 1){
+                if($service->isMultipleAttendantsForServiceEnabled() && $service->getCountMultipleattendants() != 1){
                     $attendantsNeeds = true;
                     break;
                 }
