@@ -1,6 +1,6 @@
 jQuery(function ($) {
     $(document)
-        .on('click', '.extensions-section .extensions-wrapper .extensions-item:not(.disabled) .extensions-button.blue', function (e) {
+        .on('click', '.extensions-section .extensions-wrapper .extensions-item:not(.disabled) .extensions-button', function (e) {
             e.preventDefault();
 
             let btn = $(this);
@@ -56,49 +56,30 @@ jQuery(function ($) {
             });
         });
 
-    sliderExtensions();
-
-    function sliderExtensions() {
-        $('.extensions-section').each(function () {
-            const section = $(this);
-            const wrapper = section.find('.extensions-wrapper');
-            const slideCount = wrapper.children().length;
-
-            if (wrapper.data('sort')) {
-                const items = wrapper.find('.extensions-item');
-                const installed = items.filter('[data-installed="1"]');
-                const notInstalled = items.not('[data-installed="1"]');
-                wrapper.empty().append(notInstalled).append(installed);
+    $('.extensions-section .extensions-wrapper').slick({
+        slidesToShow: 4,
+        slidesToScroll: 1,
+        dots: false,
+        arrows: true,
+        responsive: [
+            {
+                breakpoint: 1100,
+                settings: {
+                    slidesToShow: 3,
+                }
+            },
+            {
+                breakpoint: 800,
+                settings: {
+                    slidesToShow: 2,
+                }
+            },
+            {
+                breakpoint: 550,
+                settings: {
+                    slidesToShow: 1,
+                }
             }
-
-            if (slideCount > 3) {
-                wrapper.slick({
-                    slidesToShow: 4,
-                    slidesToScroll: 1,
-                    dots: false,
-                    arrows: true,
-                    responsive: [
-                        {
-                            breakpoint: 1100,
-                            settings: {
-                                slidesToShow: 3,
-                            }
-                        },
-                        {
-                            breakpoint: 800,
-                            settings: {
-                                slidesToShow: 2,
-                            }
-                        },
-                        {
-                            breakpoint: 550,
-                            settings: {
-                                slidesToShow: 1,
-                            }
-                        }
-                    ]
-                });
-            }
-        });
-    }
+        ]
+    });
 });

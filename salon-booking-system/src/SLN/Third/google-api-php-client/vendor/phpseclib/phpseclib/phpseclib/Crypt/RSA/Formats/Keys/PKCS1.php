@@ -14,6 +14,8 @@
  *
  * Analogous to ssh-keygen's pem format (as specified by -m)
  *
+ * @category  Crypt
+ * @package   RSA
  * @author    Jim Wigginton <terrafrost@php.net>
  * @copyright 2015 Jim Wigginton
  * @license   http://www.opensource.org/licenses/mit-license.html  MIT License
@@ -22,22 +24,25 @@
 
 namespace phpseclib3\Crypt\RSA\Formats\Keys;
 
-use phpseclib3\Common\Functions\Strings;
+use phpseclib3\Math\BigInteger;
 use phpseclib3\Crypt\Common\Formats\Keys\PKCS1 as Progenitor;
 use phpseclib3\File\ASN1;
 use phpseclib3\File\ASN1\Maps;
-use phpseclib3\Math\BigInteger;
+use phpseclib3\Common\Functions\Strings;
 
 /**
  * PKCS#1 Formatted RSA Key Handler
  *
+ * @package RSA
  * @author  Jim Wigginton <terrafrost@php.net>
+ * @access  public
  */
 abstract class PKCS1 extends Progenitor
 {
     /**
      * Break a public or private key down into its constituent components
      *
+     * @access public
      * @param string $key
      * @param string $password optional
      * @return array
@@ -59,13 +64,13 @@ abstract class PKCS1 extends Progenitor
         $key = parent::load($key, $password);
 
         $decoded = ASN1::decodeBER($key);
-        if (!$decoded) {
+        if (empty($decoded)) {
             throw new \RuntimeException('Unable to decode BER');
         }
 
         $key = ASN1::asn1map($decoded[0], Maps\RSAPrivateKey::MAP);
         if (is_array($key)) {
-            $components += [
+            $components+= [
                 'modulus' => $key['modulus'],
                 'publicExponent' => $key['publicExponent'],
                 'privateExponent' => $key['privateExponent'],
@@ -102,9 +107,10 @@ abstract class PKCS1 extends Progenitor
     /**
      * Convert a private key to the appropriate format.
      *
-     * @param BigInteger $n
-     * @param BigInteger $e
-     * @param BigInteger $d
+     * @access public
+     * @param \phpseclib3\Math\BigInteger $n
+     * @param \phpseclib3\Math\BigInteger $e
+     * @param \phpseclib3\Math\BigInteger $d
      * @param array $primes
      * @param array $exponents
      * @param array $coefficients
@@ -142,8 +148,9 @@ abstract class PKCS1 extends Progenitor
     /**
      * Convert a public key to the appropriate format
      *
-     * @param BigInteger $n
-     * @param BigInteger $e
+     * @access public
+     * @param \phpseclib3\Math\BigInteger $n
+     * @param \phpseclib3\Math\BigInteger $e
      * @return string
      */
     public static function savePublicKey(BigInteger $n, BigInteger $e)

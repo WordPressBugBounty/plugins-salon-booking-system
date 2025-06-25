@@ -5,6 +5,8 @@
  *
  * PHP version 5 and 7
  *
+ * @category  Crypt
+ * @package   EC
  * @author    Jim Wigginton <terrafrost@php.net>
  * @copyright 2017 Jim Wigginton
  * @license   http://www.opensource.org/licenses/mit-license.html  MIT License
@@ -13,15 +15,32 @@
 
 namespace phpseclib3\Crypt\EC\BaseCurves;
 
+use phpseclib3\Math\Common\FiniteField;
 use phpseclib3\Math\BigInteger;
 
 /**
  * Base
  *
+ * @package Prime
  * @author  Jim Wigginton <terrafrost@php.net>
+ * @access  public
  */
 abstract class Base
 {
+    /**
+     * Doubles
+     *
+     * @var object[]
+     */
+    protected $doubles;
+
+    /**
+     * NAF Points
+     *
+     * @var int[]
+     */
+    private $naf;
+
     /**
      * The Order
      *
@@ -32,7 +51,7 @@ abstract class Base
     /**
      * Finite Field Integer factory
      *
-     * @var FiniteField\Integer
+     * @var \phpseclib3\Math\FiniteField\Integer
      */
     protected $factory;
 
@@ -47,7 +66,7 @@ abstract class Base
     }
 
     /**
-     * Converts a BigInteger to a FiniteField\Integer integer
+     * Converts a BigInteger to a FiniteField integer
      *
      * @return object
      */
@@ -86,7 +105,7 @@ abstract class Base
      *
      * @return array
      */
-    public function multiplyPoint(array $p, BigInteger $d)
+    public function multiplyPoint(array $p, FiniteField\Integer $d)
     {
         $alreadyInternal = isset($p[2]);
         $r = $alreadyInternal ?
@@ -106,7 +125,7 @@ abstract class Base
     /**
      * Creates a random scalar multiplier
      *
-     * @return BigInteger
+     * @return FiniteField
      */
     public function createRandomMultiplier()
     {
@@ -115,25 +134,8 @@ abstract class Base
             $one = new BigInteger(1);
         }
 
-        return BigInteger::randomRange($one, $this->order->subtract($one));
-    }
-
-    /**
-     * Performs range check
-     */
-    public function rangeCheck(BigInteger $x)
-    {
-        static $zero;
-        if (!isset($zero)) {
-            $zero = new BigInteger();
-        }
-
-        if (!isset($this->order)) {
-            throw new \RuntimeException('setOrder needs to be called before this method');
-        }
-        if ($x->compare($this->order) > 0 || $x->compare($zero) <= 0) {
-            throw new \RangeException('x must be between 1 and the order of the curve');
-        }
+        $dA = BigInteger::randomRange($one, $this->order->subtract($one));
+        return $this->factory->newInteger($dA);
     }
 
     /**
@@ -147,7 +149,7 @@ abstract class Base
     /**
      * Returns the Order
      *
-     * @return BigInteger
+     * @return \phpseclib3\Math\BigInteger
      */
     public function getOrder()
     {

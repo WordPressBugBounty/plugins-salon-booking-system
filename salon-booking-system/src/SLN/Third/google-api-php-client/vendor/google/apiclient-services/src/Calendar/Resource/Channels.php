@@ -34,7 +34,6 @@ class Channels extends \Google\Service\Resource
    *
    * @param Channel $postBody
    * @param array $optParams Optional parameters.
-   * @throws \Google\Service\Exception
    */
   public function stop(Channel $postBody, $optParams = [])
   {

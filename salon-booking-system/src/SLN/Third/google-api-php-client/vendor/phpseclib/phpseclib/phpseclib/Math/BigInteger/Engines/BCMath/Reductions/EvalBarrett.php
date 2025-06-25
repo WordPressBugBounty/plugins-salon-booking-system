@@ -5,6 +5,8 @@
  *
  * PHP version 5 and 7
  *
+ * @category  Math
+ * @package   BigInteger
  * @author    Jim Wigginton <terrafrost@php.net>
  * @copyright 2017 Jim Wigginton
  * @license   http://www.opensource.org/licenses/mit-license.html  MIT License
@@ -13,13 +15,15 @@
 
 namespace phpseclib3\Math\BigInteger\Engines\BCMath\Reductions;
 
-use phpseclib3\Math\BigInteger\Engines\BCMath;
 use phpseclib3\Math\BigInteger\Engines\BCMath\Base;
+use phpseclib3\Math\BigInteger\Engines\BCMath;
 
 /**
  * PHP Barrett Modular Exponentiation Engine
  *
+ * @package PHP
  * @author  Jim Wigginton <terrafrost@php.net>
+ * @access  public
  */
 abstract class EvalBarrett extends Base
 {
@@ -55,6 +59,11 @@ abstract class EvalBarrett extends Base
      */
     protected static function generateCustomReduction(BCMath $m, $class)
     {
+        if (isset($n->reduce)) {
+            self::$custom_reduction = $n->reduce;
+            return $n->reduce;
+        }
+
         $m_length = strlen($m);
 
         if ($m_length < 5) {
@@ -72,9 +81,9 @@ abstract class EvalBarrett extends Base
 
         $m = "'$m'";
         $u = "'$u'";
-        $m1 = "'$m1'";
+        $m1= "'$m1'";
 
-        $code = '
+        $code.= '
             $lsd = substr($n, -' . $cutoff . ');
             $msd = substr($n, 0, -' . $cutoff . ');
 

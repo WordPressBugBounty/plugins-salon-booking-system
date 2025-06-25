@@ -5,6 +5,8 @@
  *
  * PHP version 5 and 7
  *
+ * @category  Math
+ * @package   BigInteger
  * @author    Jim Wigginton <terrafrost@php.net>
  * @copyright 2017 Jim Wigginton
  * @license   http://www.opensource.org/licenses/mit-license.html  MIT License
@@ -13,14 +15,17 @@
 
 namespace phpseclib3\Math\BigInteger\Engines\PHP;
 
-use phpseclib3\Math\BigInteger\Engines\Engine;
-use phpseclib3\Math\BigInteger\Engines\PHP;
 use phpseclib3\Math\BigInteger\Engines\PHP\Reductions\PowerOfTwo;
+use phpseclib3\Math\BigInteger\Engines\PHP;
+use phpseclib3\Math\BigInteger\Engines\PHP\Base;
+use phpseclib3\Math\BigInteger\Engines\Engine;
 
 /**
  * PHP Montgomery Modular Exponentiation Engine
  *
+ * @package PHP
  * @author  Jim Wigginton <terrafrost@php.net>
+ * @access  public
  */
 abstract class Montgomery extends Base
 {
@@ -37,12 +42,11 @@ abstract class Montgomery extends Base
     /**
      * Performs modular exponentiation.
      *
-     * @template T of Engine
-     * @param Engine $x
-     * @param Engine $e
-     * @param Engine $n
-     * @param class-string<T> $class
-     * @return T
+     * @param \phpseclib3\Math\BigInteger\Engines\Engine $x
+     * @param \phpseclib3\Math\BigInteger\Engines\Engine $e
+     * @param \phpseclib3\Math\BigInteger\Engines\Engine $n
+     * @param string $class
+     * @return \phpseclib3\Math\BigInteger\Engines\Engine
      */
     protected static function slidingWindow(Engine $x, Engine $e, Engine $n, $class)
     {
@@ -57,7 +61,7 @@ abstract class Montgomery extends Base
             if ($n->value[$i]) {
                 $temp = decbin($n->value[$i]);
                 $j = strlen($temp) - strrpos($temp, '1') - 1;
-                $j += $class::BASE * $i;
+                $j+= $class::BASE * $i;
                 break;
             }
         }

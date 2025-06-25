@@ -552,7 +552,6 @@ function sln_initSalonCalendar(
                     } else {
                         $(".sln-free-locked-slots").addClass("hide");
                     }
-                    checkUnlockIconsAndToggleButton();
                 },
                 target.data().selection,
                 target.data().attId,
@@ -600,7 +599,6 @@ function sln_initSalonCalendar(
                     } else {
                         $(".sln-free-locked-slots").addClass("hide");
                     }
-                    checkUnlockIconsAndToggleButton();
                 },
                 false,
                 DayCalendarHolydays.createButton.data().attId,
@@ -772,7 +770,6 @@ function sln_initSalonCalendar(
             } else {
                 $(".sln-free-locked-slots").addClass("hide");
             }
-            checkUnlockIconsAndToggleButton();
         },
     };
 
@@ -1122,15 +1119,4 @@ function sln_initSalonCalendarUserSelect2($) {
             },
         },
     });
-}
-
-function checkUnlockIconsAndToggleButton() {
-    const unlockIcons = document.querySelectorAll("#cal-day-panel .sln-icon--unlock, .cal-day-panel__wrapper .sln-icon--unlock");
-    const freeLockedSlotsButton = document.querySelector(".sln-free-locked-slots");
-    if (unlockIcons.length === 0 && freeLockedSlotsButton) {
-        freeLockedSlotsButton.classList.add("hide");
-    }
-    else if (unlockIcons.length > 0 && freeLockedSlotsButton) {
-        freeLockedSlotsButton.classList.remove("hide");
-    }
 }

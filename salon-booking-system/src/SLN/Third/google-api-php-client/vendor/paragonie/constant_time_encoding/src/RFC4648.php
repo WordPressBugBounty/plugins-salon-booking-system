@@ -2,10 +2,8 @@
 declare(strict_types=1);
 namespace ParagonIE\ConstantTime;
 
-use TypeError;
-
 /**
- *  Copyright (c) 2016 - 2022 Paragon Initiative Enterprises.
+ *  Copyright (c) 2016 - 2018 Paragon Initiative Enterprises.
  *  Copyright (c) 2014 Steve "Sc00bz" Thomas (steve at tobtu dot com)
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -43,13 +41,10 @@ abstract class RFC4648
      *
      * @param string $str
      * @return string
-     *
-     * @throws TypeError
+     * @throws \TypeError
      */
-    public static function base64Encode(
-        #[\SensitiveParameter]
-        string $str
-    ): string {
+    public static function base64Encode(string $str): string
+    {
         return Base64::encode($str);
     }
 
@@ -60,13 +55,10 @@ abstract class RFC4648
      *
      * @param string $str
      * @return string
-     *
-     * @throws TypeError
+     * @throws \TypeError
      */
-    public static function base64Decode(
-        #[\SensitiveParameter]
-        string $str
-    ): string {
+    public static function base64Decode(string $str): string
+    {
         return Base64::decode($str, true);
     }
 
@@ -77,13 +69,10 @@ abstract class RFC4648
      *
      * @param string $str
      * @return string
-     *
-     * @throws TypeError
+     * @throws \TypeError
      */
-    public static function base64UrlSafeEncode(
-        #[\SensitiveParameter]
-        string $str
-    ): string {
+    public static function base64UrlSafeEncode(string $str): string
+    {
         return Base64UrlSafe::encode($str);
     }
 
@@ -94,13 +83,10 @@ abstract class RFC4648
      *
      * @param string $str
      * @return string
-     *
-     * @throws TypeError
+     * @throws \TypeError
      */
-    public static function base64UrlSafeDecode(
-        #[\SensitiveParameter]
-        string $str
-    ): string {
+    public static function base64UrlSafeDecode(string $str): string
+    {
         return Base64UrlSafe::decode($str, true);
     }
 
@@ -111,13 +97,10 @@ abstract class RFC4648
      *
      * @param string $str
      * @return string
-     *
-     * @throws TypeError
+     * @throws \TypeError
      */
-    public static function base32Encode(
-        #[\SensitiveParameter]
-        string $str
-    ): string {
+    public static function base32Encode(string $str): string
+    {
         return Base32::encodeUpper($str);
     }
 
@@ -128,13 +111,10 @@ abstract class RFC4648
      *
      * @param string $str
      * @return string
-     *
-     * @throws TypeError
+     * @throws \TypeError
      */
-    public static function base32Decode(
-        #[\SensitiveParameter]
-        string $str
-    ): string {
+    public static function base32Decode(string $str): string
+    {
         return Base32::decodeUpper($str, true);
     }
 
@@ -145,13 +125,10 @@ abstract class RFC4648
      *
      * @param string $str
      * @return string
-     *
-     * @throws TypeError
+     * @throws \TypeError
      */
-    public static function base32HexEncode(
-        #[\SensitiveParameter]
-        string $str
-    ): string {
+    public static function base32HexEncode(string $str): string
+    {
         return Base32::encodeUpper($str);
     }
 
@@ -162,13 +139,10 @@ abstract class RFC4648
      *
      * @param string $str
      * @return string
-     *
-     * @throws TypeError
+     * @throws \TypeError
      */
-    public static function base32HexDecode(
-        #[\SensitiveParameter]
-        string $str
-    ): string {
+    public static function base32HexDecode(string $str): string
+    {
         return Base32::decodeUpper($str, true);
     }
 
@@ -179,13 +153,10 @@ abstract class RFC4648
      *
      * @param string $str
      * @return string
-     *
-     * @throws TypeError
+     * @throws \TypeError
      */
-    public static function base16Encode(
-        #[\SensitiveParameter]
-        string $str
-    ): string {
+    public static function base16Encode(string $str): string
+    {
         return Hex::encodeUpper($str);
     }
 
@@ -197,10 +168,8 @@ abstract class RFC4648
      * @param string $str
      * @return string
      */
-    public static function base16Decode(
-        #[\SensitiveParameter]
-        string $str
-    ): string {
+    public static function base16Decode(string $str): string
+    {
         return Hex::decode($str, true);
     }
 }

@@ -169,7 +169,7 @@ final class SLN_Wrapper_Booking_Services {
 				'service'	=> $sId,
 				'attendant'	=> $atId,
 				'start_date'	=> $parallelExec ? $startsAt->format('Y-m-d') : $startsAtClone->format('Y-m-d'),
-                'start_time'	=> $parallelExec ? $startsAt->format('H:i') : $startsAtClone->format('H:i'),
+                'start_time'	=> $parallelExec ? (isset($_REQUEST['_sln_booking_time']) ? $_REQUEST['_sln_booking_time'] : $startsAt->format('H:i') ) : ( isset($_REQUEST['_sln_booking_time']) ? $_REQUEST['_sln_booking_time'] : $startsAtClone->format('H:i') ),
 				'duration'	=> $duration,
 				'break_duration'   => $break,
 				'break_duration_data'   => $break_duration_data,

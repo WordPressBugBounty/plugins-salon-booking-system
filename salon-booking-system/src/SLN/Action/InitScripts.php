@@ -163,7 +163,6 @@ class SLN_Action_InitScripts
 			'has_stockholm_transition' => self::hasStockholmTransition() ? 'yes' : 'no',
 			'checkout_field_placeholder' => __('fill this field', 'salon-booking-system'),
 			'txt_close' => __('Close', 'salon-booking-system'),
-			'txt_overbooking' => __('This slot is already booked. Please choose a different time.', 'salon-booking-system'),
 		);
 
 		$fbLoginEnabled = SLN_Plugin::getInstance()->getSettings()->get('enabled_fb_login');

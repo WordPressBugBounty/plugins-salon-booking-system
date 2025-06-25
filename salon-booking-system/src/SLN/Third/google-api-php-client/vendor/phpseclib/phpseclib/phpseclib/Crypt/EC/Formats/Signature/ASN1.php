@@ -8,6 +8,8 @@
  * Handles signatures in the format described in
  * https://tools.ietf.org/html/rfc3279#section-2.2.3
  *
+ * @category  Crypt
+ * @package   Common
  * @author    Jim Wigginton <terrafrost@php.net>
  * @copyright 2016 Jim Wigginton
  * @license   http://www.opensource.org/licenses/mit-license.html  MIT License
@@ -16,20 +18,23 @@
 
 namespace phpseclib3\Crypt\EC\Formats\Signature;
 
+use phpseclib3\Math\BigInteger;
 use phpseclib3\File\ASN1 as Encoder;
 use phpseclib3\File\ASN1\Maps\EcdsaSigValue;
-use phpseclib3\Math\BigInteger;
 
 /**
  * ASN1 Signature Handler
  *
+ * @package Common
  * @author  Jim Wigginton <terrafrost@php.net>
+ * @access  public
  */
 abstract class ASN1
 {
     /**
      * Loads a signature
      *
+     * @access public
      * @param string $sig
      * @return array
      */
@@ -51,8 +56,9 @@ abstract class ASN1
     /**
      * Returns a signature in the appropriate format
      *
-     * @param BigInteger $r
-     * @param BigInteger $s
+     * @access public
+     * @param \phpseclib3\Math\BigInteger $r
+     * @param \phpseclib3\Math\BigInteger $s
      * @return string
      */
     public static function save(BigInteger $r, BigInteger $s)

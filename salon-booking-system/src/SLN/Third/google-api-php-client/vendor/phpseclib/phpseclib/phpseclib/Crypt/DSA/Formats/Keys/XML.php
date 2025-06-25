@@ -11,6 +11,8 @@
  *
  * PHP version 5
  *
+ * @category  Crypt
+ * @package   DSA
  * @author    Jim Wigginton <terrafrost@php.net>
  * @copyright 2015 Jim Wigginton
  * @license   http://www.opensource.org/licenses/mit-license.html  MIT License
@@ -19,20 +21,23 @@
 
 namespace phpseclib3\Crypt\DSA\Formats\Keys;
 
-use phpseclib3\Common\Functions\Strings;
-use phpseclib3\Exception\BadConfigurationException;
+use ParagonIE\ConstantTime\Base64;
 use phpseclib3\Math\BigInteger;
+use phpseclib3\Common\Functions\Strings;
 
 /**
  * XML Formatted DSA Key Handler
  *
+ * @package DSA
  * @author  Jim Wigginton <terrafrost@php.net>
+ * @access  public
  */
 abstract class XML
 {
     /**
      * Break a public or private key down into its constituent components
      *
+     * @access public
      * @param string $key
      * @param string $password optional
      * @return array
@@ -43,10 +48,6 @@ abstract class XML
             throw new \UnexpectedValueException('Key should be a string - not a ' . gettype($key));
         }
 
-        if (!class_exists('DOMDocument')) {
-            throw new BadConfigurationException('The dom extension is not setup correctly on this system');
-        }
-
         $use_errors = libxml_use_internal_errors(true);
 
         $dom = new \DOMDocument();
@@ -54,7 +55,6 @@ abstract class XML
             $key = '<xml>' . $key . '</xml>';
         }
         if (!$dom->loadXML($key)) {
-            libxml_use_internal_errors($use_errors);
             throw new \UnexpectedValueException('Key does not appear to contain XML');
         }
         $xpath = new \DOMXPath($dom);
@@ -65,7 +65,7 @@ abstract class XML
             if (!$temp->length) {
                 continue;
             }
-            $value = new BigInteger(Strings::base64_decode($temp->item(0)->nodeValue), 256);
+            $value = new BigInteger(Base64::decode($temp->item(0)->nodeValue), 256);
             switch ($key) {
                 case 'p': // a prime modulus meeting the [DSS] requirements
                     // Parameters P, Q, and G can be public and common to a group of users. They might be known
@@ -114,19 +114,20 @@ abstract class XML
      *
      * See https://www.w3.org/TR/xmldsig-core/#sec-DSAKeyValue
      *
-     * @param BigInteger $p
-     * @param BigInteger $q
-     * @param BigInteger $g
-     * @param BigInteger $y
+     * @access public
+     * @param \phpseclib3\Math\BigInteger $p
+     * @param \phpseclib3\Math\BigInteger $q
+     * @param \phpseclib3\Math\BigInteger $g
+     * @param \phpseclib3\Math\BigInteger $y
      * @return string
      */
     public static function savePublicKey(BigInteger $p, BigInteger $q, BigInteger $g, BigInteger $y)
     {
         return "<DSAKeyValue>\r\n" .
-               '  <P>' . Strings::base64_encode($p->toBytes()) . "</P>\r\n" .
-               '  <Q>' . Strings::base64_encode($q->toBytes()) . "</Q>\r\n" .
-               '  <G>' . Strings::base64_encode($g->toBytes()) . "</G>\r\n" .
-               '  <Y>' . Strings::base64_encode($y->toBytes()) . "</Y>\r\n" .
+               '  <P>' . Base64::encode($p->toBytes()) . "</P>\r\n" .
+               '  <Q>' . Base64::encode($q->toBytes()) . "</Q>\r\n" .
+               '  <G>' . Base64::encode($g->toBytes()) . "</G>\r\n" .
+               '  <Y>' . Base64::encode($y->toBytes()) . "</Y>\r\n" .
                '</DSAKeyValue>';
     }
 }

@@ -282,8 +282,7 @@
   vertical-align: middle;
 }
 
-.sln-booking-pro-feature-tooltip::after,
-.sln-profeature__tooltip::after {
+.sln-booking-pro-feature-tooltip::after {
   margin-left: 0;
   font-family: "Material Icons";
   letter-spacing: normal;

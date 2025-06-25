@@ -13,6 +13,8 @@
  *
  * PHP version 5 and 7
  *
+ * @category  Crypt
+ * @package   EC
  * @author    Jim Wigginton <terrafrost@php.net>
  * @copyright 2017 Jim Wigginton
  * @license   http://www.opensource.org/licenses/mit-license.html  MIT License
@@ -21,16 +23,18 @@
 
 namespace phpseclib3\Crypt\EC\BaseCurves;
 
-use phpseclib3\Common\Functions\Strings;
-use phpseclib3\Math\BigInteger;
 use phpseclib3\Math\Common\FiniteField\Integer;
+use phpseclib3\Common\Functions\Strings;
 use phpseclib3\Math\PrimeField;
+use phpseclib3\Math\BigInteger;
 use phpseclib3\Math\PrimeField\Integer as PrimeInteger;
 
 /**
  * Curves over y^2 = x^3 + a*x + b
  *
+ * @package Prime
  * @author  Jim Wigginton <terrafrost@php.net>
+ * @access  public
  */
 class Prime extends Base
 {
@@ -203,10 +207,8 @@ class Prime extends Base
         $v = $u1->multiply($h2);
         $x3 = $r->multiply($r)->subtract($h3)->subtract($v->multiply($this->two));
         $y3 = $r->multiply(
-            $v->subtract($x3)
-        )->subtract(
-            $s1->multiply($h3)
-        );
+            $v->subtract($x3))->subtract(
+            $s1->multiply($h3));
         return [$x3, $y3, $h];
     }
 
@@ -240,10 +242,8 @@ class Prime extends Base
         $v = $u1->multiply($h2);
         $x3 = $r->multiply($r)->subtract($h3)->subtract($v->multiply($this->two));
         $y3 = $r->multiply(
-            $v->subtract($x3)
-        )->subtract(
-            $s1->multiply($h3)
-        );
+            $v->subtract($x3))->subtract(
+            $s1->multiply($h3));
         $z3 = $h->multiply($z1);
         return [$x3, $y3, $z3];
     }
@@ -279,10 +279,8 @@ class Prime extends Base
         $v = $u1->multiply($h2);
         $x3 = $r->multiply($r)->subtract($h3)->subtract($v->multiply($this->two));
         $y3 = $r->multiply(
-            $v->subtract($x3)
-        )->subtract(
-            $s1->multiply($h3)
-        );
+            $v->subtract($x3))->subtract(
+            $s1->multiply($h3));
         $z3 = $h->multiply($z1)->multiply($z2);
         return [$x3, $y3, $z3];
     }
@@ -372,8 +370,7 @@ class Prime extends Base
         $m = $m1->add($m2);
         $x1 = $m->multiply($m)->subtract($this->two->multiply($s));
         $y1 = $m->multiply($s->subtract($x1))->subtract(
-            $this->eight->multiply($y2->multiply($y2))
-        );
+              $this->eight->multiply($y2->multiply($y2)));
         $z1 = $this->two->multiply($y)->multiply($z);
         return [$x1, $y1, $z1];
     }
@@ -393,8 +390,7 @@ class Prime extends Base
         $m = $m1->add($this->a);
         $x1 = $m->multiply($m)->subtract($this->two->multiply($s));
         $y1 = $m->multiply($s->subtract($x1))->subtract(
-            $this->eight->multiply($y2->multiply($y2))
-        );
+              $this->eight->multiply($y2->multiply($y2)));
         $z1 = $this->two->multiply($y);
         return [$x1, $y1, $z1];
     }
@@ -443,12 +439,8 @@ class Prime extends Base
         $x = new BigInteger($m, 256);
         $xp = $this->convertInteger($x);
         switch ($y) {
-            case 2:
-                $ypn = false;
-                break;
-            case 3:
-                $ypn = true;
-                break;
+            case 2: $ypn = false; break;
+            case 3: $ypn = true; break;
             default:
                 throw new \RuntimeException('Coordinate not in recognized format');
         }
@@ -483,7 +475,7 @@ class Prime extends Base
     /**
      * Returns the modulo
      *
-     * @return BigInteger
+     * @return \phpseclib3\Math\BigInteger
      */
     public function getModulo()
     {
@@ -493,7 +485,7 @@ class Prime extends Base
     /**
      * Returns the a coefficient
      *
-     * @return PrimeInteger
+     * @return \phpseclib3\Math\PrimeField\Integer
      */
     public function getA()
     {
@@ -503,7 +495,7 @@ class Prime extends Base
     /**
      * Returns the a coefficient
      *
-     * @return PrimeInteger
+     * @return \phpseclib3\Math\PrimeField\Integer
      */
     public function getB()
     {
@@ -513,8 +505,7 @@ class Prime extends Base
     /**
      * Multiply and Add Points
      *
-     * Adapted from:
-     * https://github.com/indutny/elliptic/blob/725bd91/lib/elliptic/curve/base.js#L125
+     * Adapted from https://git.io/vxPUH
      *
      * @return int[]
      */
@@ -538,7 +529,7 @@ class Prime extends Base
         // comb all window NAFs
 
         $max = 0;
-        for ($i = $length - 1; $i >= 1; $i -= 2) {
+        for ($i = $length - 1; $i >= 1; $i-= 2) {
             $a = $i - 1;
             $b = $i;
             if ($wndWidth[$a] != 1 || $wndWidth[$b] != 1) {
@@ -640,12 +631,11 @@ class Prime extends Base
     /**
      * Precomputes NAF points
      *
-     * Adapted from:
-     * https://github.com/indutny/elliptic/blob/725bd91/lib/elliptic/curve/base.js#L351
+     * Adapted from https://git.io/vxY1f
      *
      * @return int[]
      */
-    private function getNAFPoints(array $point, $wnd)
+    private function getNAFPoints($point, $wnd)
     {
         if (isset($point['naf'])) {
             return $point['naf'];
@@ -677,8 +667,7 @@ class Prime extends Base
     /**
      * Precomputes points in Joint Sparse Form
      *
-     * Adapted from:
-     * https://github.com/indutny/elliptic/blob/725bd91/lib/elliptic/utils.js#L96
+     * Adapted from https://git.io/vxrpD
      *
      * @return int[]
      */
@@ -698,12 +687,12 @@ class Prime extends Base
         while ($k1->compare(new BigInteger(-$d1)) > 0 || $k2->compare(new BigInteger(-$d2)) > 0) {
             // first phase
             $m14 = $k1->testBit(0) + 2 * $k1->testBit(1);
-            $m14 += $d1;
-            $m14 &= 3;
+            $m14+= $d1;
+            $m14&= 3;
 
             $m24 = $k2->testBit(0) + 2 * $k2->testBit(1);
-            $m24 += $d2;
-            $m24 &= 3;
+            $m24+= $d2;
+            $m24&= 3;
 
             if ($m14 == 3) {
                 $m14 = -1;
@@ -715,8 +704,8 @@ class Prime extends Base
             $u1 = 0;
             if ($m14 & 1) { // if $m14 is odd
                 $m8 = $k1->testBit(0) + 2 * $k1->testBit(1) + 4 * $k1->testBit(2);
-                $m8 += $d1;
-                $m8 &= 7;
+                $m8+= $d1;
+                $m8&= 7;
                 $u1 = ($m8 == 3 || $m8 == 5) && $m24 == 2 ? -$m14 : $m14;
             }
             $jsf[0][] = $u1;
@@ -724,8 +713,8 @@ class Prime extends Base
             $u2 = 0;
             if ($m24 & 1) { // if $m24 is odd
                 $m8 = $k2->testBit(0) + 2 * $k2->testBit(1) + 4 * $k2->testBit(2);
-                $m8 += $d2;
-                $m8 &= 7;
+                $m8+= $d2;
+                $m8&= 7;
                 $u2 = ($m8 == 3 || $m8 == 5) && $m14 == 2 ? -$m24 : $m24;
             }
             $jsf[1][] = $u2;

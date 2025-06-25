@@ -5,6 +5,8 @@
  *
  * PHP version 5
  *
+ * @category  Crypt
+ * @package   EC
  * @author    Jim Wigginton <terrafrost@php.net>
  * @copyright 2015 Jim Wigginton
  * @license   http://www.opensource.org/licenses/mit-license.html  MIT License
@@ -13,20 +15,24 @@
 
 namespace phpseclib3\Crypt\EC\Formats\Keys;
 
-use phpseclib3\Common\Functions\Strings;
+use ParagonIE\ConstantTime\Hex;
 use phpseclib3\Crypt\EC\BaseCurves\Base as BaseCurve;
-use phpseclib3\Crypt\EC\BaseCurves\Binary as BinaryCurve;
 use phpseclib3\Crypt\EC\BaseCurves\Prime as PrimeCurve;
+use phpseclib3\Crypt\EC\BaseCurves\Binary as BinaryCurve;
 use phpseclib3\Crypt\EC\BaseCurves\TwistedEdwards as TwistedEdwardsCurve;
-use phpseclib3\Exception\UnsupportedCurveException;
+use phpseclib3\Common\Functions\Strings;
+use phpseclib3\Math\BigInteger;
+use phpseclib3\Math\PrimeField;
 use phpseclib3\File\ASN1;
 use phpseclib3\File\ASN1\Maps;
-use phpseclib3\Math\BigInteger;
+use phpseclib3\Exception\UnsupportedCurveException;
 
 /**
  * Generic EC Key Parsing Helper functions
  *
+ * @package EC
  * @author  Jim Wigginton <terrafrost@php.net>
+ * @access  public
  */
 trait Common
 {
@@ -92,8 +98,8 @@ trait Common
                 'sect163k1' => '1.3.132.0.1',
                 'sect163r2' => '1.3.132.0.15',
                 'secp224r1' => '1.3.132.0.33',
-                'sect233k1' => '1.3.132.0.26',
-                'sect233r1' => '1.3.132.0.27',
+                'sect233k1'=> '1.3.132.0.26',
+                'sect233r1'=> '1.3.132.0.27',
                 'secp256r1' => '1.2.840.10045.3.1.7', // aka prime256v1
                 'sect283k1' => '1.3.132.0.16',
                 'sect283r1' => '1.3.132.0.17',
@@ -183,7 +189,7 @@ trait Common
      * If the key contains an implicit curve phpseclib needs the curve
      * to be explicitly provided
      *
-     * @param BaseCurve $curve
+     * @param \phpseclib3\Crypt\EC\BaseCurves\Base $curve
      */
     public static function setImplicitCurve(BaseCurve $curve)
     {
@@ -195,7 +201,7 @@ trait Common
      * on the curve parameters
      *
      * @param array $params
-     * @return BaseCurve|false
+     * @return \phpseclib3\Crypt\EC\BaseCurves\Base|false
      */
     protected static function loadCurveByParam(array $params)
     {
@@ -249,8 +255,8 @@ trait Common
                     $curve->setModulo(...$modulo);
                     $len = ceil($modulo[0] / 8);
                     $curve->setCoefficients(
-                        Strings::bin2hex($data['curve']['a']),
-                        Strings::bin2hex($data['curve']['b'])
+                        Hex::encode($data['curve']['a']),
+                        Hex::encode($data['curve']['b'])
                     );
                     $point = self::extractPoint("\0" . $data['base'], $curve);
                     $curve->setBasePoint(...$point);
@@ -269,7 +275,7 @@ trait Common
      * Supports both compressed and uncompressed points
      *
      * @param string $str
-     * @param BaseCurve $curve
+     * @param \phpseclib3\Crypt\EC\BaseCurves\Base $curve
      * @return object[]
      */
     public static function extractPoint($str, BaseCurve $curve)
@@ -296,7 +302,7 @@ trait Common
         // the first byte of a bit string represents the number of bits in the last byte that are to be ignored but,
         // currently, bit strings wanting a non-zero amount of bits trimmed are not supported
         if (($val = Strings::shift($str)) != "\0") {
-            throw new \UnexpectedValueException('extractPoint expects the first byte to be null - not ' . Strings::bin2hex($val));
+            throw new \UnexpectedValueException('extractPoint expects the first byte to be null - not ' . Hex::encode($val));
         }
         if ($str == "\0") {
             return [];
@@ -314,7 +320,7 @@ trait Common
             preg_match("#(.)(.{{$order}})(.{{$order}})#s", $str, $matches);
             list(, $w, $x, $y) = $matches;
             if ($w != "\4") {
-                throw new \UnexpectedValueException('The first byte of an uncompressed point should be 04 - not ' . Strings::bin2hex($val));
+                throw new \UnexpectedValueException('The first byte of an uncompressed point should be 04 - not ' . Hex::encode($val));
             }
             $point = [
                 $curve->convertInteger(new BigInteger($x, 256)),
@@ -335,7 +341,7 @@ trait Common
      * Encode Parameters
      *
      * @todo Maybe at some point this could be moved to __toString() for each of the curves?
-     * @param BaseCurve $curve
+     * @param \phpseclib3\Crypt\EC\BaseCurves\Base $curve
      * @param bool $returnArray optional
      * @param array $options optional
      * @return string|false

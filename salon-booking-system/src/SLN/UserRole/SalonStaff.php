@@ -95,11 +95,7 @@ class SLN_UserRole_SalonStaff
             SLN_Plugin::POST_TYPE_BOOKING,
             SLN_Plugin::POST_TYPE_RESOURCE,
         ) as $k) {
-            $postTypeObj = get_post_type_object($k);
-            if (!is_object($postTypeObj)) {
-                continue;
-            }
-            foreach ($postTypeObj->cap as $v) {
+            foreach (get_post_type_object($k)->cap as $v) {
                 if ($canManage) {
                     $roleObj->add_cap($v);
                 }
@@ -133,11 +129,7 @@ class SLN_UserRole_SalonStaff
     public static function changeCapabilitiesByPostType($post_types, $canManage) {
         $roleObj = get_role(SLN_Plugin::USER_ROLE_STAFF);
         foreach ($post_types as $k) {
-            $postTypeObj = get_post_type_object($k);
-            if (!is_object($postTypeObj)) {
-                continue;
-            }
-            foreach ($postTypeObj->cap as $v) {
+            foreach (get_post_type_object($k)->cap as $v) {
                 if ($canManage) {
                     $roleObj->add_cap($v);
                 }

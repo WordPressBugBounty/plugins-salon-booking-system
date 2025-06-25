@@ -5,6 +5,8 @@
  *
  * PHP version 5
  *
+ * @category  Crypt
+ * @package   EC
  * @author    Jim Wigginton <terrafrost@php.net>
  * @copyright 2015 Jim Wigginton
  * @license   http://www.opensource.org/licenses/mit-license.html  MIT License
@@ -13,27 +15,32 @@
 
 namespace phpseclib3\Crypt\EC\Formats\Keys;
 
-use phpseclib3\Crypt\EC\BaseCurves\Montgomery as MontgomeryCurve;
 use phpseclib3\Crypt\EC\Curves\Curve25519;
 use phpseclib3\Crypt\EC\Curves\Curve448;
+use phpseclib3\Crypt\EC\BaseCurves\Montgomery as MontgomeryCurve;
+use phpseclib3\Math\Common\FiniteField\Integer;
 use phpseclib3\Math\BigInteger;
 
 /**
  * Montgomery Public Key Handler
  *
+ * @package EC
  * @author  Jim Wigginton <terrafrost@php.net>
+ * @access  public
  */
 abstract class MontgomeryPublic
 {
     /**
      * Is invisible flag
      *
+     * @access private
      */
     const IS_INVISIBLE = true;
 
     /**
      * Break a public or private key down into its constituent components
      *
+     * @access public
      * @param string $key
      * @param string $password optional
      * @return array
@@ -42,10 +49,10 @@ abstract class MontgomeryPublic
     {
         switch (strlen($key)) {
             case 32:
-                $curve = new Curve25519();
+                $curve = new Curve25519;
                 break;
             case 56:
-                $curve = new Curve448();
+                $curve = new Curve448;
                 break;
             default:
                 throw new \LengthException('The only supported lengths are 32 and 56');
@@ -60,7 +67,8 @@ abstract class MontgomeryPublic
     /**
      * Convert an EC public key to the appropriate format
      *
-     * @param MontgomeryCurve $curve
+     * @access public
+     * @param \phpseclib3\Crypt\EC\BaseCurves\Montgomery $curve
      * @param \phpseclib3\Math\Common\FiniteField\Integer[] $publicKey
      * @return string
      */

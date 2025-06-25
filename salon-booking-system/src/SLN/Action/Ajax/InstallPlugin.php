@@ -10,7 +10,7 @@ class SLN_Action_Ajax_InstallPlugin extends SLN_Action_Ajax_Abstract {
         if (!isset($sln_license))
             return ['success' => false, 'message' => 'License manager not initialized.'];
 
-        if (!current_user_can('install_plugins'))
+        if (!current_user_can( 'install_plugins'))
             return ['success' => false, 'message' => 'Insufficient permissions for this action.'];
 
         $productID = isset($_POST['product_id']) ? absint($_POST['product_id']) : 0;
@@ -87,8 +87,6 @@ class SLN_Action_Ajax_InstallPlugin extends SLN_Action_Ajax_Abstract {
     }
 
     protected static function plugin_install($files) {
-        global $sln_license;
-
         $installed = false;
 
         foreach ($files as $file) {
@@ -97,6 +95,7 @@ class SLN_Action_Ajax_InstallPlugin extends SLN_Action_Ajax_Abstract {
             if (strpos($zipUrl, '.zip') === false)
                 continue;
 
+            $upgrader = new Plugin_Upgrader(new WP_Ajax_Upgrader_Skin());
             $res = self::get_plugin($file->name);
             if ($res['success']) {
                 add_filter('upgrader_package_options', function($options) {
@@ -104,12 +103,7 @@ class SLN_Action_Ajax_InstallPlugin extends SLN_Action_Ajax_Abstract {
                     $options['overwrite_package'] = true;
                     return $options;
                 });
-            } else {
-                if ($sln_license->checkLicense()->license != 'valid')
-                    return ['success' => false, 'message' => 'License is not valid. Please activate or check your license.'];
             }
-
-            $upgrader = new Plugin_Upgrader(new WP_Ajax_Upgrader_Skin());
             $result = $upgrader->install($zipUrl);
 
             if (is_wp_error($result))

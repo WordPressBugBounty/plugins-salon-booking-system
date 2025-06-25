@@ -143,10 +143,9 @@ class SLN_GoogleScope {
         if (array_intersect($allowed_roles, $user->roles) === []) {
             wp_send_json_error('Unauthorized', 403);
         }
-
         $nonce = $_POST['nonce'] ?? '';
 
-        if ( ! wp_verify_nonce( $nonce, 'google_calendar' ) ) {
+        if ( ! wp_verify_nonce( $nonce, 'my_ajax_action' ) ) {
             wp_send_json_error( [ 'message' => 'Invalid nonce' ], 403 );
         }
     }

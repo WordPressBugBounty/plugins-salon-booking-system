@@ -539,34 +539,6 @@ sum(
                 <p><?php esc_html_e('This allows will hide customer phone for Salon Staff.', 'salon-booking-system') ?></p>
             </div>
         </div>
-        <div class="row">
-            <div class="col-xs-12 col-sm-6 sln-checkbox">
-                <div class="form-group">
-                    <button type="submit" class="sln-btn sln-btn--main--tonal sln-btn--big"
-                            onclick="return confirm('Force logout all Salon Staff members?')" name="force_logout_staff"
-                            value="1"><?php esc_html_e('Force Logout All Salon Staff', 'salon-booking-system') ?></button>
-                    <div class="sln-box-maininfo">
-                        <p class="sln-box-info">
-                            <?php esc_html_e('Force logout all salon staff users', 'salon-booking-system') ?>
-                            <br>
-                            <?php
-                            $staff_users = get_users(array('role' => SLN_Plugin::USER_ROLE_STAFF));
-                            $total_staff = count($staff_users);
-                            $online_staff = 0;
-
-                            foreach ($staff_users as $user) {
-                                $sessions = get_user_meta($user->ID, 'session_tokens', true);
-                                if (!empty($sessions)) {
-                                    $online_staff++;
-                                }
-                            }
-                            printf(__('Total staff: %d | Online: %d', 'salon-booking-system'), $total_staff, $online_staff);
-                            ?>
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 <?php echo $plugin->loadView('settings/_tab_general_pages', array('helper' => $this)); ?>

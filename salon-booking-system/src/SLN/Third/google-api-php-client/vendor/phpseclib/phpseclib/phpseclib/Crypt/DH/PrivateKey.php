@@ -3,6 +3,8 @@
 /**
  * DH Private Key
  *
+ * @category  Crypt
+ * @package   DH
  * @author    Jim Wigginton <terrafrost@php.net>
  * @copyright 2015 Jim Wigginton
  * @license   http://www.opensource.org/licenses/mit-license.html  MIT License
@@ -11,15 +13,17 @@
 
 namespace phpseclib3\Crypt\DH;
 
-use phpseclib3\Crypt\Common;
 use phpseclib3\Crypt\DH;
+use phpseclib3\Crypt\Common;
 
 /**
  * DH Private Key
  *
+ * @package DH
  * @author  Jim Wigginton <terrafrost@php.net>
+ * @access  public
  */
-final class PrivateKey extends DH
+class PrivateKey extends DH
 {
     use Common\Traits\PasswordProtected;
 
@@ -27,6 +31,7 @@ final class PrivateKey extends DH
      * Private Key
      *
      * @var \phpseclib3\Math\BigInteger
+     * @access private
      */
     protected $privateKey;
 
@@ -34,13 +39,15 @@ final class PrivateKey extends DH
      * Public Key
      *
      * @var \phpseclib3\Math\BigInteger
+     * @access private
      */
     protected $publicKey;
 
     /**
      * Returns the public key
      *
-     * @return PublicKey
+     * @access public
+     * @return DH\PublicKey
      */
     public function getPublicKey()
     {

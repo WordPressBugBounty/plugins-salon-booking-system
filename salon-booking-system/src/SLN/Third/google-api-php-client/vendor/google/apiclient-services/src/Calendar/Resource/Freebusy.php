@@ -36,7 +36,6 @@ class Freebusy extends \Google\Service\Resource
    * @param FreeBusyRequest $postBody
    * @param array $optParams Optional parameters.
    * @return FreeBusyResponse
-   * @throws \Google\Service\Exception
    */
   public function query(FreeBusyRequest $postBody, $optParams = [])
   {

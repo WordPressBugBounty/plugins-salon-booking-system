@@ -95,7 +95,8 @@ class SLN_Action_Init
         new SLN_Admin_Customers($p);
         new SLN_Admin_Reports($p);
         new SLN_Admin_Settings($p);
-        if (defined('SLN_VERSION_PAY') && SLN_VERSION_PAY) {
+
+        if (isset($sln_license) && $sln_license->checkLicense()->license == 'valid') {
             new SLN_Admin_Extensions($p);
         }
 
@@ -452,7 +453,7 @@ class SLN_Action_Init
         add_action('sln_email_feedback', 'sln_email_feedback');
         add_action('sln_cancel_bookings', 'sln_cancel_bookings');
         add_action('sln_email_weekly_report', 'sln_email_weekly_report');
-        add_action('sln.helper.calendar_link.remove', array('SLN_Helper_CalendarLink', 'cronUnlinkCall'), 10, 1);
+        add_action('sln.helper.calendar_link.remove', array('SLN_Helper_CalendarLink', 'cronUnlinkCall'));
 
 	if ( ! wp_get_schedule('sln_clean_up_database') ) {
 	    wp_schedule_event(time(), 'daily', 'sln_clean_up_database');

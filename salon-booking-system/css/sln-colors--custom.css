@@ -1026,7 +1026,7 @@
 #sln-salon.sln-customcolors .sln-box--main.sln-box--fixed_height.sln-box--scrollable,
 #sln-salon.sln-customcolors .sln-summary .sln-summary__terms,
 #sln-salon.sln-customcolors .sln-input--datepicker #sln_time.is_scrollable {
-  scrollbar-color: #adadad #f0f0f0;
+  scrollbar-color: {color-text-d} transparent;
 }
 #sln-salon.sln-customcolors .datetimepicker.sln-datetimepicker table tr td.day.active:not(.disabled),
 #sln-salon.sln-customcolors .datetimepicker.sln-datetimepicker table tr td.day:not(.disabled):hover,
@@ -1346,5 +1346,3 @@
 #sln-salon.sln-customcolors .sln-topbar a {
   color: {color-main-a};
 }
-
-/*# sourceMappingURL=sln-colors--custom.css.map */

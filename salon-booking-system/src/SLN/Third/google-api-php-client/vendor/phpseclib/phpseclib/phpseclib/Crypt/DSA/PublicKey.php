@@ -3,6 +3,8 @@
 /**
  * DSA Public Key
  *
+ * @category  Crypt
+ * @package   DSA
  * @author    Jim Wigginton <terrafrost@php.net>
  * @copyright 2015 Jim Wigginton
  * @license   http://www.opensource.org/licenses/mit-license.html  MIT License
@@ -11,16 +13,18 @@
 
 namespace phpseclib3\Crypt\DSA;
 
-use phpseclib3\Crypt\Common;
 use phpseclib3\Crypt\DSA;
 use phpseclib3\Crypt\DSA\Formats\Signature\ASN1 as ASN1Signature;
+use phpseclib3\Crypt\Common;
 
 /**
  * DSA Public Key
  *
+ * @package DSA
  * @author  Jim Wigginton <terrafrost@php.net>
+ * @access  public
  */
-final class PublicKey extends DSA implements Common\PublicKey
+class PublicKey extends DSA implements Common\PublicKey
 {
     use Common\Traits\Fingerprint;
 
@@ -28,6 +32,7 @@ final class PublicKey extends DSA implements Common\PublicKey
      * Verify a signature
      *
      * @see self::verify()
+     * @access public
      * @param string $message
      * @param string $signature
      * @return mixed

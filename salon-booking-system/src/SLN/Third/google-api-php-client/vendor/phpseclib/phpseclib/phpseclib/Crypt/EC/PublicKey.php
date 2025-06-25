@@ -3,6 +3,8 @@
 /**
  * EC Public Key
  *
+ * @category  Crypt
+ * @package   EC
  * @author    Jim Wigginton <terrafrost@php.net>
  * @copyright 2015 Jim Wigginton
  * @license   http://www.opensource.org/licenses/mit-license.html  MIT License
@@ -11,24 +13,26 @@
 
 namespace phpseclib3\Crypt\EC;
 
-use phpseclib3\Common\Functions\Strings;
-use phpseclib3\Crypt\Common;
 use phpseclib3\Crypt\EC;
-use phpseclib3\Crypt\EC\BaseCurves\Montgomery as MontgomeryCurve;
+use phpseclib3\Crypt\Hash;
+use phpseclib3\Math\BigInteger;
+use phpseclib3\Crypt\EC\Formats\Signature\ASN1 as ASN1Signature;
 use phpseclib3\Crypt\EC\BaseCurves\TwistedEdwards as TwistedEdwardsCurve;
+use phpseclib3\Crypt\EC\BaseCurves\Montgomery as MontgomeryCurve;
 use phpseclib3\Crypt\EC\Curves\Ed25519;
 use phpseclib3\Crypt\EC\Formats\Keys\PKCS1;
-use phpseclib3\Crypt\EC\Formats\Signature\ASN1 as ASN1Signature;
-use phpseclib3\Crypt\Hash;
+use phpseclib3\Crypt\Common;
 use phpseclib3\Exception\UnsupportedOperationException;
-use phpseclib3\Math\BigInteger;
+use phpseclib3\Common\Functions\Strings;
 
 /**
  * EC Public Key
  *
+ * @package EC
  * @author  Jim Wigginton <terrafrost@php.net>
+ * @access  public
  */
-final class PublicKey extends EC implements Common\PublicKey
+class PublicKey extends EC implements Common\PublicKey
 {
     use Common\Traits\Fingerprint;
 
@@ -36,6 +40,7 @@ final class PublicKey extends EC implements Common\PublicKey
      * Verify a signature
      *
      * @see self::verify()
+     * @access public
      * @param string $message
      * @param string $signature
      * @return mixed
@@ -103,8 +108,8 @@ final class PublicKey extends EC implements Common\PublicKey
 
             $qa = $curve->convertToInternal($this->QA);
 
-            $lhs = $curve->multiplyPoint($curve->getBasePoint(), $S);
-            $rhs = $curve->multiplyPoint($qa, $k);
+            $lhs = $curve->multiplyPoint($curve->getBasePoint(), $curve->convertInteger($S));
+            $rhs = $curve->multiplyPoint($qa, $curve->convertInteger($k));
             $rhs = $curve->addPoint($rhs, $R);
             $rhs = $curve->convertToAffine($rhs);
 
