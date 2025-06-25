@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<wpml-config>
+  <custom-types>
+     <custom-type translate="1">sln_service</custom-type>
+     <custom-type translate="1">sln_attendant</custom-type>
+     <custom-type translate="0">sln_booking</custom-type>
+  </custom-types>
+  <taxonomies>
+   <taxonomy translate="1">sln_service_category</taxonomy>
+  </taxonomies>
+  <admin-texts>
+    <key name="salon_settings">
+      <key name="email_subject"/>
+      <key name="disabled_message"/>
+      <key name="gen_timetable"/>
+      <key name="gen_address"/>
+      <key name="email_nb_subject"/>
+      <key name="new_booking_message"/>
+      <key name="booking_update_message"/>
+      <key name="feedback_message"/>
+      <key name="last_step_note"/>
+      <key name="checkout_fields">
+      <key name="firstname"><key name="label"/></key><key name="lastname"><key name="label"/></key><key name="email"><key name="label"/></key><key name="phone"><key name="label"/></key><key name="address"><key name="label"/></key><key name="privacy"><key name="label"/></key><key name="qwe"><key name="label"/></key><key name="file"><key name="label"/></key></key>
+    </key>
+  </admin-texts>
+</wpml-config>

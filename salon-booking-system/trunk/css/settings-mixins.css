@@ -1,0 +1,85 @@
+#sln-salon *,
+#sln-salon *:before,
+#sln-salon *:after,
+.sln-datashortcode *,
+.sln-datashortcode *:before,
+.sln-datashortcode *:after {
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+}
+#sln-salon *:focus,
+#sln-salon *:before:focus,
+#sln-salon *:after:focus,
+.sln-datashortcode *:focus,
+.sln-datashortcode *:before:focus,
+.sln-datashortcode *:after:focus {
+  outline: 0 !important;
+}
+
+/**
+ * For modern browsers
+ * 1. The space content is one way to avoid an Opera bug when the
+ *    contenteditable attribute is included anywhere else in the document.
+ *    Otherwise it causes space to appear at the top and bottom of elements
+ *    that are clearfixed.
+ * 2. The use of `table` rather than `block` is only necessary if using
+ *    `:before` to contain the top-margins of child elements.
+ */
+.clearfix:before, .clearfix:after,
+.clear:before,
+.clear:after {
+  content: " ";
+  display: table;
+}
+.clearfix:after,
+.clear:after {
+  clear: both;
+}
+
+/*
+@-webkit-keyframes fade-in {
+  0% {
+    opacity: 0;
+    -webkit-transform: scale(0);
+  }
+  100% {
+    opacity: 1;
+    -webkit-transform: scale(1);
+  }
+}
+
+@-moz-keyframes fade-in {
+  0% {
+    opacity: 0;
+    -webkit-transform: scale(0);
+  }
+  100% {
+    opacity: 1;
+    -webkit-transform: scale(1);
+  }
+}
+
+@-ms-keyframes fade-in {
+  0% {
+    opacity: 0;
+    -webkit-transform: scale(0);
+  }
+  100% {
+    opacity: 1;
+    -webkit-transform: scale(1);
+  }
+}
+*/
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.99);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/*# sourceMappingURL=settings-mixins.css.map */

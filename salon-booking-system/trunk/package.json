@@ -1,0 +1,14 @@
+{
+	"scripts": {
+		"compile:sass": "sass scss:css -w",
+		"serve": "browser-sync start --proxy 'localhost:8080' --files 'css/*.css, *.php, js/*.js'",
+		"start": "npm-run-all --parallel compile:sass serve"
+	},
+	"dependencies": {
+		"-": "^0.0.1",
+		"browser-sync": "^3.0.3",
+		"npm-run-all": "^4.1.5",
+		"sass": "^1.83.0",
+		"save-dev": "^0.0.1-security"
+	}
+}

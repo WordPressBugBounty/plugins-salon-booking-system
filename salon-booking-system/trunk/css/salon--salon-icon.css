@@ -1,0 +1,1054 @@
+@charset "UTF-8";
+
+@font-face {
+    font-family: "FontAwesome";
+    src: url("../fonts/fontawesome-webfont.eot?v=5.14.0");
+    src: url("../fonts/fontawesome-webfont.eot?#iefix&v=5.14.0")
+            format("embedded-opentype"),
+        url("../fonts/fontawesome-webfont.woff2?v=5.14.0") format("woff2"),
+        url("../fonts/fontawesome-webfont.woff?v=5.14.0") format("woff"),
+        url("../fonts/fontawesome-webfont.ttf?v=5.14.0") format("truetype"),
+        url("../fonts/fontawesome-webfont.svg?v=5.14.0#fontawesomesolid")
+            format("svg");
+    font-weight: 900;
+    font-style: normal;
+}
+@font-face {
+    font-family: "FontAwesome";
+    src: url("../fonts/fontawesome-webfont-regular.eot?v=5.14.0");
+    src: url("../fonts/fontawesome-webfont-regular.eot?#iefix&v=5.14.0")
+            format("embedded-opentype"),
+        url("../fonts/fontawesome-webfont-regular.woff2?v=5.14.0")
+            format("woff2"),
+        url("../fonts/fontawesome-webfont-regular.woff?v=5.14.0") format("woff"),
+        url("../fonts/fontawesome-webfont-regular.ttf?v=5.14.0")
+            format("truetype"),
+        url("../fonts/fontawesome-webfont-regular.svg?v=5.14.0#fontawesomeregular")
+            format("svg");
+    font-weight: 400;
+    font-style: normal;
+}
+@font-face {
+    font-family: "FontAwesome";
+    src: url("../fonts/fontawesome-webfont-brands.eot?v=5.14.0");
+    src: url("../fonts/fontawesone-webfont-brands.eot?#iefix&v=5.14.0")
+            format("embedded-opentype"),
+        url("../fonts/fontawesone-webfont-brands.woff2?v=5.14.0")
+            format("woff2"),
+        url("../fonts/fontawesone-webfont-brands.woff?v=5.14.0") format("woff"),
+        url("../fonts/fontawesone-webfont-brands.ttf?v=5.14.0")
+            format("truetype"),
+        url("../fonts/fontawesone-webfont-brands.svg?v=5.14.0#fontawesomeregular")
+            format("svg");
+    font-weight: 300;
+    font-style: normal;
+}
+
+.material-icons {
+    font-family: "FontAwesome";
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
+}
+
+#sln-salon .datetimepicker.sln-datetimepicker .prev:before,
+#sln-salon .datetimepicker.sln-datetimepicker .next:before,
+#sln-salon
+    #sln-salon-my-account
+    .datetimepicker.sln-datetimepicker
+    .prev:before,
+#sln-salon
+    #sln-salon-my-account
+    .datetimepicker.sln-datetimepicker
+    .next:before {
+    display: block;
+    font-family: "FontAwesome";
+    font-style: normal;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
+    font-size: 18px;
+    line-height: 0;
+    line-height: 1;
+}
+
+@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+    #sln-salon .datetimepicker.sln-datetimepicker .prev:before,
+    #sln-salon .datetimepicker.sln-datetimepicker .next:before,
+    #sln-salon
+        #sln-salon-my-account
+        .datetimepicker.sln-datetimepicker
+        .prev:before,
+    #sln-salon
+        #sln-salon-my-account
+        .datetimepicker.sln-datetimepicker
+        .next:before {
+        font-family: "FontAwesome";
+        font-style: normal;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: normal;
+        text-transform: none;
+        display: inline-block;
+        white-space: nowrap;
+        word-wrap: normal;
+        direction: ltr;
+        -webkit-font-feature-settings: "liga";
+        -webkit-font-smoothing: antialiased;
+        font-size: 18px;
+        line-height: 0;
+    }
+}
+
+#sln-salon .datetimepicker.sln-datetimepicker .prev i,
+#sln-salon .datetimepicker.sln-datetimepicker .next i,
+#sln-salon #sln-salon-my-account .datetimepicker.sln-datetimepicker .prev i,
+#sln-salon #sln-salon-my-account .datetimepicker.sln-datetimepicker .next i {
+    display: none;
+}
+#sln-salon
+    .datetimepicker.sln-datetimepicker
+    .table-condensed
+    thead
+    .prev:before,
+#sln-salon
+    #sln-salon-my-account
+    .datetimepicker.sln-datetimepicker
+    .table-condensed
+    thead
+    .prev:before,
+#sln-salon
+    .datetimepicker.sln-datetimepicker
+    .table-condensed
+    thead
+    .next:before,
+#sln-salon
+    #sln-salon-my-account
+    .datetimepicker.sln-datetimepicker
+    .table-condensed
+    thead
+    .next:before {
+    content: "\f061";
+}
+#sln-salon .sln-panel .sln-panel-heading.collapsed .sln-btn:after,
+#sln-salon.sln-loginform:not(.sln-customcolors)
+    .sln-panel
+    .sln-panel-heading.collapsed
+    #loginform
+    #wp-submit:after,
+#sln-salon.sln-loginform:not(.sln-customcolors)
+    #loginform
+    .sln-panel
+    .sln-panel-heading.collapsed
+    #wp-submit:after {
+    content: "\f107";
+}
+
+#sln-salon .sln-panel .sln-panel-heading .sln-btn::after,
+#sln-salon.sln-loginform:not(.sln-customcolors)
+    .sln-panel
+    .sln-panel-heading
+    #loginform
+    #wp-submit::after,
+#sln-salon.sln-loginform:not(.sln-customcolors)
+    #loginform
+    .sln-panel
+    .sln-panel-heading
+    #wp-submit::after {
+    position: absolute;
+    top: 50%;
+    -webkit-transform: translateY(-50%);
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
+    right: 1em;
+    bottom: auto;
+    bottom: initial;
+    font-size: 1.2em;
+    content: "\f106";
+    opacity: 0.5;
+    -webkit-transition: opacity 200ms, transform 250ms;
+    -moz-transition: opacity 200ms, transform 250ms;
+    -o-transition: opacity 200ms, transform 250ms;
+    transition: opacity 200ms, transform 250ms;
+}
+
+#sln-salon .sln_datepicker:after,
+#sln-salon .sln_timepicker:after,
+#sln-salon #sln-salon-my-account .sln_datepicker:after,
+#sln-salon #sln-salon-my-account .sln_timepicker:after {
+    font-family: "FontAwesome";
+    font-style: normal;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
+    font-size: 1.6em;
+    line-height: 0;
+    display: inline-block;
+    right: 0.4em;
+    font-style: normal;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    border-radius: 50%;
+    -webkit-transition: color 250ms;
+    -moz-transition: color 250ms;
+    -o-transition: color 250ms;
+    transition: color 250ms;
+}
+@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+    #sln-salon .sln_datepicker:after,
+    #sln-salon .sln_timepicker:after,
+    #sln-salon #sln-salon-my-account .sln_datepicker:after,
+    #sln-salon #sln-salon-my-account .sln_timepicker:after {
+        font-size: 30px;
+        right: 16px;
+    }
+}
+
+.sln-icon {
+    position: relative;
+    top: 1px;
+    display: inline-block;
+    font-family: "FontAwesome";
+    font-style: normal;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
+    font-size: 60;
+    line-height: 0;
+    font-style: normal;
+    font-weight: 900;
+    line-height: 3.3333333333rem;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+.sln-icon:after {
+    content: "\f111";
+    display: inline-block;
+    text-align: center;
+    text-transform: none !important;
+    -webkit-transition: background-color 200ms, color 300ms;
+    -moz-transition: background-color 200ms, color 300ms;
+    -o-transition: background-color 200ms, color 300ms;
+    transition: background-color 200ms, color 300ms;
+    z-index: 200;
+}
+
+.sln-icon-sort {
+    font-weight: 900;
+    font-family: "FontAwesome";
+    cursor: pointer;
+}
+.sln-icon-sort--up:after {
+    content: "\f161";
+}
+.sln-icon-sort--down:after {
+    content: "\f160";
+}
+.sln-icon-sort.active {
+    background-color: #ccc;
+}
+
+.sln-icon--checked--square:after {
+    content: "\f14a";
+    font-weight: 900;
+}
+
+.sln-icon--calendar:after {
+    content: "\f073";
+}
+
+.sln-icon--booking:after,
+.sln-icon--time:after {
+    content: "\f017";
+    font-weight: 900;
+}
+
+.sln-icon--back:after,
+.sln-icon--left:after,
+.sln-icon--prev:after,
+.sln-btn--icon.sln-icon--back:after,
+.sln-btn--icon.sln-icon--left:after,
+.sln-btn--icon.sln-icon--prev:after {
+    font-family: "FontAwesome";
+    font-weight: 400;
+    content: "\f191";
+}
+
+div.sln-input-file .sln-icon--upload:before {
+    font-family: "FontAwesome";
+    content: "\f574";
+    font-weight: 900;
+    font-size: 1.7em;
+}
+
+div.sln-input-file span.sln-icon--close {
+    margin-left: 3px;
+}
+
+.sln-icon--forward:after,
+.sln-icon--right:after,
+.sln-icon--next:after {
+    font-family: "FontAwesome";
+    font-weight: 400;
+    content: "\f152";
+}
+
+.sln-icon--cancel:after,
+.sln-btn--icon.sln-icon--cancel:after {
+    font-family: "FontAwesome";
+    font-weight: 400;
+    content: "\f410";
+}
+
+div.sln-input-file ul li span.sln-icon-close {
+    border-radius: 10px;
+    background-color: #0277bd;
+    color: white;
+    padding: 0px 4px;
+    font-size: 0.75em;
+    cursor: pointer;
+}
+
+.sln-box--formactions .sln-icon--back.sln-btn--medium:after,
+.sln-box--formactions
+    #sln-salon.sln-loginform:not(.sln-customcolors)
+    #loginform
+    .sln-icon--back#wp-submit:after,
+#sln-salon.sln-loginform:not(.sln-customcolors)
+    #loginform
+    .sln-box--formactions
+    .sln-icon--back#wp-submit:after,
+.sln-box--formactions .sln-btn--icon.sln-icon--back.sln-btn--medium:after {
+    font-size: 1.2222222222rem;
+    display: flex;
+    align-items: center;
+}
+
+.sln-icon--cancel.sln-btn--medium,
+#sln-salon.sln-loginform:not(.sln-customcolors)
+    #loginform
+    .sln-icon--cancel#wp-submit,
+.sln-btn--icon.sln-icon--cancel.sln-btn--medium {
+    padding-left: 1em;
+    text-align: center;
+}
+
+.sln-checkbox input + label:after,
+#sln-salon .sln-checkbox input + label:after {
+    background-color: transparent;
+    content: "\f00c";
+    transition: all 0.15s;
+    backface-visibility: hidden;
+    opacity: 0;
+    font-family: "FontAwesome";
+    font-style: normal;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
+    font-size: 1.2em;
+    line-height: 0;
+    line-height: 1.2em;
+    top: 0.15em;
+    left: 0.25em;
+    width: 1em;
+    height: 1em;
+    text-align: center;
+}
+
+@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+    .sln-checkbox input + label:after {
+        font-family: "FontAwesome";
+        font-weight: 900;
+        font-size: 18px;
+        line-height: 0;
+        line-height: 0;
+        top: 12px;
+        left: 3px;
+        width: 16px;
+        height: 16px;
+    }
+}
+
+body.post-type-sln_booking:not(.sln-salon-page)
+    .select2-container.select2-container--sln
+    .select2-results__option.select2-results__option--stl
+    .sln-select__wrn::before,
+body.post-type-sln_booking:not(.sln-salon-page)
+    .select2-container.select2-container--sln
+    .select2-results__option::after,
+.wp-admin.salon_page_salon-settings
+    .select2-container.select2-container--sln
+    .select2-results__option::after,
+body:not(.sln-salon-page)
+    .select2-container.select2-container--sln
+    .select2-selection--single
+    .select2-selection__arrow:before,
+.sln-salon-page
+    .select2-container.select2-container--sln
+    .select2-selection--single
+    .select2-selection__arrow:before {
+    font-family: "FontAwesome";
+    font-size: 0.9166666667rem;
+    font-weight: 900;
+}
+
+.sln-salon-page
+    .select2-container.select2-container--sln
+    .select2-selection--single
+    .select2-selection__arrow:before {
+    display: block;
+    width: 1.1111111111rem;
+    height: 1.1111111111rem;
+    content: "\f078";
+    position: absolute;
+    top: 0;
+    left: 0;
+    line-height: 1.1111111111rem;
+    color: currentColor;
+}
+
+.sln-btn--icon {
+    text-align: left;
+    position: relative;
+    background-color: #fff;
+}
+.sln-btn--icon input,
+.sln-btn--icon button {
+    text-align: left;
+}
+
+.sln-btn--icon:after {
+    content: "\f111";
+    display: inline-block;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    text-align: center;
+    font-family: "FontAwesome";
+    font-style: normal;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
+    font-size: 1em;
+    line-height: 0;
+    font-style: normal;
+    font-weight: 900;
+    line-height: 4em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-transform: none;
+    -webkit-transition: background-color 200ms;
+    -moz-transition: background-color 200ms;
+    -o-transition: background-color 200ms;
+    transition: background-color 200ms;
+    z-index: 200;
+}
+@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+    .sln-btn--icon:after {
+        font-style: normal;
+        font-weight: 400;
+        line-height: 1;
+        letter-spacing: normal;
+        text-transform: none;
+        display: inline-block;
+        white-space: nowrap;
+        word-wrap: normal;
+        direction: ltr;
+        -webkit-font-feature-settings: "liga";
+        -webkit-font-smoothing: antialiased;
+        font-size: 16px;
+        line-height: 0;
+        line-height: 50px;
+    }
+}
+
+.sln-btn--icon.sln-btn--big {
+    padding-right: 2.6em;
+}
+.sln-btn--icon.sln-btn--big:after {
+    font-family: "FontAwesome";
+    font-style: normal;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
+    font-size: 1.2em;
+    line-height: 0;
+    padding: 0 1em;
+    line-height: 3.4em;
+}
+@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+    .sln-btn--icon.sln-btn--big:after {
+        font-size: 20px;
+        padding: 0 18px;
+        line-height: 50px;
+    }
+}
+
+.sln-btn--icon.sln-btn--medium,
+#sln-salon.sln-loginform:not(.sln-customcolors)
+    #loginform
+    .sln-btn--icon#wp-submit {
+    padding-right: 1em;
+    padding-left: 2em;
+}
+.sln-btn--icon.sln-btn--medium:after,
+#sln-salon.sln-loginform:not(.sln-customcolors)
+    #loginform
+    .sln-btn--icon#wp-submit:after {
+    font-size: 16px;
+    padding: 0 0.5em;
+    line-height: 3.6em;
+}
+@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+    .sln-btn--icon.sln-btn--medium:after,
+    #sln-salon.sln-loginform:not(.sln-customcolors)
+        #loginform
+        .sln-btn--icon#wp-submit:after {
+        font-size: 16px;
+        padding: 0 9px;
+        line-height: 50px;
+    }
+}
+
+.sln-btn--icon.sln-btn--noheight {
+    padding-right: 1em;
+    padding-left: 2em;
+}
+.sln-btn--icon.sln-btn--noheight:after {
+    font-family: "FontAwesome";
+    font-style: normal;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
+    font-size: 1em;
+    line-height: 0;
+    padding: 0 0.5em;
+    line-height: 3.6em;
+}
+@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+    .sln-btn--icon.sln-btn--noheight:after {
+        font-size: 16px;
+        padding: 0 9px;
+        line-height: 50px;
+    }
+}
+
+.sln-btn--icon.sln-btn--icon--left {
+    text-align: right;
+}
+.sln-btn--icon.sln-btn--icon--left.sln-btn--fullwidth,
+#sln-salon.sln-loginform:not(.sln-customcolors)
+    #loginform
+    .sln-btn--icon.sln-btn--icon--left#wp-submit {
+    text-align: left;
+}
+.sln-btn--icon.sln-btn--icon--left.sln-btn--fullwidth button,
+#sln-salon.sln-loginform:not(.sln-customcolors)
+    #loginform
+    .sln-btn--icon.sln-btn--icon--left#wp-submit
+    button {
+    text-align: left;
+}
+.sln-btn--icon.sln-btn--icon--left button {
+    text-align: right;
+}
+.sln-btn--icon.sln-btn--icon--left:after {
+    top: 0;
+    right: auto;
+    right: initial;
+    bottom: 0;
+    left: 0;
+}
+.sln-btn--icon.sln-btn--icon--left.sln-btn--big {
+    padding-right: 4em;
+    padding-left: 4em;
+}
+
+.sln-btn--icon.sln-btn--medium.sln-reschedule-form--cancel-button:after,
+#sln-salon.sln-loginform:not(.sln-customcolors)
+    #loginform
+    .sln-btn--icon.sln-reschedule-form--cancel-button#wp-submit:after {
+    line-height: 1.9em;
+}
+
+.sln-alert:after,
+#sln-salon .alert:after {
+    font-family: "FontAwesome";
+    font-style: normal;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
+    font-size: 2em;
+    line-height: 0;
+    display: inline-block;
+    content: "\f144";
+    position: absolute;
+    top: 0.6em;
+    left: 50%;
+    -webkit-transform: translateX(-50%) translateY(0);
+    -ms-transform: translateX(-50%) translateY(0);
+    transform: translateX(-50%) translateY(0);
+    font-style: normal;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    border-radius: 50%;
+}
+@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+    .sln-alert:after,
+    #sln-salon .alert:after {
+        font-size: 18px;
+        left: 16px;
+    }
+}
+@media only screen and (min-width: 768px) {
+    .sln-alert:after,
+    #sln-salon .alert:after {
+        font-family: "FontAwesome";
+        font-style: normal;
+        font-weight: 400;
+        line-height: 1;
+        letter-spacing: normal;
+        text-transform: none;
+        display: inline-block;
+        white-space: nowrap;
+        word-wrap: normal;
+        direction: ltr;
+        -webkit-font-feature-settings: "liga";
+        -webkit-font-smoothing: antialiased;
+        font-size: 2em;
+        line-height: 0;
+        display: inline-block;
+        content: "\f05a";
+        position: absolute;
+        top: 50%;
+        left: 0.4em;
+        -webkit-transform: translateY(-50%);
+        -ms-transform: translateY(-50%);
+        transform: translateY(-50%);
+        font-style: normal;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        border-radius: 50%;
+    }
+    .sln-alert.sln-alert--topicon:after,
+    #sln-salon .alert.sln-alert--topicon:after {
+        top: 0.8em;
+        left: 0.4em;
+    }
+}
+
+.sln-step-thankyou .sln-alert:after {
+    font-family: "FontAwesome";
+    font-style: normal;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
+    font-size: 2em;
+    line-height: 0;
+    display: inline-block;
+    content: "\f05a";
+    position: absolute;
+    top: 0.6em;
+    left: 0.3em;
+    font-style: normal;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    border-radius: 50%;
+}
+@media only screen and (min-width: 768px) {
+    .sln-step-thankyou .sln-alert:after {
+        left: 0;
+    }
+}
+
+.sln-alert.sln-alert-medium:after {
+    left: 0;
+    top: 50%;
+    -webkit-transform: translateX(0) translateY(-50%);
+    -ms-transform: translateX(0) translateY(-50%);
+    transform: translateX(0) translateY(-50%);
+}
+
+.sln-alert--success:after,
+#sln-salon .alert-success:after {
+    content: "\f00c";
+    font-weight: 400;
+    font-family: "FontAwesome";
+}
+
+.sln-alert--problem:after,
+#sln-salon .sln-alert--problem:after,
+#sln-salon .alert-danger:after {
+    content: "\f06a";
+    font-weight: 900;
+    font-family: "FontAwesome";
+}
+
+.sln-alert--warning:after,
+#sln-salon .alert-warning:after {
+    content: "\f06a";
+    font-weight: 900;
+    font-family: "FontAwesome";
+}
+
+.sln-alert--info:after,
+#sln-salon .sln-alert--info:after {
+    content: "\f05a";
+    font-weight: 900;
+    font-family: "FontAwesome";
+}
+
+.sln-alert.sln-alert--wait::after,
+.sln-alert--wait::after {
+    display: block;
+    font-weight: 400;
+    font-family: "FontAwesome";
+    content: "\f017";
+    font-size: 1.9em;
+    text-transform: none;
+}
+
+@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+    .sln-salon--loading .sln-btn--medium #sln-step-submit:after,
+    .sln-salon--loading
+        #sln-salon.sln-loginform:not(.sln-customcolors)
+        #loginform
+        #wp-submit
+        #sln-step-submit:after,
+    #sln-salon.sln-loginform:not(.sln-customcolors)
+        #loginform
+        .sln-salon--loading
+        #wp-submit
+        #sln-step-submit:after {
+        font-family: "FontAwesome";
+        font-weight: 900;
+        font-size: 1em;
+        line-height: 0;
+    }
+}
+
+#sln-salon.sln-step-date #sln-notifications.sln-notifications--active::before,
+#sln-salon.sln-step-date
+    #sln-debug-notifications.sln-notifications--active::before {
+    display: block;
+    content: "";
+    width: 2000px;
+    height: 100%;
+    color: #0277bd;
+    background-image: repeating-linear-gradient(
+        -25deg,
+        #fff,
+        #fff 20px,
+        currentColor 20px,
+        currentColor 40px,
+        #fff 40px,
+        #fff 60px,
+        currentColor 60px,
+        currentColor 80px
+    );
+    position: absolute;
+    top: 0;
+    -webkit-animation: wait--m 4s infinite linear;
+    animation: wait--m 4s infinite linear;
+    -webkit-transform-origin: center;
+    -ms-transform-origin: center;
+    transform-origin: center;
+    opacity: 0.25;
+}
+#sln-salon.sln-step-date
+    #sln-notifications.sln-notifications--active
+    .sln-alert.sln-alert--wait::after {
+    top: 1em;
+    color: #fff;
+}
+
+#sln-salon #sln-salon-my-account .glyphicon {
+    font-family: "FontAwesome";
+    font-size: 1em;
+}
+#sln-salon #sln-salon-my-account .glyphicon:before {
+    font-weight: 900;
+    content: "\f111";
+}
+#sln-salon #sln-salon-my-account .glyphicon.glyphicon-clock:before {
+    content: "\f017";
+    font-weight: 400;
+}
+#sln-salon #sln-salon-my-account .glyphicon.glyphicon-trash:before {
+    content: "\f2ed";
+}
+#sln-salon #sln-salon-my-account .glyphicon.glyphicon-ban-circle:before {
+    content: "\f05e";
+}
+#sln-salon #sln-salon-my-account .glyphicon.glyphicon-plus:before {
+    content: "\f067";
+}
+#sln-salon #sln-salon-my-account .glyphicon.glyphicon-minus:before {
+    content: "\f068";
+}
+#sln-salon #sln-salon-my-account .glyphicon.glyphicon-star:before {
+    content: "\f005";
+}
+#sln-salon #sln-salon-my-account .glyphicon.glyphicon-star-empty:before {
+    content: "\f005";
+    font-weight: 400;
+}
+#sln-salon #sln-salon-my-account .glyphicon.glyphicon-thumbs-up:before {
+    content: "\f164";
+}
+#sln-salon #sln-salon-my-account .glyphicon.glyphicon-warning-sign:before {
+    content: "\f071";
+}
+#sln-salon #sln-salon-my-account .glyphicon.glyphicon-ok-sign:before {
+    content: "\f058";
+}
+#sln-salon #sln-salon-my-account .glyphicon.glyphicon-hourglass:before {
+    content: "\f254";
+    font-weight: 400;
+}
+#sln-salon #sln-salon-my-account i.glyphicon {
+    font-style: normal;
+}
+
+.sln-datashortcode .glyphicon {
+    font-family: "FontAwesome";
+    font-size: 1em;
+    font-style: normal;
+}
+
+.sln-datashortcode .glyphicon.glyphicon-star:before {
+    content: "\f005";
+    font-weight: bold;
+}
+
+.sln-datashortcode .glyphicon.glyphicon-star-empty:before {
+    content: "\f005";
+}
+
+.sln-datashortcode .glyphicon {
+    margin: 0 5px 0 0;
+    color: #e6cc00 !important;
+}
+.sln-datashortcode .glyphicon.glyphicon-star-empty {
+    margin: 0 5px 0 0;
+    color: #0170b9 !important;
+}
+
+#sln-salon.sln-loginform #loginform .login-remember label:after {
+    background-color: transparent;
+    content: "\f00c";
+    transition: all 0.15s;
+    backface-visibility: hidden;
+    opacity: 0;
+    font-family: "FontAwesome";
+    font-style: normal;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: "liga";
+    -webkit-font-smoothing: antialiased;
+    font-size: 1.6em;
+    line-height: 0;
+    line-height: 1.2em;
+    top: -0.03em;
+    left: 0.08em;
+    width: 1em;
+    height: 1em;
+    text-align: center;
+}
+@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+    #sln-salon.sln-loginform #loginform .login-remember label:after {
+        font-size: 18px;
+        line-height: 0;
+        line-height: 0;
+        top: 12px;
+        left: 3px;
+        width: 16px;
+        height: 16px;
+    }
+}
+#sln-salon.sln-loginform #loginform .login-remember label:hover:after {
+    opacity: 0.5;
+}
+#sln-salon.sln-loginform #loginform .login-remember label.is-checked:after,
+#sln-salon.sln-loginform
+    #loginform
+    .login-remember
+    label.is-checked:hover:after {
+    opacity: 1;
+}
+
+body:not(.sln-salon-page)
+    .select2-container.select2-container--sln
+    .select2-selection--single
+    .select2-selection__arrow:before {
+    display: block;
+    width: 0.8333333333rem;
+    height: 0.8333333333rem;
+    content: "\f078";
+    position: absolute;
+    top: 0;
+    left: 0;
+    line-height: 0.8333333333rem;
+    color: rgb(0, 53, 83);
+}
+
+.wp-admin.salon_page_salon-settings
+    .select2-container.select2-container--sln
+    .select2-results__option::after {
+    color: transparent;
+    content: " \f00c";
+    transition: all 0.15s;
+    backface-visibility: hidden;
+    opacity: 1;
+    font-size: 0.8333333333rem;
+    line-height: 1.5rem;
+    text-align: center;
+}
+
+body.post-type-sln_booking:not(.sln-salon-page)
+    .select2-container.select2-container--sln
+    .select2-results__option::after {
+    color: transparent;
+    content: " \f00c";
+    transition: all 0.15s;
+    backface-visibility: hidden;
+    opacity: 1;
+    font-size: 0.8333333333rem;
+    line-height: 1.5rem;
+    text-align: center;
+}
+
+body.post-type-sln_booking:not(.sln-salon-page)
+    .select2-container.select2-container--sln
+    .select2-results__option.select2-results__option--stl
+    .sln-select__wrn::before {
+    display: inline-block;
+    padding-right: 0.25rem;
+    color: currentColor;
+    content: " \f06a";
+    backface-visibility: hidden;
+    opacity: 1;
+    grid-column: 1;
+    grid-row: 1;
+    transition: all 0.15s;
+}
+
+/* ADMIN BOOKING DETAILS DROPDOWN // END */
+/* ADMIN BOOKING DETAILS CUSTOM ICONS */
+body:not(.sln-salon-page)
+    #sln-update-user-field
+    + .select2-container.select2-container--sln
+    .select2-selection--single
+    .select2-selection__arrow:before {
+    content: " \f2b9";
+    font-size: 1.125rem;
+}
+/* ADMIN BOOKING DETAILS CUSTOM ICONS // END */
+
+.sln-service-variable-duration--counter--minus::after,
+.sln-service-variable-duration--counter--plus::after {
+    margin-left: 0;
+    font-family: "FontAwesome";
+    letter-spacing: normal;
+    text-transform: none;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: "liga";
+    font-size: 25px;
+    line-height: 1;
+    display: inline-block;
+    font-style: normal;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    border-radius: 50%;
+    color: #0091ea;
+    vertical-align: middle;
+}
+
+.sln-service-variable-duration--counter--minus::after {
+    content: "\f056";
+}
+
+.sln-service-variable-duration--counter--plus::after {
+    content: "\f055";
+}
