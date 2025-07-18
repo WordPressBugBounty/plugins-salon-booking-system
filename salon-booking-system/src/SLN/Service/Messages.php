@@ -58,7 +58,10 @@ class SLN_Service_Messages
             $forAdmin = true;
             $p->sendMail('mail/status_canceled', compact('booking', 'forAdmin', 'sendToAdmin'));
         } elseif ($status == SLN_Enum_BookingStatus::PENDING_PAYMENT && $booking->getNotifyCustomer() && $sendToCustomer) {
-            $p->sendMail('mail/status_pending_payment', compact('booking'));
+            $settings = $this->plugin->getSettings();
+            if (!$settings->get('disable_first_pending_payment_email_to_customer')) {
+                $p->sendMail('mail/status_pending_payment', compact('booking'));
+            }
         } elseif (in_array($status, self::$statusForSummary)) {
             $this->sendSummaryMail($booking, $sendToAdmin, $sendToCustomer);
             $this->sendSmsBooking($booking, $sendToAdmin, $sendToCustomer);

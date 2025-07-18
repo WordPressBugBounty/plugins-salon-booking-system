@@ -561,6 +561,7 @@ function sln_init($) {
                 method: "POST",
                 dataType: "json",
             });
+            const urlParams = new URLSearchParams(window.location.search);
 
             if (response.success) {
                 // add assistant to URL if needed
@@ -570,8 +571,17 @@ function sln_init($) {
                 }
                 window.location = href;
             } else {
-                alert(salon.txt_overbooking);
-                location.reload();
+                if (urlParams.has('pay_remaining_amount')) {
+                    let href = button.attr('href');
+                    if (checkData['sln[attendant]'] && !href.includes('sln[attendant]')) {
+                        href += '&sln[attendant]=' + checkData['sln[attendant]'];
+                    }
+                    window.location = href;
+                } else {
+                    alert(salon.txt_overbooking);
+                    location.reload();
+                }
+
             }
         } catch (error) {
             console.error('Overbooking check error:', error);

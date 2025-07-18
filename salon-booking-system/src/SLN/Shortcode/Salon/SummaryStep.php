@@ -12,7 +12,7 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
         $bb     = $this->getPlugin()->getBookingBuilder()->getLastBooking();
         $value = isset($_POST['sln']) && isset($_POST['sln']['note']) ? sanitize_text_field(wp_unslash($_POST['sln']['note'])) : '';
         $plugin = $this->getPlugin();
-        $isCreateAfterPay = $plugin->getSettings()->get('create_booking_after_pay') && $plugin->getSettings()->isPayEnabled();
+        $isCreateAfterPay = /*$plugin->getSettings()->get('create_booking_after_pay') &&*/ $plugin->getSettings()->isPayEnabled();
         if(isset($_GET['sln_booking_id']) && intval($_GET['sln_booking_id'])){
             $bb = $plugin->createBooking(intval(sanitize_text_field($_GET['sln_booking_id'])));
         }

@@ -521,7 +521,7 @@ if (!String.prototype.formatNum) {
 
 	Calendar.prototype._render = function() {
 		this.context.html("");
-		
+
 		this.context.append(this.options.server_render);
 		this._update();
 		this._update_day_prepare_sln_booking_editor();
@@ -812,7 +812,7 @@ if (!String.prototype.formatNum) {
 				}
 			});
 		};
-		
+
 		var loadevent = null;
 		this.options.onBeforeEventsLoad.call(this, function() {
 			loadevent = loader();
@@ -834,6 +834,11 @@ if (!String.prototype.formatNum) {
 		// var is_touch_device = "ontouchstart" in document.documentElement;
 		var tooltipShown = false;
 		var currentTooltipId = null;
+
+    if (this.options.view !== "day") {
+      $(".sln-free-locked-slots").addClass("hide");
+    }
+
 		Calendar.prototype.is_tooltip_shown = function(){
 			return tooltipShown;
 		};
@@ -886,6 +891,17 @@ if (!String.prototype.formatNum) {
 			}
 		// }
 
+		$(".sln-btn--icon.sln-icon--close.custom").on("click", function () {
+			$.ajax({
+				url:
+					salon.ajax_url +
+					"&action=salon&method=RemoveNotice",
+				type: "POST",
+				success: function($data) {
+					$('.row.notice_custom').remove();
+				},
+			});
+		})
 		$(".sln-event-header-more-icon").on("click", function () {
 
 			var tooltipId = $(this).data("tooltip-id");
@@ -943,7 +959,7 @@ if (!String.prototype.formatNum) {
 			//loading transition 06.2024
 			setTimeout(function() {
 				self.view(view);
-			}, 100); 
+			}, 100);
 		});
 		$(".cal-cell").on("dblclick", function() {
 			var view = $("[data-cal-date]", this).data("cal-view");

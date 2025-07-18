@@ -59,8 +59,25 @@ $row['always'] = isset($row['always']) ? ($row['always'] ? true : false) : true;
     </div>
     <?php if ($show_specific_dates): ?>
         <div class="sln-select-specific-dates-calendar <?php echo isset($row['select_specific_dates']) && $row['select_specific_dates'] ? '' : 'hide' ?>">
-            <?php SLN_Form::fieldJSDate($prefix . '[specific_dates]', '', array('inline' => true)) ?>
-            <?php SLN_Form::fieldText($prefix . '[specific_dates]', isset($row['specific_dates']) ? $row['specific_dates'] : '', array('attrs' => array_merge(array('hidden' => ''), $attrs))) ?>
+            <div class="sln-specific-dates-wrapper">
+                <div class="sln-datepicker-section">
+                    <?php SLN_Form::fieldJSDate($prefix . '[specific_dates]', '', array('inline' => true)) ?>
+                    <?php SLN_Form::fieldText($prefix . '[specific_dates]', isset($row['specific_dates']) ? $row['specific_dates'] : '', array('attrs' => array_merge(array('hidden' => ''), $attrs))) ?>
+
+                    <div class="sln-selected-dates-panel">
+                        <div class="sln-selected-dates-header">
+                            <h4><?php esc_html_e('Selected Dates', 'salon-booking-system'); ?>:</h4>
+                            <span class="sln-selected-count">0</span>
+                        </div>
+                        <div class="sln-selected-dates-list">
+                            <div class="sln-selected-dates-empty"><?php esc_html_e('No dates selected', 'salon-booking-system'); ?></div>
+                        </div>
+                        <button type="button" class="sln-clear-all-dates sln-btn sln-btn--light sln-btn--small">
+                            <?php esc_html_e('Clear All Dates', 'salon-booking-system'); ?>
+                        </button>
+                    </div>
+                </div>
+            </div>
             <div class="clearfix"></div>
         </div>
     <?php endif; ?>
@@ -180,16 +197,35 @@ $row['always'] = isset($row['always']) ? ($row['always'] ? true : false) : true;
                 </div>
             <?php endif; ?>
         </div>
-        <div class="col-xs-12 col-md-4 form-group sln-switch">
-            <?php SLN_Form::fieldCheckboxSwitch(
-                $prefix . '[always]',
-                $row['always'],
-                __('This rule is always Enabled', 'salon-booking-system'),
-                __('Not always Enabled', 'salon-booking-system'),
-                array('attrs' => array(
-                    'data-unhide' => '#' . SLN_Form::makeID($prefix . '[always]' . 'unhide'),
-                ))
-            ); ?>
+        <div class="sln-always-valid-section <?php echo $show_specific_dates && isset($row['select_specific_dates']) && $row['select_specific_dates'] ? 'hide' : '' ?>">
+            <div class="col-xs-12 col-md-4 form-group sln-switch">
+                <?php SLN_Form::fieldCheckboxSwitch(
+                    $prefix . '[always]',
+                    $row['always'],
+                    __('This rule is always Enabled', 'salon-booking-system'),
+                    __('Not always Enabled', 'salon-booking-system'),
+                    array('attrs' => array(
+                        'data-unhide' => '#' . SLN_Form::makeID($prefix . '[always]' . 'unhide'),
+                    ))
+                ); ?>
+            </div>
+            <div id="<?php echo SLN_Form::makeID($prefix . '[always]' . 'unhide') ?>" class="col-xs-12">
+                <div class="row sln-box--tertiary">
+                    <div class="col-xs-12">
+                        <h3 class="sln-box-title--sec ">
+                            <?php esc_html_e('Set a time range for this rule', 'salon-booking-system') ?>:
+                        </h3>
+                    </div>
+                    <div class="col-xs-12 col-md-4 sln-input--simple sln-input--datepicker">
+                        <label><?php esc_html_e('Apply from', 'salon-booking-system') ?></label>
+                        <?php SLN_Form::fieldJSDate($prefix . "[from_date]", $dateFrom) ?>
+                    </div>
+                    <div class="col-xs-12 col-md-4 sln-input--simple sln-input--datepicker">
+                        <label><?php esc_html_e('Until', 'salon-booking-system') ?></label>
+                        <div class="sln_datepicker"><?php SLN_Form::fieldJSDate($prefix . "[to_date]", $dateTo) ?></div>
+                    </div>
+                </div>
+            </div>
         </div>
         <div id="<?php echo SLN_Form::makeID($prefix . '[always]' . 'unhide') ?>" class="col-xs-12">
             <div class="row sln-box--tertiary">

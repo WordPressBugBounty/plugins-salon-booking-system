@@ -105,21 +105,30 @@ usort($services, function ($service1, $service2) {
 </div>
 </div>
 
+<div class="booking-wrapper">
+    <?php echo $plugin->loadView(
+        'metabox/_tab_attendant_rules',
+        array(
+            'availabilities' => $attendant->getMeta('availabilities'),
+            'base' => '_sln_attendant_availabilities',
+            'show_specific_dates' => true,
+            'attendant' => $attendant
+        )
+    ); ?>
+    <?php echo $plugin->loadView(
+        'settings/_availability_preview',
+        array(
+            'availabilities' => $attendant->getMeta('availabilities'),
+            'base' => '_sln_attendant_availabilities',
+        )
+    ); ?>
+</div>
 <?php echo $plugin->loadView(
-	'metabox/_tab_attendant_rules',
-	array(
-		'availabilities' => $attendant->getMeta('availabilities'),
-		'base' => '_sln_attendant_availabilities',
-		'show_specific_dates' => true,
-        'attendant' => $attendant
-	)
-); ?>
-<?php echo $plugin->loadView(
-	'settings/_tab_booking_holiday_rules',
-	array(
-		'holidays' => $attendant->getMeta('holidays'),
-		'base' => '_sln_attendant_holidays',
-	)
+    'settings/_tab_booking_holiday_rules',
+    array(
+        'holidays' => $attendant->getMeta('holidays'),
+        'base' => '_sln_attendant_holidays',
+    )
 ); ?>
 
 <div class="sln-clear"></div>

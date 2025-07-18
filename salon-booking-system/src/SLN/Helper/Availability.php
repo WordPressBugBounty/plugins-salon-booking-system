@@ -608,9 +608,9 @@ class SLN_Helper_Availability
                     $_validated = array_filter( $validated, function( $serviceID ){
                         return SLN_Plugin::getInstance()->createService( $serviceID )->isSecondary();
                     });
-                    if( count( $_services ) >= $secondaryServicesCount ){
+                   /* if( count( $_services ) >= $secondaryServicesCount ){
                         break;
-                    }
+                    }*/
                 }
             }
 

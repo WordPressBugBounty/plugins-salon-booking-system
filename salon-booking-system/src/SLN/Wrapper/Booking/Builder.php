@@ -358,7 +358,8 @@ class SLN_Wrapper_Booking_Builder
     private function getCreateStatus()
     {
         $settings = $this->plugin->getSettings();
-        if($settings->isPayEnabled() && $settings->get('create_booking_after_pay')){
+        $is_api_request = defined('REST_REQUEST') && REST_REQUEST;
+        if($settings->isPayEnabled() /*&& $settings->get('create_booking_after_pay')*/ && !$is_api_request){
             return SLN_Enum_BookingStatus::DRAFT;
         }
 
@@ -368,7 +369,7 @@ class SLN_Wrapper_Booking_Builder
                 SLN_Enum_BookingStatus::PENDING_PAYMENT
                 : SLN_Enum_BookingStatus::CONFIRMED);
 
-	return apply_filters('sln.booking_builder.getCreateStatus', $status);
+        return apply_filters('sln.booking_builder.getCreateStatus', $status);
     }
 
     public function getEndsAt()

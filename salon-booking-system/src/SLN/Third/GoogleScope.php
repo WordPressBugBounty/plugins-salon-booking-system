@@ -1106,6 +1106,8 @@ function synch_a_booking($booking, $sync = false) {
                     }
                 }
                 sln_my_wp_log($events[$att_id]);
+                $events = update_post_meta($booking->getId(), '_sln_calendar_attendants_events_id', $events);
+
             }
         }
     }

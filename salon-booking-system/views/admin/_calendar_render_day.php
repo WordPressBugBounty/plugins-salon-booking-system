@@ -37,7 +37,14 @@ $isPro = defined('SLN_VERSION_PAY') && SLN_VERSION_PAY;
                         for ($line = 0; $line < $lines; $line++):
                             $holiday_by_line = $calendar->hasHolidaysByLine($line);
                             $attendant_holiday = $calendar->hasAttendantHoliday($line, $att['id']);
+                            $daily_holiday = $calendar->hasHolidaysDaylyByLine($line);
                             $time_unavailable = in_array($calendar->getTimeByLine($line), $att['unavailable_times']);
+
+                            $css_classes = '';
+                            if ($holiday_by_line) $css_classes .= ' blocked blocked-system';
+                            if ($attendant_holiday) $css_classes .= ' blocked blocked-attendant';
+                            if ($daily_holiday) $css_classes .= ' blocked blocked-daily';
+
                             $is_blocked = $is_attendant_blocked || $holiday_by_line;
                             $is_attendant_blocked = $attendant_holiday && !$time_unavailable;
                             $block_title = '';
@@ -48,7 +55,7 @@ $isPro = defined('SLN_VERSION_PAY') && SLN_VERSION_PAY;
                             }
                             ?>
                             <div style="margin-left: <?php echo ($attCol + 1) * 200; ?>px; top: <?php echo $line * 100; ?>px;"
-                                 class="att-time-slot <?php echo $is_blocked ? 'blocked' : ''; ?>"
+                                 class="att-time-slot<?php echo $css_classes; ?>"
                                  data-index="<?php echo $line; ?>"
                                  data-att-id="<?php echo $att['id']; ?>"
                                 <?php echo $block_title ? 'title="' . $block_title . '"' : ''; ?>>

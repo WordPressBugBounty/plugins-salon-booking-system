@@ -8,7 +8,8 @@ $helper->showNonce($postType);
     <?php if ('basic' == SLN_Plugin::getInstance()->getSettings()->get('availability_mode')): ?>
         <div class="form-group sln-notice notice-warning">
             <span class="sln-notice--icon"></span>
-            <span class="sln-notice--content"><?php esc_html_e('Switch to "ADVANCED / Availability method" to set custom duration', 'salon-booking-system'); ?></span>
+            <span
+                class="sln-notice--content"><?php esc_html_e('Switch to "ADVANCED / Availability method" to set custom duration', 'salon-booking-system'); ?></span>
             <span class="sln-notice--action"><a href="admin.php?page=salon-settings&tab=booking#sln-availability_mode">Change now</a></span>
         </div>
     <?php endif; ?>
@@ -27,7 +28,8 @@ $helper->showNonce($postType);
                 <label><?php esc_html_e('Duration', 'salon-booking-system'); ?></label>
                 <?php SLN_Form::fieldTime($helper->getFieldName($postType, 'duration'), $pagenow === 'post-new.php' ? current(array_slice(SLN_Func::getMinutesIntervals(), 1)) : $service->getDuration()); ?>
             </div>
-            <div class="col-xs-12 col-sm-6 form-group sln-checkbox sln-service-variable-duration sln-profeature <?php echo !defined("SLN_VERSION_PAY")  ? 'sln-service-variable-duration-disabled sln-profeature--disabled  sln-profeature__tooltip-wrapper' : '' ?>">
+            <div
+                class="col-xs-12 col-sm-6 form-group sln-checkbox sln-service-variable-duration sln-profeature <?php echo !defined("SLN_VERSION_PAY") ? 'sln-service-variable-duration-disabled sln-profeature--disabled  sln-profeature__tooltip-wrapper' : '' ?>">
                 <?php echo $plugin->loadView(
                     'metabox/_pro_feature_tooltip',
                     array(
@@ -38,7 +40,8 @@ $helper->showNonce($postType);
                 ); ?>
                 <div class="sln-profeature__input sln-service-variable-duration--checkbox">
                     <?php SLN_Form::fieldCheckbox($helper->getFieldName($postType, 'variable_duration'), $service->isVariableDuration()) ?>
-                    <label for="_sln_service_variable_duration"><?php esc_html_e('Variable duration', 'salon-booking-system'); ?></label>
+                    <label
+                        for="_sln_service_variable_duration"><?php esc_html_e('Variable duration', 'salon-booking-system'); ?></label>
                     <p><?php esc_html_e('Select this if you want this service has variable duration', 'salon-booking-system'); ?></p>
                 </div>
             </div>
@@ -50,18 +53,21 @@ $helper->showNonce($postType);
                 <label for="_sln_service_secondary"><?php esc_html_e('Secondary', 'salon-booking-system'); ?></label>
                 <p><?php esc_html_e('Select this if you want this service considered as secondary level service', 'salon-booking-system'); ?></p>
             </div>
-            <div id="exclusive_service" class="col-xs-12 col-sm-4 col-md-6 col-lg-4 form-group sln-checkbox <?php echo ($service->isSecondary() ? 'hide' : ''); ?>">
+            <div id="exclusive_service"
+                 class="col-xs-12 col-sm-4 col-md-6 col-lg-4 form-group sln-checkbox <?php echo($service->isSecondary() ? 'hide' : ''); ?>">
                 <?php SLN_Form::fieldCheckbox($helper->getFieldName($postType, 'exclusive'), $service->isExclusive()) ?>
-                <label for="_sln_service_exclusive"><?php esc_html_e('Exclusive service', 'salon-booking-system'); ?></label>
+                <label
+                    for="_sln_service_exclusive"><?php esc_html_e('Exclusive service', 'salon-booking-system'); ?></label>
                 <p><?php esc_html_e('If enabled, when a customer choose this service no other services can be booked during the same reservation', 'salon-booking-system'); ?></p>
             </div>
             <div id="exclusive_service" class="col-xs-12 col-sm-4 col-md-6 col-lg-4 form-group sln-checkbox">
                 <?php SLN_Form::fieldCheckbox($helper->getFieldName($postType, 'hide_on_frontend'), $service->isHideOnFrontend()) ?>
-                <label for="_sln_service_hide_on_frontend"><?php esc_html_e('Hide on front-end', 'salon-booking-system'); ?></label>
+                <label
+                    for="_sln_service_hide_on_frontend"><?php esc_html_e('Hide on front-end', 'salon-booking-system'); ?></label>
                 <p><?php esc_html_e('If enabled this service will never be displayed on front-end', 'salon-booking-system'); ?></p>
             </div>
 
-            <div id="secondary_details" class="<?php echo ($service->isSecondary() ? '' : 'hide'); ?>">
+            <div id="secondary_details" class="<?php echo($service->isSecondary() ? '' : 'hide'); ?>">
                 <div class="col-xs-12 col-sm-8 col-md-6 col-lg-4 form-group sln-select">
                     <label><?php esc_html_e('Display if', 'salon-booking-system'); ?></label>
                     <?php SLN_Form::fieldSelect(
@@ -76,7 +82,8 @@ $helper->showNonce($postType);
                         true
                     ); ?>
                 </div>
-                <div id="secondary_parent_services" class="col-xs-12 form-group sln-select <?php echo ($service->getMeta('secondary_display_mode') === 'service' ? '' : 'hide'); ?>">
+                <div id="secondary_parent_services"
+                     class="col-xs-12 form-group sln-select <?php echo($service->getMeta('secondary_display_mode') === 'service' ? '' : 'hide'); ?>">
                     <label><?php esc_html_e('Select parent services', 'salon-booking-system'); ?></label>
                     <?php
                     /** @var SLN_Wrapper_Service[] $services */
@@ -90,7 +97,7 @@ $helper->showNonce($postType);
                     SLN_Form::fieldSelect(
                         $helper->getFieldName($postType, 'secondary_parent_services[]'),
                         $items,
-                        (array) $service->getMeta('secondary_parent_services'),
+                        (array)$service->getMeta('secondary_parent_services'),
                         array('attrs' => array('multiple' => true, 'placeholder' => __('select one or more services', 'salon-booking-system'), 'data-containerCssClass' => 'sln-select-wrapper-no-search')),
                         true
                     ); ?>
@@ -113,17 +120,20 @@ $helper->showNonce($postType);
         <div class="row">
             <div class="col-xs-12 col-sm-6 col-lg-4 form-group sln-checkbox">
                 <?php SLN_Form::fieldCheckbox($helper->getFieldName($postType, 'attendants'), !$service->isAttendantsEnabled()) ?>
-                <label for="_sln_service_attendants"><?php esc_html_e('No assistant required', 'salon-booking-system'); ?></label>
+                <label
+                    for="_sln_service_attendants"><?php esc_html_e('No assistant required', 'salon-booking-system'); ?></label>
                 <p><?php esc_html_e('No assistant required', 'salon-booking-system'); ?></p>
             </div>
             <div class="col-xs-12 col-sm-6 col-lg-4 form-group sln-checkbox">
                 <?php SLN_Form::fieldCheckbox($helper->getFieldName($postType, 'parallel_exec'), $service->isExecutionParalleled()) ?>
-                <label for="_sln_service_parallel_exec"><?php esc_html_e('Parallel execution', 'salon-booking-system'); ?></label>
+                <label
+                    for="_sln_service_parallel_exec"><?php esc_html_e('Parallel execution', 'salon-booking-system'); ?></label>
             </div>
             <div class="sln-clear"></div>
         </div>
         <div class="row">
-            <div class="col-xs-12 col-sm-6 col-lg-4 form-group sln-checkbox sln-profeature <?php echo !defined("SLN_VERSION_PAY")  ? 'sln-service-variable-duration-disabled sln-profeature--disabled sln-profeature__tooltip-wrapper' : '' ?>">
+            <div
+                class="col-xs-12 col-sm-6 col-lg-4 form-group sln-checkbox sln-profeature <?php echo !defined("SLN_VERSION_PAY") ? 'sln-service-variable-duration-disabled sln-profeature--disabled sln-profeature__tooltip-wrapper' : '' ?>">
                 <?php echo $plugin->loadView(
                     'metabox/_pro_feature_tooltip',
                     array(
@@ -133,11 +143,13 @@ $helper->showNonce($postType);
                 ); ?>
                 <div class="sln-profeature__input sln-service-multiple-attendants-for-service">
                     <?php SLN_Form::fieldCheckbox($helper->getFieldName($postType, 'multiple_attendants_for_service'), $service->isMultipleAttendantsForServiceEnabled()) ?>
-                    <label for="_sln_service_multiple_attendants_for_service"><?php esc_html_e('Multiple attendats', 'salon-booking-system'); ?></label>
+                    <label
+                        for="_sln_service_multiple_attendants_for_service"><?php esc_html_e('Multiple attendats', 'salon-booking-system'); ?></label>
                 </div>
             </div>
             <?php if (defined('SLN_VERSION_PAY') && SLN_VERSION_PAY): ?>
-                <div class="col-xs-12 col-sm-6 col-lg-4 form-group sln-select sln-multiple-count-attendants <?php echo $service->isMultipleAttendantsForServiceEnabled() ? '' : 'hide'; ?>">
+                <div
+                    class="col-xs-12 col-sm-6 col-lg-4 form-group sln-select sln-multiple-count-attendants <?php echo $service->isMultipleAttendantsForServiceEnabled() ? '' : 'hide'; ?>">
                     <label><?php esc_html_e('Minimum amount', 'salon-booking-system'); ?></label>
                     <?php
                     SLN_Form::fieldNumeric(
@@ -152,7 +164,8 @@ $helper->showNonce($postType);
             <?php endif; ?>
         </div>
         <div class="row">
-            <div class="col-xs-12 col-sm-6 col-lg-4 form-group sln-checkbox sln-profeature <?php echo !defined("SLN_VERSION_PAY") ? 'sln-service-variable-duration-disabled sln-profeature--disabled sln-profeature__tooltip-wrapper' : '' ?>">
+            <div
+                class="col-xs-12 col-sm-6 col-lg-4 form-group sln-checkbox sln-profeature <?php echo !defined("SLN_VERSION_PAY") ? 'sln-service-variable-duration-disabled sln-profeature--disabled sln-profeature__tooltip-wrapper' : '' ?>">
                 <?php echo $plugin->loadView(
                     'metabox/_pro_feature_tooltip',
                     array(
@@ -162,12 +175,14 @@ $helper->showNonce($postType);
                 ); ?>
                 <div class="sln-profeature__input sln-service-offset-for-service">
                     <?php SLN_Form::fieldCheckbox($helper->getFieldName($postType, 'offset_for_service'), $service->isOffsetEnabled()) ?>
-                    <label for="_sln_service_offset_for_service"><?php esc_html_e('Service Offset', 'salon-booking-system'); ?></label>
+                    <label
+                        for="_sln_service_offset_for_service"><?php esc_html_e('Service Offset', 'salon-booking-system'); ?></label>
                     <p><?php esc_html_e('If enabled, create a block between two consecutive reservations for this service', 'salon-booking-system') ?></p>
                 </div>
             </div>
             <?php if (defined('SLN_VERSION_PAY') && SLN_VERSION_PAY): ?>
-                <div class="col-xs-12 col-sm-6 col-lg-4 form-group sln-select sln-service-offset-interval <?php echo $service->isOffsetEnabled() ? '' : 'hide' ?>">
+                <div
+                    class="col-xs-12 col-sm-6 col-lg-4 form-group sln-select sln-service-offset-interval <?php echo $service->isOffsetEnabled() ? '' : 'hide' ?>">
                     <label><?php esc_html_e('Offset Timing', 'salon-booking-system'); ?></label>
                     <?php
                     $offset_timing = array(
@@ -196,7 +211,8 @@ $helper->showNonce($postType);
             <?php endif ?>
         </div>
         <div class="row">
-            <div class="col-xs-12 col-sm-6 col-lg-4 form-group sln-checkbox sln-profeature <?php echo !defined('SLN_VERSION_PAY') ? 'sln-service-variable-duration-disabled sln-profeature--disabled sln-profeature__tooltip-wrapper' : '' ?>">
+            <div
+                class="col-xs-12 col-sm-6 col-lg-4 form-group sln-checkbox sln-profeature <?php echo !defined('SLN_VERSION_PAY') ? 'sln-service-variable-duration-disabled sln-profeature--disabled sln-profeature__tooltip-wrapper' : '' ?>">
                 <?php echo $plugin->loadView(
                     'metabox/_pro_feature_tooltip',
                     array(
@@ -206,12 +222,14 @@ $helper->showNonce($postType);
                 ); ?>
                 <div class="sln-profeature__input sln-service-lock-for-service">
                     <?php SLN_Form::fieldCheckbox($helper->getFieldName($postType, 'lock_for_service'), $service->isLockEnabled()); ?>
-                    <label for="_sln_service_lock_for_service"><?php esc_html_e('Service lock', 'salon-booking-system'); ?></label>
-                    <p><?php esc_html_e('If enabled, new bookings for this service are locked for the time range defined in the settings.', 'salon-booking-system'); ?></label>
+                    <label
+                        for="_sln_service_lock_for_service"><?php esc_html_e('Service lock', 'salon-booking-system'); ?></label>
+                    <p><?php esc_html_e('If enabled, new bookings for this service are locked for the time range defined in the settings.', 'salon-booking-system'); ?></p>
                 </div>
             </div>
             <?php if (defined('SLN_VERSION_PAY') && SLN_VERSION_PAY): ?>
-                <div class="col-xs-12 col-sm-6 col-lg-4 form-group sln-select sln-service-lock-interval <?php echo $service->isOffsetEnabled() ? '' : 'hide' ?>">
+                <div
+                    class="col-xs-12 col-sm-6 col-lg-4 form-group sln-select sln-service-lock-interval <?php echo $service->isOffsetEnabled() ? '' : 'hide' ?>">
                     <label><?php esc_html_e('Lock Timing', 'salon-booking-system'); ?></label>
                     <?php
                     $offset_timing = array(
@@ -238,20 +256,26 @@ $helper->showNonce($postType);
             <?php if ('highend' === $settings->getAvailabilityMode()): ?>
                 <div class="col-xs-12 col-sm-6 col-lg-4 form-group sln-checkbox">
                     <?php SLN_Form::fieldCheckbox($helper->getFieldName($postType, 'break_duration_enabled'), SLN_Func::getMinutesFromDuration($service->getBreakDuration())) ?>
-                    <label for="_sln_service_break_duration_enabled"><?php esc_html_e('Enable service break', 'salon-booking-system'); ?></label>
+                    <label
+                        for="_sln_service_break_duration_enabled"><?php esc_html_e('Enable service break', 'salon-booking-system'); ?></label>
                     <p><?php esc_html_e('-', 'salon-booking-system'); ?></p>
                 </div>
                 <div class="clearfix"></div>
                 <?php SLN_Action_InitScripts::enqueueServiceBreakSliderRange(); ?>
-                <div class="col-xs-12 col-sm-8- form-group sln-select-- sln-slider-break-duration-wrapper <?php echo SLN_Func::getMinutesFromDuration($service->getBreakDuration()) ? '' : 'hide' ?>">
+                <div
+                    class="col-xs-12 col-sm-8- form-group sln-select-- sln-slider-break-duration-wrapper <?php echo SLN_Func::getMinutesFromDuration($service->getBreakDuration()) ? '' : 'hide' ?>">
                     <div class="row sln-slider sln-slider--break">
                         <div class="col col-time">
-                            <input type="text" name="<?php echo esc_attr($helper->getFieldName($postType, 'break_duration_data')) ?>[from]" id=""
-                                value="<?php echo esc_attr($service->getBreakDurationData()['from']) ?>"
-                                class="sln-slider--break-time-input-from hidden">
-                            <input type="text" name="<?php echo esc_attr($helper->getFieldName($postType, 'break_duration_data')) ?>[to]" id=""
-                                value="<?php echo esc_attr($service->getBreakDurationData()['to']) ?>"
-                                class="sln-slider--break-time-input-to hidden">
+                            <input type="text"
+                                   name="<?php echo esc_attr($helper->getFieldName($postType, 'break_duration_data')) ?>[from]"
+                                   id=""
+                                   value="<?php echo esc_attr($service->getBreakDurationData()['from']) ?>"
+                                   class="sln-slider--break-time-input-from hidden">
+                            <input type="text"
+                                   name="<?php echo esc_attr($helper->getFieldName($postType, 'break_duration_data')) ?>[to]"
+                                   id=""
+                                   value="<?php echo esc_attr($service->getBreakDurationData()['to']) ?>"
+                                   class="sln-slider--break-time-input-to hidden">
                         </div>
                         <div class="col-xs-12 col-sm-4">
                             <div class="sln-slider--break-length">
@@ -260,18 +284,18 @@ $helper->showNonce($postType);
                                     <div class="sln-slider--break-length--minus"></div>
                                     <?php $break_duration = SLN_Func::getMinutesFromDuration($service->getBreakDuration()); ?>
                                     <input class="sln-slider--break-length--input"
-                                        type="text"
-                                        id="<?php echo esc_attr($helper->getFieldName($postType, 'break_duration')) ?>"
-                                        name="<?php echo esc_attr($helper->getFieldName($postType, 'break_duration')) ?>"
-                                        value="<?php echo $break_duration ? esc_attr($break_duration) : $settings->getInterval() ?>"
-                                        step="<?php echo esc_attr($settings->getInterval()) ?>" min="0" readonly="">
+                                           type="text"
+                                           id="<?php echo esc_attr($helper->getFieldName($postType, 'break_duration')) ?>"
+                                           name="<?php echo esc_attr($helper->getFieldName($postType, 'break_duration')) ?>"
+                                           value="<?php echo $break_duration ? esc_attr($break_duration) : $settings->getInterval() ?>"
+                                           step="<?php echo esc_attr($settings->getInterval()) ?>" min="0" readonly="">
                                     <div class="sln-slider--break-length--plus"></div>
                                 </div>
                                 <p class="sln-input-help"><?php esc_html_x('The time minimum breke is', 'part of:The time minimum breke is 30\' with increase of 30\' each', 'salon-booking-system');
-                                                            echo ' ', $settings->getInterval(), '\' ';
-                                                            esc_html_x('with increase of', 'part of: The time minimum breke is 30\' with increase of 30\' each', 'salon-booking-system');
-                                                            echo ' ' . $settings->getInterval() . '\' ' . _x('each', 'part of: The time minimum breke is 30\' with increase of 30\' each', 'salon-booking-system');
-                                                            ?></p>
+                                    echo ' ', $settings->getInterval(), '\' ';
+                                    esc_html_x('with increase of', 'part of: The time minimum breke is 30\' with increase of 30\' each', 'salon-booking-system');
+                                    echo ' ' . $settings->getInterval() . '\' ' . _x('each', 'part of: The time minimum breke is 30\' with increase of 30\' each', 'salon-booking-system');
+                                    ?></p>
                             </div>
                         </div>
                         <div class="col-xs-12 col-sm-8">
@@ -279,29 +303,37 @@ $helper->showNonce($postType);
                                 <label><?php esc_html_e('Break position', 'salon-booking-system'); ?></label>
                                 <div class="sln-slider--break__wrapper">
                                     <div class="sliders_step1 col col-slider">
-                                        <div class="service-break-slider-range ui-slider ui-corner-all ui-slider-horizontal ui-widget ui-widget-content">
-                                            <div class="ui-slider-range ui-corner-all ui-widget-header" style="width: 0%; left: 0%;">
+                                        <div
+                                            class="service-break-slider-range ui-slider ui-corner-all ui-slider-horizontal ui-widget ui-widget-content">
+                                            <div class="ui-slider-range ui-corner-all ui-widget-header"
+                                                 style="width: 0%; left: 0%;">
                                                 <div class="sln-slider--break-time-break"></div>
                                             </div>
                                             <span tabindex="0">
-                                                <div class="sln-slider--break-time-range-min sln-slider--break-time-range-value">
+                                                <div
+                                                    class="sln-slider--break-time-range-min sln-slider--break-time-range-value">
                                                     <div class="sln-slider--break-time-from">
-                                                        <div class="sln-slider--break-time-from-value"><?php echo esc_attr($service->getBreakDurationData()['from']) ?></div>'
+                                                        <div
+                                                            class="sln-slider--break-time-from-value"><?php echo esc_attr($service->getBreakDurationData()['from']) ?></div>'
                                                     </div>
                                                 </div>
                                             </span>
                                             <span tabindex="0">
-                                                <div class="sln-slider--break-time-range-max sln-slider--break-time-range-value">
+                                                <div
+                                                    class="sln-slider--break-time-range-max sln-slider--break-time-range-value">
                                                     <div class="sln-slider--break-time-to">
-                                                        <div class="sln-slider--break-time-to-value"><?php echo esc_attr($service->getBreakDurationData()['to']) ?></div>'
+                                                        <div
+                                                            class="sln-slider--break-time-to-value"><?php echo esc_attr($service->getBreakDurationData()['to']) ?></div>'
                                                     </div>
                                                 </div>
                                             </span>
                                         </div>
                                     </div>
                                     <div class="sln-slider--break-time-limits">
-                                        <span class="sln-slider--break-time-min"><span class="sln-slider--break-time-min-value">0</span>'</span>
-                                        <span class="sln-slider--break-time-max"><span class="sln-slider--break-time-max-value"><?php echo SLN_Func::getMinutesFromDuration($service->getTotalDuration()) ?></span>'</span>
+                                        <span class="sln-slider--break-time-min"><span
+                                                class="sln-slider--break-time-min-value">0</span>'</span>
+                                        <span class="sln-slider--break-time-max"><span
+                                                class="sln-slider--break-time-max-value"><?php echo SLN_Func::getMinutesFromDuration($service->getTotalDuration()) ?></span>'</span>
                                     </div>
                                 </div>
 
@@ -318,15 +350,23 @@ $helper->showNonce($postType);
         <!-- collapse END -->
     </div>
 </div>
-
-<?php echo $plugin->loadView(
-    'settings/_tab_booking_rules',
-    array(
-        'availabilities' => $service->getMeta('availabilities'),
-        'base' => '_sln_service_availabilities',
-        'show_specific_dates' => true,
-    )
-); ?>
+<div class="booking-wrapper">
+    <?php echo $plugin->loadView(
+        'settings/_tab_booking_rules',
+        array(
+            'availabilities' => $service->getMeta('availabilities'),
+            'base' => '_sln_service_availabilities',
+            'show_specific_dates' => true,
+        )
+    ); ?>
+    <?php echo $plugin->loadView(
+        'settings/_availability_preview',
+        array(
+            'availabilities' => $service->getMeta('availabilities'),
+            'base' => '_sln_service_availabilities',
+        )
+    ); ?>
+</div>
 <div class="sln-clear"></div>
 <?php if ($plugin->getSettings()->isFormStepsAltOrder()): ?>
     <?php $directLink = add_query_arg(
@@ -365,7 +405,8 @@ $helper->showNonce($postType);
     <div class="col-xs-12">
         <div class="sln-box sln-box--main sln-box--haspanel">
             <div class="row sln-variable-price--header">
-                <div class="col-xs-12 sln-profeature <?php echo !defined("SLN_VERSION_PAY")  ? 'sln-variable-price--disabled sln-profeature--disabled sln-profeature__tooltip-wrapper' : '' ?>">
+                <div
+                    class="col-xs-12 sln-profeature <?php echo !defined("SLN_VERSION_PAY") ? 'sln-variable-price--disabled sln-profeature--disabled sln-profeature__tooltip-wrapper' : '' ?>">
                     <?php echo $plugin->loadView(
                         'metabox/_pro_feature_tooltip',
                         array(
@@ -393,7 +434,8 @@ $helper->showNonce($postType);
                         <?php esc_html_e('Assistant', 'salon-booking-system') ?>
                     </div>
                     <div class="col-xs-6">
-                        <?php esc_html_e('Price', 'salon-booking-system') ?> (<?php echo $settings->getCurrencySymbol() ?>)
+                        <?php esc_html_e('Price', 'salon-booking-system') ?>
+                        (<?php echo $settings->getCurrencySymbol() ?>)
                     </div>
                 </div>
                 <?php if ($service->getAttendants()): ?>

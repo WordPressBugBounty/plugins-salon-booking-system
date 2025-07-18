@@ -601,6 +601,7 @@ function sln_initSalonCalendar(
                         $(".sln-free-locked-slots").addClass("hide");
                     }
                     checkUnlockIconsAndToggleButton();
+                    DayCalendarHolydays.showRules({ options: { day: calendar.options.day } });
                 },
                 false,
                 DayCalendarHolydays.createButton.data().attId,
@@ -825,7 +826,7 @@ function sln_initSalonCalendar(
                 var parts = fdate.split("-");
                 return new Date(parts[0], parts[1] - 1, parts[2]);
             }
-            
+
             if (view === "day") DayCalendarHolydays.showRules(this);
         },
         classes: {
@@ -919,7 +920,7 @@ function sln_initSalonCalendar(
     var observer = new MutationObserver(function(mutations) {
         setTimeout(function() {
                 $('.sln-box.sln-calendar-view .sln-viewloading').addClass('sln-viewloading--inactive');
-            }, 100);  
+            }, 100);
     });
 
     // Pass in the target node, as well as the observer options.
@@ -948,7 +949,7 @@ function sln_initSalonCalendar(
                 if (!$('.sln-box.sln-calendar-view .sln-viewloading').hasClass('sln-viewloading--inactive')) {
                     calendar.navigate($this.data("calendar-nav"));
                 }
-            }, 100);  
+            }, 100);
         });
     });
 
@@ -960,7 +961,7 @@ function sln_initSalonCalendar(
                 if (!$('.sln-box.sln-calendar-view .sln-viewloading').hasClass('sln-viewloading--inactive')) {
                     calendar.view($this.data("calendar-view"));
                 }
-            }, 100); 
+            }, 100);
         });
     });
 
@@ -1030,7 +1031,7 @@ function sln_initSalonCalendar(
     );
 
     $(".sln-free-locked-slots").on("click", function () {
-        var self = this;
+        let self = this;
         $.ajax({
             url:
                 salon.ajax_url +
@@ -1042,9 +1043,19 @@ function sln_initSalonCalendar(
             success: function (data) {
                 DayCalendarHolydays.rules = data.rules;
                 DayCalendarHolydays.assistants_rules = data.assistants_rules;
-                $(".cal-day-hour-part.blocked").removeClass("blocked");
-                $(".att-time-slot.blocked").removeClass("blocked");
-                $(".calendar-holydays-button").remove();
+
+                let holidayButtons = $(".calendar-holydays-button");
+                holidayButtons.each(function() {
+                  let button = $(this);
+                  let els = button.data('els');
+                  if (els) {
+                    Object.keys(els).forEach(function(key) {
+                      $(els[key]).removeClass("blocked");
+                    });
+                  }
+                });
+                holidayButtons.remove();
+
                 $(self).addClass("hide");
             },
         });

@@ -33,4 +33,9 @@ $attendantGCalendar = $attendant->getGoogleCalendar();
         </select>
     </div>
     <div class="clearfix"></div>
+<style>
+    .post-type-sln_attendant .select2.select2-container{
+        overflow:hidden;
+    }
+</style>
 <?php

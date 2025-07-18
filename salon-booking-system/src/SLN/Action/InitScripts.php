@@ -264,24 +264,38 @@ class SLN_Action_InitScripts
 		$mixpanel->init();
 	}
 
-	public static function enqueueCustomSliderRange()
-	{
-		wp_enqueue_script(
-			'salon-customSliderRange',
-			SLN_PLUGIN_URL . '/js/admin/customSliderRange.js',
-			array('jquery'),
-			self::ASSETS_VERSION,
-			true
-		);
-		//100% we need this too
-		wp_enqueue_script(
-			'salon-customRulesCollections',
-			SLN_PLUGIN_URL . '/js/admin/customRulesCollections.js',
-			array('jquery'),
-			self::ASSETS_VERSION,
-			true
-		);
-	}
+    public static function enqueueCustomSliderRange()
+    {
+        wp_enqueue_script(
+            'salon-customSliderRange',
+            SLN_PLUGIN_URL . '/js/admin/customSliderRange.js',
+            array('jquery'),
+            self::ASSETS_VERSION,
+            true
+        );
+        //100% we need this too
+        wp_enqueue_script(
+            'salon-customRulesCollections',
+            SLN_PLUGIN_URL . '/js/admin/customRulesCollections.js',
+            array('jquery'),
+            self::ASSETS_VERSION,
+            true
+        );
+
+        // enqueue opening hours preview functionality
+        self::enqueueAvailabilityPreview();
+    }
+
+    public static function enqueueAvailabilityPreview()
+    {
+        wp_enqueue_script(
+            'salon-availabilityPreview',
+            SLN_PLUGIN_URL . '/js/admin/availabilityPreview.js',
+            array('jquery', 'salon-customRulesCollections'),
+            self::ASSETS_VERSION,
+            true
+        );
+    }
 
 	public static function enqueueServiceBreakSliderRange()
 	{

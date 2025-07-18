@@ -665,7 +665,8 @@ class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
     public function getCreateStatus()
     {
         $settings = SLN_Plugin::getInstance()->getSettings();
-        if($settings->isPayEnabled() && $settings->get('create_booking_after_pay')){
+        $is_api_request = defined('REST_REQUEST') && REST_REQUEST;
+        if($settings->isPayEnabled() && !$settings->get('confirmation') /*&& $settings->get('create_booking_after_pay')*/ && !$is_api_request){
             return SLN_Enum_BookingStatus::DRAFT;
         }
 
@@ -675,7 +676,7 @@ class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
                 SLN_Enum_BookingStatus::PENDING_PAYMENT
                 : SLN_Enum_BookingStatus::CONFIRMED);
 
-    return apply_filters('sln.booking_builder.getCreateStatus', $status);
+        return apply_filters('sln.booking_builder.getCreateStatus', $status);
     }
 
 

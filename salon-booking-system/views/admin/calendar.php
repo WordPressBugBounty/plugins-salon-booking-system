@@ -266,9 +266,10 @@ $holidays = $plugin->getSettings()->get('holidays');
                     </div>
                 </div>
             <?php elseif ($subscription->info->status === 'active'): ?>
-                <div class="row">
+                <?php if (!isset($_COOKIE['remove_notice'])) { ?>
+                    <div class="row notice_custom">
                     <div class="col-xs-12 sln-notice__wrapper">
-                        <div class="sln-notice sln-notice--bold sln-notice--subscription-active">
+                        <div class="sln-notice sln-notice--bold sln-notice--subscription-active" style="position:relative;">
                             <div class="sln-notice--bold__text">
                                 <h2><?php _e('<strong>Your subscription is active</strong>', 'salon-booking-system') ?></h2>
                                 <p><?php echo sprintf(
@@ -279,9 +280,12 @@ $holidays = $plugin->getSettings()->get('holidays');
                                 <p><?php _e('<strong>If you are happy with us, please submit a positive review.</strong>', 'salon-booking-system') ?></p>
                             </div>
                             <a href="https://reviews.capterra.com/new/166320?utm_source=vp&utm_medium=none&utm_campaign=vendor_request_paid" target="_blank" class="sln-notice--plugin_update__action"><?php esc_html_e('Leave a review', 'salon-booking-system') ?></a>
+                            <button style="position: absolute;right: 0px;top: 0px;background: transparent;" class="custom sln-btn sln-btn--main sln-btn--small sln-btn--icon sln-icon--close">info</button>
                         </div>
                     </div>
                 </div>
+                <?php }?>
+
             <?php elseif ($subscription->info->status === 'expired'): ?>
                 <?php
                 $expire_days = ceil((strtotime($sln_license->get('license_data')->expires) - current_time('timestamp')) / (24 * 3600));
@@ -320,7 +324,10 @@ $holidays = $plugin->getSettings()->get('holidays');
     body.sln-body--scrolldef {
         overflow: auto;
     }
-
+    .custom.sln-btn--small.sln-btn--icon:after{
+        font-size: 1rem!important;
+        line-height: 1rem!important;
+    }
     #sln-pageloading,
     #sln-viewloading,
     #sln-modalloading {
