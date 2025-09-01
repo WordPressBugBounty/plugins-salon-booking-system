@@ -4,7 +4,7 @@ Tags: booking, reservations, scheduling, booking calendar, appointment calendar
 Requires at least: 4.1
 Tested up to: 6.7
 Requires PHP: 7.4.8
-Stable tag: 10.20
+Stable tag: 10.22
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -409,7 +409,16 @@ FREE version doesn't have the online payments options, no mobile app access, no 
 
 == Changelog ==
 
-18.07.2027 - 10.20
+01.09.2025 - 10.22
+
+- Fix minor issues
+
+31.07.2025 - 10.21
+
+* New PRO feature: CLONE reservation X times
+
+
+18.07.2025 - 10.20
 
 * Added "Opening hours preview" metabox on "Booking rules" settings
 * Improved "Specific date" availability rule UI

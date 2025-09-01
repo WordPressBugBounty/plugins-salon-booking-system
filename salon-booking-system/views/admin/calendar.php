@@ -63,6 +63,9 @@ $holidays = $plugin->getSettings()->get('holidays');
     var replaceBookingModalWithPopup = +'<?php echo $replace_booking_modal_with_popup ?>';
 </script>
 <style>
+    .sln-btn--big.hide-important{
+        display: none!important;
+    }
     .day-calbar,
     .week-calbar {
         display: block;
@@ -201,6 +204,7 @@ $holidays = $plugin->getSettings()->get('holidays');
         width: auto;
     }
 </style>
+<?php if(apply_filters('sln.show_branding', true)) : ?>
 <div class="sln-bootstrap sln-calendar-plugin-update-notice--wrapper">
     <?php if (!defined("SLN_VERSION_PAY")): ?>
         <div class="row">
@@ -315,6 +319,7 @@ $holidays = $plugin->getSettings()->get('holidays');
         <?php endif; ?>
     <?php endif; ?>
 </div>
+<?php endif; ?>
 <div class="clearfix"></div>
 <style>
     body {
@@ -585,7 +590,9 @@ $holidays = $plugin->getSettings()->get('holidays');
                                 <iframe name="booking_editor" class="booking-editor" width="100%" height="600px" frameborder="0"
                                     data-src-template-edit-booking="<?php echo admin_url('/post.php?post=%id&action=edit&mode=sln_editor') ?>"
                                     data-src-template-new-booking="<?php echo admin_url('/post-new.php?post_type=sln_booking&date=%date&time=%time&mode=sln_editor') ?>"
-                                    data-src-template-duplicate-booking="<?php echo admin_url('/post-new.php?post_type=sln_booking&action=duplicate&post=%id&mode=sln_editor') ?>"></iframe>
+                                    data-src-template-duplicate-booking="<?php echo admin_url('/post-new.php?post_type=sln_booking&action=duplicate&post=%id&mode=sln_editor') ?>"
+                                    data-src-template-duplicate_clone-booking="<?php echo admin_url('/post-new.php?post_type=sln_booking&action=duplicate_clone&post=%id&mode=sln_editor') ?>"
+                                ></iframe>
                             </div>
                         </div>
                     </div>
@@ -602,7 +609,11 @@ $holidays = $plugin->getSettings()->get('holidays');
                                         'additional_classes' => 'sln-profeature--button--bare sln-profeature--modal-footer__actions',
                                     )
                                 ); ?>
-                                <button type="button" class="sln-btn sln-btn--nu sln-btn--nu--lowhemph sln-btn--big" aria-hidden="true" data-action="duplicate-edited-booking"><?php esc_html_e('Duplicate', 'salon-booking-system') ?></button>
+                                <button type="button" class="sln-btn sln-btn--nu sln-btn--nu--lowhemph sln-btn--big" aria-hidden="true" data-action="clone-edited-booking"><?php esc_html_e('Clone', 'salon-booking-system') ?></button>
+                            </div>
+                            <div class="clone-info" style="font-family: 'Open Sans';display:none;">
+                                <input type="number" name="unit_times_input" min="1" value="1" style="width: 50px;"/>
+                                <span class="time_until" style="margin-left: 10px;font-size:13px;" >times until <span class="time_date">%date</span></span>
                             </div>
                             <button type="button" class="sln-btn sln-btn--nu sln-btn--nu--lowhemph sln-btn--big" aria-hidden="true" data-action="delete-edited-booking"><?php esc_html_e('Delete', 'salon-booking-system') ?></button>
                             <button type="button" class="sln-btn sln-btn--nu sln-btn--nu--medhemph sln-btn--big" data-dismiss="modal" aria-hidden="true"><?php esc_html_e('Close', 'salon-booking-system') ?></button>
@@ -676,10 +687,12 @@ $holidays = $plugin->getSettings()->get('holidays');
             </div>
             <div class="col-xs-12 col-md-3">
                 <?php if (! in_array(SLN_Plugin::USER_ROLE_WORKER,  wp_get_current_user()->roles)): ?>
+                    <?php if (apply_filters('sln.show_branding', true)) : ?>
                     <div class="sln-help-button__block">
                         <button class="sln-help-button sln-btn sln-btn--nobkg sln-btn--big sln-btn--icon sln-icon--helpchat sln-btn--icon--al visible-md-inline-block visible-lg-inline-block"><?php esc_html_e('Do you need help ?', 'salon-booking-system') ?></button>
                         <button class="sln-help-button sln-btn sln-btn--mainmedium sln-btn--small--round sln-btn--icon  sln-icon--helpchat sln-btn--icon--al hidden-md hidden-lg"><?php esc_html_e('Do you need help ?', 'salon-booking-system') ?> </button>
                     </div>
+                    <?php endif; ?>
                 <?php endif; ?>
             </div>
         </div>

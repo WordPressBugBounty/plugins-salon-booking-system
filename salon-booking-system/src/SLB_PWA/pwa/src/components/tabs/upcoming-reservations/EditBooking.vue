@@ -807,54 +807,80 @@ export default {
     isOverlapping(startA, endA, startB, endB) {
       return startA.isBefore(endB) && endA.isAfter(startB);
     },
+    calculateServiceTimes(booking) {
+      const serviceTimes = [];
+      let currentStartTime = this.moment(`${booking.date} ${booking.time}`, 'YYYY-MM-DD HH:mm');
+
+      booking.services.forEach((service) => {
+        const serviceData = this.servicesList.find(s => s.value === service.service_id);
+
+        if (!serviceData) {
+          return;
+        }
+
+        const durationMinutes = this.convertDurationToMinutes(serviceData.duration);
+        const endTime = this.moment(currentStartTime).add(durationMinutes, 'minutes');
+
+        const serviceTime = {
+          service_id: service.service_id,
+          assistant_id: service.assistant_id,
+          resource_id: service.resource_id,
+          start: currentStartTime.clone(),
+          end: endTime.clone(),
+          duration: durationMinutes,
+          serviceName: serviceData.serviceName
+        };
+
+        serviceTimes.push(serviceTime);
+        currentStartTime = endTime.clone();
+      });
+
+      return serviceTimes;
+    },
     async validateAssistantAvailability(booking) {
       try {
         const existingBookings = await this.getExistingBookings(booking.date);
+        const newServiceTimes = this.calculateServiceTimes(booking);
 
-        for (const newService of booking.services) {
-          if (!newService.assistant_id) continue;
-
-          const newServiceData = this.servicesList.find(s => s.value === newService.service_id);
-          if (!newServiceData) continue;
-
-          const durationMinutes = this.convertDurationToMinutes(newServiceData.duration);
-
-          const newServiceStartTime = this.moment(`${booking.date} ${booking.time}`, 'YYYY-MM-DD HH:mm');
-          const newServiceEndTime = this.moment(newServiceStartTime).add(durationMinutes, 'minutes');
+        for (const newServiceTime of newServiceTimes) {
+          if (!newServiceTime.assistant_id) {
+            continue;
+          }
 
           const relevantBookings = existingBookings.filter(b =>
-              b.services.some(s => s.assistant_id === newService.assistant_id)
+            b.services.some(s => s.assistant_id === newServiceTime.assistant_id)
           );
 
           for (const existingBooking of relevantBookings) {
-            for (const existingService of existingBooking.services) {
-              if (existingService.assistant_id !== newService.assistant_id) continue;
+            const existingServiceTimes = this.calculateServiceTimes({
+              date: existingBooking.date,
+              time: existingBooking.time,
+              services: existingBooking.services
+            });
 
-              const existingServiceData = this.servicesList.find(s => s.value === existingService.service_id);
-              if (!existingServiceData) continue;
+            for (const existingServiceTime of existingServiceTimes) {
+              if (existingServiceTime.assistant_id !== newServiceTime.assistant_id) {
+                continue;
+              }
 
-              const existingDurationMinutes = this.convertDurationToMinutes(existingServiceData.duration);
+              const isOverlapping = this.isOverlapping(
+                newServiceTime.start,
+                newServiceTime.end,
+                existingServiceTime.start,
+                existingServiceTime.end
+              );
 
-              const existingServiceStartTime = this.moment(`${existingBooking.date} ${existingBooking.time}`, 'YYYY-MM-DD HH:mm');
-              const existingServiceEndTime = this.moment(existingServiceStartTime).add(existingDurationMinutes, 'minutes');
-
-              if (
-                  this.isOverlapping(
-                      newServiceStartTime,
-                      newServiceEndTime,
-                      existingServiceStartTime,
-                      existingServiceEndTime
-                  )
-              ) {
-                const assistant = this.attendantsList.find(a => a.value === newService.assistant_id);
+              if (isOverlapping) {
+                const assistant = this.attendantsList.find(a => a.value === newServiceTime.assistant_id);
                 const assistantName = assistant ? assistant.text : this.getLabel('assistantBusyTitle');
-                throw new Error(
-                    `${assistantName} ` + this.sprintf(
-                        this.getLabel('assistantBusyMessage'),
-                        existingServiceStartTime.format('HH:mm'),
-                        existingServiceEndTime.format('HH:mm')
-                    )
+
+                const errorMessage = `${assistantName} ` + this.sprintf(
+                  this.getLabel('assistantBusyMessage'),
+                  existingServiceTime.start.format('HH:mm'),
+                  existingServiceTime.end.format('HH:mm')
                 );
+
+                throw new Error(errorMessage);
               }
             }
           }
@@ -881,7 +907,7 @@ export default {
         });
 
         return Array.isArray(response.data.items)
-            ? response.data.items.filter(b => b.id !== this.bookingID)
+            ? response.data.items.filter(b => String(b.id) !== String(this.bookingID))
             : [];
       } catch (error) {
         console.error('Error getting existing bookings:', error);

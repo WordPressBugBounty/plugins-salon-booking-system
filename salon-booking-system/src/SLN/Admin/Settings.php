@@ -43,6 +43,9 @@ class SLN_Admin_Settings {
 		if (!in_array($current, array_keys($this->tabs))) {
 			throw new Exception('Tab with slug ' . $current . ' not registered');
 		}
+		if(!apply_filters('sln.show_branding', true)){
+		    unset($this->tabs['documentation']);
+        }
 		$class_name = 'SLN_Admin_SettingTabs_' . ucfirst($current) . 'Tab';
 		if (!class_exists($class_name)) {
 			throw new Exception('Class ' . $class_name . ' is not existent');

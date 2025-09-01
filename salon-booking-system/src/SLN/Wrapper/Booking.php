@@ -225,8 +225,14 @@ class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
         SLN_Plugin::addLog(__CLASS__ . ' eval total of' . $this->getId());
 
         foreach ($this->getBookingServices()->getItems() as $bookingService) {
-            //$price = $bookingService->getPrice() * $bookingService->getCountServices();
-            $price = $bookingService->getPrice();
+            if(isset($bookingService->toArray()['service'])){
+                $variable = get_post_meta($bookingService->toArray()['service'],'_sln_service_variable_duration', true);
+            }
+            if($variable){
+                $price = $bookingService->getPrice() * $bookingService->getCountServices();
+            } else {
+                $price = $bookingService->getPrice();
+            }
             $amount += $price;
             SLN_Plugin::addLog(' - service ' . $bookingService->getService() . ' +' . $price);
         }
@@ -460,9 +466,15 @@ class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
         }
 
         foreach ($services_credits as $service_credit) {
-            $prepaid_services[$service_credit] -= 1;
+            foreach ($prepaid_services as $package_order=>$ps){
+                if($prepaid_services[$package_order][$service_credit] > 0){
+                    $prepaid_services[$package_order][$service_credit] -= 1;
+                    $this->setMeta('service_credit_package',$package_order);
+                    break;
+                }
+            }
         }
-
+        $this->setStatus(SLN_Enum_BookingStatus::PAID);
         update_user_meta($user_id, '_sln_prepaid_services', $prepaid_services);
     }
 

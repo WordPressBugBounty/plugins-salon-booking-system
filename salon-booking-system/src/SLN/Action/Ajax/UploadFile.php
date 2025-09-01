@@ -14,6 +14,7 @@ class SLN_Action_Ajax_UploadFile extends SLN_Action_Ajax_Abstract
                 require_once( ABSPATH . 'wp-admin/includes/file.php' );
             }
             $tmp_file  = $_FILES['file'];
+            $tmp_file['name'] = str_replace(' ','_',$tmp_file['name']);
             $file_name = $this->unique_filename(null, $tmp_file['name']);
 
             $upload_dir = wp_upload_dir();

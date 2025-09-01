@@ -11,7 +11,7 @@ $plugin = SLN_Plugin::getInstance();
                 <div class="sln-datalist__item">
                     <div class="sln-datalist__item__author">
                             <?php $user = get_user_by('email', $comment->comment_author_email) ?>
-                            <?php echo $user ? esc_html($user->first_name) . ' ' . esc_html($user->last_name) : esc_html($comment->comment_author); ?>
+                            <?php echo $user ? esc_html($user->first_name) . ' ' . esc_html($data['truncate_lastname'] ? substr($user->last_name, 0, 1) : $user->last_name) : esc_html($comment->comment_author); ?>
                     </div>
                         <p class="sln-datalist__item__date">
                             <?php echo esc_html(gmdate('d.m.Y', strtotime($comment->comment_date))) ?>

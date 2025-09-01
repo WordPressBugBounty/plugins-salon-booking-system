@@ -1326,7 +1326,6 @@ function sln_updateDatepickerTimepickerSlots($, intervals, bookingId) {
             .data("datetimepicker");
     }
 
-    console.log(datetimepicker.length);
     if(datetimepicker == undefined) {
         var DtTime = document.getElementById('_sln_booking_time').value;
     } else {
@@ -1341,10 +1340,12 @@ function sln_updateDatepickerTimepickerSlots($, intervals, bookingId) {
         $('.day[data-ymd="' + value + '"]').removeClass("disabled");
     });
     $(".day[data-ymd]").removeClass("full");
-    $.each(intervals.fullDays, function (key, value) {
-        //console.log(value);
-        $('.day[data-ymd="' + value + '"]').addClass("disabled full");
-    });
+    if(intervals.fullDays !== undefined){
+        $.each(intervals.fullDays, function (key, value) {
+            //console.log(value);
+            $('.day[data-ymd="' + value + '"]').addClass("disabled full");
+        });
+    }
 
     $.each(intervals.times, function (key, value) {
         $('.minute[data-ymd="' + value + '"]').removeClass("disabled");

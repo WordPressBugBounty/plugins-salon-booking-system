@@ -12928,4 +12928,8 @@ body:not(.sln-salon-page)
   width: 100%;
 }
 
+.sln-alert.sln-alert--warning:after {
+  left: 100% !important;
+}
+
 /*# sourceMappingURL=salon.css.map */

@@ -299,7 +299,7 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                                                     $file_name = preg_replace('/^[0-9]+_/i', '', $file['file']);
                                                 }
                                                 ?>
-                                                <a href="<?php echo $file_url ?>" download="<?php echo $file_url ?>"><?php echo esc_attr($file_name) ?></a>
+                                                <a href="<?php echo $file_url ?>" download><?php echo esc_attr($file_name) ?></a>
                                             <?php endforeach; ?>
                                         </div><?php
                                             } else {
@@ -654,9 +654,17 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
         ); ?>
     <?php endif; ?>
     <?php if (isset($_GET['sln_editor_popup'])): ?>
+    <style>
+    .sln-btn--big.hide-important{
+        display:none!important;
+    }
+    </style>
         <script>
             jQuery(document).ready(function() {
-
+                if( $('#_sln_booking_email').val() == ''){
+                    $('[data-action="clone-edited-booking"]').addClass('hide-important');
+                    $('[data-action="delete-edited-booking"]').addClass('hide-important');
+                }
                 jQuery('.sln-last-edit').html(jQuery('.booking-last-edit').html())
 
                 jQuery("[data-action=save-edited-booking]").on("click", function() {
@@ -686,6 +694,137 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                         window.location.href = href;
                     }
                 });
+
+                jQuery("[name=unit_times_input]").on("click", function() {
+                        var times = parseInt($(this).val());
+
+                        let dateStr =$('#_sln_booking_date').val(); // '08/07/2025'
+
+                        function parseFlexibleDate(dateStr) {
+                            let parts;
+
+                        if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
+                            parts = dateStr.split('/');
+                            return new Date(parts[2], parts[1] - 1, parts[0]); // yyyy, mm, dd
+                        }
+
+                        if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+                            parts = dateStr.split('-');
+                            return new Date(parts[0], parts[1] - 1, parts[2]); // yyyy, mm, dd
+                        }
+
+                        if (/^\d{2}-\d{2}-\d{4}$/.test(dateStr)) {
+                            parts = dateStr.split('-');
+                            return new Date(parts[2], parts[0] - 1, parts[1]); // yyyy, mm, dd
+                        }
+                        if (/^\d{2} [A-Za-z]{3} \d{4}$/.test(dateStr)) {
+                            parts = dateStr.split(' ');
+                            const monthMap = {
+                                Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
+                                Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11
+                            };
+                            let day = parseInt(parts[0]);
+                            let month = monthMap[parts[1]];
+                            let year = parseInt(parts[2]);
+                            return new Date(year, month, day);
+                        }
+                            return null;
+                        }
+
+                        let date = parseFlexibleDate(dateStr);
+
+                        if (date && !isNaN(date)) {
+                        date.setDate(date.getDate() + 7*times);
+
+                        var newDateStr =
+                        String(date.getDate()).padStart(2, '0') + '/' +
+                        String(date.getMonth() + 1).padStart(2, '0') + '/' +
+                        date.getFullYear();
+
+                        $('.time_until .time_date').text(newDateStr);
+                        } else {
+                        console.error("wrong date: " + dateStr);
+                        }
+                });
+
+                jQuery("[data-action=clone-edited-booking]").on("click", function() {
+
+
+                    if(($('[data-action=clone-edited-booking].confirm').length == 0)){
+
+
+                        let dateStr = jQuery('#_sln_booking_date').val(); // '08/07/2025'
+
+                        function parseFlexibleDate(dateStr) {
+                            let parts;
+
+                            if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
+                                parts = dateStr.split('/');
+                                return new Date(parts[2], parts[1] - 1, parts[0]); // yyyy, mm, dd
+                            }
+
+                            if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+                                parts = dateStr.split('-');
+                                return new Date(parts[0], parts[1] - 1, parts[2]); // yyyy, mm, dd
+                            }
+
+                            if (/^\d{2}-\d{2}-\d{4}$/.test(dateStr)) {
+                                parts = dateStr.split('-');
+                                return new Date(parts[2], parts[0] - 1, parts[1]); // yyyy, mm, dd
+                            }
+                            if (/^\d{2} [A-Za-z]{3} \d{4}$/.test(dateStr)) {
+                                parts = dateStr.split(' ');
+                                const monthMap = {
+                                    Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
+                                    Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11
+                                };
+                                let day = parseInt(parts[0]);
+                                let month = monthMap[parts[1]];
+                                let year = parseInt(parts[2]);
+                                return new Date(year, month, day);
+                            }
+                            return null;
+                        }
+
+                        let date = parseFlexibleDate(dateStr);
+
+                            if (date && !isNaN(date)) {
+                                date.setDate(date.getDate() + 7);
+
+                                var newDateStr =
+                                    String(date.getDate()).padStart(2, '0') + '/' +
+                                    String(date.getMonth() + 1).padStart(2, '0') + '/' +
+                                    date.getFullYear();
+
+                                $('.time_until .time_date').text(newDateStr);
+                            } else {
+                                console.error("wrong date: " + dateStr);
+                            }
+
+                            $("[data-action=clone-edited-booking]").text('Confirm');
+                            $("[data-action=clone-edited-booking]").addClass('confirm');
+                            $('[data-action="delete-edited-booking"]').addClass('hide-important');
+                            $('.clone-info').show();
+                            return false;
+                           }
+                            if (sln_validateBooking()) {
+                                var bookingId = $('#post_ID').val();
+                                var unit_times = $('.clone-info input').val();
+                                var data = "&action=salon&method=DuplicateClone&bookingId="+bookingId+"&unit="+unit_times+"&security=" + salon.ajax_nonce;
+                                $.ajax({
+                                    url: salon.ajax_url,
+                                    data: data,
+                                    method: "POST",
+                                    dataType: "json",
+                                    success: function (data) {
+                                        if (window.opener) {
+                                            window.opener.location.reload();
+                                        }
+                                        window.close();
+                                    },
+                                });
+                            }
+                });
             })
         </script>
         <div class="sln-editor-popup-actions pull-right">
@@ -694,16 +833,16 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                 <button type="button" class="sln-btn sln-btn--nu sln-btn--nu--highemph sln-btn--big" aria-hidden="true" data-action="save-edited-booking">
                     <?php esc_html_e('Save', 'salon-booking-system') ?>
                 </button>
-                <div class="sln-duplicate-booking <?php echo !defined("SLN_VERSION_PAY")  ? 'sln-duplicate-booking--disabled sln-profeature__tooltip-wrapper' : '' ?> <?php echo isset($_GET['action']) && $_GET['action'] === 'duplicate' ? 'hide' : '' ?>">
-                    <span class="sln-profeature__tooltip">
-                        <a href="https://www.salonbookingsystem.com/homepage/plugin-pricing/?utm_source=default_status&utm_medium=free-edition-back-end&utm_campaign=unlock_feature&utm_id=GOPRO" target="_blank">
-                            <?php echo esc_html__('Switch to PRO to unlock this feature', 'salon-booking-system') ?>
-                        </a>
-                    </span>
-                    <button type="button" class="sln-btn sln-btn--nu sln-btn--nu--lowhemph sln-btn--big" aria-hidden="true" data-action="duplicate-edited-booking"><?php esc_html_e('Duplicate', 'salon-booking-system') ?></button>
+                <button type="button" class="sln-btn sln-btn--nu sln-btn--nu--lowhemph sln-btn--big" aria-hidden="true" data-action="clone-edited-booking"><?php esc_html_e('Clone', 'salon-booking-system') ?></button>
+                <div class="clone-info" style="font-family: 'Open Sans';display:none;">
+                    <input type="number" name="unit_times_input" min="1" value="1" style="width: 50px;"/>
+                    <span class="time_until" style="margin-left: 10px;font-size:13px;" >times until <span class="time_date">%date</span></span>
                 </div>
                 <button type="button" class="sln-btn sln-btn--nu sln-btn--nu--lowhemph sln-btn--big" aria-hidden="true" data-action="delete-edited-booking">
                     <?php esc_html_e('Delete', 'salon-booking-system') ?>
+                </button>
+                      <button type="button" class="sln-btn sln-btn--nu sln-btn--nu--lowhemph sln-btn--big" aria-hidden="true" onclick="window.close()">
+                    <?php esc_html_e('Close', 'salon-booking-system') ?>
                 </button>
             </div>
         </div>

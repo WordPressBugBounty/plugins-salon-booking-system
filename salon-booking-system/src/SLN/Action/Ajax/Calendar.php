@@ -198,12 +198,14 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
 
   public function renderMonthDay($week_number, $day, $stats){
     $settings = $this->plugin->getSettings();
-    $firstDay = $this->from->format('N');
+
     $weekStart = $settings->get('week_start');
-    $firstDay = abs(intval($firstDay) - intval($weekStart)) % 7;
-    $day -= $firstDay;
+    $firstDayOfMonthWeekday = (int)$this->from->format('w'); // 0 (Sun) .. 6 (Sat)
+    $offset = ($firstDayOfMonthWeekday - $weekStart + 7) % 7;
+    $dayIndex = $day - $offset;
+
     $currDate = clone $this->from;
-    $currDate->modify($day . ' day');
+    $currDate->modify("{$dayIndex} days");
 
     $dayClass = '';
     if($currDate < $this->from || $currDate > $this->to){

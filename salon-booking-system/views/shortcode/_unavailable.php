@@ -2,7 +2,7 @@
     <div class="row sln-box--main">
     <div class="col-xs-12">
         <div class="sln-alert sln-alert--warning">
-            <p><?php esc_html_e('SORRY! This slot is no more available', 'salon-booking-system') ?></p>
+            <p><?php esc_html_e('Time-slot already booked, please start over.', 'salon-booking-system') ?></p>
             <hr/>
             <p><strong><?php esc_html_e('Please start over your reservation', 'salon-booking-system') ?></strong></p>
         </div>

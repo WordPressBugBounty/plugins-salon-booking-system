@@ -349,6 +349,7 @@ class SLN_Third_GoogleCalendarImport
             'post_author' => $bookingDetails['user_id'],
             'post_type'   => SLN_Plugin::POST_TYPE_BOOKING,
             'post_title'  => $name.' - '.$dateString,
+            'post_status' => 'sln-b-paylater',
             'meta_input'  => array(
                 '_'.SLN_Plugin::POST_TYPE_BOOKING.'_date'      => $bookingDetails['date'],
                 '_'.SLN_Plugin::POST_TYPE_BOOKING.'_time'      => $bookingDetails['time'],
@@ -381,7 +382,7 @@ class SLN_Third_GoogleCalendarImport
         $booking->getBookingServices();
         $booking->evalTotal();
         $booking->evalDuration();
-        $booking->setStatus(SLN_Enum_BookingStatus::PAY_LATER);
+        //$booking->setStatus(SLN_Enum_BookingStatus::PAY_LATER);
 
         return true;
     }

@@ -13,16 +13,17 @@ class SLN_Admin_Extensions extends SLN_Admin_AbstractPage
 
     public function admin_menu()
     {
-        $pagename = add_submenu_page(
-            'salon',
-            __('Salon Extensions', 'salon-booking-system'),
-            __('Extensions', 'salon-booking-system'),
-            $this->getCapability(),
-            static::PAGE,
-            [$this, 'show']
-        );
-
+        if(apply_filters('sln.show_branding', true) ){
+            $pagename = add_submenu_page(
+                'salon',
+                __('Salon Extensions', 'salon-booking-system'),
+                __('Extensions', 'salon-booking-system'),
+                $this->getCapability(),
+                static::PAGE,
+                [$this, 'show']
+            );
         add_action('load-' . $pagename, [$this, 'enqueueAssets']);
+        }
     }
 
     public function enqueueAssets()

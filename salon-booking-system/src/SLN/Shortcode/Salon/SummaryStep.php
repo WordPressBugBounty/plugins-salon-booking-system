@@ -28,10 +28,10 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
         $mode = isset($_GET['mode']) ? sanitize_text_field(wp_unslash($_GET['mode'])) : null;
 
         if($mode == 'confirm' || empty($paymentMethod) || $bb->getAmount() <= 0.0){
-            $bb->setPrepaidServices();
             if($bb->getStatus() == SLN_Enum_BookingStatus::DRAFT){
                 $bb->setStatus($bb->getCreateStatus()); // SLN_Wrapper_Booking::getCreateStatus
             }
+            $bb->setPrepaidServices();
             return !$this->hasErrors();
         } elseif($mode == 'later'){
             if(in_array($bb->getStatus(), array(SLN_Enum_BookingStatus::PENDING_PAYMENT, SLN_Enum_BookingStatus::DRAFT))){
@@ -64,9 +64,23 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
         $bb = $this->getPlugin()->getBookingBuilder();
         if($bb->get('services') && $bb->isValid()){
             $data = $this->getViewData();
+            $service_ids   = implode('-', $bb->getServicesIds());
+            $attendant_ids = implode('-', array_values($bb->getAttendantsIds()));
+            $start_time    = $bb->getDateTime()->format('Y-m-d H:i:s');
+
+            $lock_key = 'booking_lock_' . md5($service_ids . '_' . $attendant_ids . '_' . $start_time);
+
+            if ( get_transient($lock_key) ) {
+                $this->addError(self::SLOT_UNAVAILABLE);
+                $bb->create(SLN_Enum_BookingStatus::DRAFT);
+                return parent::render();
+            }
+
+            set_transient($lock_key, 1, 15);
+
             do_action('sln.shortcode.summary.dispatchForm.before_booking_creation', $this, $bb);
-            if(!$this->hasErrors()){
-                $bb->create(SLN_Enum_BookingStatus::DRAFT); 
+            if ( ! $this->hasErrors() ) {
+                $bb->create(SLN_Enum_BookingStatus::DRAFT);
             }
             do_action('sln.shortcode.summary.dispatchForm.after_booking_creation', $bb);
             return parent::render();

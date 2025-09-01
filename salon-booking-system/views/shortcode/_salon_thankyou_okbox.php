@@ -52,7 +52,13 @@ foreach ($booking->getServices() as $service){
     $services_data[] = $service->getTitle();
 }
 foreach ($booking->getAttendants() as $attendant){
-    $attendants_data[] = $attendant->getName();
+    if(is_array($attendant)){
+        foreach ($attendant as $at){
+            $attendants_data[] = $at->getName();
+        }
+    } else {
+        $attendants_data[] = $attendant->getName();
+    }
 }
 ?>
 <script>

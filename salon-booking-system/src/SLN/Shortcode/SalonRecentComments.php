@@ -34,12 +34,16 @@ class SLN_Shortcode_SalonRecentComments
     {
         $number = 10;
         $rating = false;
+        $truncate_lastname = false;
 
         if(!empty($this->attrs['number'])){
             $number = (int)$this->attrs['number'];
         }
         if(!empty($this->attrs['rating'])){
             $rating = (int)$this->attrs['rating'];
+        }
+        if(!empty($this->attrs['truncate_lastname'])){
+            $truncate_lastname = (int)$this->attrs['truncate_lastname'];
         }
 
         global $wpdb;
@@ -64,8 +68,7 @@ class SLN_Shortcode_SalonRecentComments
                 LIMIT %d
             ", $number)
         );
-
-        $data = array('comments' => $results);
+        $data = array('comments' => $results,'truncate_lastname'=> $truncate_lastname);
 
         return $this->render($data);
     }

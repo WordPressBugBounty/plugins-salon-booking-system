@@ -122,6 +122,9 @@ class SLN_Update_Manager
         if ($response->license == 'expired' ) {
             SLN_Func::updateOption($this->get('slug').'_license_status', $response->license, true);
             SLN_Func::updateOption($this->get('slug').'_license_data', $response, true);
+        } else if($response->license == 'valid') {
+            SLN_Func::updateOption($this->get('slug').'_license_status', $response->license, true);
+            SLN_Func::updateOption($this->get('slug').'_license_data', $response, true);
         }
 
         return $response;
@@ -255,7 +258,34 @@ class SLN_Update_Manager
             return $response;
         } else {
             $license_data = json_decode(wp_remote_retrieve_body($response));
-
+            if( $license_data->license == 'item_name_mismatch'){
+                $license  = $this->get('license_key');
+                $request  = array(
+                    'edd_action' => urlencode($action),
+                    'license'    => urlencode($license),
+                    'item_name'  => 'Business Plan',
+                    'url'        => urlencode(home_url()),
+                );
+                $response = wp_remote_get(
+                    add_query_arg($request, $this->get('store')),
+                    array('timeout' => 15, 'sslverify' => false)
+                );
+                $license_data = json_decode(wp_remote_retrieve_body($response));
+                if( $license_data->license == 'item_name_mismatch'){
+                    $license  = $this->get('license_key');
+                    $request  = array(
+                        'edd_action' => urlencode($action),
+                        'license'    => urlencode($license),
+                        'item_name'  => 'Basic / Branded version',
+                        'url'        => urlencode(home_url()),
+                    );
+                    $response = wp_remote_get(
+                        add_query_arg($request, $this->get('store')),
+                        array('timeout' => 15, 'sslverify' => false)
+                    );
+                    $license_data = json_decode(wp_remote_retrieve_body($response));
+                }
+            }
             return $license_data;
         }
     }
