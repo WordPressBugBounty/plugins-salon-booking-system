@@ -36,13 +36,22 @@ jQuery(function () {
     ".sln-select-specific-dates input",
     function () {
       let $rule = jQuery(this).closest(".sln-booking-rule");
+      if (!$rule.length) {
+        $rule = jQuery(this).closest(".sln-box--sub");
+      }
 
-      if (jQuery(this).prop("checked")) {
+      if ($rule.length && jQuery(this).prop("checked")) {
         $rule.find(".sln-checkbutton-group").addClass("hide");
         $rule.find(".sln-select-specific-dates-calendar").removeClass("hide");
         $rule.find(".sln-always-valid-section").addClass("hide");
-        sln_updateSelectedDatesList($rule);
-      } else {
+
+        setTimeout(function() {
+          jQuery("body").trigger("sln_date");
+          setTimeout(function() {
+            sln_updateSelectedDatesList($rule);
+          }, 100);
+        }, 50);
+      } else if ($rule.length) {
         $rule.find(".sln-checkbutton-group").removeClass("hide");
         $rule.find(".sln-select-specific-dates-calendar").addClass("hide");
         $rule.find(".sln-always-valid-section").removeClass("hide");
@@ -105,7 +114,12 @@ jQuery(function () {
 					});
 
           let $rule = jQuery(this).closest(".sln-booking-rule");
-          sln_updateSelectedDatesList($rule);
+          if (!$rule.length) {
+            $rule = jQuery(this).closest(".sln-box--sub");
+          }
+          if ($rule.length) {
+            sln_updateSelectedDatesList($rule);
+          }
 				}
 			);
 		});
@@ -114,24 +128,34 @@ jQuery(function () {
   jQuery("body").on("click", ".sln-clear-all-dates", function(e) {
     e.preventDefault();
     let $rule = jQuery(this).closest(".sln-booking-rule");
-    let $calendar = $rule.find(".sln-select-specific-dates-calendar");
-    $calendar.find('input[name*="specific_dates"]').val("");
-    $calendar.find(".day.active").removeClass("active");
-    sln_updateSelectedDatesList($rule);
+    if (!$rule.length) {
+      $rule = jQuery(this).closest(".sln-box--sub");
+    }
+    if ($rule.length) {
+      let $calendar = $rule.find(".sln-select-specific-dates-calendar");
+      $calendar.find('input[name*="specific_dates"]').val("");
+      $calendar.find(".day.active").removeClass("active");
+      sln_updateSelectedDatesList($rule);
+    }
   });
 
   jQuery("body").on("click", ".sln-remove-date", function(e) {
     e.preventDefault();
     let $rule = jQuery(this).closest(".sln-booking-rule");
-    let $calendar = $rule.find(".sln-select-specific-dates-calendar");
-    let dateToRemove = jQuery(this).data("date");
-    let values = $calendar.find('input[name*="specific_dates"]').val().split(",");
-    values = values.filter(function (item) {
-      return item && item !== dateToRemove;
-    });
-    $calendar.find('input[name*="specific_dates"]').val(values.join(","));
-    $calendar.find('.day[data-ymd="' + dateToRemove + '"]').removeClass("active");
-    sln_updateSelectedDatesList($rule);
+    if (!$rule.length) {
+      $rule = jQuery(this).closest(".sln-box--sub");
+    }
+    if ($rule.length) {
+      let $calendar = $rule.find(".sln-select-specific-dates-calendar");
+      let dateToRemove = jQuery(this).data("date");
+      let values = $calendar.find('input[name*="specific_dates"]').val().split(",");
+      values = values.filter(function (item) {
+        return item && item !== dateToRemove;
+      });
+      $calendar.find('input[name*="specific_dates"]').val(values.join(","));
+      $calendar.find('.day[data-ymd="' + dateToRemove + '"]').removeClass("active");
+      sln_updateSelectedDatesList($rule);
+    }
   });
 
 	jQuery(".sln_datepicker div").on("changeDay", function () {
@@ -165,7 +189,12 @@ jQuery(function () {
 							.addClass("active");
 					});
           let $rule = datepicker.closest(".sln-booking-rule");
-          sln_updateSelectedDatesList($rule);
+          if (!$rule.length) {
+            $rule = datepicker.closest(".sln-box--sub");
+          }
+          if ($rule.length) {
+            sln_updateSelectedDatesList($rule);
+          }
 				});
 			}
 		);
@@ -195,7 +224,12 @@ jQuery(function () {
 							.addClass("active");
 					});
           let $rule = datepicker.closest(".sln-booking-rule");
-          sln_updateSelectedDatesList($rule);
+          if (!$rule.length) {
+            $rule = datepicker.closest(".sln-box--sub");
+          }
+          if ($rule.length) {
+            sln_updateSelectedDatesList($rule);
+          }
 				});
 			}
 		);
@@ -400,77 +434,83 @@ function sln_toggleSecondShift(e) {
 	}
 }
 function sln_initSelectSpecificDates(e) {
-	jQuery(".sln-select-specific-dates-calendar .sln_datepicker > div").each(
-		function () {
-			var $this = jQuery(this);
-			if (jQuery($this).hasClass("started")) {
-				return;
-			} else {
-				var disabledWeekDays = [];
+  jQuery(".sln-select-specific-dates-calendar .sln_datepicker > div").each(function () {
+    var $this = jQuery(this);
+    if (jQuery($this).hasClass("started")) {
+      return;
+    } else {
+      var disabledWeekDays = [];
+      var availabilityDates = jQuery($this).data("availability-dates");
 
-				var availabilityDates =
-					jQuery($this).data("availability-dates");
+      availabilityDates.forEach(function (item, index) {
+        if (Array.isArray(item) && !item.length) {
+          disabledWeekDays.push(index);
+        }
+      });
 
-				availabilityDates.forEach(function (item, index) {
-					if (Array.isArray(item) && !item.length) {
-						disabledWeekDays.push(index);
-					}
-				});
+      var picker = jQuery($this)
+        .addClass("started")
+        .datetimepicker({
+          format: jQuery($this).data("format"),
+          weekStart: jQuery($this).data("weekstart"),
+          autoclose: true,
+          minView: 2,
+          maxView: 4,
+          language: jQuery($this).data("locale"),
+          daysOfWeekDisabled: disabledWeekDays,
+          initialDate: false,
+          todayHighlight: false
+        })
+        .on("show", function () {
+          jQuery("body").trigger("sln_date");
+        })
+        .on("place", function () {
+          jQuery("body").trigger("sln_date");
+        })
+        .on("changeMonth", function () {
+          jQuery("body").trigger("sln_date");
+        })
+        .on("changeYear", function () {
+          jQuery("body").trigger("sln_date");
+        })
+        .data("datetimepicker").picker;
 
-				var picker = jQuery($this)
-					.addClass("started")
-					.datetimepicker({
-						format: jQuery($this).data("format"),
-						weekStart: jQuery($this).data("weekstart"),
-						autoclose: true,
-						minView: 2,
-						maxView: 4,
-						language: jQuery($this).data("locale"),
-						daysOfWeekDisabled: disabledWeekDays,
-					})
-					.on("show", function () {
-						jQuery("body").trigger("sln_date");
-					})
-					.on("place", function () {
-						jQuery("body").trigger("sln_date");
-					})
-					.on("changeMonth", function () {
-						jQuery("body").trigger("sln_date");
-					})
-					.on("changeYear", function () {
-						jQuery("body").trigger("sln_date");
-					})
-					.data("datetimepicker").picker;
+      jQuery($this).find(".day.active").removeClass("active");
+      jQuery($this).datetimepicker('update', '');
 
-				jQuery("body").trigger("sln_date");
+      jQuery("body").trigger("sln_date");
 
-				var values = jQuery(this)
-					.closest(".sln-select-specific-dates-calendar")
-					.find('input[name*="specific_dates"]')
-					.val()
-					.split(",");
+      var values = jQuery(this)
+        .closest(".sln-select-specific-dates-calendar")
+        .find('input[name*="specific_dates"]')
+        .val()
+        .split(",");
 
-				values = values.filter(function (item) {
-					return item;
-				});
+      values = values.filter(function (item) {
+        return item;
+      });
 
-				var datepicker = jQuery(this);
+      var datepicker = jQuery(this);
 
-        setTimeout(function () {
-          datepicker.find(".day.active").removeClass("active");
-          values.forEach(function (item) {
-            datepicker
-              .find('.day[data-ymd="' + item + '"]')
-              .addClass("active");
-          });
-          let $rule = datepicker.closest(".sln-booking-rule");
-          sln_updateSelectedDatesList($rule);
+      setTimeout(function () {
+        datepicker.find(".day.active").removeClass("active");
+        values.forEach(function (item) {
+          datepicker
+            .find('.day[data-ymd="' + item + '"]')
+            .addClass("active");
         });
+        let $rule = datepicker.closest(".sln-booking-rule");
+        if (!$rule.length) {
+          $rule = datepicker.closest(".sln-box--sub");
+        }
+        if ($rule.length) {
+          sln_updateSelectedDatesList($rule);
+        }
+      });
 
-				picker.addClass(jQuery($this).data("popup-class"));
-			}
-		}
-	);
+      picker.addClass(jQuery($this).data("popup-class"));
+    }
+  });
 }
 
 function sln_initSelectSpecificService(e) {

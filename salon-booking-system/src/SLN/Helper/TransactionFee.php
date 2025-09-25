@@ -17,7 +17,9 @@ class SLN_Helper_TransactionFee {
 	if ($transactionFeeType === 'percent') {
 	    $fee = $amount * SLN_Func::filter($transactionFeeAmount, 'float') / 100;
 	}
-
+    if($amount == 0){
+        $fee = 0;
+    }
 	return round(abs($fee), 2);
     }
 

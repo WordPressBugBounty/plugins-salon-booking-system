@@ -41,6 +41,12 @@ class HolidayRules_Controller extends REST_Controller
                         'required' => false,
                         'default' => false
                     ),
+                    'shop' => array(
+                        'description' => __('Shop ID.', 'salon-booking-system'),
+                        'type' => 'integer',
+                        'required' => false,
+                        'default' => null,
+                    ),
                 )),
             ),
             array(
@@ -76,17 +82,25 @@ class HolidayRules_Controller extends REST_Controller
             do_action('sln_api_holiday_rules_get_holiday_rules_before', $request);
             do_action('sln_api_holiday_rules_get_holiday_rules_before_check', $request);
 
+
             $date = sanitize_text_field(wp_unslash($request->get_param('date')));
             $assistants_mode = (bool)$request->get_param('assistants_mode');
+            $shop_id = $request->get_param('shop');
 
             $plugin = SLN_Plugin::getInstance();
             $settings = $plugin->getSettings();
 
             if ($assistants_mode) {
+                $holidays_rules = $settings->get('holidays_daily') ?: array();
+
+                foreach ($holidays_rules as &$rule) {
+                    $rule['is_manual'] = isset($rule['is_manual']) ? (bool)$rule['is_manual'] : true;
+                }
+
                 return $this->success_response([
                     'success' => 1,
-                    'rules' => apply_filters('sln.get-day-holidays-rules', $settings->get('holidays_daily')),
-                    'assistants_rules' => $this->get_assistants_rules()
+                    'rules' => $holidays_rules,
+                    'assistants_rules' => $this->get_assistants_rules($shop_id, $date)
                 ]);
             }
 
@@ -120,8 +134,23 @@ class HolidayRules_Controller extends REST_Controller
             $data['from_time'] = $formatter->time($request->get_param('from_time'));
             $data['to_time'] = $formatter->time($request->get_param('to_time'));
             $data['daily'] = true;
+            $data['is_manual'] = (bool)$request->get_param('is_manual');
+
+            if ($data['from_date'] != $data['to_date']) {
+                $toTime = new DateTime($data['to_date'] . ' ' . $data['to_time']);
+                $toTimeHour = (int)$toTime->format('H');
+                if ($toTimeHour < 12) {
+                    $data['to_date'] = $data['from_date'];
+                    $fromTime = new DateTime($data['from_date'] . ' ' . $data['from_time']);
+                    $interval = $settings->getInterval();
+                    $endTime = clone $fromTime;
+                    $endTime->modify('+' . $interval . ' minutes');
+                    $data['to_time'] = $endTime->format('H:i');
+                }
+            }
 
             $assistants_mode = (bool)$request->get_param('assistants_mode');
+            $shop_id = $request->get_param('shop');
 
             if ($this->validateDate($data['from_date']) && $this->validateDate($data['to_date'])) {
                 if (!empty($data['assistant_id'])) {
@@ -150,8 +179,8 @@ class HolidayRules_Controller extends REST_Controller
                 if ($assistants_mode) {
                     return $this->success_response([
                         'success' => 1,
-                        'rules' => apply_filters('sln.get-day-holidays-rules', $settings->get('holidays_daily')),
-                        'assistants_rules' => $this->get_assistants_rules()
+                        'rules' => $settings->get('holidays_daily') ?: array(),
+                        'assistants_rules' => $this->get_assistants_rules($shop_id, $date)
                     ]);
                 }
 
@@ -188,12 +217,14 @@ class HolidayRules_Controller extends REST_Controller
             $data['daily'] = true;
 
             $assistants_mode = (bool)$request->get_param('assistants_mode');
+            $shop_id = $request->get_param('shop');
 
             if (!empty($data['assistant_id'])) {
                 $applied = apply_filters('sln.remove-holiday-rule.remove-holidays-daily-assistants', false, $data, $data['assistant_id']);
 
                 if (!$applied) {
                     $attendant = $plugin->createAttendant($data['assistant_id']);
+
                     $holidays_rules = $attendant->getMeta('holidays_daily') ?: array();
                     $search_rule = array();
 
@@ -210,6 +241,25 @@ class HolidayRules_Controller extends REST_Controller
                     }
 
                     $attendant->setMeta('holidays_daily', $search_rule);
+
+                    $holidays = $attendant->getMeta('holidays') ?: array();
+                    $search_holidays = array();
+
+                    foreach ($holidays as $rule) {
+                        if (
+                            $data['from_date'] === $rule['from_date'] &&
+                            $data['to_date'] === $rule['to_date'] &&
+                            $data['from_time'] === $formatter->time($rule['from_time']) &&
+                            $data['to_time'] === $formatter->time($rule['to_time'])
+                        ) continue;
+
+                        $search_holidays[] = $rule;
+                    }
+
+                    $attendant->setMeta('holidays', $search_holidays);
+
+                    $bc = $plugin->getBookingCache();
+                    $bc->refresh($data['from_date'], $data['to_date']);
                 }
             } else {
                 $applied = apply_filters('sln.remove-holiday-rule.remove-holidays-daily', false, $data);
@@ -239,10 +289,16 @@ class HolidayRules_Controller extends REST_Controller
             $bc->refresh($data['from_date'], $data['to_date']);
 
             if ($assistants_mode) {
+                $holidays_rules = $settings->get('holidays_daily') ?: array();
+
+                foreach ($holidays_rules as &$rule) {
+                    $rule['is_manual'] = isset($rule['is_manual']) ? (bool)$rule['is_manual'] : true;
+                }
+
                 return $this->success_response([
                     'success' => 1,
-                    'rules' => apply_filters('sln.get-day-holidays-rules', $settings->get('holidays_daily')),
-                    'assistants_rules' => $this->get_assistants_rules()
+                    'rules' => $holidays_rules,
+                    'assistants_rules' => $this->get_assistants_rules($shop_id, $date)
                 ]);
             }
 
@@ -257,45 +313,81 @@ class HolidayRules_Controller extends REST_Controller
         }
     }
 
-    protected function get_assistants_rules()
+    protected function get_assistants_rules($shop_id = null, $date = '')
     {
         $plugin = SLN_Plugin::getInstance();
-
-        if (class_exists('\SalonMultishop\Addon')) {
-            $addon = \SalonMultishop\Addon::getInstance();
-            $currentShop = $addon->getCurrentShop();
-        }
         $assistants = $plugin->getRepository(SLN_Plugin::POST_TYPE_ATTENDANT)->getAll();
 
         $holidays_assistants_rules = array();
         foreach ($assistants as $att) {
             $current_attendant = $att;
-            if (class_exists('\SalonMultishop\Addon')) {
-                $addon = \SalonMultishop\Addon::getInstance();
-                $currentShop = $addon->getCurrentShop();
-                if ($currentShop) {
-                    try {
-                        $current_attendant = $currentShop->getAttendantWrapper($att);
-                    } catch (\Exception $e) {
-                        var_dump('$e',$e);
-                    }
+
+            if ($shop_id && class_exists('\SalonMultishop\Addon')) {
+                try {
+                    $shop = $plugin->createFromPost($shop_id);
+                    $current_attendant = $shop->getAttendantWrapper($att);
+                } catch (\Exception $e) {
                 }
             }
 
             $holidays_daily = $current_attendant->getMeta('holidays_daily') ?: array();
+
+            $holidays_daily = array_filter($holidays_daily, function ($h) use ($date) {
+                foreach (['from_date', 'to_date', 'from_time', 'to_time', 'daily'] as $prop) {
+                    if (empty($h[$prop])) {
+                        return false;
+                    }
+                }
+                if (!empty($date)) {
+                    return ($date === $h['from_date'] ||
+                        $date === $h['to_date'] ||
+                        ($date >= $h['from_date'] && $date <= $h['to_date']));
+                }
+                return true;
+            });
+
             foreach ($holidays_daily as &$rule) {
-                $rule['is_manual'] = true;
+                $rule['assistant_id'] = $att->getId();
+                $rule['is_manual'] = isset($rule['is_manual']) ? (bool)$rule['is_manual'] : true;
             }
+
             $holidays = $current_attendant->getMeta('holidays') ?: array();
 
+            $holidays = array_filter($holidays, function ($h) use ($date) {
+                foreach (['from_date', 'to_date', 'from_time', 'to_time'] as $prop) {
+                    if (empty($h[$prop])) {
+                        return false;
+                    }
+                }
+                if (!empty($date)) {
+                    return ($date === $h['from_date'] ||
+                        $date === $h['to_date'] ||
+                        ($date >= $h['from_date'] && $date <= $h['to_date']));
+                }
+                return true;
+            });
+
             foreach ($holidays as &$rule) {
+                $rule['assistant_id'] = $att->getId();
                 if (!isset($rule['daily'])) {
                     $rule['daily'] = true;
                 }
-                $rule['is_manual'] = false;
+                $rule['is_manual'] = isset($rule['is_manual']) ? (bool)$rule['is_manual'] : false;
             }
 
-            $holidays_assistants_rules[$att->getId()] = array_merge($holidays_daily, $holidays);
+            $all_rules = array_merge($holidays_daily, $holidays);
+
+            $unique_rules = array();
+            $seen_keys = array();
+            foreach ($all_rules as $rule) {
+                $key = $rule['from_date'] . '|' . $rule['to_date'] . '|' . $rule['from_time'] . '|' . $rule['to_time'];
+                if (!isset($seen_keys[$key])) {
+                    $seen_keys[$key] = true;
+                    $unique_rules[] = $rule;
+                }
+            }
+
+            $holidays_assistants_rules[$att->getId()] = $unique_rules;
         }
 
         return apply_filters(
@@ -411,4 +503,5 @@ class HolidayRules_Controller extends REST_Controller
 
         return apply_filters('sln_api_holiday_rules_get_item_schema', $schema);
     }
+
 }

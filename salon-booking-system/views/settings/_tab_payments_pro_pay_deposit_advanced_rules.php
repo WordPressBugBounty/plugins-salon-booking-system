@@ -9,9 +9,9 @@ $rules = $settings->getPaymentDepositAdvancedRules();
      class="sln-box sln-box--main sln-box--haspanel <?php echo !$settings->isPaymentDepositAdvancedRules() ? 'hide' : '' ?>"
 >
     <h2 class="sln-box-title sln-box__paneltitle">
-        <?php _e('Advanced rules', 'salon-booking-system'); ?>
+        <?php esc_html_e('Advanced rules', 'salon-booking-system'); ?>
         <span class="block" style="font-size: 16px;">
-            <?php _e('Set one or more conditions to define the amount of the upfront payment', 'salon-booking-system'); ?>
+            <?php esc_html_e('Set one or more conditions to define the amount of the upfront payment', 'salon-booking-system'); ?>
         </span>
     </h2>
 
@@ -31,12 +31,12 @@ $rules = $settings->getPaymentDepositAdvancedRules();
                 <?php foreach ($rules as $i => $rule) { ?>
                     <?php $rule_prefix = "{$meta}[$field][$i]"; ?>
                     <div class="ar-rule<?php echo $i === '__template__' ? ' hide' : ''; ?>"
-                         data-id="<?php echo $i; ?>">
+                         data-id="<?php echo esc_html($i); ?>">
                         <div class="row">
                             <div class="col-xs-12 col-lg-4">
                                 <div class="ar-rule-field sln-input--simple">
-                                    <label for="<?php echo SLN_Form::makeID("{$rule_prefix}[name]") ?>">
-                                        <?php _e('Name', 'salon-booking-system') ?>
+                                    <label for="<?php echo esc_html(SLN_Form::makeID("{$rule_prefix}[name]")) ?>">
+                                        <?php esc_html_e('Name', 'salon-booking-system') ?>
                                     </label>
 
                                     <?php SLN_Form::fieldText(
@@ -49,8 +49,8 @@ $rules = $settings->getPaymentDepositAdvancedRules();
 
                             <div class="col-xs-12 col-lg-4">
                                 <div class="ar-rule-field sln-select<?php echo $i === '__template__' ? '-template' : ''; ?>">
-                                    <label for="<?php echo SLN_Form::makeID("{$rule_prefix}[condition]") ?>">
-                                        <?php _e('Condition (booking total amount is)', 'salon-booking-system') ?>
+                                    <label for="<?php echo esc_html(SLN_Form::makeID("{$rule_prefix}[condition]")) ?>">
+                                        <?php esc_html_e('Condition (booking total amount is)', 'salon-booking-system') ?>
                                     </label>
 
                                     <?php
@@ -71,9 +71,9 @@ $rules = $settings->getPaymentDepositAdvancedRules();
 
                             <div class="col-xs-12 col-lg-2">
                                 <div class="ar-rule-field sln-input--simple">
-                                    <label for="<?php echo SLN_Form::makeID("{$rule_prefix}[amount]") ?>">
-                                        <?php _e('Amount', 'salon-booking-system') ?>
-                                        (<?php echo $settings->getCurrencySymbol() ?>)
+                                    <label for="<?php echo esc_html(SLN_Form::makeID("{$rule_prefix}[amount]")) ?>">
+                                        <?php esc_html_e('Amount', 'salon-booking-system') ?>
+                                        (<?php echo esc_html($settings->getCurrencySymbol()) ?>)
                                     </label>
 
                                     <?php SLN_Form::fieldText(
@@ -86,8 +86,8 @@ $rules = $settings->getPaymentDepositAdvancedRules();
 
                             <div class="col-xs-12 col-lg-2">
                                 <div class="ar-rule-field sln-input--simple">
-                                    <label for="<?php echo SLN_Form::makeID("{$rule_prefix}[deposit]") ?>">
-                                        <?php _e('Deposit', 'salon-booking-system') ?>
+                                    <label for="<?php echo esc_html(SLN_Form::makeID("{$rule_prefix}[deposit]")) ?>">
+                                        <?php esc_html_e('Deposit', 'salon-booking-system') ?>
                                         (%)
                                     </label>
 
@@ -103,8 +103,8 @@ $rules = $settings->getPaymentDepositAdvancedRules();
                         <div class="row">
                             <div class="col-xs-12 col-lg-4">
                                 <div class="ar-rule-field sln-input--simple">
-                                    <label for="<?php echo SLN_Form::makeID("{$rule_prefix}[valid_from]") ?>">
-                                        <?php _e('Valid from', 'salon-booking-system') ?>
+                                    <label for="<?php echo esc_html(SLN_Form::makeID("{$rule_prefix}[valid_from]")) ?>">
+                                        <?php esc_html_e('Valid from', 'salon-booking-system') ?>
                                     </label>
 
                                     <?php SLN_Form::fieldJSDate(
@@ -117,8 +117,8 @@ $rules = $settings->getPaymentDepositAdvancedRules();
 
                             <div class="col-xs-12 col-lg-4">
                                 <div class="ar-rule-field sln-input--simple">
-                                    <label for="<?php echo SLN_Form::makeID("{$rule_prefix}[valid_to]") ?>">
-                                        <?php _e('Valid to', 'salon-booking-system') ?>
+                                    <label for="<?php echo esc_html(SLN_Form::makeID("{$rule_prefix}[valid_to]")) ?>">
+                                        <?php esc_html_e('Valid to', 'salon-booking-system') ?>
                                     </label>
 
                                     <?php SLN_Form::fieldJSDate(
@@ -135,7 +135,7 @@ $rules = $settings->getPaymentDepositAdvancedRules();
                                     <button type="button"
                                             class="sln-btn sln-btn--problem sln-btn--big"
                                             data-action="ar-rule-remove">
-                                        <?php _e('Remove rule', 'salon-booking-system') ?>
+                                        <?php esc_html_e('Remove rule', 'salon-booking-system') ?>
                                     </button>
                                 </div>
                             </div>
@@ -148,7 +148,7 @@ $rules = $settings->getPaymentDepositAdvancedRules();
                 <button type="button"
                         class="sln-btn sln-btn--main sln-btn--big"
                         data-action="ar-rule-add">
-                    <?php _e('Add rule', 'salon-booking-system') ?>
+                    <?php esc_html_e('Add rule', 'salon-booking-system') ?>
                 </button>
             </div>
         </div>

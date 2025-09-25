@@ -37,7 +37,7 @@ $isPro = defined('SLN_VERSION_PAY') && SLN_VERSION_PAY;
                         for ($line = 0; $line < $lines; $line++):
                             $holiday_by_line = $calendar->hasHolidaysByLine($line);
                             $attendant_holiday = $calendar->hasAttendantHoliday($line, $att['id']);
-                            $daily_holiday = $calendar->hasHolidaysDaylyByLine($line);
+                            $daily_holiday = $calendar->hasHolidaysDaylyByLine($line, $att['id']);
                             $time_unavailable = in_array($calendar->getTimeByLine($line), $att['unavailable_times']);
 
                             $css_classes = '';
@@ -246,7 +246,18 @@ $isPro = defined('SLN_VERSION_PAY') && SLN_VERSION_PAY;
                     $isHoliday = $calendar->hasHolidaysByLine($line)
                         || $calendar->hasHolidaysDaylyByLine($line);
                     $isOutOfSchedule = !$calendar->isLineInWorkingSchedule($line);
-                    $locked = (!$calendar->getAttendantMode() && ($isHoliday || $isOutOfSchedule)) ? 'blocked' : '';
+
+                    $classes = [];
+                    if (!$calendar->getAttendantMode()) {
+                        if ($isHoliday) {
+                            $classes[] = 'blocked blocked-system';
+                        }
+                        if ($isOutOfSchedule) {
+                            $classes[] = 'off-hours';
+                        }
+                    }
+                    $locked = implode(' ', $classes);
+
                     if ($isHoliday) {
                         $title = __('Holiday rule', 'salon-booking-system');
                     } elseif ($isOutOfSchedule) {

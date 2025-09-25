@@ -22,6 +22,20 @@ class SLN_Action_Ajax_AddHolydayRule extends SLN_Action_Ajax_Abstract
 			$data['from_time']	= sanitize_text_field(wp_unslash($_POST['rule']['from_time']));
 			$data['to_time']	= sanitize_text_field(wp_unslash($_POST['rule']['to_time']));
 			$data['daily']		= true;
+			$data['is_manual']	= true;
+
+			if($data['from_date'] != $data['to_date']) {
+				$toTime = new DateTime($data['to_date'] . ' ' . $data['to_time']);
+				$toTimeHour = (int)$toTime->format('H');
+				if($toTimeHour < 12) {
+					$data['to_date'] = $data['from_date'];
+					$fromTime = new DateTime($data['from_date'] . ' ' . $data['from_time']);
+					$interval = $settings->getInterval();
+					$endTime = clone $fromTime;
+					$endTime->modify('+' . $interval . ' minutes');
+					$data['to_time'] = $endTime->format('H:i');
+				}
+			}
 			$attId                  = sanitize_text_field(wp_unslash($_POST['attendant_id']));
 			if(!empty($data['from_date']) && !empty($data['to_date']) && !empty($data['from_time']) && !empty($data['to_time']) && $this->validateDate($data['from_date']) && $this->validateDate($data['to_date']) ){
                             if (empty($attId)) {
@@ -63,7 +77,13 @@ class SLN_Action_Ajax_AddHolydayRule extends SLN_Action_Ajax_Abstract
                 $assistants                 = $plugin->getRepository(SLN_Plugin::POST_TYPE_ATTENDANT)->getAll();
 
                 foreach ($assistants as $att) {
-                    $holidays_assistants_rules[$att->getId()] = $att->getMeta('holidays_daily')?:array();
+                    $holidays_rules = $att->getMeta('holidays_daily')?:array();
+
+                    foreach ($holidays_rules as &$rule) {
+                        $rule['assistant_id'] = $att->getId();
+                    }
+
+                    $holidays_assistants_rules[$att->getId()] = $holidays_rules;
                 }
 
 		$holidays_assistants_rules = apply_filters('sln.get-day-holidays-assistants-rules', $holidays_assistants_rules, $assistants);

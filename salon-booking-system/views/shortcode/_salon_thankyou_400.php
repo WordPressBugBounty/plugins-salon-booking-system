@@ -18,7 +18,9 @@
                 if ($bookingMyAccountPageId && !$plugin->getSettings()->get('enabled_force_guest_checkout') && is_user_logged_in() ) {
                     $current_user = wp_get_current_user();
                     echo '<div class="sln-box--formactions--summary">';
-                    echo '<a class="sln-btn sln-btn--fitcontent sln-btn--borderonly sln-btn--medium" href="' . get_permalink($bookingMyAccountPageId) . ';">' . __('Go to your personal account', 'salon-booking-system') . '</a>';
+                    echo '<a class="sln-btn sln-btn--fitcontent sln-btn--borderonly sln-btn--medium" href="' . esc_html(get_permalink($bookingMyAccountPageId)) . '">';
+                    esc_html_e('Go to your personal account', 'salon-booking-system');
+                    echo '</a>';
                     echo '</div>';
                 } //// $bookingMyAccountPageId  && !$plugin->getSettings()->get('enabled_force_guest_checkout') // END ////
             ?>

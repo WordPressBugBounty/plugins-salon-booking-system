@@ -806,6 +806,22 @@ if (!String.prototype.formatNum) {
 					$('.current-view--title').addClass('sln-box--loading');
 					setTimeout(() => {$('.current-view--title').removeClass('sln-box--loading');}, 3000)
 					self._recover_scroll_pos();
+
+					if (json.rules && typeof window !== 'undefined') {
+						window.daily_rules = json.rules;
+					}
+					if (json.assistants_rules && typeof window !== 'undefined') {
+						window.daily_assistants_rules = json.assistants_rules;
+					}
+
+					if (typeof DayCalendarHolydays !== 'undefined') {
+						DayCalendarHolydays.rules = false;
+						DayCalendarHolydays.assistants_rules = false;
+						if (self.options.view === 'day') {
+							DayCalendarHolydays.showRules(self);
+						}
+					}
+
 					self.options.onAfterViewLoad.call(self, self.options.view);
 					setTimeout(() => {$("#sln-pageloading").addClass("sln-pageloading--inactive");}, 3000);
 					setTimeout(() => {$("body").addClass("sln-body--scrolldef");}, 3200);
@@ -1011,7 +1027,7 @@ if (!String.prototype.formatNum) {
 
 		$(document).on('click', ".sln-pen-icon-tooltip", function(event){
 			$('*[data-toggle="tooltip"]').tooltip('hide');
-			$("[data-action=clone-edited-booking]").text('Clone');
+			$("[data-action=clone-edited-booking]").text($("[data-action=clone-edited-booking]").data('clone'));
 			$("[data-action=clone-edited-booking]").removeClass('confirm');
 			$('[data-dismiss="modal"]').removeClass('hide-important');
 			$('[data-action="delete-edited-booking"]').removeClass('hide-important');
@@ -1330,7 +1346,7 @@ if (!String.prototype.formatNum) {
 		function onChangeTimes(event) {
 			var times = parseInt($(this).val());
 
-			let dateStr =$('#_sln_booking_date', window.frames[0].document).val(); // '08/07/2025'
+			let dateStr =$('#_sln_booking_date', window.frames[0].document).data('value').replace('00:00:00','').trim(); // '08/07/2025'
 
 			function parseFlexibleDate(dateStr) {
 				let parts;
@@ -1384,7 +1400,7 @@ if (!String.prototype.formatNum) {
 				return false;
 			}
 			if($('[data-action=clone-edited-booking].confirm').length == 0){
-				let dateStr =$('#_sln_booking_date', window.frames[0].document).val(); // '08/07/2025'
+				let dateStr =$('#_sln_booking_date', window.frames[0].document).data('value').replace('00:00:00','').trim(); // '08/07/2025'
 
 				function parseFlexibleDate(dateStr) {
 					let parts;
@@ -1432,7 +1448,7 @@ if (!String.prototype.formatNum) {
 					console.error("wrong date: " + dateStr);
 				}
 
-				$("[data-action=clone-edited-booking]").text('Confirm');
+				$("[data-action=clone-edited-booking]").text($("[data-action=clone-edited-booking]").data('confirm'));
 				$("[data-action=clone-edited-booking]").addClass('confirm');
 				$('[data-dismiss="modal"]').addClass('hide-important');
 				$('[data-action="delete-edited-booking"]').addClass('hide-important');

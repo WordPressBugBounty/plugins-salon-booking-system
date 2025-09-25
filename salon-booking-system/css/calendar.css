@@ -1736,14 +1736,17 @@ sln-calendar--wrapper .att-time-slot .block_date {
   -ms-user-select: none;
 }
 
+.att-time-slot.off-hours:hover,
 .att-time-slot.blocked:hover {
   background-color: #ed5e69 !important;
 }
 
+.att-time-slot.off-hours:hover,
 .att-time-slot.blocked:hover {
   background-color: #ed5e69;
 }
 
+.att-time-slot.off-hours,
 .att-time-slot.blocked {
   background-color: #ed5e69;
   opacity: 0.35;

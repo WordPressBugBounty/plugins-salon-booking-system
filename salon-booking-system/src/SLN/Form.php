@@ -43,7 +43,8 @@ class SLN_Form {
 			<div class="sln_datepicker"><div name="<?php echo $name ?>" id="<?php echo self::makeID($name) ?>"
 				data-format="<?php echo $jsFormat ?>" data-weekstart="<?php echo $weekStart ?>"
 				value="<?php echo SLN_plugin::getInstance()->format()->date($value) ?>"
-				data-locale="<?php echo SLN_Plugin::getInstance()->getSettings()->getDateLocale() ?>"
+                data-value="<?php echo $value ?>"
+                data-locale="<?php echo SLN_Plugin::getInstance()->getSettings()->getDateLocale() ?>"
 				data-availability-dates="<?php echo esc_attr(wp_json_encode(SLN_Plugin::getInstance()->getSettings()->getAvailabilityItems()->getWeekDayRules())) ?>"
 				data-popup-class="<?php echo (isset($settings['popup-class']) ? $settings['popup-class'] : '') ?>"></div></div>
 			</div><?php
@@ -53,6 +54,7 @@ class SLN_Form {
 				required="required" data-format="<?php echo $jsFormat ?>" data-weekstart="<?php echo $weekStart ?>"
 				class="sln-input sln-input--text <?php echo isset($settings['extending-classes']) ? $settings['extending-classes'] : '' ?>"
 				value="<?php echo SLN_plugin::getInstance()->format()->date($value) ?>"
+                data-value="<?php echo $value ?>"
 				data-locale="<?php echo SLN_Plugin::getInstance()->getSettings()->getDateLocale() ?>"
 				data-popup-class="<?php echo (isset($settings['popup-class']) ? $settings['popup-class'] : '') ?>"/></div>
 			</div><?php
@@ -90,6 +92,7 @@ class SLN_Form {
 				data-meridian="<?php echo strpos($phpFormat, 'a') !== false ? 'true' : 'false' ?>"
 				data-format="<?php echo $jsFormat ?>" value="<?php echo SLN_plugin::getInstance()->format()->time($value) ?>"
 				data-interval="<?php echo $interval ?>" data-locale="<?php echo SLN_Plugin::getInstance()->getSettings()->getDateLocale() ?>"
+                data-value="<?php echo $value ?>"
 				data-popup-class="<?php echo (isset($settings['popup-class']) ? $settings['popup-class'] : '') ?>"></div></div>
 			</span><?php
 		} else {
@@ -99,6 +102,7 @@ class SLN_Form {
 				required="required" data-format="<?php echo $jsFormat ?>"
 				class="sln-input <?php echo isset($settings['extending-classes']) ? $settings['extending-classes'] : '' ?>"
 				value="<?php echo SLN_plugin::getInstance()->format()->time($value) ?>" data-interval="<?php echo $interval ?>"
+				data-value="<?php echo $value ?>"
 				data-locale="<?php echo SLN_Plugin::getInstance()->getSettings()->getDateLocale() ?>"
 				data-popup-class="<?php echo (isset($settings['popup-class']) ? $settings['popup-class'] : '') ?>"/></div>
 			</span><?php

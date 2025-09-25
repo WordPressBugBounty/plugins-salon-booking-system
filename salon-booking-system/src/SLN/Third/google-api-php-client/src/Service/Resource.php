@@ -102,7 +102,7 @@ class Resource
 
             throw new GoogleException(
                 "Unknown function: " .
-                "{$this->serviceName}->{$this->resourceName}->{$name}()"
+                esc_html("{$this->serviceName}->{$this->resourceName}->{$name}()")
             );
         }
         $method = $this->methods[$name];
@@ -155,7 +155,7 @@ class Resource
                         'parameter' => $key
                     ]
                 );
-                throw new GoogleException("($name) unknown parameter: '$key'");
+                throw new GoogleException("(".esc_html($name).") unknown parameter: ".esc_html($key));
             }
         }
 
@@ -174,7 +174,7 @@ class Resource
                         'parameter' => $paramName
                     ]
                 );
-                throw new GoogleException("($name) missing required param: '$paramName'");
+                throw new GoogleException("(".esc_html($name).") missing required param: ".esc_html($paramName));
             }
             if (isset($parameters[$paramName])) {
                 $value = $parameters[$paramName];

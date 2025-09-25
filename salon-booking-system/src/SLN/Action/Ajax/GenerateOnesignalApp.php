@@ -3,30 +3,34 @@
 class SLN_Action_Ajax_GenerateOnesignalApp extends SLN_Action_Ajax_Abstract
 {
     public function execute()  {
+        if(current_user_can ('manage_options') && isset($_POST['security']) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['security'] ) ), 'ajax_post_validation')){
+            $url  = 'https://onesignal.com/api/v1/apps';
 
-        $url  = 'https://onesignal.com/api/v1/apps';
+            $info = parse_url(home_url());
 
-        $info = parse_url(home_url());
+            $args = array(
+                'headers' => array(
+                    'Authorization' => 'Basic ' . SLN_ONESIGNAL_USER_AUTH_KEY,
+                    'Content-Type'  => 'application/json',
+                ),
+                'body'    => wp_json_encode(array(
+                    'name'                  => 'Salon Booking Plugin App ' . $info['host'],
+                    'chrome_web_origin'     => $info['scheme'] . '://' . $info['host'],
+                    'site_name'             => $info['host'],
+                    'safari_site_origin'    => $info['scheme'] . '://' . $info['host'],
+                )),
+            );
 
-        $args = array(
-            'headers' => array(
-                'Authorization' => 'Basic ' . SLN_ONESIGNAL_USER_AUTH_KEY,
-                'Content-Type'  => 'application/json',
-            ),
-            'body'    => wp_json_encode(array(
-                'name'                  => 'Salon Booking Plugin App ' . $info['host'],
-                'chrome_web_origin'     => $info['scheme'] . '://' . $info['host'],
-                'site_name'             => $info['host'],
-                'safari_site_origin'    => $info['scheme'] . '://' . $info['host'],
-            )),
-        );
+            $response = wp_remote_post($url, $args);
+            $body     = json_decode(wp_remote_retrieve_body($response));
 
-        $response = wp_remote_post($url, $args);
-        $body     = json_decode(wp_remote_retrieve_body($response));
+            return array(
+            'app_id' => $body->id,
+            );
+        } else {
+            wp_send_json_error('Not authorized',403);
+        }
 
-        return array(
-	    'app_id' => $body->id,
-        );
     }
 
 }

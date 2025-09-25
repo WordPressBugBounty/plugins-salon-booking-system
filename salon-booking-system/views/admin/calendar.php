@@ -609,11 +609,11 @@ $holidays = $plugin->getSettings()->get('holidays');
                                         'additional_classes' => 'sln-profeature--button--bare sln-profeature--modal-footer__actions',
                                     )
                                 ); ?>
-                                <button type="button" class="sln-btn sln-btn--nu sln-btn--nu--lowhemph sln-btn--big" aria-hidden="true" data-action="clone-edited-booking"><?php esc_html_e('Clone', 'salon-booking-system') ?></button>
+                                <button type="button" class="sln-btn sln-btn--nu sln-btn--nu--lowhemph sln-btn--big" aria-hidden="true"  data-confirm="<?php esc_html_e('Confirm', 'salon-booking-system') ?>" data-confirm="<?php esc_html_e('Clone', 'salon-booking-system') ?>" data-action="clone-edited-booking"><?php esc_html_e('Clone', 'salon-booking-system') ?></button>
                             </div>
                             <div class="clone-info" style="font-family: 'Open Sans';display:none;">
                                 <input type="number" name="unit_times_input" min="1" value="1" style="width: 50px;"/>
-                                <span class="time_until" style="margin-left: 10px;font-size:13px;" >times until <span class="time_date">%date</span></span>
+                                <span class="time_until" style="margin-left: 10px;font-size:13px;" ><?php esc_html_e('times until', 'salon-booking-system') ?> <span class="time_date">%date</span></span>
                             </div>
                             <button type="button" class="sln-btn sln-btn--nu sln-btn--nu--lowhemph sln-btn--big" aria-hidden="true" data-action="delete-edited-booking"><?php esc_html_e('Delete', 'salon-booking-system') ?></button>
                             <button type="button" class="sln-btn sln-btn--nu sln-btn--nu--medhemph sln-btn--big" data-dismiss="modal" aria-hidden="true"><?php esc_html_e('Close', 'salon-booking-system') ?></button>

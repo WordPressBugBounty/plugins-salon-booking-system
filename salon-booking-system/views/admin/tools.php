@@ -80,7 +80,7 @@
 										</div>
 									</div>
 								</div>
-                                <a class="sln-item-csv" href="<?php echo SLN_PLUGIN_URL . '/csv-import-samples/Salon import sample customers.csv'; ?>"><?php esc_html_e('Download sample CSV file', 'salon-booking-system') ?></a>
+                                <a class="sln-item-csv" href="<?php echo SLN_PLUGIN_URL . '/csv-import-samples/salon_import_sample_customers.csv'; ?>"><?php esc_html_e('Download sample CSV file', 'salon-booking-system') ?></a>
                             
                             </div>
                         </div>
@@ -116,7 +116,7 @@
 										</div>
 									</div>
 								</div>
-								<a class="sln-item-csv" href="<?php echo SLN_PLUGIN_URL . '/csv-import-samples/Salon import sample services.csv'; ?>"><?php esc_html_e('Download sample CSV file', 'salon-booking-system') ?></a>
+								<a class="sln-item-csv" href="<?php echo SLN_PLUGIN_URL . '/csv-import-samples/salon_import_sample_services.csv'; ?>"><?php esc_html_e('Download sample CSV file', 'salon-booking-system') ?></a>
 							</div>
 						</div>
 					</div>
@@ -153,7 +153,7 @@
 										</div>
 									</div>
 								</div>
-								<a class="sln-item-csv" href="<?php echo SLN_PLUGIN_URL . '/csv-import-samples/Salon import sample assistants.csv'; ?>"><?php esc_html_e('Download sample CSV file', 'salon-booking-system') ?></a>
+								<a class="sln-item-csv" href="<?php echo SLN_PLUGIN_URL . '/csv-import-samples/salon_import_sample_assistants.csv'; ?>"><?php esc_html_e('Download sample CSV file', 'salon-booking-system') ?></a>
 							</div>
 						</div>
 					</div>
@@ -189,7 +189,7 @@
 										</div>
 									</div>
 								</div>
-								<a class="sln-item-csv" href="<?php echo SLN_PLUGIN_URL . '/csv-import-samples/Salon import sample booking.csv'; ?>"><?php esc_html_e('Download sample CSV file', 'salon-booking-system') ?></a>
+								<a class="sln-item-csv" href="<?php echo SLN_PLUGIN_URL . '/csv-import-samples/salon_import_sample_booking.csv'; ?>"><?php esc_html_e('Download sample CSV file', 'salon-booking-system') ?></a>
 							</div>
 						</div>
 					</div>

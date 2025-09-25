@@ -1,0 +1,10 @@
+﻿Reservations,from,to,,,,,,,,,,
+,13 Apr 2024,23 Apr 2024,,,,,,,,,,
+,,,,,,,,,,,,
+ID,DATE/TIME,CREATED,CUSTOMER FIRST NAME,CUSTOMER LAST NAME,CUSTOMER EMAIL,CUSTOMER PHONE,CUSTOMER ADDRESS,SERVICES,ASSISTANTS,TOTAL PRICE,STATUS,NUMBER OF FOR EACH SERVICE
+29,15 Apr 2024 09:00,23 Apr 2024 07:43,Dimitri,Grassi,contact@wordpresschef.it,3293520440,Vico IV Capezzuti 10,"Haircut, Shampoo","Mario, Pablo",40.10 $,Pending payment,"1, 1"
+14,18 Apr 2024 18:45,18 Apr 2024 18:45,Customer firstname,Customer lastname,custome@mail.com,8888888888888888,Vico IV Capezzuti 10,Beard Trim,,15 $,Paid,1
+15,18 Apr 2024 18:45,18 Apr 2024 18:45,Customer firstname,Customer lastname,custome@mail.com,8888888888888888,Vico IV Capezzuti 10,Haircut,Pablo,10.11 $,Confirmed,1
+16,18 Apr 2024 18:45,18 Apr 2024 18:45,Customer firstname,Customer lastname,custome@mail.com,8888888888888888,Vico IV Capezzuti 10,"Beard Trim, Shampoo",Pablo,44.99 $,Pending,"1, 2"
+18,19 Apr 2024 19:00,18 Apr 2024 18:49,Dimitri,Grassi,contact@wordpresschef.it,3293520440,Vico IV Capezzuti 10,,Pablo,10.11 $,Confirmed,2
+21,22 Apr 2024 08:00,18 Apr 2024 18:51,Dimitri,Grassi,contact@wordpresschef.it,3293520440,Vico IV Capezzuti 10,Beard Trim,Mario,15 $,Confirmed,3

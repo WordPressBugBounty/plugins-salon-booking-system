@@ -308,10 +308,12 @@ function sln_init($) {
         sln_stepDate($);
     } else {
         if ($("#salon-step-summary").length && $('#start-over').length) {
+            $('.sln-btn--prevstep a').removeAttr("data-salon-data");
+            $('.sln-btn--prevstep a').removeAttr("href");
             $('#sln-step-submit').text($('#sln-step-submit-complete').text());
             $('.sln-btn--prevstep a').text($('#start-over').text());
-            $('.sln-btn--prevstep a').click(function (){
-                location.reload();
+            $('.sln-btn--prevstep a').click(function (e){
+                location.href = location.origin + location.pathname;
             });
         }
         if ($("#salon-step-details").length) {

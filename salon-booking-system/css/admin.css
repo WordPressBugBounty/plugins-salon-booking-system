@@ -25639,6 +25639,7 @@ body.sln-noscroll .sln-tab .sln-calendar--wrapper .sln-tab__curtain,
 }
 
 .cal-day-hour-part.selected,
+.cal-day-hour-part.offhours,
 .cal-day-hour-part.to-select:hover {
   background-color: #ed5e69 !important;
   user-select: none;
@@ -25647,11 +25648,13 @@ body.sln-noscroll .sln-tab .sln-calendar--wrapper .sln-tab__curtain,
   -ms-user-select: none;
 }
 
+.cal-day-hour-part.off-hours:hover,
 .cal-day-hour-part.selected:hover {
   background-color: #f07882 !important;
 }
 
-.cal-day-hour-part.blocked {
+.cal-day-hour-part.blocked,
+.cal-day-hour-part.off-hours {
   background-color: #ed5e69;
   opacity: 0.35;
   user-select: none;
@@ -25659,7 +25662,8 @@ body.sln-noscroll .sln-tab .sln-calendar--wrapper .sln-tab__curtain,
   -webkit-user-select: none;
   -ms-user-select: none;
 }
-.cal-day-hour-part.blocked:hover {
+.cal-day-hour-part.blocked:hover,
+.cal-day-hour-part.off-hours:hover {
   background-color: #ed5e69;
 }
 

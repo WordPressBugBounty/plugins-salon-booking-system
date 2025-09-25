@@ -22,6 +22,19 @@ class SLN_Action_Ajax_RemoveHolydayRule extends SLN_Action_Ajax_Abstract
 			$data['from_time']	= sanitize_text_field(wp_unslash($_POST['rule']['from_time']));
 			$data['to_time']	= sanitize_text_field(wp_unslash($_POST['rule']['to_time']));
 			$data['daily']		= true;
+
+			if($data['from_date'] != $data['to_date']) {
+				$toTime = new DateTime($data['to_date'] . ' ' . $data['to_time']);
+				$toTimeHour = (int)$toTime->format('H');
+				if($toTimeHour < 12) {
+					$data['to_date'] = $data['from_date'];
+					$fromTime = new DateTime($data['from_date'] . ' ' . $data['from_time']);
+					$interval = $settings->getInterval();
+					$endTime = clone $fromTime;
+					$endTime->modify('+' . $interval . ' minutes');
+					$data['to_time'] = $endTime->format('H:i');
+				}
+			}
                         $attId                  = sanitize_text_field(wp_unslash($_POST['attendant_id']));
 
                         if (empty($attId)) {
@@ -52,6 +65,7 @@ class SLN_Action_Ajax_RemoveHolydayRule extends SLN_Action_Ajax_Abstract
 
                             if (!$applied) {
                                 $attendant        = $plugin->createAttendant($attId);
+
                                 $holidays_rules   = $attendant->getMeta('holidays_daily')?:array();
                                 $search_rule=array();
 
@@ -61,10 +75,24 @@ class SLN_Action_Ajax_RemoveHolydayRule extends SLN_Action_Ajax_Abstract
                                                 $data['to_date']	=== $rule['to_date'] &&
                                                 $data['from_time']	=== $rule['from_time'] &&
                                                 $data['to_time']	=== $rule['to_time'] &&
-                                                $rule['daily']      === true
+                                                $rule['daily']      === true &&
+                                                (empty($rule['assistant_id']) || $rule['assistant_id'] == $attId)
                                         )) $search_rule[] = $rule;
                                 }
                                 $attendant->setMeta('holidays_daily', $search_rule);
+
+                                $holidays = $attendant->getMeta('holidays')?:array();
+                                $search_holidays = array();
+
+                                foreach ($holidays as $rule) {
+                                        if(!(
+                                                $data['from_date']	=== $rule['from_date'] &&
+                                                $data['to_date']	=== $rule['to_date'] &&
+                                                $data['from_time']	=== $rule['from_time'] &&
+                                                $data['to_time']	=== $rule['to_time']
+                                        )) $search_holidays[] = $rule;
+                                }
+                                $attendant->setMeta('holidays', $search_holidays);
                             }
                             $bc = $plugin->getBookingCache();
                             $bc->refresh($data['from_date'],$data['to_date']);
@@ -79,7 +107,13 @@ class SLN_Action_Ajax_RemoveHolydayRule extends SLN_Action_Ajax_Abstract
                 $assistants                 = $plugin->getRepository(SLN_Plugin::POST_TYPE_ATTENDANT)->getAll();
 
                 foreach ($assistants as $att) {
-                    $holidays_assistants_rules[$att->getId()] = $att->getMeta('holidays_daily')?:array();
+                    $holidays_rules = $att->getMeta('holidays_daily')?:array();
+
+                    foreach ($holidays_rules as &$rule) {
+                        $rule['assistant_id'] = $att->getId();
+                    }
+
+                    $holidays_assistants_rules[$att->getId()] = $holidays_rules;
                 }
 
 		$holidays_assistants_rules = apply_filters('sln.get-day-holidays-assistants-rules', $holidays_assistants_rules, $assistants);

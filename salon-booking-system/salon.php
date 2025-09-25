@@ -1,14 +1,17 @@
 <?php
 
 /*
-Plugin Name: Salon Booking Wordpress Plugin - Free Version
+Plugin Name: Salon Booking System - Free Version
 Description: Let your customers book you services through your website. Perfect for hairdressing salons, barber shops and beauty centers.
-Version: 10.22
+Version: 10.26
 Plugin URI: http://salonbookingsystem.com/
 Author: Salon Booking System
 Author URI: http://salonbookingsystem.com/
 Text Domain: salon-booking-system
 Domain Path: /languages
+License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+
  */
 
 if (!function_exists('sln_deactivate_plugin')) {
@@ -44,7 +47,7 @@ if (defined('SLN_PLUGIN_BASENAME')) {
 define('SLN_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('SLN_PLUGIN_DIR', untrailingslashit(dirname(__FILE__)));
 define('SLN_PLUGIN_URL', untrailingslashit(plugins_url('', __FILE__)));
-define('SLN_VERSION', '10.22');
+define('SLN_VERSION', '10.26');
 define('SLN_STORE_URL', 'https://salonbookingsystem.com');
 define('SLN_AUTHOR', 'Salon Booking');
 define('SLN_UPLOADS_DIR', wp_upload_dir()['basedir'] . '/sln_uploads/');
@@ -57,7 +60,7 @@ define('SLN_API_TOKEN', '7c901a98fa10dd3af65b038d6f5f190c');
 
 
 
-define('SLN_ONESIGNAL_USER_AUTH_KEY', 'YTc3MDkyMjYtMGZiMC00OGI1LTliMDAtZjA2NTZhMGRmZDNl');
+
 
 $sln_autoload = function ($className) {
 	if (strpos($className, 'SLN_') === 0) {

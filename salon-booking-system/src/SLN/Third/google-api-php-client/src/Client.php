@@ -419,7 +419,7 @@ class Client
         // include_granted_scopes should be string "true", string "false", or null
         $includeGrantedScopes = $this->config['include_granted_scopes'] === null
             ? null
-            : var_export($this->config['include_granted_scopes'], true);
+            : $this->config['include_granted_scopes'];
 
         $params = array_filter([
             'access_type' => $this->config['access_type'],
@@ -990,10 +990,12 @@ class Client
      * Are we running in Google AppEngine?
      * return bool
      */
-    public function isAppEngine()
-    {
-        return (isset($_SERVER['SERVER_SOFTWARE']) &&
-            strpos($_SERVER['SERVER_SOFTWARE'], 'Google App Engine') !== false);
+    public function isAppEngine() {
+        if ( isset( $_SERVER['SERVER_SOFTWARE'] ) ) {
+            $server_software = sanitize_text_field( wp_unslash( $_SERVER['SERVER_SOFTWARE'] ) );
+            return ( strpos( $server_software, 'Google App Engine' ) !== false );
+        }
+        return false;
     }
 
     public function setConfig($name, $value)
@@ -1031,7 +1033,7 @@ class Client
     {
         if (is_string($config)) {
             if (!file_exists($config)) {
-                throw new InvalidArgumentException(sprintf('file "%s" does not exist', $config));
+                throw new InvalidArgumentException(sprintf('file "%s" does not exist', esc_html($config)));
             }
 
             $json = file_get_contents($config);
@@ -1353,8 +1355,8 @@ class Client
         if ($credentialsUniverse !== $this->getUniverseDomain()) {
             throw new DomainException(sprintf(
                 'The configured universe domain (%s) does not match the credential universe domain (%s)',
-                $this->getUniverseDomain(),
-                $credentialsUniverse
+                esc_html($this->getUniverseDomain()),
+                esc_html($credentialsUniverse)
             ));
         }
     }

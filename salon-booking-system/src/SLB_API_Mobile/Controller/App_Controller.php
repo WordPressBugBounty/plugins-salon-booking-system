@@ -92,7 +92,7 @@ class App_Controller extends REST_Controller
                     $addon = \SalonMultishop\Addon::getInstance();
                     $addon->setCurrentShop($shop_id);
                 } catch (\Exception $e) {
-                    var_dump("API: Failed to set shop context: " . $e->getMessage());
+                    return $e->getMessage();
                 }
             }
 

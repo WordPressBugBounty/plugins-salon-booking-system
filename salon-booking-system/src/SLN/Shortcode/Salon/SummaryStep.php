@@ -23,17 +23,38 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
         if(!empty($value)){
             $bb->setMeta('note', SLN_Func::filter($value));
         }
+        $handler = new SLN_Action_Ajax_CheckDateAlt( $plugin );
+
         $plugin->getBookingBuilder()->clear($bb->getId());
         $paymentMethod = $plugin->getSettings()->isPayEnabled() ? SLN_Enum_PaymentMethodProvider::getService($plugin->getSettings()->getPaymentMethod(), $plugin) : false;
         $mode = isset($_GET['mode']) ? sanitize_text_field(wp_unslash($_GET['mode'])) : null;
 
         if($mode == 'confirm' || empty($paymentMethod) || $bb->getAmount() <= 0.0){
+            $errors = $handler->checkDateTimeServicesAndAttendants($bb->getAttendantsIds(), $bb->getStartsAt());
+            if(!empty($errors)){
+                $this->addError(self::SLOT_UNAVAILABLE);
+                return false;
+            }
             if($bb->getStatus() == SLN_Enum_BookingStatus::DRAFT){
-                $bb->setStatus($bb->getCreateStatus()); // SLN_Wrapper_Booking::getCreateStatus
+                ///$bb->setStatus($bb->getCreateStatus()); // SLN_Wrapper_Booking::getCreateStatus
+                if($bb->getAmount() <= 0.0){
+                    $bb->setStatus(SLN_Enum_BookingStatus::CONFIRMED);
+                } else if(SLN_Plugin::getInstance()->getSettings()->get('confirmation')) {
+                    $bb->setStatus(SLN_Enum_BookingStatus::PENDING);
+                } else if(empty($paymentMethod)) {
+                    $bb->setStatus(SLN_Enum_BookingStatus::CONFIRMED);
+                }  else {
+                    $bb->setStatus(SLN_Enum_BookingStatus::PAID);
+                }
             }
             $bb->setPrepaidServices();
             return !$this->hasErrors();
         } elseif($mode == 'later'){
+            $errors = $handler->checkDateTimeServicesAndAttendants($bb->getAttendantsIds(), $bb->getStartsAt());
+            if(!empty($errors)){
+                $this->addError(self::SLOT_UNAVAILABLE);
+                return false;
+            }
             if(in_array($bb->getStatus(), array(SLN_Enum_BookingStatus::PENDING_PAYMENT, SLN_Enum_BookingStatus::DRAFT))){
                 if($bb->getAmount() > 0.0){
                     $bb->setStatus(SLN_Enum_BookingStatus::PAY_LATER);

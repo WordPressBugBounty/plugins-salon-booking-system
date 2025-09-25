@@ -7483,3 +7483,12 @@ msgstr ""
 
 msgid "week %s of %s"
 msgstr ""
+
+msgid "Confirm"
+msgstr ""
+
+msgid "Clone"
+msgstr ""
+
+msgid "times until"
+msgstr ""

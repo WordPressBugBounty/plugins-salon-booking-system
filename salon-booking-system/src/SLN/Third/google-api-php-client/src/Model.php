@@ -249,7 +249,7 @@ class Model implements \ArrayAccess
     {
         if ($obj && !is_array($obj)) {
             throw new GoogleException(
-                "Incorrect parameter type passed to $method(). Expected an array."
+                esc_html("Incorrect parameter type passed to $method(). Expected an array.")
             );
         }
     }

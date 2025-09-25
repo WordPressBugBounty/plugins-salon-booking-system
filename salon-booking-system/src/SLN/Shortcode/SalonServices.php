@@ -67,6 +67,7 @@ class SLN_Shortcode_SalonServices
         $services = $repo->sortByExecAndTitleDESC($repo->get($criteria));
         $data = array('services' => $services);
         $data['styled'] = !empty($this->attrs['styled']) && $this->attrs['styled']=== 'true';
+        $data['secondary'] = !empty($this->attrs['secondary']) && $this->attrs['secondary'] === 'no' ? 'no' : 'yes';
         $data['skip_service_selection'] = !empty($this->attrs['skip_service_selection']) && $this->attrs['skip_service_selection'] === 'true';
         if(!empty($this->attrs['columns']) && intval($this->attrs['columns'])) $data['columns'] =  intval($this->attrs['columns']);
         $data['display'] = $display;

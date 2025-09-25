@@ -232,7 +232,6 @@ class SLN_Plugin
     public function ajax()
     {
         SLN_TimeFunc::startRealTimezone();
-        //check_ajax_referer('ajax_post_validation', 'security');
         $method = sanitize_text_field(wp_unslash( $_REQUEST['method'] ));
         $className = 'SLN_Action_Ajax_'.ucwords($method);
         $classAltName = 'SLN_Action_Ajax_'.ucwords($method).'Alt';

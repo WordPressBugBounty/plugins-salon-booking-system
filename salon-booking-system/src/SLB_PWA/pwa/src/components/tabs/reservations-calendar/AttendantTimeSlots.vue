@@ -125,6 +125,14 @@ export default {
       immediate: true,
     },
   },
+  computed: {
+    isShopsEnabled() {
+      return !!(window?.slnPWA?.is_shops);
+    },
+    selectedShopId() {
+      return this.shop?.id || null;
+    },
+  },
   methods: {
     /** helpers **/
     /* method to format date consistently */
@@ -232,10 +240,10 @@ export default {
 
       try {
         const updatedRules = await this.axios.get('holiday-rules', {
-          params: {
+          params: this.withShop({
             assistants_mode: true,
             date: formattedDate,
-          }
+          }),
         });
 
         if (updatedRules.data?.assistants_rules) {
@@ -244,7 +252,7 @@ export default {
               rules.map(rule => ({
                 ...rule,
                 assistant_id: Number(assistantId) || null,
-                is_manual: rule.is_manual !== false ? true : false,
+                is_manual: rule.is_manual === true,
               }))
           );
           this.$emit('update:lockedTimeslots', newLockedTimeslots);
@@ -255,7 +263,7 @@ export default {
               to_date: rule.to_date,
               from_time: rule.from_time,
               to_time: rule.to_time,
-              is_manual: rule.is_manual !== false ? true : false
+              is_manual: rule.is_manual === true
             }));
             if (this.shop?.id) {
               const shopData = attendant.shops?.find(shop => shop.id === this.shop.id);
@@ -265,6 +273,7 @@ export default {
                   to_date: rule.to_date,
                   from_time: rule.from_time,
                   to_time: rule.to_time,
+                  is_manual: rule.is_manual === true,
                 }));
               }
             }
@@ -300,32 +309,25 @@ export default {
       // prevent multiple processing of the same slot
       if (this.processingSlots.has(slotKey)) return;
       this.processingSlots.add(slotKey);
-
       try {
         const formattedDate = this.getFormattedDate();
-
         // prepare time values
         const formattedFromTime = this.normalizeTime(timeslot);
-        let formattedToTime;
-
-        if (nextTimeslot) {
-          formattedToTime = this.normalizeTime(nextTimeslot);
-        } else {
-          formattedToTime = this.moment(formattedFromTime, 'HH:mm').add(30, 'minutes').format('HH:mm');
-        }
+        const formattedToTime = nextTimeslot ? this.normalizeTime(nextTimeslot)
+          : this.moment(formattedFromTime,'HH:mm').add(30,'minutes').format('HH:mm');
 
         // prepare API payload
-        const payload = {
+        const payload = this.withShop({
           assistants_mode: true,
           assistant_id: attendant.id || null,
           date: formattedDate,
           from_date: formattedDate,
           to_date: formattedDate,
-          from_time: formattedFromTime,
-          to_time: formattedToTime,
+          formattedFromTime,
+          formattedToTime,
           daily: true,
-          shop: this.shop?.id || null,
-        };
+          is_manual: true,
+        });
 
         // send lock request
         await this.axios.post('holiday-rules', payload);
@@ -341,6 +343,7 @@ export default {
         this.processingSlots.delete(slotKey);
       }
     },
+
     async unlockSlot(timeslot, attendant, index) {
       const nextTimeslot = this.getNextTimeslot(index);
       const slotKey = this.getSlotKey(timeslot, nextTimeslot, attendant.id);
@@ -348,7 +351,6 @@ export default {
       // prevent multiple processing of the same slot
       if (this.processingSlots.has(slotKey)) return;
       this.processingSlots.add(slotKey);
-
       try {
         const formattedDate = this.getFormattedDate();
         const slotMinutes = this.getTimeInMinutes(timeslot);
@@ -365,13 +367,10 @@ export default {
               (slotMinutes >= lockStart && slotMinutes < lockEnd);
         });
 
-        if (!relevantLock) {
-          this.processingSlots.delete(slotKey);
-          return;
-        }
+        if (!relevantLock) { this.processingSlots.delete(slotKey); return; }
 
         // prepare API payload
-        const payload = {
+        const payload = this.withShop({
           assistants_mode: true,
           assistant_id: attendant.id,
           from_date: formattedDate,
@@ -379,11 +378,10 @@ export default {
           from_time: this.normalizeTime(relevantLock.from_time),
           to_time: this.normalizeTime(relevantLock.to_time),
           daily: true,
-          shop: this.shop?.id || 0,
-        };
+        });
 
         // send unlock request
-        await this.axios.delete('holiday-rules', {data: payload});
+        await this.axios.delete('holiday-rules', { data: payload });
 
         // update locked timeslots
         await this.updateLockedTimeslots();
@@ -749,6 +747,12 @@ export default {
         backgroundColor: "#ddd",
         zIndex: 1
       };
+    },
+    withShop(params = {}) {
+      if (this.isShopsEnabled && this.selectedShopId) {
+        return {...params, shop: this.selectedShopId};
+      }
+      return {...params};
     },
   },
   emits: ['add', 'update:lockedTimeslots', 'slot-processing', 'lock', 'unlock'],

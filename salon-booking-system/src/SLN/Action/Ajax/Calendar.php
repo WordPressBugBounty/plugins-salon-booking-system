@@ -56,9 +56,39 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
         'render' => $this->renderEvents(),
       );
     } else {
+      $settings = $this->plugin->getSettings();
+      $holidays_rules = $settings->get('holidays_daily') ?: array();
+
+      foreach ($holidays_rules as &$rule) {
+          $rule['is_manual'] = isset($rule['is_manual']) ? (bool)$rule['is_manual'] : true;
+      }
+
+      $holidays_assistants_rules = array();
+      $assistants = $this->plugin->getRepository(\SLN_Plugin::POST_TYPE_ATTENDANT)->getAll();
+
+      foreach ($assistants as $att) {
+          $holidays_daily = $att->getMeta('holidays_daily') ?: array();
+          foreach ($holidays_daily as &$rule) {
+              $rule['assistant_id'] = $att->getId();
+              $rule['is_manual'] = isset($rule['is_manual']) ? (bool)$rule['is_manual'] : true;
+          }
+          $holidays = $att->getMeta('holidays') ?: array();
+          foreach ($holidays as &$rule) {
+              $rule['assistant_id'] = $att->getId();
+              if (!isset($rule['daily'])) {
+                  $rule['daily'] = true;
+              }
+              $rule['is_manual'] = isset($rule['is_manual']) ? (bool)$rule['is_manual'] : false;
+          }
+
+          $holidays_assistants_rules[$att->getId()] = array_merge($holidays_daily, $holidays);
+      }
+
       $ret = array(
         'success' => 1,
         'render' => $this->renderEvents(),
+        'rules' => $holidays_rules,
+        'assistants_rules' => apply_filters('sln.get-day-holidays-assistants-rules', $holidays_assistants_rules, $assistants),
       );
     }
 
@@ -608,9 +638,16 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
     return false;
   }
 
-  public function hasHolidaysDaylyByLine($line){
+  public function hasHolidaysDaylyByLine($line, $attId = null){
     $settings = $this->plugin->getSettings();
     $holidays = $settings->get('holidays_daily') ?: array();
+
+    if (!empty($attId)) {
+        $attendant = $this->plugin->createAttendant($attId);
+        $attendant_holidays = $attendant->getMeta('holidays_daily') ?: array();
+        $holidays = array_merge($holidays, $attendant_holidays);
+    }
+
     if(empty($holidays) || !isset($holidays)){
       return false;
     }
@@ -649,7 +686,6 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
         $interval = $this->plugin->getSettings()->getInterval();
 
         $holidays = $attendant->getMeta('holidays') ?: array();
-        $holidays = array_merge($holidays, $attendant->getMeta('holidays_daily') ?: array());
 
         $time = clone $this->startTime;
         $time->modify($line*$interval. ' minutes');
@@ -663,6 +699,7 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
         }
         return false;
     }
+
 
     public function isAttendantAvailable($attendantId, $day, $isFullDay = false)
     {

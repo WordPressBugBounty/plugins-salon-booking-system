@@ -3,22 +3,22 @@
     <h5 class="title">{{ this.getLabel("reservationsCalendarTitle") }}</h5>
 
     <SearchInput
-        v-model="search"
-        @search="handleSearch"
+      v-model="search"
+      @search="handleSearch"
     />
 
     <BookingCalendar
-        v-model="date"
-        :availability-stats="availabilityStats"
-        :is-loading="isLoadingTimeslots || !attendantsLoaded"
-        @month-year-update="handleMonthYear"
+      v-model="date"
+      :availability-stats="availabilityStats"
+      :is-loading="isLoadingTimeslots || !attendantsLoaded"
+      @month-year-update="handleMonthYear"
     />
 
     <SlotsHeadline
-        :date="date"
-        :settings="$root.settings"
-        :attendants="attendants"
-        v-model:is-attendant-view="isAttendantView"
+      :date="date"
+      :settings="$root.settings"
+      :attendants="attendants"
+      v-model:is-attendant-view="isAttendantView"
     />
 
     <div class="slots" :class="{ 'slots--assistants': isAttendantView }" ref="slotsContainer">
@@ -27,53 +27,55 @@
 
       <div v-else-if="isReadyToRender" class="slots-inner">
         <TimeAxis
-            :timeslots="timeslots"
-            :slot-height="slotHeight"
-            :time-format-new="timeFormatNew"
+          :timeslots="timeslots"
+          :slot-height="slotHeight"
+          :time-format-new="timeFormatNew"
         />
         <div
-            class="slots-content"
-            ref="dragScrollContainer"
-            v-on="dragHandlers"
+          class="slots-content"
+          ref="dragScrollContainer"
+          v-on="dragHandlers"
         >
           <!--with-->
           <template v-if="isAttendantView">
             <AttendantsList
-                v-if="attendantsLoaded"
-                :attendants="sortedAttendants"
-                :column-widths="columnWidths"
-                :column-gap="attendantColumnGap"
-                :is-hidden="!shouldShowAttendants"
+              v-if="attendantsLoaded"
+              :attendants="sortedAttendants"
+              :column-widths="columnWidths"
+              :column-gap="attendantColumnGap"
+              :is-hidden="!shouldShowAttendants"
             />
 
             <div class="bookings-canvas" :style="canvasStyle">
               <AttendantTimeSlots
-                  v-if="sortedAttendants.length > 0 && timeslots.length > 0"
-                  :sorted-attendants="sortedAttendants"
-                  :timeslots="timeslots"
-                  :column-widths="columnWidths"
-                  :slot-height="slotHeight"
-                  :selected-slots="selectedTimeSlots"
-                  :processed-bookings="processedBookings"
-                  :availability-intervals="availabilityIntervals"
-                  v-model:lockedTimeslots="lockedTimeslots"
-                  @lock="handleAttendantLock"
-                  @unlock="handleAttendantUnlock"
-                  @slot-processing="setSlotProcessing"
-                  :date="date"
-                  :shop="shop"
-                  @add="addBookingForAttendant"
+                ref="attendantTimeSlots"
+                v-if="sortedAttendants.length > 0 && timeslots.length > 0"
+                :sorted-attendants="sortedAttendants"
+                :timeslots="timeslots"
+                :column-widths="columnWidths"
+                :slot-height="slotHeight"
+                :selected-slots="selectedTimeSlots"
+                :processed-bookings="processedBookings"
+                :availability-intervals="availabilityIntervals"
+                v-model:lockedTimeslots="lockedTimeslots"
+                @lock="handleAttendantLock"
+                @unlock="handleAttendantUnlock"
+                @slot-processing="setSlotProcessing"
+                :date="date"
+                :shop="shop"
+                @add="addBookingForAttendant"
               />
               <!-- Bookings display -->
-              <template v-for="booking in processedBookings" :key="booking.id + (booking._serviceTime?.start || '')">
+              <template v-for="booking in processedBookings"
+                        :key="booking.id + (booking._serviceTime?.start || '')">
                 <BookingCard
-                    v-if="booking._assistantId"
-                    :booking="booking"
-                    :style="getBookingStyle(booking)"
-                    :class="{ 'booking-card--default-duration': booking._isDefaultDuration }"
-                    @deleteItem="deleteItem"
-                    @showDetails="showDetails"
-                    @viewCustomerProfile="viewCustomerProfile"
+                  v-if="booking._assistantId"
+                  :booking="booking"
+                  :style="getBookingStyle(booking)"
+                  :class="{ 'booking-card--default-duration': booking._isDefaultDuration }"
+                  @deleteItem="deleteItem"
+                  @showDetails="showDetails"
+                  @viewCustomerProfile="viewCustomerProfile"
                 />
               </template>
             </div>
@@ -83,44 +85,44 @@
             <div class="bookings-canvas" :style="canvasStyle">
 
               <TimeSlots
-                  :timeslots="timeslots"
-                  :slot-style="getTimeSlotLineStyle"
-                  :is-locked="isSlotLocked"
-                  :is-system-locked="isSystemLocked"
-                  :is-manual-locked="isManualLocked"
-                  :is-processing="(start, end) => slotProcessing[`${start}-${end}`]"
-                  :active-index="activeSlotIndex"
-                  @toggle="toggleSlotActions"
+                :timeslots="timeslots"
+                :slot-style="getTimeSlotLineStyle"
+                :is-locked="isSlotLocked"
+                :is-system-locked="isSystemLocked"
+                :is-manual-locked="isManualLocked"
+                :is-processing="(start, end) => slotProcessing[`${start}-${end}`]"
+                :active-index="activeSlotIndex"
+                @toggle="toggleSlotActions"
               >
                 <template #actions="{ timeSlot, slotIndex }">
                   <SlotActions
-                      :time-slot="timeSlot"
-                      :index="slotIndex"
-                      :timeslots="timeslots"
-                      :is-locked="isSlotLocked"
-                      :is-available="isAvailable"
-                      :is-system-locked="isSystemLocked"
-                      :is-schedule-locked="isSlotLocked"
-                      :is-manual-locked="isManualLocked"
-                      :is-disabled="slotProcessing[`${timeSlot}-${timeslots[slotIndex+1]}`]"
-                      :has-overlapping="hasOverlappingBookings"
-                      :date="date"
-                      :shop="shop"
-                      @add="addBooking"
-                      @lock="handleSlotLock"
-                      @unlock="handleSlotUnlock"
-                      @update-processing="updateSlotProcessing"
+                    :time-slot="timeSlot"
+                    :index="slotIndex"
+                    :timeslots="timeslots"
+                    :is-locked="isSlotLocked"
+                    :is-available="isAvailable"
+                    :is-system-locked="isSystemLocked"
+                    :is-schedule-locked="isSlotLocked"
+                    :is-manual-locked="isManualLocked"
+                    :is-disabled="slotProcessing[`${timeSlot}-${timeslots[slotIndex+1]}`]"
+                    :has-overlapping="hasOverlappingBookings"
+                    :date="date"
+                    :shop="shop"
+                    @add="addBooking"
+                    @lock="handleSlotLock"
+                    @unlock="handleSlotUnlock"
+                    @update-processing="updateSlotProcessing"
                   />
                 </template>
               </TimeSlots>
 
               <template v-for="booking in bookingsList" :key="booking.id">
                 <BookingCard
-                    :booking="booking"
-                    :style="getBookingStyle(booking)"
-                    @deleteItem="deleteItem"
-                    @showDetails="showDetails"
-                    @viewCustomerProfile="viewCustomerProfile"
+                  :booking="booking"
+                  :style="getBookingStyle(booking)"
+                  @deleteItem="deleteItem"
+                  @showDetails="showDetails"
+                  @viewCustomerProfile="viewCustomerProfile"
                 />
               </template>
             </div>
@@ -269,8 +271,8 @@ export default {
       }
 
       const dynamicWidth = Math.max(
-          this.bookingsList.length * (this.cardWidth + this.gap),
-          this.canvasWidth
+        this.bookingsList.length * (this.cardWidth + this.gap),
+        this.canvasWidth
       );
 
       return {
@@ -402,14 +404,14 @@ export default {
         }
 
         if (!this.availabilityIntervals ||
-            Object.keys(this.availabilityIntervals).length === 0) {
+          Object.keys(this.availabilityIntervals).length === 0) {
           return false;
         }
       }
 
       return !this.isLoadingTimeslots &&
-          this.attendantsLoaded &&
-          this.timeslots.length > 0;
+        this.attendantsLoaded &&
+        this.timeslots.length > 0;
     },
     validatedHolidayRule() {
       return (rule) => {
@@ -418,11 +420,17 @@ export default {
         if (!rule.from_time || !rule.to_time) return false;
 
         return this.moment(rule.from_date, 'YYYY-MM-DD').isValid() &&
-            this.moment(rule.to_date, 'YYYY-MM-DD').isValid() &&
-            /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(rule.from_time) &&
-            /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(rule.to_time);
+          this.moment(rule.to_date, 'YYYY-MM-DD').isValid() &&
+          /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(rule.from_time) &&
+          /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(rule.to_time);
       };
-    }
+    },
+    isShopsEnabled() {
+      return !!(window?.slnPWA?.is_shops);
+    },
+    selectedShopId() {
+      return this.shop?.id || null;
+    },
   },
   watch: {
     shop: {
@@ -540,102 +548,92 @@ export default {
       };
 
       loadSettings()
-          .then(() => this.loadTimeslots())
-          .then(() => {
-            const additionalTasks = [
-              this.loadLockedTimeslots(),
-              this.loadBookingsList(),
-              this.loadAvailabilityIntervals()
-            ];
+        .then(() => this.loadTimeslots())
+        .then(() => {
+          const additionalTasks = [
+            this.loadLockedTimeslots(),
+            this.loadBookingsList(),
+            this.loadAvailabilityIntervals()
+          ];
 
-            const d = this.date;
-            const y = d.getFullYear();
-            const m = d.getMonth();
-            const firstDate = new Date(y, m, 1);
-            const lastDate = new Date(y, m + 1, 0);
+          const d = this.date;
+          const y = d.getFullYear();
+          const m = d.getMonth();
+          const firstDate = new Date(y, m, 1);
+          const lastDate = new Date(y, m + 1, 0);
 
-            additionalTasks.push(this.loadAvailabilityStats(firstDate, lastDate));
+          additionalTasks.push(this.loadAvailabilityStats(firstDate, lastDate));
 
-            if (this.isAttendantView && this.$root.settings?.attendant_enabled && !this.attendantsLoaded) {
-              additionalTasks.push(this.loadAttendants());
-            }
+          if (this.isAttendantView && this.$root.settings?.attendant_enabled && !this.attendantsLoaded) {
+            additionalTasks.push(this.loadAttendants());
+          }
 
-            this.loadingQueue = additionalTasks;
+          this.loadingQueue = additionalTasks;
 
-            return Promise.all(additionalTasks);
-          })
-          .then(() => {
-            this.$nextTick(() => {
-              this.arrangeBookings();
-              this.$forceUpdate();
-            });
-          })
-          .catch(error => {
-            console.error('Error loading calendar data:', error);
-          })
-          .finally(() => {
-            this.isLoading = false;
+          return Promise.all(additionalTasks);
+        })
+        .then(() => {
+          this.$nextTick(() => {
+            this.arrangeBookings();
+            this.$forceUpdate();
           });
+        })
+        .catch(error => {
+          console.error('Error loading calendar data:', error);
+        })
+        .finally(() => {
+          this.isLoading = false;
+        });
     },
     cancelPendingLoads() {
       this.loadingQueue = [];
     },
     async loadTimeslots() {
       this.isLoadingTimeslots = true;
-      return this.axios.get('calendar/intervals', {
-        params: {shop: this.shop?.id || null},
-      }).then(response => {
+      try {
+        const response = await this.axios.get('calendar/intervals', {
+          params: this.withShop({}),
+        });
         this.timeslots = response.data.items || [];
         this.updateCurrentTimeLinePosition();
         return response;
-      }).catch(error => {
-        console.error('Error loading timeslots:', error);
-        throw error;
-      }).finally(() => {
+      } finally {
         this.isLoadingTimeslots = false;
-      });
+      }
     },
     async loadLockedTimeslots() {
       try {
         const salonRulesResponse = await this.axios.get('holiday-rules', {
-          params: {
-            assistants_mode: 'false',
+          params: this.withShop({
+            assistants_mode: false,
             date: this.moment(this.date).format('YYYY-MM-DD'),
-          },
+          }),
         });
-
-        let salonRules = [];
-        if (salonRulesResponse.data?.status === 'OK') {
-          salonRules = salonRulesResponse.data.items || [];
-        }
+        const salonRules = salonRulesResponse.data?.items || [];
 
         if (this.isAttendantView) {
           const assistantsResponse = await this.axios.get('holiday-rules', {
-            params: {
-              assistants_mode: 'true',
+            params: this.withShop({
+              assistants_mode: true,
               date: this.moment(this.date).format('YYYY-MM-DD'),
-            },
+            }),
           });
 
-          if (assistantsResponse.data?.status === 'OK') {
-            const assistantsRules = assistantsResponse.data.assistants_rules || {};
-            const formattedAssistantRules = Object.entries(assistantsRules).flatMap(([assistantId, rules]) =>
-                rules.map(rule => ({
-                  ...rule,
-                  assistant_id: Number(assistantId) || null,
-                }))
-            );
-
-            const formattedSalonRules = salonRules.map(rule => ({
+          const assistantsRules = assistantsResponse.data?.assistants_rules || {};
+          const formattedAssistantRules = Object.entries(assistantsRules).flatMap(([assistantId, rules]) =>
+            rules.map(rule => ({
               ...rule,
-              assistant_id: null,
-            }));
+              assistant_id: Number(assistantId) || null,
+            }))
+          );
 
-            this.lockedTimeslots = [...formattedSalonRules, ...formattedAssistantRules];
-          }
+          const formattedSalonRules = salonRules.map(r => ({...r, assistant_id: null}));
+
+          this.lockedTimeslots = this.dedupeRules([...formattedSalonRules, ...formattedAssistantRules]);
         } else {
-          this.lockedTimeslots = salonRules;
+          this.lockedTimeslots = this.dedupeRules(salonRules);
         }
+
         this.$nextTick(() => {
           this.$forceUpdate();
         });
@@ -644,6 +642,21 @@ export default {
         console.error('Error loading locked timeslots:', error.response?.data || error.message);
         throw error;
       }
+    },
+    dedupeRules(rules) {
+      const seen = new Set();
+      return rules.filter(rule => {
+        const key = [
+          rule.assistant_id ?? null,
+          rule.from_date, rule.to_date,
+          this.normalizeTime(rule.from_time), this.normalizeTime(rule.to_time),
+          rule.daily ? 1 : 0,
+          rule.is_manual ? 1 : 0,
+        ].join('|');
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
     },
     async loadBookingsList() {
       return this.axios.get('bookings', {
@@ -663,9 +676,9 @@ export default {
         const newBookingsMap = new Map(newBookings.map(b => [b.id, b]));
         this.bookingsList = [];
         this.bookingsList = this.bookingsList.map(existingBooking =>
-            newBookingsMap.has(existingBooking.id)
-                ? {...existingBooking, ...newBookingsMap.get(existingBooking.id)}
-                : existingBooking
+          newBookingsMap.has(existingBooking.id)
+            ? {...existingBooking, ...newBookingsMap.get(existingBooking.id)}
+            : existingBooking
         );
 
         newBookings.forEach(newBooking => {
@@ -694,42 +707,36 @@ export default {
     async loadAvailabilityStats(fd, td) {
       this.isLoadingCalendar = true;
       try {
-        const response = await this.axios.get("availability/stats", {
-          params: {
-            from_date: this.moment(fd).format("YYYY-MM-DD"),
-            to_date: this.moment(td).format("YYYY-MM-DD"),
-            shop: this.shop?.id || null
-          },
+        const response = await this.axios.get('availability/stats', {
+          params: this.withShop({
+            from_date: this.moment(fd).format('YYYY-MM-DD'),
+            to_date: this.moment(td).format('YYYY-MM-DD'),
+          }),
         });
         this.availabilityStats = response.data.stats;
         return response;
-      } catch (error) {
-        console.error('Error loading availability stats:', error);
-        throw error;
       } finally {
         this.isLoadingCalendar = false;
       }
     },
     async loadAvailabilityIntervals() {
       const timeParam = this.timeslots.length > 0 ? this.timeslots[0] : '09:00';
-
       try {
-        const response = await this.axios.post("availability/intervals", {
-          date: this.moment(this.date).format("YYYY-MM-DD"),
+        const response = await this.axios.post('availability/intervals', this.withShop({
+          date: this.moment(this.date).format('YYYY-MM-DD'),
           time: timeParam,
-          shop: this.shop?.id || 0
-        });
+        }));
         this.availabilityIntervals = response.data.intervals;
         return response;
-      } catch (error) {
-        console.error('Error loading availability intervals:', error);
-        throw error;
+      } catch (e) {
+        console.error('Error loading availability intervals:', e);
+        throw e;
       }
     },
     async loadAttendants() {
       try {
-        const response = await this.axios.get("assistants", {
-          params: {shop: this.shop?.id || null, per_page: -1}
+        const response = await this.axios.get('assistants', {
+          params: this.withShop({per_page: -1}),
         });
         this.attendants = response.data.items;
         this.attendantsLoaded = true;
@@ -739,9 +746,19 @@ export default {
         this.attendantsLoaded = true;
         throw error;
       }
+    }
+    ,
+    async update() {
+      await this.loadBookingsList();
+      if (this.$refs.attendantTimeSlots) {
+        await this.$refs.attendantTimeSlots.updateLockedTimeslots();
+      }
     },
-    update() {
-      return this.loadBookingsList();
+    withShop(params = {}) {
+      if (this.isShopsEnabled && this.selectedShopId) {
+        return {...params, shop: this.selectedShopId};
+      }
+      return {...params};
     },
     addBookingForAttendant({timeslot, attendantId}) {
       const selectedDate = this.modelValue;
@@ -787,23 +804,18 @@ export default {
     },
     handleSlotLock(rule) {
       this.lockedTimeslots.push(rule);
-
-      this.axios.post('holiday-rules', this.normalizeRule(rule))
-          .catch(() => {
-            this.lockedTimeslots = this.lockedTimeslots.filter(existingRule =>
-                !this.isSameRule(existingRule, rule)
-            );
-          });
+      this.axios.post('holiday-rules', this.withShop(this.normalizeRule(rule)))
+        .catch(() => {
+          this.lockedTimeslots = this.lockedTimeslots.filter(r => !this.isSameRule(r, rule));
+        });
     },
     async handleSlotUnlock(rule) {
       const slotKey = `${rule.from_time}-${rule.to_time}`;
       this.updateSlotProcessing({slot: slotKey, status: true});
-      this.lockedTimeslots = this.lockedTimeslots.filter(r =>
-          !this.isSameRule(r, rule)
-      );
+      this.lockedTimeslots = this.lockedTimeslots.filter(r => !this.isSameRule(r, rule));
       this.updateLocalAvailability(rule, true);
       try {
-        await this.axios.delete('holiday-rules', {data: this.normalizeRule(rule)});
+        await this.axios.delete('holiday-rules', {data: this.withShop(this.normalizeRule(rule))});
       } catch (err) {
         this.lockedTimeslots.push(rule);
         console.error('Unlock failed:', err);
@@ -815,7 +827,7 @@ export default {
     updateLocalAvailability(rule, isUnlock) {
       if (!this.availabilityIntervals) return;
 
-      const { times = {}, workTimes = {} } = this.availabilityIntervals;
+      const {times = {}, workTimes = {}} = this.availabilityIntervals;
       const slotDuration = this.calcSlotStep();
 
       // convert times to minutes
@@ -824,8 +836,8 @@ export default {
 
       // if unlock was successful ==> restore slot range into allowed times
       if (isUnlock) {
-        const updatedTimes = { ...times };
-        const updatedWorkTimes = { ...workTimes };
+        const updatedTimes = {...times};
+        const updatedWorkTimes = {...workTimes};
 
         // update the locked timeslots array
         for (let t = startMin; t < endMin; t += slotDuration) {
@@ -851,10 +863,10 @@ export default {
 
       // compare all critical properties: dates, times, assistant ID
       return ruleA.from_date === ruleB.from_date &&
-          ruleA.to_date === ruleB.to_date &&
-          a_from_time === b_from_time &&
-          a_to_time === b_to_time &&
-          (ruleA.assistant_id ?? null) === (ruleB.assistant_id ?? null);
+        ruleA.to_date === ruleB.to_date &&
+        a_from_time === b_from_time &&
+        a_to_time === b_to_time &&
+        (ruleA.assistant_id ?? null) === (ruleB.assistant_id ?? null);
     },
     normalizeRule(rule) {
       return {
@@ -898,7 +910,7 @@ export default {
           /* same‑day holiday */
           if (from.isSame(to, 'day')) {
             return slotMin >= this.timeToMinutes(holiday.from_time)
-                && slotMin < this.timeToMinutes(holiday.to_time);
+              && slotMin < this.timeToMinutes(holiday.to_time);
           }
 
           /* first or last day of multi‑day holiday */
@@ -916,9 +928,9 @@ export default {
         const daily = this.lockedTimeslots.find(lockRule => {
           if (lockRule.assistant_id != null) return false;
           return lockRule.from_date === dateStr
-              && lockRule.to_date === dateStr
-              && slotMin >= this.timeToMinutes(this.normalizeTime(lockRule.from_time))
-              && slotMin < this.timeToMinutes(this.normalizeTime(lockRule.to_time));
+            && lockRule.to_date === dateStr
+            && slotMin >= this.timeToMinutes(this.normalizeTime(lockRule.from_time))
+            && slotMin < this.timeToMinutes(this.normalizeTime(lockRule.to_time));
         });
         if (daily) return true; // ==> slot is locked by daily rule
 
@@ -931,7 +943,7 @@ export default {
           /* same‑day lock */
           if (from.isSame(to, 'day')) {
             return slotMin >= this.timeToMinutes(lockRule.from_time)
-                && slotMin < this.timeToMinutes(lockRule.to_time);
+              && slotMin < this.timeToMinutes(lockRule.to_time);
           }
 
           /* first or last day of multi‑day lock */
@@ -971,7 +983,7 @@ export default {
         const times = this.availabilityIntervals.times || {};
         const allowed = Object.keys(workTimes).length ? workTimes : times;
         return !Object.values(allowed).some(timeValue =>
-            slotMin === this.timeToMinutes(timeValue)
+          slotMin === this.timeToMinutes(timeValue)
         ); // ==> return true if time not in allowed times
       } catch {
         // return locked on any error for safety
@@ -1005,7 +1017,7 @@ export default {
         /* same‑day holiday */
         if (from.isSame(to, 'day')) {
           return slotMin >= this.timeToMinutes(holiday.from_time)
-              && slotMin < this.timeToMinutes(holiday.to_time);
+            && slotMin < this.timeToMinutes(holiday.to_time);
         }
 
         /* first or last day of multi‑day holiday */
@@ -1023,9 +1035,9 @@ export default {
       const daily = this.lockedTimeslots.find(lockRule => {
         if (lockRule.assistant_id != null) return false;
         return lockRule.from_date === dateStr
-            && lockRule.to_date === dateStr
-            && slotMin >= this.timeToMinutes(this.normalizeTime(lockRule.from_time))
-            && slotMin < this.timeToMinutes(this.normalizeTime(lockRule.to_time));
+          && lockRule.to_date === dateStr
+          && slotMin >= this.timeToMinutes(this.normalizeTime(lockRule.from_time))
+          && slotMin < this.timeToMinutes(this.normalizeTime(lockRule.to_time));
       });
       if (daily) return false; // ==> slot is locked by daily rule
 
@@ -1046,7 +1058,7 @@ export default {
 
       /* -- step 5: check for full day unavailability -- */
       const fullDay = this.availabilityStats.find(statItem =>
-          statItem.date === dateStr && statItem.error?.type === 'holiday_rules'
+        statItem.date === dateStr && statItem.error?.type === 'holiday_rules'
       );
       if (fullDay) return false; // ==> full day is locked
 
@@ -1070,7 +1082,7 @@ export default {
       const times = this.availabilityIntervals.times || {};
       const allowed = Object.keys(workTimes).length ? workTimes : times;
       return Object.values(allowed).some(timeValue =>
-          slotMin === this.timeToMinutes(timeValue)
+        slotMin === this.timeToMinutes(timeValue)
       ); // ==> true if time is in allowed times
     },
     isSystemLocked(currentSlot) {
@@ -1150,7 +1162,7 @@ export default {
 
         if (from.isSame(to, 'day')) {
           return slotStartMin >= this.timeToMinutes(holiday.from_time) &&
-              slotStartMin < this.timeToMinutes(holiday.to_time);
+            slotStartMin < this.timeToMinutes(holiday.to_time);
         }
 
         if (currentDate.isSame(from, 'day')) {
@@ -1247,8 +1259,8 @@ export default {
       const position = (minutesSinceOpening / slotDuration) * this.slotHeight;
 
       this.currentTimeLinePosition = Math.max(
-          0,
-          Math.min(position, this.timeslots.length * this.slotHeight)
+        0,
+        Math.min(position, this.timeslots.length * this.slotHeight)
       );
       this.showCurrentTimeLine = true;
     },
@@ -1271,7 +1283,10 @@ export default {
       if (document.querySelector('.dp__active_date.dp__today') !== null) {
         if (document.querySelector('.current-time-line') !== null) {
           document.querySelector('.current-time-line').style.display = 'block';
-          document.querySelector('.current-time-line').scrollIntoView({behavior: 'smooth', block: 'center'})
+          document.querySelector('.current-time-line').scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          })
         }
       } else {
         if (document.querySelector('.current-time-line') !== null)
@@ -1303,8 +1318,8 @@ export default {
     hasOverlappingBookings(slotIndex) {
       const slotStart = this.getMinutes(this.timeslots[slotIndex]);
       const slotEnd = (slotIndex + 1 < this.timeslots.length)
-          ? this.getMinutes(this.timeslots[slotIndex + 1])
-          : slotStart + this.calcSlotStep();
+        ? this.getMinutes(this.timeslots[slotIndex + 1])
+        : slotStart + this.calcSlotStep();
 
       return this.bookingsList.some((booking) => {
         const bookingStart = this.getBookingStart(booking);
@@ -1417,19 +1432,19 @@ export default {
       const bookingEnd = startMin + displayDuration;
 
       const overlappingBookings = this.processedBookings
-          .filter(b => {
-            if (b._assistantId !== attendantId || b.id === booking.id) return false;
-            const bStart = this.getMinutes(b._serviceTime.start);
-            const bRealDuration = this.getMinutes(b._serviceTime.end) - bStart;
-            const bDisplayDuration = this.getDisplayDuration(b, bRealDuration);
-            const bEnd = bStart + bDisplayDuration;
-            return startMin < bEnd && bookingEnd > bStart;
-          })
-          .sort((a, b) => {
-            const timeA = this.getMinutes(a._serviceTime.start);
-            const timeB = this.getMinutes(b._serviceTime.start);
-            return timeA === timeB ? a.id - b.id : timeA - timeB;
-          });
+        .filter(b => {
+          if (b._assistantId !== attendantId || b.id === booking.id) return false;
+          const bStart = this.getMinutes(b._serviceTime.start);
+          const bRealDuration = this.getMinutes(b._serviceTime.end) - bStart;
+          const bDisplayDuration = this.getDisplayDuration(b, bRealDuration);
+          const bEnd = bStart + bDisplayDuration;
+          return startMin < bEnd && bookingEnd > bStart;
+        })
+        .sort((a, b) => {
+          const timeA = this.getMinutes(a._serviceTime.start);
+          const timeB = this.getMinutes(b._serviceTime.start);
+          return timeA === timeB ? a.id - b.id : timeA - timeB;
+        });
 
       if (overlappingBookings.length === 0) {
         booking._position = 0;
@@ -1490,7 +1505,7 @@ export default {
       if (this.isDragging) {
         e.preventDefault();
         this.$refs.dragScrollContainer.scrollLeft =
-            this.scrollLeft - (x - this.startX);
+          this.scrollLeft - (x - this.startX);
       }
     },
     onMouseUp() {
@@ -1528,7 +1543,7 @@ export default {
         this.activeSlotIndex = -1;
         if (e.cancelable) e.preventDefault();
         this.$refs.dragScrollContainer.scrollLeft =
-            this.scrollLeft - (x - this.startX);
+          this.scrollLeft - (x - this.startX);
       }
     },
     onTouchEnd() {

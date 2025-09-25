@@ -61,7 +61,7 @@ class Batch
         $batchPath = null
     ) {
         $this->client = $client;
-        $this->boundary = $boundary ?: mt_rand();
+        $this->boundary = $boundary ?: wp_rand();
         $rootUrl = rtrim($rootUrl ?: $this->client->getConfig('base_path'), '/');
         $this->rootUrl = str_replace(
             'UNIVERSE_DOMAIN',
@@ -74,7 +74,7 @@ class Batch
     public function add(RequestInterface $request, $key = false)
     {
         if (false == $key) {
-            $key = mt_rand();
+            $key = wp_rand();
         }
 
         $this->requests[$key] = $request;
@@ -84,18 +84,14 @@ class Batch
     {
         $body = '';
         $classes = [];
-        $batchHttpTemplate = <<<EOF
---%s
-Content-Type: application/http
-Content-Transfer-Encoding: binary
-MIME-Version: 1.0
-Content-ID: %s
-
-%s
-%s%s
-
-
-EOF;
+        $batchHttpTemplate =
+            "--%s\n" .
+            "Content-Type: application/http\n" .
+            "Content-Transfer-Encoding: binary\n" .
+            "MIME-Version: 1.0\n" .
+            "Content-ID: %s\n\n" .
+            "%s\n" .
+            "%s%s\n\n\n";
 
         /** @var RequestInterface $request */
         foreach ($this->requests as $key => $request) {

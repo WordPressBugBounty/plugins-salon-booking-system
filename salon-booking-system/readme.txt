@@ -1,16 +1,15 @@
-=== Salon Booking System, Appointment Scheduling for Salons, Spas & Small Businesses ===
+=== Salon Booking System - Free Version ===
 Contributors: Salon Booking System
 Tags: booking, reservations, scheduling, booking calendar, appointment calendar
 Requires at least: 4.1
-Tested up to: 6.7
+Tested up to: 6.8
 Requires PHP: 7.4.8
-Stable tag: 10.22
+Stable tag: 10.26
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 
-A comprehensive and user-friendly appointment scheduling plugin designed for salons, spas, and wellness centers to streamline bookings and enhance customer satisfaction.
-
+Appointment scheduling plugin for salons, spas, and wellness centers to streamline bookings and improve customer satisfaction.
 
 == Description ==
 
@@ -408,6 +407,14 @@ FREE version doesn't have the online payments options, no mobile app access, no 
 
 
 == Changelog ==
+
+12.09.2025 - 10.24
+
+- Fixed critical issues
+
+09.09.2025 - 10.23
+
+- Fixed issue with free reservations
 
 01.09.2025 - 10.22
 

@@ -77,13 +77,6 @@ class SLN_Admin_Calendar extends SLN_Admin_AbstractPage
             'underscore'
         );
         wp_enqueue_script(
-            'salon-moment',
-            SLN_PLUGIN_URL.'/js/moment.min.js',
-            array('jquery'),
-            $av,
-            true
-        );
-        wp_enqueue_script(
             'salon-calendar-app',
             SLN_PLUGIN_URL.'/js/admin/customCalendar.js',
             array('jquery'),

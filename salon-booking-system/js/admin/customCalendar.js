@@ -391,13 +391,24 @@ function sln_initSalonCalendar(
                 var single =
                     firstD + firstT === lastD + lastB.attr("data-event-time");
 
-                var top = single
-                    ? firstEl.position().top + firstEl.height() / 2
-                    : firstEl.position().top +
-                      (lastEl.position().top +
+                var calDayPanel = $('#cal-day-panel');
+                var firstPos = firstEl.position();
+                var lastPos = lastEl.position();
+
+                var baseTop = single
+                    ? firstPos.top
+                    : firstPos.top +
+                      (lastPos.top +
                           lastEl.height() -
-                          firstEl.position().top) /
+                          firstPos.top) /
                           2;
+
+                var top = baseTop + firstEl.height() / 2;
+
+                var maxTop = calDayPanel.height() - 50;
+                if (top > maxTop) {
+                    top = maxTop;
+                }
                 var button = $(
                     '<button class=" ' +
                         (status
@@ -482,13 +493,24 @@ function sln_initSalonCalendar(
                 var single =
                     firstD + firstT === lastD + lastB.attr("data-event-time");
 
-                var top = single
-                    ? firstEl.position().top + firstEl.height() / 2
-                    : firstEl.position().top +
-                      (lastEl.position().top +
+                var calDayPanel = $('#cal-day-panel');
+                var firstPos = firstEl.position();
+                var lastPos = lastEl.position();
+
+                var baseTop = single
+                    ? firstPos.top
+                    : firstPos.top +
+                      (lastPos.top +
                           lastEl.height() -
-                          firstEl.position().top) /
+                          firstPos.top) /
                           2;
+
+                var top = baseTop + firstEl.height() / 2;
+
+                var maxTop = calDayPanel.height() - 50;
+                if (top > maxTop) {
+                    top = maxTop;
+                }
                 var button = $(
                     '<button class=" ' +
                         (status
@@ -601,7 +623,6 @@ function sln_initSalonCalendar(
                         $(".sln-free-locked-slots").addClass("hide");
                     }
                     checkUnlockIconsAndToggleButton();
-                    DayCalendarHolydays.showRules({ options: { day: calendar.options.day } });
                 },
                 false,
                 DayCalendarHolydays.createButton.data().attId,
@@ -627,6 +648,7 @@ function sln_initSalonCalendar(
             });
         },
         showRules: function (calendar) {
+            $(".calendar-holydays-button").remove();
             if (!$(".sln-calendar-view").hasClass("sln-assistant-mode")) {
                 var p_rules = window.daily_rules;
                 if (!DayCalendarHolydays.rules)
@@ -663,17 +685,19 @@ function sln_initSalonCalendar(
                     if (endTomorrow) {
                         els = els.add(lastEl);
                     }
-                    els.addClass("blocked");
-                    var button = DayCalendarHolydays.createPopUp(
-                        0,
-                        firstEl,
-                        endTomorrow ? lastEl : lastEl.prev(),
-                        els,
-                        rule,
-                    );
-                    button
-                        .off("click")
-                        .on("click", DayCalendarHolydays.unblockPop);
+                  els.addClass("blocked");
+                     if ((firstEl.hasClass('blocked') || firstEl.find('.att-time-slot.blocked').length) && firstEl.length && firstEl.position()) {
+                        var button = DayCalendarHolydays.createPopUp(
+                            0,
+                            firstEl,
+                            endTomorrow ? lastEl : lastEl.prev(),
+                            els,
+                            rule,
+                        );
+                        button
+                            .off("click")
+                            .on("click", DayCalendarHolydays.unblockPop);
+                    }
                 });
             } else {
                 var p_rules = window.daily_assistants_rules;
@@ -1145,3 +1169,4 @@ function checkUnlockIconsAndToggleButton() {
         freeLockedSlotsButton.classList.remove("hide");
     }
 }
+

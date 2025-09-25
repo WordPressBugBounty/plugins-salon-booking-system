@@ -26,9 +26,15 @@ class SLN_Helper_PayDepositAdvancedRules
      */
     public static function getDepositWithFee(float $amount): float
     {
-        $fee = SLN_Helper_TransactionFee::getFee($amount);
+        $plugin		      = SLN_Plugin::getInstance();
 
-        return $amount + $fee;
+        $fee = SLN_Helper_TransactionFee::getFee($amount);
+        $transactionFeeType   = $plugin->getSettings()->get('pay_transaction_fee_type');
+
+        if ($transactionFeeType === 'fixed') {
+            return $amount + $fee;
+        }
+        return $amount;
     }
 
     /**

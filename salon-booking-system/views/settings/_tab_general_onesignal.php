@@ -4,6 +4,7 @@
  * @var $helper SLN_Admin_Settings
  */
 // phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
+if(defined('SLN_VERSION_PAY') && SLN_VERSION_PAY) :
 ?>
 <div class="sln-box--sub row">
     <div class="col-xs-12">
@@ -17,7 +18,7 @@
 	__('App ID', 'salon-booking-system')
 );?>
                 <div class="generate-onesignal-app--wrapper">
-                    <a href="#" class="generate-onesignal-app"><?php echo esc_html__('Generate', 'salon-booking-system') ?></a>
+                    <a href="#"  data-nonce="<?php echo wp_create_nonce('ajax_post_validation'); ?>" class="generate-onesignal-app"><?php echo esc_html__('Generate', 'salon-booking-system') ?></a>
                 </div>
             </div>
             <div class="col-xs-12">
@@ -48,3 +49,4 @@
     </div>
     <div class="clearfix"></div>
 </div>
+<?php endif;

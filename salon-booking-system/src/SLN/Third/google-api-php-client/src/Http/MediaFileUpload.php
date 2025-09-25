@@ -238,7 +238,7 @@ class MediaFileUpload
             $postBody = $this->data;
         } elseif (self::UPLOAD_MULTIPART_TYPE == $uploadType) {
             // This is a multipart/related upload.
-            $boundary = $this->boundary ?: mt_rand();
+            $boundary = $this->boundary ?: wp_rand();
             $boundary = str_replace('"', '', $boundary);
             $contentType = 'multipart/related; boundary=' . $boundary;
             $related = "--$boundary\r\n";
@@ -327,7 +327,7 @@ class MediaFileUpload
         $error = "Failed to start the resumable upload (HTTP {$message})";
         $this->client->getLogger()->error($error);
 
-        throw new GoogleException($error);
+        throw new GoogleException(esc_html($error));
     }
 
     private function transformToUploadUrl()

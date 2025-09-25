@@ -9,7 +9,7 @@ Copyright (c) 1989 Adobe Systems Incorporated.  All Rights Reserved.Avenir is a 
 <defs>
 <font id="AvenirLT-Medium" horiz-adv-x="556" >
   <font-face 
-    font-family="Avenir LT 65 Medium"
+    font-family="avenir_lt_65_medium"
     font-weight="400"
     font-stretch="normal"
     units-per-em="1000"

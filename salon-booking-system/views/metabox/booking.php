@@ -698,7 +698,7 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                 jQuery("[name=unit_times_input]").on("click", function() {
                         var times = parseInt($(this).val());
 
-                        let dateStr =$('#_sln_booking_date').val(); // '08/07/2025'
+                        let dateStr = $('#_sln_booking_date').data('value').replace('00:00:00','').trim(); // '08/07/2025'
 
                         function parseFlexibleDate(dateStr) {
                             let parts;
@@ -743,7 +743,7 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
 
                         $('.time_until .time_date').text(newDateStr);
                         } else {
-                        console.error("wrong date: " + dateStr);
+                        console.error("wrong date1: " + dateStr);
                         }
                 });
 
@@ -753,7 +753,7 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                     if(($('[data-action=clone-edited-booking].confirm').length == 0)){
 
 
-                        let dateStr = jQuery('#_sln_booking_date').val(); // '08/07/2025'
+                        let dateStr =$('#_sln_booking_date').data('value').replace('00:00:00','').trim();
 
                         function parseFlexibleDate(dateStr) {
                             let parts;
@@ -801,7 +801,7 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                                 console.error("wrong date: " + dateStr);
                             }
 
-                            $("[data-action=clone-edited-booking]").text('Confirm');
+                            $("[data-action=clone-edited-booking]").text($("[data-action=clone-edited-booking]").data('confirm'));
                             $("[data-action=clone-edited-booking]").addClass('confirm');
                             $('[data-action="delete-edited-booking"]').addClass('hide-important');
                             $('.clone-info').show();
@@ -833,10 +833,10 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                 <button type="button" class="sln-btn sln-btn--nu sln-btn--nu--highemph sln-btn--big" aria-hidden="true" data-action="save-edited-booking">
                     <?php esc_html_e('Save', 'salon-booking-system') ?>
                 </button>
-                <button type="button" class="sln-btn sln-btn--nu sln-btn--nu--lowhemph sln-btn--big" aria-hidden="true" data-action="clone-edited-booking"><?php esc_html_e('Clone', 'salon-booking-system') ?></button>
+                <button type="button" class="sln-btn sln-btn--nu sln-btn--nu--lowhemph sln-btn--big" aria-hidden="true" data-confirm="<?php esc_html_e('Confirm', 'salon-booking-system') ?>" data-action="clone-edited-booking"><?php esc_html_e('Clone', 'salon-booking-system') ?></button>
                 <div class="clone-info" style="font-family: 'Open Sans';display:none;">
                     <input type="number" name="unit_times_input" min="1" value="1" style="width: 50px;"/>
-                    <span class="time_until" style="margin-left: 10px;font-size:13px;" >times until <span class="time_date">%date</span></span>
+                    <span class="time_until" style="margin-left: 10px;font-size:13px;" ><?php esc_html_e('times until', 'salon-booking-system') ?> <span class="time_date">%date</span></span>
                 </div>
                 <button type="button" class="sln-btn sln-btn--nu sln-btn--nu--lowhemph sln-btn--big" aria-hidden="true" data-action="delete-edited-booking">
                     <?php esc_html_e('Delete', 'salon-booking-system') ?>

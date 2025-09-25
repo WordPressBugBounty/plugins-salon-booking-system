@@ -14,6 +14,9 @@ if (empty($rulenumber)) {
 $dateFrom = new SLN_DateTime(isset($row['from_date']) ? $row['from_date'] : null);
 $dateTo = new SLN_DateTime(isset($row['to_date']) ? $row['to_date'] : null);
 $row['always'] = isset($row['always']) ? ($row['always'] ? true : false) : true;
+if (!empty($row['select_specific_dates'])) {
+    $row['always'] = true;
+}
 ?>
 <div class="col-xs-12 sln-box--sub sln-booking-rule" data-n="<?php echo esc_attr($rulenumber) ?>">
     <h2 class="sln-box-title"><?php esc_html_e('Rule', 'salon-booking-system'); ?> <strong><?php echo esc_attr($rulenumber); ?></strong> <span class="block"><?php echo esc_attr($alert) ?></span>
@@ -198,12 +201,12 @@ $row['always'] = isset($row['always']) ? ($row['always'] ? true : false) : true;
             <?php endif; ?>
         </div>
         <div class="sln-always-valid-section <?php echo $show_specific_dates && isset($row['select_specific_dates']) && $row['select_specific_dates'] ? 'hide' : '' ?>">
-            <div class="col-xs-12 col-md-4 form-group sln-switch">
+            <div class="col-12 form-group sln-switch">
                 <?php SLN_Form::fieldCheckboxSwitch(
                     $prefix . '[always]',
                     $row['always'],
-                    __('This rule is always Enabled', 'salon-booking-system'),
-                    __('Not always Enabled', 'salon-booking-system'),
+                    __('Always valid ( default )', 'salon-booking-system'),
+                    __('Valid from', 'salon-booking-system'),
                     array('attrs' => array(
                         'data-unhide' => '#' . SLN_Form::makeID($prefix . '[always]' . 'unhide'),
                     ))
@@ -227,23 +230,6 @@ $row['always'] = isset($row['always']) ? ($row['always'] ? true : false) : true;
                 </div>
             </div>
         </div>
-        <div id="<?php echo SLN_Form::makeID($prefix . '[always]' . 'unhide') ?>" class="col-xs-12">
-            <div class="row sln-box--tertiary">
-                <div class="col-xs-12">
-                    <h3 class="sln-box-title--sec ">
-                        <?php esc_html_e('Set a time range for this rule', 'salon-booking-system') ?>:
-                    </h3>
-                </div>
-                <div class="col-xs-12 col-md-4 sln-input--simple sln-input--datepicker">
-                    <label><?php esc_html_e('Apply from', 'salon-booking-system') ?></label>
-                    <?php SLN_Form::fieldJSDate($prefix . "[from_date]", $dateFrom) ?>
-                </div>
-                <div class="col-xs-12 col-md-4 sln-input--simple sln-input--datepicker">
-                    <label><?php esc_html_e('Until', 'salon-booking-system') ?></label>
-                    <div class="sln_datepicker"><?php SLN_Form::fieldJSDate($prefix . "[to_date]", $dateTo) ?></div>
-                </div>
-            </div>
-        </div>
         <div class="col-xs-12 sln-booking-rules__actions">
             <button class="sln-btn sln-btn--problem sln-btn--big sln-btn--icon sln-icon--trash"
                 data-collection="remove"><?php echo esc_html__('Remove this rule', 'salon-booking-system') ?></button>
@@ -251,3 +237,4 @@ $row['always'] = isset($row['always']) ? ($row['always'] ? true : false) : true;
         <div class="clearfix"></div>
     </div>
 </div>
+

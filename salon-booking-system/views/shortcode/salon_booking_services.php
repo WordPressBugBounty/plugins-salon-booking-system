@@ -11,6 +11,12 @@ $plugin = SLN_Plugin::getInstance();
 	<?php 
 	$display = $data['display'];
 	foreach ($data['services'] as $service) {
+	    if($data['secondary'] == 'no'){
+            $secondary = $service->getMeta('secondary');
+            if($secondary){
+                continue;
+            }
+        }
 		$thumb     = has_post_thumbnail($service->getId()) ?get_the_post_thumbnail(
         	$service->getId(),
         	'thumbnail'

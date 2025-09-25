@@ -635,12 +635,15 @@ jQuery(function ($) {
 	$(".generate-onesignal-app").on("click", function (e) {
 		$(this).addClass("loading");
 		var self = this;
+		var nonce = $(this).data("nonce"); // берем из data-атрибута
+
 		jQuery.ajax({
 			url: ajaxurl,
 			type: "POST",
 			data: {
 				action: "salon",
 				method: "GenerateOnesignalApp",
+				security: nonce
 			},
 			cache: false,
 			dataType: "json",

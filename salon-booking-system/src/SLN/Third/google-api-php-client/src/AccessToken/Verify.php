@@ -164,7 +164,7 @@ class Verify
             if (!$file = file_get_contents($url)) {
                 throw new GoogleException(
                     "Failed to retrieve verification certificates: '".
-                    $url."'."
+                    esc_html($url)."'."
                 );
             }
 
@@ -180,9 +180,9 @@ class Verify
         throw new GoogleException(
             sprintf(
                 'Failed to retrieve verification certificates: "%s".',
-                $response->getBody()->getContents()
+                esc_html($response->getBody()->getContents())
             ),
-            $response->getStatusCode()
+            esc_html($response->getStatusCode())
         );
     }
 

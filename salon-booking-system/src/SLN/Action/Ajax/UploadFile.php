@@ -6,6 +6,8 @@ class SLN_Action_Ajax_UploadFile extends SLN_Action_Ajax_Abstract
 {
     public function execute()
     {
+        if(current_user_can( 'upload_files' ) && isset($_POST['security']) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['security'] ) ), 'ajax_post_validation')){
+
         $errors    = array();
         $file_name = '';
 
@@ -53,6 +55,9 @@ class SLN_Action_Ajax_UploadFile extends SLN_Action_Ajax_Abstract
         );
 
         return $ret;
+    } else {
+            wp_send_json_error('Not authorized',403);
+        }
     }
 
     public function unique_filename($path, $filename){

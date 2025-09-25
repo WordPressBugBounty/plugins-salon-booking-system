@@ -102,7 +102,7 @@ p {
 }
 @font-face {
   font-family: "GeoSlab703 XBd BT Extra Bold";
-  src: url("../fonts/GeoSlab703 XBd BT Extra Bold/GeoSlab703 XBd BT Extra Bold.woff2") format("woff2"), url("../fonts/GeoSlab703 XBd BT Extra Bold/GeoSlab703 XBd BT Extra Bold.woff") format("woff"), url("../fonts/GeoSlab703 XBd BT Extra Bold/GeoSlab703 XBd BT Extra Bold.ttf") format("truetype");
+  src: url("../fonts/geoslab703_xbd_bt_extra_bold/geoslab703_xbd_bt_extra_bold.woff2") format("woff2"), url("../fonts/geoslab703_xbd_bt_extra_bold/geoslab703_xbd_bt_extra_bold.woff") format("woff"), url("../fonts/geoslab703_xbd_bt_extra_bold/geoslab703_xbd_bt_extra_bold.ttf") format("truetype");
 }
 /* VARIABLES */
 :root {
