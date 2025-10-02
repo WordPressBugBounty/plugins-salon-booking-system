@@ -37,7 +37,7 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
             }
             if($bb->getStatus() == SLN_Enum_BookingStatus::DRAFT){
                 ///$bb->setStatus($bb->getCreateStatus()); // SLN_Wrapper_Booking::getCreateStatus
-                if($bb->getAmount() <= 0.0){
+                if($bb->getAmount() <= 0.0 && !SLN_Plugin::getInstance()->getSettings()->get('confirmation')){
                     $bb->setStatus(SLN_Enum_BookingStatus::CONFIRMED);
                 } else if(SLN_Plugin::getInstance()->getSettings()->get('confirmation')) {
                     $bb->setStatus(SLN_Enum_BookingStatus::PENDING);
