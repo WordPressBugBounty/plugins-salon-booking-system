@@ -81,6 +81,7 @@ class LabelProvider
             'goBackButtonLabel' => __('GO BACK', 'salon-booking-system'),
             'customersAddressBookNoResultLabel' => __('No customers found ...', 'salon-booking-system'),
             'installPWAPromptText' => __('Add to home screen ?', 'salon-booking-system'),
+            'calendarLocale' => $lang = substr( get_locale(), 0, 2 ),
             'installPWAPromptInstallBtnLabel' => __('Install!', 'salon-booking-system'),
             'installPWAPromptNoInstallBtnLabel' => __('No, thanks', 'salon-booking-system'),
             'installPWAIOSText' => __('Install this app on your IPhone=> __( tap menu and then Add to homescreen',

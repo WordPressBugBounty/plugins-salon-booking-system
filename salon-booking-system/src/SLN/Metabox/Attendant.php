@@ -105,6 +105,10 @@ class SLN_Metabox_Attendant extends SLN_Metabox_Abstract {
 		}
 
 		parent::save_post($post_id, $post);
+		
+		// Refresh booking cache when assistant availability or holiday rules change
+		// Assistant-level rules affect availability calculations for all dates
+		$this->getPlugin()->getBookingCache()->refreshAll();
 	}
 
 	protected function enqueueAssets() {

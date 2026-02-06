@@ -73,12 +73,28 @@ class SLN_Action_Ajax_CheckServices extends SLN_Action_Ajax_Abstract
 	{
 		if ( ! isset($this->date)) {
 			if (isset($data['sln'])) {
-				$this->date = sanitize_text_field($data['sln']['date']);
-				$this->time = sanitize_text_field($data['sln']['time']);
+				$date = isset($data['sln']['date']) ? sanitize_text_field($data['sln']['date']) : '';
+				$time = isset($data['sln']['time']) ? sanitize_text_field($data['sln']['time']) : '';
+				
+				// Only set date/time if they're not empty to prevent errors
+				if (!empty($date)) {
+					$this->date = $date;
+				}
+				if (!empty($time)) {
+					$this->time = $time;
+				}
 			}
 			if (isset($data['_sln_booking_date'])) {
-				$this->date = sanitize_text_field($data['_sln_booking_date']);
-				$this->time = sanitize_text_field($data['_sln_booking_time']);
+				$date = sanitize_text_field($data['_sln_booking_date']);
+				$time = isset($data['_sln_booking_time']) ? sanitize_text_field($data['_sln_booking_time']) : '';
+				
+				// Only set date/time if they're not empty to prevent errors
+				if (!empty($date)) {
+					$this->date = $date;
+				}
+				if (!empty($time)) {
+					$this->time = $time;
+				}
 			}
 		}
 	}
@@ -341,10 +357,24 @@ class SLN_Action_Ajax_CheckServices extends SLN_Action_Ajax_Abstract
 
 	protected function getDateTime()
 	{
-		$date = $this->date;
-		$time = $this->time;
+		$date = isset($this->date) ? $this->date : null;
+		$time = isset($this->time) ? $this->time : null;
+		
+		// Validate date is not empty
+		if (empty($date)) {
+			throw new Exception(
+				'Missing date in request. Date: "' . ($date ?? 'null') . '". Please select a date before checking services.'
+			);
+		}
+		
+		// If time is empty, use a default placeholder time
+		// This allows checking date availability without requiring a specific time
+		if (empty($time)) {
+			$time = '00:00';
+		}
+		
 		$ret  = new SLN_DateTime(
-			SLN_Func::filter($date, 'date').' '.SLN_Func::filter($time, 'time'.':00')
+			SLN_Func::filter($date, 'date').' '.SLN_Func::filter($time, 'time') . ':00'
 		);
 
 		return $ret;

@@ -6,6 +6,7 @@ class SLN_Enum_SmsProvider {
 
 	private static $classes = array(
 		'fake' => 'SLN_Action_Sms_Fake',
+		'ip1smsv2' => 'SLN_Action_Sms_Ip1SmsV2',
 		'ip1smshttp' => 'SLN_Action_Sms_Ip1SmsHttp',
 		'ip1smswebservice' => 'SLN_Action_Sms_Ip1SmsWebservice',
 		'twilio' => 'SLN_Action_Sms_Twilio',
@@ -47,7 +48,9 @@ class SLN_Enum_SmsProvider {
 	public static function init() {
 		self::$labels = array(
 			'fake' => __('test (sms sent by email to the admin)', 'salon-booking-system'),
-			'ip1smswebservice' => 'ip1sms',
+			'ip1smsv2' => 'IP1SMS (API V2)',
+			'ip1smswebservice' => 'IP1SMS Webservice/SOAP (DEPRECATED - Migrate to API V2)',
+			'ip1smshttp' => 'IP1SMS HTTP (DEPRECATED - Migrate to API V2)',
 			'twilio' => 'Twilio',
 			'plivo' => 'Plivo',
 		);

@@ -56,7 +56,8 @@ class SLN_Shortcode_Salon_AttendantStep extends SLN_Shortcode_Salon_Step
 
         foreach ($bookingServices->getItems() as $bookingService) {
             $service = $bookingService->getService();
-            if (!$service->isAttendantsEnabled()) {
+            // Add null check to prevent fatal error
+            if (!$service || !$service->isAttendantsEnabled()) {
                 continue;
             }
             $tmp                                        = $ah->getAvailableAttsIdsForBookingService($bookingService);
@@ -111,8 +112,11 @@ class SLN_Shortcode_Salon_AttendantStep extends SLN_Shortcode_Salon_Step
         foreach ($bookingServices->getItems() as $bookingService) {
             $service = $bookingService->getService();
 
-            if (!$service->isAttendantsEnabled()) {
-                $ret[$service->getId()] = 0;
+            // Add null check to prevent fatal error
+            if (!$service || !$service->isAttendantsEnabled()) {
+                if ($service) {
+                    $ret[$service->getId()] = 0;
+                }
                 continue;
             }
 
@@ -178,10 +182,11 @@ class SLN_Shortcode_Salon_AttendantStep extends SLN_Shortcode_Salon_Step
 
         $availAtts = null;
         foreach ($bookingServices->getItems() as $bookingService) {
-            if (!$bookingService->getService()->isAttendantsEnabled()) {
+            $service = $bookingService->getService();
+            // Add null check to prevent fatal error
+            if (!$service || !$service->isAttendantsEnabled()) {
                 continue;
             }
-            $service = $bookingService->getService();
             $availAtts = $ah->getAvailableAttendantForService($availAtts, $bookingService);
 
             if (empty($availAtts)) {
@@ -191,7 +196,8 @@ class SLN_Shortcode_Salon_AttendantStep extends SLN_Shortcode_Salon_Step
 
                 return false;
             }
-            if($service->isMultipleAttendantsForServiceEnabled() && count($availAtts) < $service->getCountMultipleAttendants()){
+            // Add null/array check for PHP 8.x compatibility
+            if($service->isMultipleAttendantsForServiceEnabled() && is_array($availAtts) && count($availAtts) < $service->getCountMultipleAttendants()){
                 $this->addError(
                     sprintf(
                         // translators: %1$s will be replaced by the service name, %2$s will be replaced by the service count multiple attendants
@@ -205,7 +211,8 @@ class SLN_Shortcode_Salon_AttendantStep extends SLN_Shortcode_Salon_Step
         }
 
         if (!$selected) {
-            if (count($availAtts)) {
+            // Add null check for PHP 8.x compatibility
+            if (is_array($availAtts) && count($availAtts)) {
                 $index = mt_rand(0, count($availAtts) - 1);
                 $attId = array_values($availAtts)[$index];
                 $selected = $attId;
@@ -220,8 +227,11 @@ class SLN_Shortcode_Salon_AttendantStep extends SLN_Shortcode_Salon_Step
         foreach ($bookingServices->getItems() as $bookingService) {
             $service = $bookingService->getService();
 
-            if (!$service->isAttendantsEnabled()) {
-                $ret[$service->getId()] = 0;
+            // Add null check to prevent fatal error
+            if (!$service || !$service->isAttendantsEnabled()) {
+                if ($service) {
+                    $ret[$service->getId()] = 0;
+                }
                 continue;
             }
 
@@ -303,18 +313,24 @@ class SLN_Shortcode_Salon_AttendantStep extends SLN_Shortcode_Salon_Step
             }
         }else{
             foreach($bookingServices as $bookingService){
+                $service = $bookingService->getService();
+                // Add null check to prevent fatal error
+                if (!$service) {
+                    return false;
+                }
+                
                 foreach($attendants as $attendant){
                     if(
                         SLN_Shortcode_Salon_AttendantHelper::validateItem($bookingServices->getItems(), $ah, $attendant) &&
-                        $attendant->hasService($bookingService->getService())
+                        $attendant->hasService($service)
                     ){
-                        if(isset($validAttendants[$bookingService->getService()->getId()])){
+                        if(isset($validAttendants[$service->getId()])){
                             return false;
                         }
-                        $validAttendants[$bookingService->getService()->getId()] = $attendant->getId();
+                        $validAttendants[$service->getId()] = $attendant->getId();
                     }
                 }
-                if(!isset($validAttendants[$bookingService->getService()->getId()])){
+                if(!isset($validAttendants[$service->getId()])){
                     return false;
                 }
             }

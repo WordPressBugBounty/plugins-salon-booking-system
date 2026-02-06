@@ -38,7 +38,10 @@ class SLN_Action_Feedback
      * @throws Exception
      */
     private function getBookings() {
-        $current_day = new SLN_DateTime( '- 1 day' );
+        // Look at bookings from the last 7 days to catch any missed by cron failures
+        // This provides a retry mechanism if the cron doesn't run on a particular day
+        $start_day = new SLN_DateTime( '-7 days' );
+        $end_day = new SLN_DateTime( '-1 day' );
 
         $statuses = array( SLN_Enum_BookingStatus::PAID, SLN_Enum_BookingStatus::CONFIRMED, SLN_Enum_BookingStatus::PAY_LATER );
 
@@ -47,16 +50,52 @@ class SLN_Action_Feedback
         $tmp = $repo->get(
             array(
                 'post_status' => $statuses,
-                'day'         => $current_day,
+                'day@min'     => $start_day,
+                'day@max'     => $end_day,
             )
         );
         $ret = array();
+        $now = new SLN_DateTime('now');
+        
+        $feedback_reminder_mail = $this->plugin->getSettings()->get( 'feedback_email' );
+        $feedback_reminder_sms = $this->plugin->getSettings()->get( 'feedback_sms' );
+        $custom_feedback_url = $this->plugin->getSettings()->get( 'custom_feedback_url' );
+        
         foreach ( $tmp as $booking ) {
             $done = $booking->getMeta('feedback');
+            
+            // Skip if feedback already sent
+            if ($done) {
+                continue;
+            }
+            
+            // Check if booking was at least 1 day ago
+            $booking_date = $booking->getDate();
+            $days_since_booking = $now->diff($booking_date)->days;
+            
+            if ($days_since_booking < 1) {
+                continue; // Too recent
+            }
 
-            if ( !$done && SLN_Wrapper_Customer::isCustomer( $booking->getUserId() ) ) {
+            $isRegisteredCustomer = SLN_Wrapper_Customer::isCustomer( $booking->getUserId() );
+            
+            // Registered customers can always receive feedback (they can use customer login hash)
+            if ( $isRegisteredCustomer ) {
                 $ret[] = $booking;
             }
+            // Guest bookings can only receive feedback if custom URL is configured
+            // (otherwise they have no way to submit feedback without a login hash)
+            else if ( !empty($custom_feedback_url) ) {
+                $hasEmail = !empty($booking->getEmail());
+                $hasPhone = !empty($booking->getPhone());
+                
+                // Include guest if they have email (for email) or phone (for SMS)
+                if ( ($feedback_reminder_mail && $hasEmail) || 
+                     ($feedback_reminder_sms && $hasPhone) ) {
+                    $ret[] = $booking;
+                }
+            }
+            // Otherwise skip guest bookings (no way for them to submit feedback)
         }
         return $ret;
     }

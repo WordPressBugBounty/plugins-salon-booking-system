@@ -30,10 +30,17 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
             add_action('admin_enqueue_scripts',array($this,'admin_enqueue_scripts')   );
             add_filter( 'posts_search', [$this,'posts_search'], 10, 2 );
             add_filter('redirect_post_location', [$this, 'redirect_post_location'], 10, 2);
+            // PERFORMANCE: Pre-load metadata for admin list (Issue #7)
+            add_filter('posts_results', array($this, 'optimize_admin_list_metadata'), 10, 2);
         }
         $user_role_helper = new UserRoleHelper();
         $this->hide_email = $user_role_helper->is_hide_customer_phone();
         $this->hide_phone = $user_role_helper->is_hide_customer_email();
+
+        // CRITICAL FIX: Clear cache on booking meta updates (PWA drag-resize, backend edits)
+        // Not just status changes - any booking update should invalidate availability cache
+        add_action('updated_post_meta', array($this, 'onBookingMetaUpdate'), 10, 4);
+
         $this->registerPostStatus();
     }
 
@@ -62,7 +69,7 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
     public function admin_enqueue_scripts(){
         $screen = get_current_screen();
         if( $screen->id === 'edit-sln_booking' ){
-            wp_enqueue_style('salon-admin-css', SLN_PLUGIN_URL.'/css/admin.css', array(), SLN_VERSION, 'all');
+			wp_enqueue_style('salon-admin-css', SLN_PLUGIN_URL.'/css/admin.css', array(), SLN_Action_InitScripts::ASSETS_VERSION, 'all');
 
 	    //Rtl support
 	    wp_style_add_data( 'salon-admin-css', 'rtl', 'replace' );
@@ -72,21 +79,6 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
             SLN_Action_InitScripts::enqueueSelect2();
             SLN_Action_InitScripts::enqueueTwitterBootstrap(true);
             SLN_Action_InitScripts::enqueueAdmin();
-
-            $event = 'Page views of back-end plugin pages';
-            $data  = array(
-                'page' => 'bookings',
-            );
-
-            SLN_Action_InitScripts::mixpanelTrack($event, $data);
-        }
-
-        if ($screen->id === 'sln_booking') {
-            $event = $_SESSION['mixpanel_event_booking'] ?? '';
-            if ($event) {
-                SLN_Action_InitScripts::mixpanelTrack($event['name'], $event['data']);
-                unset($_SESSION['mixpanel_event_booking']);
-            }
         }
     }
 
@@ -155,6 +147,46 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
     	    }
         }
         return $query;
+    }
+    
+    /**
+     * Optimize admin list performance by pre-loading all metadata
+     * 
+     * With 36,000+ bookings, loading metadata individually for each row
+     * causes 100-200 queries per page. This pre-loads all metadata in
+     * a single query, making subsequent get_post_meta() calls instant.
+     * 
+     * @param array $posts
+     * @param WP_Query $query
+     * @return array
+     */
+    public function optimize_admin_list_metadata($posts, $query) {
+        // Only optimize admin booking list page
+        if (!is_admin() || !$query->is_main_query()) {
+            return $posts;
+        }
+        
+        global $pagenow;
+        if ($pagenow !== 'edit.php' || !isset($_GET['post_type']) || $_GET['post_type'] !== $this->getPostType()) {
+            return $posts;
+        }
+        
+        if (empty($posts)) {
+            return $posts;
+        }
+        
+        // Pre-load ALL metadata for these posts in a single query
+        $post_ids = wp_list_pluck($posts, 'ID');
+        update_meta_cache('post', $post_ids);
+        
+        if (SLN_Plugin::isDebugEnabled()) {
+            SLN_Plugin::addLog(sprintf(
+                '[Admin Performance] Pre-loaded metadata for %d bookings in admin list',
+                count($post_ids)
+            ));
+        }
+        
+        return $posts;
     }
     public function posts_join ( $join, $wp_query ) {
         global $pagenow, $wpdb;
@@ -500,10 +532,54 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
 
                 break;
                 case 'origin_source':
-                    if ($obj->getOrigin()) {
-	                    echo esc_html__($obj->getOrigin(), 'salon-booking-system');
-                    } else {
-	                    echo 'Direct';
+                    $origin = $obj->getOrigin() ? $obj->getOrigin() : 'Direct';
+                    $displayLabel = SLN_Enum_BookingOrigin::getLabel($origin);
+                    
+                    // Add WordPress username for Back-end and Web app origins
+                    // Use created_by_user_id (admin who created) not post_author (customer)
+                    if ($displayLabel === 'Back-end' || $displayLabel === 'Web app') {
+                        $creator_user_id = $obj->getMeta('created_by_user_id');
+                        
+                        // Fallback: If no creator ID, check if post_author is an admin/staff user
+                        if (!$creator_user_id) {
+                            $post = get_post($post_id);
+                            if ($post && $post->post_author) {
+                                $post_author_user = get_userdata($post->post_author);
+                                if ($post_author_user) {
+                                    // Check if post_author is admin/staff (not just customer)
+                                    $user_roles = $post_author_user->roles;
+                                    if (array_intersect($user_roles, ['administrator', 'shop_manager', 'sln_staff', 'sln_worker'])) {
+                                        $creator_user_id = $post->post_author;
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Display username if we found a creator
+                        if ($creator_user_id) {
+                            $user = get_userdata($creator_user_id);
+                            if ($user) {
+                                $username = $user->display_name ?: $user->user_login;
+                                $displayLabel .= ' <span style="font-size: 0.85em; color: #637491;">(' . esc_html($username) . ')</span>';
+                            }
+                        }
+                    }
+                    
+                    echo $displayLabel;
+                    
+                    // Show last edit information if booking was edited (same pattern as booking_date column)
+                    $last_editor_id = $obj->getLastEditedByUserId();
+                    $last_edited_at = $obj->getLastEditedAt();
+                    
+                    if ($last_editor_id && $last_edited_at) {
+                        $editor = get_userdata($last_editor_id);
+                        if ($editor) {
+                            $editor_name = $editor->display_name ?: $editor->user_login;
+                            $time_ago = human_time_diff(strtotime($last_edited_at), current_time('timestamp'));
+                            echo '<span style="color:#999;font-size:11px;font-style:italic;"><br>';
+                            echo sprintf(__('Edited by %s (%s ago)', 'salon-booking-system'), esc_html($editor_name), $time_ago);
+                            echo '</span>';
+                        }
                     }
 
                 break;
@@ -636,6 +712,106 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
             $booking = $p->createBooking($post);
             $p->messages()->sendByStatus($booking, $new_status);
             do_action('sln.booking_builder.create.booking_created', $booking);
+            
+            // PERFORMANCE OPTIMIZATION: Clear availability cache when booking changes
+            // Reference: PERFORMANCE_OPTIMIZATION_ANALYSIS.md - Issue #2
+            if ($booking && $booking->getDate()) {
+                SLN_Helper_Availability_Cache::clearDateCache($booking->getDate());
+                
+                // PERFORMANCE: Clear intervals cache (Issue #8)
+                $this->clearIntervalsCache($booking);
+            }
+        }
+    }
+    
+    /**
+     * Clear intervals cache when bookings change
+     * 
+     * The intervals cache stores pre-calculated availability data for the date step.
+     * When a booking is created/updated/deleted, this cache must be cleared to show
+     * accurate availability.
+     * 
+     * @param SLN_Wrapper_Booking $booking
+     */
+    private function clearIntervalsCache($booking) {
+        global $wpdb;
+        
+        // Clear all intervals transients
+        // These are cached in DateStep::getViewData() with keys like 'sln_[hash]'
+        $deleted = $wpdb->query(
+            "DELETE FROM {$wpdb->options} 
+             WHERE option_name LIKE '_transient_sln_%'"
+        );
+        
+        if (SLN_Plugin::isDebugEnabled()) {
+            SLN_Plugin::addLog(sprintf(
+                '[DateStep Performance] Cleared %d intervals cache entries due to booking #%d status change',
+                $deleted,
+                $booking->getId()
+            ));
+        }
+    }
+
+    /**
+     * Clear availability cache when booking metadata is updated
+     *
+     * CRITICAL FIX: PWA drag-to-resize and other booking updates don't change status,
+     * but DO change services/duration. We must clear cache on ANY booking update,
+     * not just status changes.
+     *
+     * This fixes the issue where:
+     * - PWA user drags to resize booking (30 min → 90 min)
+     * - Booking saved correctly in database
+     * - But availability cache NOT cleared (status unchanged: confirmed → confirmed)
+     * - Front-end users see stale availability and get booking errors
+     *
+     * Reference: PWA_DRAG_RESIZE_CACHE_INVALIDATION_FIX.md
+     *
+     * @param int    $meta_id    ID of updated metadata entry
+     * @param int    $post_id    Post ID (booking ID)
+     * @param string $meta_key   Meta key being updated
+     * @param mixed  $meta_value New meta value
+     */
+    public function onBookingMetaUpdate($meta_id, $post_id, $meta_key, $meta_value) {
+        // Only process booking post type
+        if (get_post_type($post_id) !== SLN_Plugin::POST_TYPE_BOOKING) {
+            return;
+        }
+
+        // Clear cache when services are updated (includes duration changes from PWA drag-resize)
+        if ($meta_key === '_sln_booking_services') {
+            $booking = $this->getPlugin()->createBooking($post_id);
+
+            if ($booking && $booking->getDate()) {
+                if (SLN_Plugin::isDebugEnabled()) {
+                    SLN_Plugin::addLog(sprintf(
+                        '[Cache Invalidation] Clearing availability cache due to services update (booking #%d, date: %s)',
+                        $post_id,
+                        $booking->getDate()->format('Y-m-d')
+                    ));
+                }
+
+                SLN_Helper_Availability_Cache::clearDateCache($booking->getDate());
+                $this->clearIntervalsCache($booking);
+            }
+        }
+
+        // Also clear when date or time changes (booking rescheduled)
+        if (in_array($meta_key, array('_sln_booking_date', '_sln_booking_time'))) {
+            $booking = $this->getPlugin()->createBooking($post_id);
+
+            if ($booking && $booking->getDate()) {
+                if (SLN_Plugin::isDebugEnabled()) {
+                    SLN_Plugin::addLog(sprintf(
+                        '[Cache Invalidation] Clearing availability cache due to date/time update (booking #%d, date: %s)',
+                        $post_id,
+                        $booking->getDate()->format('Y-m-d')
+                    ));
+                }
+
+                SLN_Helper_Availability_Cache::clearDateCache($booking->getDate());
+                $this->clearIntervalsCache($booking);
+            }
         }
     }
 
@@ -740,7 +916,7 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
                 $attendant = sanitize_text_field(wp_unslash($_GET['attendant']));
                 $meta_queries[] = array(
                     'key'     => '_sln_booking_services',
-                    'value'   => "i:{$_GET['attendant']};",
+                    'value'   => "i:{$attendant};",
                     'compare' => 'LIKE',
                 );
             }
@@ -764,7 +940,17 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
             if(has_filter('sln_booking_meta_multi_param')) {
                 $meta_queries = apply_filters('sln_booking_meta_multi_param', $meta_queries);
             }
-
+            
+            // Only set post_status to all statuses if user hasn't selected a specific status
+            // This allows the status filter dropdown to work correctly
+            if (empty($_GET['post_status']) || $_GET['post_status'] === 'all') {
+                $statuses_keys = array_keys(SLN_Enum_BookingStatus::toArray());
+                // Don't include auto-draft posts in the bookings list
+                // These are temporary posts created by WordPress for autosave functionality
+                $query->set('post_status',$statuses_keys);
+            }
+            // If post_status is set in GET, WordPress will handle it automatically
+            
             if (!empty($meta_queries)) {
                 $meta_queries['relation'] = 'AND';
 

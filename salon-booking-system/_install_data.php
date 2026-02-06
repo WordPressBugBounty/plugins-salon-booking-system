@@ -1,4 +1,66 @@
 <?php
+// Helper function to get next available booking date based on configured availability
+function getNextAvailableDate($availableDays) {
+    $date = new DateTime();
+    $maxAttempts = 8; // Check up to 7 days forward (8 iterations: skip day 0, check days 1-7)
+    
+    for ($i = 0; $i < $maxAttempts; $i++) {
+        $dayOfWeek = (int)$date->format('w'); // 0 (Sunday) through 6 (Saturday)
+        
+        // ✅ FIX: Skip today to avoid creating bookings with past times
+        // Sample bookings use times like 09:30, 10:30, 12:30
+        // If it's currently later than these times, today's date would create invalid bookings
+        if ($i === 0) {
+            // First iteration is today - skip to tomorrow
+            $date->modify('+1 day');
+            continue;
+        }
+        
+        // Check if current day is in available days
+        if (isset($availableDays[$dayOfWeek]) && $availableDays[$dayOfWeek] == 1) {
+            return $date->format('Y-m-d');
+        }
+        
+        // Move to next day
+        $date->modify('+1 day');
+    }
+    
+    // Fallback: Find the next occurrence of any available day
+    // If we reach here, none of the next 7 days are available
+    if (!empty($availableDays)) {
+        // Find the first day of week that is actually marked as available (value == 1)
+        $firstAvailableDayOfWeek = null;
+        foreach ($availableDays as $dayOfWeek => $isAvailable) {
+            if ($isAvailable == 1) {
+                $firstAvailableDayOfWeek = (int)$dayOfWeek;
+                break;
+            }
+        }
+        
+        // If we found an available day of week, calculate next occurrence
+        if ($firstAvailableDayOfWeek !== null) {
+            $date = new DateTime();
+            $date->modify('+1 day'); // ✅ FIX: Start from tomorrow
+            $todayDayOfWeek = (int)$date->format('w');
+            
+            // Calculate days to add from TOMORROW to reach first available day
+            $daysToAdd = ($firstAvailableDayOfWeek - $todayDayOfWeek + 7) % 7;
+            
+            // If $daysToAdd = 0, we're already on that day of week
+            if ($daysToAdd === 0) {
+                return $date->format('Y-m-d');
+            }
+            
+            $date->modify("+{$daysToAdd} days");
+            return $date->format('Y-m-d');
+        }
+    }
+    
+    // Ultimate fallback if no available days configured (shouldn't happen)
+    // Return 7 days from today as a safe default
+    return (new DateTime())->modify('+7 days')->format('Y-m-d');
+}
+
 return array(
     'settings' => array(
         'date_format'       => 'default',
@@ -168,7 +230,7 @@ return array(
                 '_sln_booking_services' => array(
                     array(
                         'attendant' => 0,
-                        'service' => 2,
+                        'service' => 2,  // Beard Trim (array index 2, price $15)
                     )
                 ),
                 '_sln_booking_services_processed' => 1,
@@ -176,7 +238,7 @@ return array(
                 '_sln_calendar_attendants_event_id' => array(),
                 '_edit_last' => '1',
                 '_sln_booking_amount' => 15,
-                '_sln_booking_date' => (new DateTime())->format('Y-m-d'),
+                '_sln_booking_date' => getNextAvailableDate(array(2 => 1, 3 => 1, 4 => 1, 5 => 1, 6 => 1)),
                 '_sln_booking_time' => '09:30',
                 '_sln_booking_firstname' => 'Carlo',
                 '_sln_booking_lastname' => 'Verdi',
@@ -195,7 +257,7 @@ return array(
                 '_sln_booking_services' => array(
                     array(
                         'attendant' => 1,
-                        'service' => 3,
+                        'service' => 3,  // Haircut (array index 3, price $10.11)
                     )
                 ),
                 '_sln_booking_services_processed' => 1,
@@ -203,7 +265,7 @@ return array(
                 '_sln_calendar_attendants_event_id' => array(),
                 '_edit_last' => '1',
                 '_sln_booking_amount' => 10.11,
-                '_sln_booking_date' => (new DateTime())->format('Y-m-d'),
+                '_sln_booking_date' => getNextAvailableDate(array(2 => 1, 3 => 1, 4 => 1, 5 => 1, 6 => 1)),
                 '_sln_booking_time' => '10:30',
                 '_sln_booking_firstname' => 'Mario',
                 '_sln_booking_lastname' => 'Rossi',
@@ -222,19 +284,19 @@ return array(
                 '_sln_booking_services' => array(
                     array(
                         'attendant' => 1,
-                        'service' => 2,
+                        'service' => 2,  // Beard Trim (array index 2, price $15)
                     ),
                     array(
                         'attendant' => 1,
-                        'service' => 4
+                        'service' => 4   // Shampoo (array index 4, price $29.99)
                     )
                 ),
                 '_sln_booking_services_processed' => 1,
                 '_sln_booking_duration' => '01:30',
                 '_sln_calendar_attendants_event_id' => array(),
                 '_edit_last' => '1',
-                '_sln_booking_amount' => 44.99,
-                '_sln_booking_date' => (new DateTime())->format('Y-m-d'),
+                '_sln_booking_amount' => 44.99,  // $15 + $29.99 = $44.99 ✓
+                '_sln_booking_date' => getNextAvailableDate(array(2 => 1, 3 => 1, 4 => 1, 5 => 1, 6 => 1)),
                 '_sln_booking_time' => '12:30',
                 '_sln_booking_firstname' => 'Luigi',
                 '_sln_booking_lastname' => 'Bianchi',

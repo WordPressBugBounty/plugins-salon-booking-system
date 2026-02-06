@@ -14,6 +14,8 @@ use SLN_Wrapper_Booking_Builder;
 use SLN_Metabox_Helper;
 use SLN_Enum_CheckoutFields;
 use SLN_Wrapper_Booking;
+use SLN_Helper_RateLimiter;
+use SLN_Helper_RecaptchaVerifier;
 
 class Bookings_Controller extends REST_Controller
 {
@@ -121,7 +123,7 @@ class Bookings_Controller extends REST_Controller
             array(
                 'methods'   => WP_REST_Server::CREATABLE,
                 'callback'  => array( $this, 'create_item' ),
-		'permission_callback' => '__return_true',
+		'permission_callback' => array( $this, 'create_item_permissions_check' ),
                 'args'	    => $this->get_endpoint_args_for_item_schema( WP_REST_Server::CREATABLE ),
             ),
             'schema' => array( $this, 'get_public_item_schema' ),
@@ -218,7 +220,7 @@ class Bookings_Controller extends REST_Controller
             array(
                 'methods'             => WP_REST_Server::EDITABLE,
                 'callback'            => array( $this, 'update_item' ),
-                'permission_callback' => array( $this, 'update_item_permissions_check' ),
+                'permission_callback' => array( $this, 'get_item_permissions_check' ),
                 'args'                => $this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE ),
             ),
             array(
@@ -828,6 +830,51 @@ class Bookings_Controller extends REST_Controller
 	return apply_filters('sln_api_bookings_prepare_response_for_collection', $response, $booking);
     }
 
+    /**
+     * Check permissions for creating a booking via Mobile REST API
+     * Implements bot protection using reCAPTCHA
+     * 
+     * @param WP_REST_Request $request
+     * @return bool|WP_Error
+     */
+    public function create_item_permissions_check( $request )
+    {
+        // If user is logged in and has proper capabilities, allow
+        if (is_user_logged_in() && current_user_can('edit_posts')) {
+            return true;
+        }
+
+        // Rate limiting check FIRST (prevents brute force before reCAPTCHA)
+        if (class_exists('SLN_Helper_RateLimiter') && SLN_Helper_RateLimiter::isEnabled()) {
+            if (!SLN_Helper_RateLimiter::checkRateLimit()) {
+                SLN_Plugin::addLog('[Rate Limit] Mobile API booking creation blocked - too many attempts');
+                return new WP_Error(
+                    'salon_rest_rate_limit',
+                    __('Too many booking attempts. Please try again in a few minutes.', 'salon-booking-system'),
+                    array('status' => 429)
+                );
+            }
+        }
+
+        // For public bookings, require reCAPTCHA verification
+        if (SLN_Helper_RecaptchaVerifier::isEnabled()) {
+            $token = $request->get_param('recaptcha_token');
+            
+            if (!SLN_Helper_RecaptchaVerifier::verify($token, 'api_booking_create')) {
+                SLN_Plugin::addLog('[reCAPTCHA] Mobile API booking creation blocked - verification failed');
+                return new WP_Error(
+                    'salon_rest_bot_detected',
+                    __('Bot verification failed. Please try again.', 'salon-booking-system'),
+                    array('status' => 403)
+                );
+            }
+            
+            SLN_Plugin::addLog('[reCAPTCHA] Mobile API booking creation verified successfully');
+        }
+
+        return true;
+    }
+
     public function create_item( $request )
     {
         if ($request->get_param('id')) {
@@ -1118,6 +1165,9 @@ class Bookings_Controller extends REST_Controller
         }
 
 	    add_post_meta($booking->getId(), '_'.SLN_Plugin::POST_TYPE_BOOKING.'_origin_source', SLN_Enum_BookingOrigin::ORIGIN_MOBILE);
+	    
+	    // Track the WordPress user who created the booking (admin/staff, not customer)
+	    add_post_meta($booking->getId(), '_'.SLN_Plugin::POST_TYPE_BOOKING.'_created_by_user_id', get_current_user_id());
 
         return array(
 	    'id'	  => $booking->getId(),
@@ -1134,14 +1184,28 @@ class Bookings_Controller extends REST_Controller
 
         $services = array();
         $resources = array();
+        $services_durations = array(); // Track custom durations from PWA drag-to-resize
+        $has_custom_durations = false;
 
         foreach (array_filter($request->get_param('services')) as $service) {
+            $service_id = isset($service['service_id']) ? $service['service_id'] : '';
+            
             $services[] = array(
                 'attendant' => isset($service['assistant_id']) ? $service['assistant_id'] : '',
-                'service'   => isset($service['service_id']) ? $service['service_id'] : '',
+                'service'   => $service_id,
             );
-            if (isset($service['service_id'])) {
-                $resources[$service['service_id']] = $service['resource_id'] ?? '';
+            
+            if ($service_id) {
+                $resources[$service_id] = $service['resource_id'] ?? '';
+                
+                // Extract custom duration if provided (from PWA drag-to-resize)
+                if (isset($service['duration']) && !empty($service['duration'])) {
+                    // Validate format: HH:MM
+                    if (preg_match('/^\d{2}:\d{2}$/', $service['duration'])) {
+                        $services_durations[$service_id] = $service['duration'];
+                        $has_custom_durations = true;
+                    }
+                }
             }
         }
 
@@ -1226,6 +1290,37 @@ class Bookings_Controller extends REST_Controller
         $booking->evalBookingServices();
         $booking->evalTotal();
         $booking->evalDuration();
+        
+        // Apply custom durations from PWA drag-to-resize feature
+        if ($has_custom_durations) {
+            $booking_services = $booking->getMeta('services');
+            $duration_updated = false;
+            
+            foreach ($booking_services as &$booking_service) {
+                $service_id = isset($booking_service['service']) ? $booking_service['service'] : null;
+                
+                if ($service_id && isset($services_durations[$service_id])) {
+                    // Apply custom duration
+                    $booking_service['duration'] = $services_durations[$service_id];
+                    // Remove break duration (user set total duration)
+                    $booking_service['break_duration'] = '00:00';
+                    $booking_service['break_duration_data'] = array('from' => 0, 'to' => 0);
+                    // Remove total_duration (will be recalculated)
+                    unset($booking_service['total_duration']);
+                    $duration_updated = true;
+                }
+            }
+            
+            // Save updated services with custom durations
+            if ($duration_updated) {
+                update_post_meta($id, '_sln_booking_services', $booking_services);
+                
+                // Reload booking and recalculate durations
+                $booking = $this->prepare_item_for_response($id, $request);
+                $booking->evalDuration();
+            }
+        }
+        
         $booking->setStatus($request->get_param('status'));
 
         if(!$is_modified) {

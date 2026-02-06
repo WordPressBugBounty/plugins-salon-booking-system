@@ -28,7 +28,45 @@ class SLB_Discount_Action_Ajax_ApplyDiscountCode extends SLN_Action_Ajax_Abstrac
             'post_status' => 'publish',
 		);
 		$discounts = $plugin->getRepository(SLB_Discount_Plugin::POST_TYPE_DISCOUNT)->get($criteria);
-		$bb       = $plugin->getBookingBuilder()->getLastBooking();
+		
+		// FIX: Try to get the last booking first, if not available use the booking builder
+		// This handles both cases: booking already created (DRAFT) or still in progress
+		$bookingBuilder = $plugin->getBookingBuilder();
+		$bb = $bookingBuilder->getLastBooking();
+		
+            // If no saved booking exists, the booking is still in progress in the builder
+		// Create a temporary booking object from the builder data for discount validation
+		if (!$bb) {
+			// Check if booking builder has data (services, date, time, etc.)
+			if (!$bookingBuilder->get('services') || empty($bookingBuilder->get('services'))) {
+				$this->addError(__('Please select at least one service before applying a discount code.', 'salon-booking-system'));
+				return array(
+					'errors' => $this->getErrors(),
+					'total'  => 0,
+				);
+			}
+			
+			// Create the booking now so we can apply the discount to it
+			try {
+				$bb = $bookingBuilder->create(SLN_Enum_BookingStatus::DRAFT);
+			} catch (Exception $e) {
+				$this->addError(__('Unable to process discount. Please try again.', 'salon-booking-system'));
+				return array(
+					'errors' => $this->getErrors(),
+					'total'  => 0,
+				);
+			}
+		}
+		
+		// Final validation: ensure we have a booking object
+		if (!$bb) {
+			$this->addError(__('Your booking session has expired. Please start a new booking to apply a discount code.', 'salon-booking-system'));
+			return array(
+				'errors' => $this->getErrors(),
+				'total'  => 0,
+			);
+		}
+		
 		if (!empty($discounts)) {
 			/** @var SLB_Discount_Wrapper_Discount $discount */
 			$discount = reset($discounts);

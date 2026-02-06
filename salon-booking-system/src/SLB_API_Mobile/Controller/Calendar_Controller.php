@@ -52,7 +52,15 @@ class Calendar_Controller extends REST_Controller
             $start = explode(':', $timestart);
             $end   = explode(':', $timeend);
 
-            $curr = (new SLN_DateTime())->setTime($start[0],$start[1]);
+            // Normalize start time to interval boundary (e.g., 08:25 → 08:15 for 15-min intervals)
+            // This ensures intervals align with POST /availability/intervals endpoint
+            $startMinutes = ((int)$start[0] * 60) + (int)$start[1];
+            $intervalMinutes = (int)$interval;
+            $normalizedStartMinutes = floor($startMinutes / $intervalMinutes) * $intervalMinutes;
+            $normalizedHour = floor($normalizedStartMinutes / 60);
+            $normalizedMinute = $normalizedStartMinutes % 60;
+
+            $curr = (new SLN_DateTime())->setTime($normalizedHour, $normalizedMinute);
 
             $end = (new SLN_DateTime())->setTime($end[0],$end[1]);
 

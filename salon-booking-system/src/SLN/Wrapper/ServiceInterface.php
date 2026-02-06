@@ -4,6 +4,7 @@ interface SLN_Wrapper_ServiceInterface
 {
     function getPrice();
     function getUnitPerHour();
+    function getMaxVariableDuration();
     function getDuration();
     function isSecondary();
     function isExclusive();

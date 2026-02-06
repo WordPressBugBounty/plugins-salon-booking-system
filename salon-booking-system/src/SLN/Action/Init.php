@@ -16,6 +16,8 @@ class SLN_Action_Init
             } else {
                 $this->initFrontend();
             }
+            // Initialize AJAX handlers (must run for both admin and frontend for wp_ajax_nopriv_)
+            $this->initAjax();
         });
         $this->init();
     }
@@ -40,6 +42,37 @@ class SLN_Action_Init
     {
         $p = $this->plugin;
         if(!defined("SLN_VERSION_CODECANYON") && defined("SLN_VERSION_PAY") && SLN_VERSION_PAY ) { $this->initLicense(); }
+        
+        // CRITICAL DEBUG: Log ALL booking status transitions to catch status reversion
+        // Only logs when plugin debug mode is enabled (respects sln_debug_enabled option)
+        add_action('transition_post_status', function($new_status, $old_status, $post) {
+            if ($post->post_type === SLN_Plugin::POST_TYPE_BOOKING) {
+                // Get the call stack to see what's triggering the status change
+                $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10);
+                $caller_info = array();
+                foreach ($backtrace as $i => $trace) {
+                    if (isset($trace['file']) && isset($trace['line'])) {
+                        $caller_info[] = basename($trace['file']) . ':' . $trace['line'];
+                    }
+                }
+                
+                $context_flags = array();
+                if (defined('DOING_AJAX') && DOING_AJAX) $context_flags[] = 'AJAX';
+                if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) $context_flags[] = 'AUTOSAVE';
+                if (defined('DOING_CRON') && DOING_CRON) $context_flags[] = 'CRON';
+                $context = !empty($context_flags) ? ' [' . implode(',', $context_flags) . ']' : '';
+                
+                // Use plugin's standard logging (respects debug mode setting)
+                SLN_Plugin::addLog(sprintf(
+                    'BOOKING STATUS TRANSITION: #%d: %s → %s%s | Caller: %s',
+                    $post->ID,
+                    $old_status,
+                    $new_status,
+                    $context,
+                    implode(' → ', array_slice($caller_info, 0, 3))
+                ));
+            }
+        }, 10, 3);
 
 
         new SLN_TaxonomyType_ServiceCategory(
@@ -95,12 +128,27 @@ class SLN_Action_Init
         new SLN_Admin_Customers($p);
         new SLN_Admin_Reports($p);
         new SLN_Admin_Settings($p);
+        new SLN_Admin_DeactivationSurvey($p);
+        
+        // Cache Warmer Setup Notice
+        // Cache warmer is now in Tools section, no admin notice needed
+        
+        // IP1SMS API Migration Notice (API V2 Migration)
+        $migration = new SLN_Admin_MigrationTools_Ip1SmsMigration($p);
+        add_action('admin_notices', array($migration, 'showMigrationNotice'));
+        add_action('wp_ajax_sln_dismiss_ip1sms_migration_notice', array($migration, 'handleDismissNotice'));
+        
+        // Check migration notice expiry daily
+        if (!wp_next_scheduled('sln_check_ip1sms_migration_notice_expiry')) {
+            wp_schedule_event(time(), 'daily', 'sln_check_ip1sms_migration_notice_expiry');
+        }
+        add_action('sln_check_ip1sms_migration_notice_expiry', array($migration, 'checkDismissedNoticeExpiry'));
         if (defined('SLN_VERSION_PAY') && SLN_VERSION_PAY) {
             new SLN_Admin_Extensions($p);
         }
 
         add_action('admin_init', array($this, 'hook_admin_init'));
-        $this->initAjax();
+        // Note: initAjax() is now called from __construct() to support wp_ajax_nopriv_ actions
         new SLN_Action_InitComments($p);
 
 	if (!current_user_can('delete_permanently_sln_booking')) {
@@ -422,6 +470,13 @@ class SLN_Action_Init
         add_action('wp_ajax_salon', $callback);
         add_action('wp_ajax_nopriv_salon', $callback);
         add_action('wp_ajax_saloncalendar', $callback);
+        add_action('wp_ajax_sln_send_feedback_email', array(new SLN_Action_Ajax_SendFeedback($this->plugin), 'execute'));
+        add_action('wp_ajax_sln_send_bulk_feedback', array(new SLN_Action_Ajax_SendBulkFeedback($this->plugin), 'execute'));
+        add_action('wp_ajax_sln_preview_bulk_feedback', array(new SLN_Action_Ajax_PreviewBulkFeedback($this->plugin), 'execute'));
+        add_action('wp_ajax_sln_ajax_noshow', array(new SLN_Action_Ajax_OnNoShow($this->plugin), 'execute'));
+        
+        // Cache warmer AJAX endpoint (public, for external cron services)
+        new SLN_Action_Ajax_CacheWarmer($this->plugin);
     }
 
     private function initSchedules() {
@@ -453,6 +508,9 @@ class SLN_Action_Init
         add_action('sln_cancel_bookings', 'sln_cancel_bookings');
         add_action('sln_email_weekly_report', 'sln_email_weekly_report');
         add_action('sln.helper.calendar_link.remove', array('SLN_Helper_CalendarLink', 'cronUnlinkCall'), 10, 1);
+        
+        // Clear reminder metadata when booking status changes to prevent reminders for canceled bookings
+        add_action('sln.booking.setStatus', array($this, 'clearReminderMetaOnStatusChange'), 10, 3);
 
 	if ( ! wp_get_schedule('sln_clean_up_database') ) {
 	    wp_schedule_event(time(), 'daily', 'sln_clean_up_database');
@@ -533,32 +591,136 @@ class SLN_Action_Init
     public function template_redirect() {
         $customerHash = isset($_GET['sln_customer_login']) ? sanitize_text_field(wp_unslash( $_GET['sln_customer_login'] )) : '';
         $feedback_id = isset($_GET['feedback_id']) ? sanitize_text_field(wp_unslash($_GET['feedback_id'])) : '';
+        
         if (!empty($customerHash)) {
+            // SECURITY FIX: Add rate limiting to prevent brute-force attacks
+            // This protects against attackers trying to guess login tokens
+            // Strict mode: 3 attempts per 10 minutes per IP address
+            $client_ip = SLN_Helper_RateLimiter::getClientIP();
+            $rate_limit_identifier = 'autologin_' . $client_ip;
+            
+            // Log all auto-login attempts for security monitoring
+            $user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? substr(sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT'])), 0, 100) : 'unknown';
+            SLN_Plugin::addLog(sprintf(
+                '[Security] Auto-login attempt - Hash: %s, IP: %s, User-Agent: %s',
+                substr($customerHash, 0, 16) . '...',
+                $client_ip,
+                $user_agent
+            ));
+            
+            // Check rate limit BEFORE processing login (strict mode: 3 attempts per 10 minutes)
+            if (!SLN_Helper_RateLimiter::checkRateLimit($rate_limit_identifier, true)) {
+                // Rate limit exceeded - log security event
+                SLN_Plugin::addLog(sprintf(
+                    '[Security] BLOCKED - Auto-login brute-force attempt from IP: %s',
+                    $client_ip
+                ));
+                error_log(sprintf(
+                    '[Salon Security] Auto-login rate limit exceeded from IP: %s, User-Agent: %s',
+                    $client_ip,
+                    $user_agent
+                ));
+                
+                // Show generic error (don't reveal we're rate limiting to attackers)
+                wp_die(
+                    '<h1>' . esc_html__('Access Denied', 'salon-booking-system') . '</h1>' .
+                    '<p>' . esc_html__('Too many login attempts. Please try again later.', 'salon-booking-system') . '</p>',
+                    esc_html__('Access Denied', 'salon-booking-system'),
+                    array('response' => 403)
+                );
+            }
+            
             $userid = SLN_Wrapper_Customer::getCustomerIdByHash($customerHash);
-            if ($userid && get_transient("sln_customer_login_{$userid}") === $customerHash) {
-                $user = get_user_by('id', (int) $userid);
-                if ($user) {
-                    $customer = new SLN_Wrapper_Customer($user);
-                    if (!$customer->isEmpty()) {
-                        wp_set_auth_cookie($user->ID, false);
-                        do_action('wp_login', $user->user_login, $user);
+            
+            // Log failed attempts - invalid hash
+            if (!$userid) {
+                SLN_Plugin::addLog(sprintf(
+                    '[Security] FAILED - Invalid hash from IP: %s',
+                    $client_ip
+                ));
+                error_log(sprintf(
+                    '[Salon Security] Auto-login failed - Invalid hash from IP: %s',
+                    $client_ip
+                ));
+                return; // Exit early, don't process further
+            }
+            
+            // Check if token is valid (exists in transient and matches)
+            $stored_hash = get_transient("sln_customer_login_{$userid}");
+            
+            if ($stored_hash !== $customerHash) {
+                // Log failed attempts - expired or mismatched token
+                SLN_Plugin::addLog(sprintf(
+                    '[Security] FAILED - Expired/invalid token for user %d from IP: %s (stored: %s, provided: %s)',
+                    $userid,
+                    $client_ip,
+                    $stored_hash ? substr($stored_hash, 0, 16) . '...' : 'none',
+                    substr($customerHash, 0, 16) . '...'
+                ));
+                error_log(sprintf(
+                    '[Salon Security] Auto-login failed - Expired/mismatched token for user %d from IP: %s',
+                    $userid,
+                    $client_ip
+                ));
+                return; // Exit early
+            }
+            
+            // Token is valid, proceed with authentication
+            $user = get_user_by('id', (int) $userid);
+            if ($user) {
+                $customer = new SLN_Wrapper_Customer($user);
+                if (!$customer->isEmpty()) {
+                    // SUCCESSFUL LOGIN - Reset rate limit for this IP
+                    SLN_Helper_RateLimiter::resetRateLimit($rate_limit_identifier);
+                    
+                    // Log successful authentication
+                    SLN_Plugin::addLog(sprintf(
+                        '[Security] SUCCESS - Auto-login successful for user %d (%s) from IP: %s',
+                        $userid,
+                        $user->user_login,
+                        $client_ip
+                    ));
+                    error_log(sprintf(
+                        '[Salon Security] Auto-login successful for user %d (%s) from IP: %s',
+                        $userid,
+                        $user->user_login,
+                        $client_ip
+                    ));
+                    
+                    wp_set_auth_cookie($user->ID, false);
+                    do_action('wp_login', $user->user_login, $user);
 
-						$customer->deleteMeta('hash');
-						delete_transient("sln_customer_login_{$userid}");
+                    // Invalidate token immediately (single-use tokens)
+                    $customer->deleteMeta('hash');
+                    delete_transient("sln_customer_login_{$userid}");
 
-                        // Create redirect URL without autologin code
-                        $id = $this->plugin->getSettings()->getBookingmyaccountPageId();
-                        if ($id) {
-                            $url = get_permalink($id);
-                            if(!empty($feedback_id)) {
-                                $url .= '?feedback_id='. $feedback_id;
-                            }
-                        }else{
-                            $url = home_url();
-                        }
-                        wp_redirect($url);
-                        exit;
+                    // Create redirect URL without autologin code
+                    $id = $this->plugin->getSettings()->getBookingmyaccountPageId();
+                    
+                    // Fallback: If translated ID is null, try getting the original page ID
+                    if (!$id) {
+                        $id = $this->plugin->getSettings()->get('bookingmyaccount');
+                        error_log('[Salon Auto-Login] Translated page ID was null, using original: ' . ($id ? $id : 'STILL NULL'));
                     }
+                    
+                    // Debug logging
+                    error_log('[Salon Auto-Login] Customer hash: ' . substr($customerHash, 0, 16) . '...');
+                    error_log('[Salon Auto-Login] User ID: ' . $userid);
+                    error_log('[Salon Auto-Login] Booking My Account Page ID: ' . ($id ? $id : 'NOT SET'));
+                    error_log('[Salon Auto-Login] Current locale: ' . get_locale());
+                    
+                    if ($id) {
+                        $url = get_permalink($id);
+                        error_log('[Salon Auto-Login] Redirecting to: ' . $url);
+                        if(!empty($feedback_id)) {
+                            $url .= '?feedback_id='. $feedback_id;
+                        }
+                    }else{
+                        $url = home_url();
+                        error_log('[Salon Auto-Login] No account page set, redirecting to home: ' . $url);
+                    }
+                    wp_redirect($url);
+                    exit;
                 }
             }
         }
@@ -568,6 +730,12 @@ class SLN_Action_Init
         $schedules['weekly'] = array(
             'interval' => 60 * 60 * 24 * 7,
             'display' => __('Weekly', 'salon-booking-system')
+        );
+        
+        // Add 25-minute schedule for cache warming (refreshes before 30-min cache expires)
+        $schedules['sln_25min'] = array(
+            'interval' => 25 * 60, // 25 minutes in seconds
+            'display' => __('Every 25 Minutes', 'salon-booking-system')
         );
 
         return $schedules;
@@ -609,5 +777,42 @@ class SLN_Action_Init
 
     public function updateProfileLastUpdateTime($user_id) {
 	update_user_meta($user_id, '_sln_last_update', current_time('timestamp', true));
+    }
+
+    /**
+     * Clear reminder metadata when booking status changes to non-remindable status.
+     * This prevents race conditions where reminders are sent to canceled bookings.
+     * 
+     * Follows the same pattern as SLB_Discount::hook_booking_setStatus() which clears
+     * discount metadata when bookings are canceled.
+     * 
+     * @param SLN_Wrapper_Booking $booking The booking object
+     * @param string $oldStatus Previous booking status
+     * @param string $newStatus New booking status
+     */
+    public function clearReminderMetaOnStatusChange($booking, $oldStatus, $newStatus) {
+        // Define statuses that are eligible for reminders
+        $remindableStatuses = array(
+            SLN_Enum_BookingStatus::PAID,
+            SLN_Enum_BookingStatus::CONFIRMED,
+            SLN_Enum_BookingStatus::PAY_LATER
+        );
+        
+        $wasRemindable = in_array($oldStatus, $remindableStatuses);
+        $isRemindable = in_array($newStatus, $remindableStatuses);
+        
+        // If status changed from remindable to non-remindable, clear reminder metadata
+        if ($wasRemindable && !$isRemindable) {
+            // Clear both SMS and email reminder metadata to prevent sending
+            $booking->setMeta('sms_remind', false);
+            $booking->setMeta('email_remind', false);
+            
+            $this->plugin->addLog(sprintf(
+                'Reminder metadata cleared for booking #%d (status changed: %s → %s)',
+                $booking->getId(),
+                $oldStatus,
+                $newStatus
+            ));
+        }
     }
 }

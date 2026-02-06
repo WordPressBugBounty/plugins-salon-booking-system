@@ -48,7 +48,12 @@ class SLN_Shortcode_SalonRecentComments
 
         global $wpdb;
 
-        $where = $rating ? "AND pm.meta_value = '" . $rating . "'" : "";
+        // Securely prepare WHERE clause using wpdb->prepare to prevent SQL injection
+        if ($rating) {
+            $where = $wpdb->prepare(" AND pm.meta_value = %d", $rating);
+        } else {
+            $where = "";
+        }
 
         $results = $wpdb->get_results(
             $wpdb->prepare("

@@ -50,6 +50,12 @@ function sln_applyDiscountCode() {
         code +
         "&action=salon_discount&method=applyDiscountCode&security=" +
         salon.ajax_nonce;
+    
+    // PERSISTENCE FIX: Include client_id if using transient storage
+    // This ensures booking data can be retrieved after session expiration
+    if (salon.client_id) {
+        data += "&sln_client_id=" + encodeURIComponent(salon.client_id);
+    }
 
     $.ajax({
         url: salon.ajax_url,

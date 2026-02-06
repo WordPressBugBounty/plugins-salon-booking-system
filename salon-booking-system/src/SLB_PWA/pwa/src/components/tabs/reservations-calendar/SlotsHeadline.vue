@@ -44,7 +44,7 @@ export default {
 
   computed: {
     formattedDate() {
-      return this.moment(this.date).format("dddd DD YYYY");
+      return this.moment(this.date).locale(this.getLabel('calendarLocale')).format("dddd DD YYYY");
     },
 
     isAttendantViewLocal: {

@@ -31,31 +31,32 @@ if(isset($updated) && $updated) {
                        . $plugin->format()->date($booking->getDate())
                        . ' - ' . $plugin->format()->time($booking->getTime());
 } elseif(isset($rescheduled) && $rescheduled) {
-    $data['to'] = $adminEmail;
-        if ($attendantEmailOption
-        && ($attendants = $booking->getAttendants(true))
-
-    ) {
+    // Always start with admin email for rescheduled bookings
+    $recipients = array();
+    if (!empty($adminEmail)) {
+        $recipients[] = $adminEmail;
+    }
+    
+    // Add attendant emails if enabled
+    if ($attendantEmailOption && ($attendants = $booking->getAttendants(true))) {
         foreach ($attendants as $attendant) {
             if(!is_array($attendant)){
                 if (($email = $attendant->getEmail())){
-                    if(!is_array($data['to'])) $data['to'] = array_filter(array(isset($data['to']) ? $data['to'] : '', $email));
-                    else $data['to'][] = $email;
+                    $recipients[] = $email;
                 }
             }else{
                 foreach($attendant as $att){
                     if(($email = $att->getEmail())){
-                        if(!is_array($data['to'])){
-                            $data['to'] = array_filter(array(isset($data['to']) ? $data['to'] : '', $email));
-                        }else{
-                            $data['to'][] = $email;
-                        }
+                        $recipients[] = $email;
                     }
                 }
             }
         }
-
     }
+    
+    // Set final recipient list
+    $recipients = array_unique(array_filter($recipients));
+    $data['to'] = !empty($recipients) ? implode(',', $recipients) : $adminEmail;
     $current_user = wp_get_current_user();
     $data['subject'] = sprintf(
         // translators: %1$s will be replaced by the booking ID, %2$s will be replaced by the username
@@ -64,33 +65,33 @@ if(isset($updated) && $updated) {
         implode(' ', array_filter(array($current_user->user_firstname, $current_user->user_lastname)))
     );
 } else {
-    if ($sendToAdmin) {
-        $data['to'] = $adminEmail;
+    // Always start with admin email if configured
+    $recipients = array();
+    if ($sendToAdmin && !empty($adminEmail)) {
+        $recipients[] = $adminEmail;
     }
-        if ($attendantEmailOption
-        && ($attendants = $booking->getAttendants(true))
-
-    ) {
+    
+    // Add attendant emails if enabled
+    if ($attendantEmailOption && ($attendants = $booking->getAttendants(true))) {
         foreach ($attendants as $attendant) {
             if(!is_array($attendant)){
                 if (($email = $attendant->getEmail())){
-                    if(!is_array($data['to'])) $data['to'] = array_filter(array(isset($data['to']) ? $data['to'] : '', $email));
-                    else $data['to'][] = $email;
+                    $recipients[] = $email;
                 }
             }else{
                 foreach($attendant as $att){
                     if(($email = $att->getEmail())){
-                        if(!is_array($data['to'])){
-                            $data['to'] = array_filter(array(isset($data['to']) ? $data['to'] : '', $email));
-                        }else{
-                            $data['to'][] = $email;
-                        }
+                        $recipients[] = $email;
                     }
                 }
             }
         }
-
     }
+    
+    // Set final recipient list (remove duplicates and empty values)
+    $recipients = array_unique(array_filter($recipients));
+    $data['to'] = !empty($recipients) ? implode(',', $recipients) : $adminEmail;
+    
     $data['subject'] = __('New booking for ','salon-booking-system')
                        . $plugin->format()->date($booking->getDate())
                        . ' - ' . $plugin->format()->time($booking->getTime());

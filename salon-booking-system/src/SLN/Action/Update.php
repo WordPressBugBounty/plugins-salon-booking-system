@@ -8,8 +8,24 @@ class SLN_Action_Update
         '2.3.1'  => 'sln-update-for-2.3.1.php',
         '3.0'  => 'sln-update-for-3.0.php',
         '7.6.4' => 'sln-update-for-7.6.4.php',
+        '10.30.11' => 'sln-update-for-10.30.11.php',
     );
 
+    /**
+     * @var array DB rollback scripts that revert database changes
+     * 
+     * IMPORTANT: This array is currently empty. To enable database rollback functionality:
+     * 1. Create rollback scripts in src/SLN/Action/Rollbacks/ directory
+     * 2. Add entries here mapping versions to rollback script filenames
+     * 3. Each script should reverse the changes made by its corresponding update script
+     * 
+     * Example:
+     * '3.0' => 'sln-rollback-to-2.3.2.php'
+     * 
+     * Without rollback scripts, the Tools page "Rollback database" button will not function.
+     * Users will need to use the License page "Rollback Options" feature instead,
+     * which downloads complete previous plugin versions from the EDD API.
+     */
     private static $dbRollbacks = array(
     );
 

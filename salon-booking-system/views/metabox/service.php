@@ -21,15 +21,22 @@ $helper->showNonce($postType);
                 <?php SLN_Form::fieldText($helper->getFieldName($postType, 'price'), $service->getPrice()); ?>
             </div>
             <div class="col-xs-12 col-sm-3 col-md-3 col-lg-3 form-group sln-select">
-                <label><?php esc_html_e('Units per session', 'salon-booking-system'); ?></label>
+                <label>
+                    <?php esc_html_e('Units per session', 'salon-booking-system'); ?>
+                    <span class="sln-tooltip" style="cursor: help;" title="<?php esc_attr_e('Maximum number of concurrent bookings allowed at the same time for this service', 'salon-booking-system'); ?>">ⓘ</span>
+                </label>
                 <?php SLN_Form::fieldNumeric($helper->getFieldName($postType, 'unit'), $service->getUnitPerHour(), array('max' => 100)); ?>
+                <p class="description" style="font-size: 11px; color: #666;"><?php esc_html_e('Concurrent capacity (how many customers can book at the same time)', 'salon-booking-system'); ?></p>
             </div>
             <div class="col-xs-12 col-sm-3 col-md-3 col-lg-3 form-group sln-select">
                 <label><?php esc_html_e('Duration', 'salon-booking-system'); ?></label>
                 <?php SLN_Form::fieldTime($helper->getFieldName($postType, 'duration'), $pagenow === 'post-new.php' ? current(array_slice(SLN_Func::getMinutesIntervals(), 1)) : $service->getDuration()); ?>
             </div>
+            <div class="sln-clear"></div>
+        </div>
+        <div class="row">
             <div
-                class="col-xs-12 col-sm-6 form-group sln-checkbox sln-service-variable-duration sln-profeature <?php echo !defined("SLN_VERSION_PAY") ? 'sln-service-variable-duration-disabled sln-profeature--disabled  sln-profeature__tooltip-wrapper' : '' ?>">
+                class="col-xs-12 col-sm-4 col-md-4 col-lg-4 form-group sln-checkbox sln-service-variable-duration sln-profeature <?php echo !defined("SLN_VERSION_PAY") ? 'sln-service-variable-duration-disabled sln-profeature--disabled  sln-profeature__tooltip-wrapper' : '' ?>">
                 <?php echo $plugin->loadView(
                     'metabox/_pro_feature_tooltip',
                     array(
@@ -42,8 +49,29 @@ $helper->showNonce($postType);
                     <?php SLN_Form::fieldCheckbox($helper->getFieldName($postType, 'variable_duration'), $service->isVariableDuration()) ?>
                     <label
                         for="_sln_service_variable_duration"><?php esc_html_e('Variable duration', 'salon-booking-system'); ?></label>
-                    <p><?php esc_html_e('Select this if you want this service has variable duration', 'salon-booking-system'); ?></p>
+                    <p><?php esc_html_e('Allow customers to select multiple duration units', 'salon-booking-system'); ?></p>
                 </div>
+            </div>
+            <!-- NEW FIELD: Max Variable Duration -->
+            <div
+                class="col-xs-12 col-sm-4 col-md-4 col-lg-4 form-group sln-select sln-service-max-variable-duration-wrapper <?php echo !$service->isVariableDuration() ? 'hide' : ''; ?> <?php echo !defined("SLN_VERSION_PAY") ? 'sln-profeature--disabled' : '' ?>">
+                <label>
+                    <?php esc_html_e('Max duration units', 'salon-booking-system'); ?>
+                    <span class="sln-tooltip" style="cursor: help;" title="<?php esc_attr_e('Maximum number of units a single customer can select', 'salon-booking-system'); ?>">ⓘ</span>
+                </label>
+                <?php 
+                $maxVarDuration = $service->getMaxVariableDuration();
+                // Default to 10 if both are empty
+                if (empty($maxVarDuration)) {
+                    $maxVarDuration = $service->getUnitPerHour() ?: 10;
+                }
+                SLN_Form::fieldNumeric(
+                    $helper->getFieldName($postType, 'max_variable_duration'), 
+                    $maxVarDuration,
+                    array('min' => 1, 'max' => 100)
+                ); 
+                ?>
+                <p class="description" style="font-size: 11px; color: #666;"><?php esc_html_e('Max duration multiplier per customer', 'salon-booking-system'); ?></p>
             </div>
             <div class="sln-clear"></div>
         </div>

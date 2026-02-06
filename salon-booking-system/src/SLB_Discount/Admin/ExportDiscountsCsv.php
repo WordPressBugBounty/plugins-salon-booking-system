@@ -1,21 +1,25 @@
 <?php
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
-class SLB_Discount_Admin_ExportDiscountsCsv{
+class SLB_Discount_Admin_ExportDiscountsCsv
+{
 
-    public static function init_hooks(){
-        add_action('sln.tools.export_button', array('SLB_Discount_Admin_ExportDiscountsCsv','hook_tools_export_button'));
+    public static function init_hooks()
+    {
+        add_action('sln.tools.export_button', array('SLB_Discount_Admin_ExportDiscountsCsv', 'hook_tools_export_button'));
         add_action('sln.tools.export_csv', array('SLB_Discount_Admin_ExportDiscountsCsv', 'hook_export'));
         add_filter('sln_tools_export_headers', array('SLB_Discount_Admin_ExportDiscountsCsv', 'filterBookingExportHeaders'));
         add_filter('sln_tools_export_booking_values', array('SLB_Discount_Admin_ExportDiscountsCsv', 'filterBookingExportValues'), 10, 2);
     }
 
-    public static function hook_export($data){
-        if(isset($data['sln-tools-export-discounts'])){
+    public static function hook_export($data)
+    {
+        if (isset($data['sln-tools-export-discounts'])) {
             self::export($data);
         }
     }
 
-    public static function export($data){
+    public static function export($data)
+    {
 
         if (!current_user_can('manage_salon')) {
             return;
@@ -23,10 +27,10 @@ class SLB_Discount_Admin_ExportDiscountsCsv{
 
         $format = SLN_Plugin::getInstance()->format();
         $from = $data['export']['from'];
-        $from = SLN_Func::filter($from, 'date').' 00:00:00';
+        $from = SLN_Func::filter($from, 'date') . ' 00:00:00';
 
         $to = $data['export']['to'];
-        $to = SLN_Func::filter($to, 'date').' 23:59:59';
+        $to = SLN_Func::filter($to, 'date') . ' 23:59:59';
 
         $criteria['@wp_query'] = array(
             'post_type' => SLB_Discount_Plugin::POST_TYPE_DISCOUNT,
@@ -56,23 +60,23 @@ class SLB_Discount_Admin_ExportDiscountsCsv{
         );
         $tmpfile = tempnam(get_temp_dir(), 'sln-export-discounts-');
         $fh = fopen($tmpfile, 'w');
-        fwrite($fh, chr(239).chr(187).chr(191));
+        fwrite($fh, chr(239) . chr(187) . chr(191));
         fputcsv(
             $fh,
             apply_filters('sln.discount.tools.export_headers', $headers)
         );
-        
-        foreach($discounts as $discount){
+
+        foreach ($discounts as $discount) {
             $limit = $discount->getTotalUsagesLimit();
             $now = new SLN_DateTime(current_time('mysql'));
             $start = $discount->getStartsAt();
             $end =   $discount->getEndsAt();
             $is_valid = $now >= $start && $now <= $end;
-            if(!empty($limit) && $discount->getTotalUsagesNumber() >= $limit) {
+            if (!empty($limit) && $discount->getTotalUsagesNumber() >= $limit) {
                 $is_valid = false;
             }
 
-            $values =array(
+            $values = array(
                 $discount->getName(),
                 $discount->getCouponCode(),
                 $discount->getAmount(),
@@ -104,31 +108,32 @@ class SLB_Discount_Admin_ExportDiscountsCsv{
         exit;
     }
 
-    public static function hook_tools_export_button(){
-		?><div class="form-group col-xs-12 col-md-4">
-		<button type="submit" id="discount-action" name="sln-tools-export-discounts" value="export"
-			class="sln-btn sln-btn--main--tonal sln-btn--big sln-btn--icon sln-icon--tag">
-			<?php esc_html_e('Export discounts', 'salon-booking-system')?></button>
-		</div>
-		<?php
-	}
+    public static function hook_tools_export_button()
+    {
+?>
+        <button type="submit" id="discount-action" name="sln-tools-export-discounts" value="export"
+            class="sln-btn sln-btn--main25 sln-btn--big25 sln-btn--fullwidth sln-calendar__export__discounts__button">
+            <?php esc_html_e('Export discounts to a CSV file', 'salon-booking-system') ?></button>
+<?php
+    }
 
-    public static function filterBookingExportHeaders($headers){
+    public static function filterBookingExportHeaders($headers)
+    {
         $headers[] = __('DISCOUNT NAME', 'salon-booking-system');
         $headers[] = __('DISCOUNT AMOUNT', 'salon-booking-system');
         return $headers;
     }
 
-    public static function filterBookingExportValues($booking_values, $booking){
+    public static function filterBookingExportValues($booking_values, $booking)
+    {
         $discount_names = array();
         $discount_amounts = array();
-        foreach(SLB_Discount_Helper_Booking::getBookingDiscounts($booking) as $discount){
+        foreach (SLB_Discount_Helper_Booking::getBookingDiscounts($booking) as $discount) {
             $discount_names[] = $discount->getName();
             if ($discount->getAmountType() === 'fixed') {
                 $discount_amounts[] = $discount->getAmount();
-            }
-            else {
-                $discount_amounts[] = round(($booking->getAmount()/100)*$discount->getAmount(), 2);
+            } else {
+                $discount_amounts[] = round(($booking->getAmount() / 100) * $discount->getAmount(), 2);
             }
         }
         $booking_values[] = implode(', ', $discount_names);

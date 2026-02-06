@@ -7,6 +7,7 @@ use WP_REST_Server;
 use WP_Error;
 use SLN_Plugin;
 use SLN_Enum_DaysOfWeek;
+use SLN_Enum_BookingStatus;
 use WP_Query;
 
 class Assistants_Controller extends REST_Controller
@@ -93,6 +94,47 @@ class Assistants_Controller extends REST_Controller
                 'permission_callback' => array( $this, 'delete_item_permissions_check' ),
             ),
             'schema' => array( $this, 'get_public_item_schema' ),
+        ) );
+
+        register_rest_route( $this->namespace, '/' . $this->rest_base . '/stats', array(
+            array(
+                'methods'             => WP_REST_Server::READABLE,
+                'callback'            => array( $this, 'get_stats' ),
+                'permission_callback' => array( $this, 'get_items_permissions_check' ),
+                'args' => array(
+                    'start_date' => array(
+                        'description'       => __('Start date.', 'salon-booking-system'),
+                        'type'              => 'string',
+                        'format'            => 'YYYY-MM-DD',
+                        'required'          => true,
+                        'validate_callback' => array($this, 'rest_validate_request_arg'),
+                    ),
+                    'end_date' => array(
+                        'description'       => __('End date.', 'salon-booking-system'),
+                        'type'              => 'string',
+                        'format'            => 'YYYY-MM-DD',
+                        'required'          => true,
+                        'validate_callback' => array($this, 'rest_validate_request_arg'),
+                    ),
+                    'order_by' => array(
+                        'description' => __( 'Order by.', 'salon-booking-system' ),
+                        'type'        => 'string',
+                        'enum'        => array('revenue', 'bookings', 'utilization'),
+                        'default'     => 'revenue',
+                    ),
+                    'order' => array(
+                        'description' => __( 'Order.', 'salon-booking-system' ),
+                        'type'        => 'string',
+                        'enum'        => array('asc', 'desc'),
+                        'default'     => 'desc',
+                    ),
+                    'shop' => array(
+                        'description' => __( 'Shop ID for multi-shop filtering (0 = all shops).', 'salon-booking-system' ),
+                        'type'        => 'integer',
+                        'default'     => 0,
+                    ),
+                ),
+            ),
         ) );
     }
 
@@ -638,6 +680,348 @@ class Assistants_Controller extends REST_Controller
         );
 
         return apply_filters('sln_api_assistants_get_item_schema', $schema);
+    }
+
+    /**
+     * Get assistant performance statistics
+     *
+     * @param \WP_REST_Request $request
+     * @return \WP_REST_Response
+     */
+    public function get_stats( $request )
+    {
+        $start_date = $request->get_param('start_date');
+        $end_date = $request->get_param('end_date');
+        $order_by = $request->get_param('order_by');
+        $order = $request->get_param('order');
+        $shop_id = (int) $request->get_param('shop');
+
+        // Get all assistants
+        $assistants_query = new WP_Query(array(
+            'post_type'      => self::POST_TYPE,
+            'post_status'    => 'publish',
+            'posts_per_page' => -1,
+        ));
+
+        $assistants_stats = array();
+
+        // Build meta query for bookings
+        $meta_query = array(
+            array(
+                'key'     => '_sln_booking_date',
+                'value'   => array($start_date, $end_date),
+                'compare' => 'BETWEEN',
+                'type'    => 'DATE',
+            ),
+        );
+
+        // Add shop filter for Multi-Shop support
+        // Apply shop manager restrictions if user is a manager
+        $shop_id = $this->apply_shop_manager_filter($request);
+        
+        if ($shop_id === -1) {
+            // Manager has no shops assigned or no access to requested shop
+            return $this->success_response(array('assistants' => array()));
+        } elseif ($shop_id > 0 && class_exists('\SalonMultishop\Addon')) {
+            $meta_query[] = array(
+                'key'     => '_sln_booking_shop',
+                'value'   => $shop_id,
+                'compare' => '=',
+            );
+        } elseif ($shop_id === 0 && $this->is_shop_manager() && class_exists('\SalonMultishop\Addon')) {
+            // Manager with multiple shops - filter by all assigned shops
+            $assigned_shops = $this->get_shop_manager_filter_ids();
+            if ($assigned_shops) {
+                $meta_query[] = array(
+                    'key'     => '_sln_booking_shop',
+                    'value'   => $assigned_shops,
+                    'compare' => 'IN',
+                );
+            }
+        }
+
+        // Exclude no-show bookings from performance calculations
+        $meta_query[] = array(
+            'relation' => 'OR',
+            array(
+                'key'     => 'no_show',
+                'compare' => 'NOT EXISTS',
+            ),
+            array(
+                'key'     => 'no_show',
+                'value'   => '1',
+                'compare' => '!=',
+            ),
+        );
+
+        // Query all bookings in period
+        $bookings_query = new WP_Query(array(
+            'post_type'      => SLN_Plugin::POST_TYPE_BOOKING,
+            'post_status'    => array(
+                SLN_Enum_BookingStatus::PAID,
+                SLN_Enum_BookingStatus::PAY_LATER,
+                SLN_Enum_BookingStatus::CONFIRMED,
+            ),
+            'posts_per_page' => -1,
+            'meta_query'     => $meta_query,
+        ));
+
+        // Initialize stats for each assistant
+        foreach ($assistants_query->posts as $assistant_post) {
+            $assistant = SLN_Plugin::getInstance()->createAttendant($assistant_post->ID);
+            $assistants_stats[$assistant_post->ID] = array(
+                'assistant_id'       => $assistant_post->ID,
+                'assistant_name'     => $assistant->getName(),
+                'bookings_count'     => 0,
+                'total_revenue'      => 0.0,
+                'avg_booking_value'  => 0.0,
+                'total_hours_worked' => 0,
+                'utilization_rate'   => 0.0,
+            );
+        }
+
+        // Process bookings
+        foreach ($bookings_query->posts as $booking_post) {
+            $booking = SLN_Plugin::getInstance()->createBooking($booking_post->ID);
+            
+            $processed_assistants = array();
+            
+            foreach ($booking->getBookingServices()->getItems() as $bookingService) {
+                $attendant = $bookingService->getAttendant();
+                $service_duration = $bookingService->getDuration(); // Get service-specific duration
+                
+                if ($attendant) {
+                    $service_assistants = is_array($attendant) ? $attendant : array($attendant);
+                    $num_assistants = count($service_assistants);
+                    
+                    // ✅ FIX: Get service price with fallback for missing prices
+                    $service_price = $bookingService->getPrice();
+                    
+                    // ✅ FALLBACK: If price is 0 or missing, calculate from service base price
+                    // This handles older bookings where individual service prices weren't stored
+                    if (empty($service_price) || $service_price == 0) {
+                        $service = $bookingService->getService();
+                        
+                        // Get variable price by attendant if enabled, otherwise use base price
+                        $attendant_id = is_array($attendant) ? (isset($attendant[0]) ? $attendant[0]->getId() : null) : $attendant->getId();
+                        if ($service->getVariablePriceEnabled() && $attendant_id && $service->getVariablePrice($attendant_id) !== '') {
+                            $service_price = floatval($service->getVariablePrice($attendant_id));
+                        } else {
+                            $service_price = floatval($service->getPrice());
+                        }
+                        
+                        // Apply quantity multiplier for variable duration services
+                        $variable_duration = get_post_meta($service->getId(), '_sln_service_variable_duration', true);
+                        if ($variable_duration) {
+                            $service_price = $service_price * $bookingService->getCountServices();
+                        }
+                    }
+                    
+                    // ✅ FIX: Handle negative prices from excessive discounts (clamp to 0)
+                    // Negative prices occur when discounts exceed service price (e.g., 100%+ discounts)
+                    $service_price = max(0, $service_price);
+                    
+                    // ✅ FIX: Split service price evenly among assistants for this service
+                    $revenue_share = $num_assistants > 0 ? $service_price / $num_assistants : 0;
+                    
+                    // ✅ FIX: Split service count evenly among assistants
+                    $service_count_share = $num_assistants > 0 ? $bookingService->getCountServices() / $num_assistants : 0;
+                    
+                    foreach ($service_assistants as $att) {
+                        $att_id = $att->getId();
+                        
+                        if (isset($assistants_stats[$att_id])) {
+                            // ✅ FIX: Count services, not bookings (to match RevenuesByAssistantsReport)
+                            // Use service ID + assistant ID as unique key to avoid double-counting
+                            $service_key = $att_id . '_' . $bookingService->getService()->getId();
+                            if (!in_array($service_key, $processed_assistants)) {
+                                $assistants_stats[$att_id]['bookings_count'] += $service_count_share;
+                                $processed_assistants[] = $service_key;
+                            }
+                            
+                            // ✅ FIX: Add revenue share (split service price, not booking amount)
+                            $assistants_stats[$att_id]['total_revenue'] += $revenue_share;
+                            
+                            // Add hours (convert duration to hours using plugin helper)
+                            if ($service_duration) {
+                                $minutes = \SLN_Func::getMinutesFromDuration($service_duration);
+                                if ($minutes > 0) {
+                                    // ✅ FIX: Split hours evenly among assistants for this service
+                                    $hours_share = $num_assistants > 0 ? ($minutes / 60) / $num_assistants : 0;
+                                    $assistants_stats[$att_id]['total_hours_worked'] += $hours_share;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Calculate averages and utilization
+        foreach ($assistants_stats as $assistant_id => $stats) {
+            if ($stats['bookings_count'] > 0) {
+                $assistants_stats[$assistant_id]['avg_booking_value'] = round($stats['total_revenue'] / $stats['bookings_count'], 2);
+            }
+            $assistants_stats[$assistant_id]['total_revenue'] = round($stats['total_revenue'], 2);
+            $assistants_stats[$assistant_id]['total_hours_worked'] = round($stats['total_hours_worked'], 2);
+            
+            // Calculate utilization based on assistant's actual availability schedule and holidays
+            $assistant = SLN_Plugin::getInstance()->createAttendant($assistant_id);
+            $available_hours = $this->calculateAvailableHours($assistant, $start_date, $end_date);
+            
+            // Calculate utilization rate (avoid division by zero)
+            if ($available_hours > 0) {
+                $assistants_stats[$assistant_id]['utilization_rate'] = round(($stats['total_hours_worked'] / $available_hours) * 100, 2);
+            } else {
+                $assistants_stats[$assistant_id]['utilization_rate'] = 0;
+            }
+        }
+
+        // Sort based on order_by
+        usort($assistants_stats, function($a, $b) use ($order_by, $order) {
+            $field_map = array(
+                'revenue'     => 'total_revenue',
+                'bookings'    => 'bookings_count',
+                'utilization' => 'utilization_rate',
+            );
+            
+            $field = $field_map[$order_by] ?? 'total_revenue';
+            $comparison = $a[$field] <=> $b[$field];
+            
+            return $order === 'asc' ? $comparison : -$comparison;
+        });
+
+        return $this->success_response(array('items' => $assistants_stats));
+    }
+
+    /**
+     * Calculate total available hours for an assistant in a date range,
+     * considering their weekly schedule and holidays.
+     * 
+     * @param \SLN_Wrapper_Attendant $assistant
+     * @param string $start_date YYYY-MM-DD
+     * @param string $end_date YYYY-MM-DD
+     * @return float Available hours
+     */
+    private function calculateAvailableHours($assistant, $start_date, $end_date) {
+        $start = new \DateTime($start_date);
+        $end = new \DateTime($end_date);
+        $end->setTime(23, 59, 59); // Include the end date
+        
+        // Get assistant's availability rules (or fall back to salon general availability)
+        $availabilityItems = $assistant->getAvailabilityItems();
+        $weekDayRules = $availabilityItems->getWeekDayRules();
+        
+        // If assistant has no schedule, use salon general availability
+        if (empty($weekDayRules) || $this->isEmptySchedule($weekDayRules)) {
+            $settings = SLN_Plugin::getInstance()->getSettings();
+            $availabilityItems = $settings->getAvailabilityItems();
+            $weekDayRules = $availabilityItems->getWeekDayRules();
+        }
+        
+        // Get holiday rules for this assistant
+        $holidayItems = $assistant->getHolidayItems();
+        
+        $totalAvailableHours = 0;
+        $current = clone $start;
+        
+        // Iterate through each day in the range
+        while ($current <= $end) {
+            $dayOfWeek = (int) $current->format('w'); // 0 (Sunday) - 6 (Saturday)
+            
+            // Check if this day is a holiday
+            if ($this->isHoliday($current, $holidayItems)) {
+                // Skip this day - no available hours
+                $current->modify('+1 day');
+                continue;
+            }
+            
+            // Get scheduled hours for this day of week
+            if (isset($weekDayRules[$dayOfWeek])) {
+                $dayRules = $weekDayRules[$dayOfWeek];
+                
+                if (!empty($dayRules['from']) && !empty($dayRules['to'])) {
+                    $fromCount = count($dayRules['from']);
+                    
+                    for ($i = 0; $i < $fromCount; $i++) {
+                        if (isset($dayRules['from'][$i]) && isset($dayRules['to'][$i])) {
+                            $from = \SLN_Func::getMinutesFromDuration($dayRules['from'][$i]);
+                            $to = \SLN_Func::getMinutesFromDuration($dayRules['to'][$i]);
+                            
+                            if ($to > $from) {
+                                $totalAvailableHours += ($to - $from) / 60;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            $current->modify('+1 day');
+        }
+        
+        return $totalAvailableHours;
+    }
+    
+    /**
+     * Check if a given date is a holiday for the assistant
+     * 
+     * @param \DateTime $date
+     * @param \SLN_Helper_HolidayItems $holidayItems
+     * @return bool
+     */
+    private function isHoliday($date, $holidayItems) {
+        if (!$holidayItems) {
+            return false;
+        }
+        
+        foreach ($holidayItems->toArray() as $holiday) {
+            $data = $holiday->getData();
+            
+            if (!$data || empty($data['from_date']) || empty($data['to_date'])) {
+                continue;
+            }
+            
+            $holidayStart = new \DateTime($data['from_date']);
+            $holidayEnd = new \DateTime($data['to_date']);
+            $holidayEnd->setTime(23, 59, 59);
+            
+            // Check if date falls within holiday range
+            if ($date >= $holidayStart && $date <= $holidayEnd) {
+                // Check if it's a full-day holiday or partial
+                $fromTime = isset($data['from_time']) ? $data['from_time'] : '';
+                $toTime = isset($data['to_time']) ? $data['to_time'] : '';
+                
+                // If no specific times set, it's a full-day holiday
+                if (empty($fromTime) && empty($toTime)) {
+                    return true;
+                }
+                
+                // TODO: For partial day holidays, we'd need more complex logic
+                // For now, treat any holiday entry as full-day
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Check if a weekly schedule is empty (no working hours defined)
+     * 
+     * @param array $weekDayRules
+     * @return bool
+     */
+    private function isEmptySchedule($weekDayRules) {
+        foreach ($weekDayRules as $dayRules) {
+            if (!empty($dayRules['from']) && !empty($dayRules['to'])) {
+                foreach ($dayRules['from'] as $i => $from) {
+                    if (!empty($from) && !empty($dayRules['to'][$i])) {
+                        return false; // Found at least one time slot
+                    }
+                }
+            }
+        }
+        return true; // No time slots found
     }
 
 }

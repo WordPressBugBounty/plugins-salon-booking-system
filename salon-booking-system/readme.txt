@@ -2,9 +2,9 @@
 Contributors: Salon Booking System
 Tags: booking, reservations, scheduling, booking calendar, appointment calendar
 Requires at least: 4.1
-Tested up to: 6.8
+Tested up to: 6.9
 Requires PHP: 7.4.8
-Stable tag: 10.27
+Stable tag: 10.30.14
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -407,6 +407,124 @@ FREE version doesn't have the online payments options, no mobile app access, no 
 
 
 == Changelog ==
+
+03.02.2026 - 10.30.14
+
+* Fixed availability cache issues
+
+26.01.2026 - 10.30.13
+
+* Minor fixes implemented
+
+24.01.2026 - 10.30.12
+
+* Fix vulnerability issue
+* Minor issues fixed
+
+12.01.2026 - 10.30.11
+
+* Added Google Re-Captcha support
+* Improved front-end booking process
+* Fixed issues with sms notifications on cancelled bookings
+* Minor issues fixed
+
+19.12.2025 10.30.8
+
+* Fixed issue with booking SMS notifications
+* Fixed issue with No-show feature
+* Implemented whatsapp link from booking tooltip
+* Improved "Re-schedule" feature UI
+
+
+11.12.2025 - 10.30.7
+
+* Fixed issue with booking cancellation
+* Improved Reports dashboard
+* fixed minor issues
+
+27.11.2025 - 10.30.6
+
+* Fixed various issues related to cache of front-end booking form
+* Fixed issues on Reports charts
+* Fixed rollback feature (PRO)
+* fixed issue with AM time format on back-end calendar
+
+24.11.2025 - 10.30.5
+
+* Fixed issue with dates and times selection on front-end booking form
+
+
+20.11.2025 - 10.30.4
+
+
+* Fixed issue on PWA - block slot
+* Fixed vulnerability issue
+* Fixed cache issue on booking form date&time step
+* Update Ip1sms API
+* Fixed issue on Reports section
+* Improved back-end calendar UI - pending bookings counter
+
+
+14.11.2025 - 10.30.3
+
+* Implemented a brand new Reports section
+
+13-11.2025 - 10.30.2
+
+* Improved booking form date selection UX
+* Improved back-end calendar block time slots UI/UX
+* Fixed various php compatibility issues
+* Minor fixes and improvements
+
+08-11-2025 10.29.8
+
+* Important changes on booking process (mainly for online payments)
+* Fixe issue with booking generated on user message entered during booking process
+
+
+05-11-2025 10.29.7
+
+* Fixed issue with specific browsers servers that block cookies
+* Improved booking tooltip UI
+* Improved back-end calendar monthly view date tooltip UI
+
+31.10.2025 - 10.29.6
+
+* Fixed service break representation
+* Fixed sms verification step
+* Fixed back-end bookings filters
+* Minor issues fixed
+
+
+
+27.10.2025 - 10.29.5
+
+* Fix variouse php minor issues
+
+25.10.2025 - 10.29.4
+
+* Implemented bookings preview on monthly view
+
+24.10.2025 - 10.29.3
+
+* Upcoming reservations counter
+
+23.10.2025 - 10.29.2
+
+* Fixed error on activation
+
+23.10.2025 - 10.29.1
+
+* Fixed error on activation
+
+23.10.2025 - 10.29
+
+* New back-end calendar style
+
+09.10.2025 - 10.28
+
+* Fixed issue with email notification when booking added from back-end
+* Fixed issue with last step of booking process when discount applied
 
 02.10.2025 - 10.27
 

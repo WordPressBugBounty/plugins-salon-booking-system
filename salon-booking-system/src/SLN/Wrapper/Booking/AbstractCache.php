@@ -75,7 +75,8 @@ class SLN_Wrapper_Booking_AbstractCache
 
     public function refresh($from,$to)
     {
-        $this->settings = array();
+        // Don't clear entire cache - only update specific dates
+        // $this->settings = array();  // REMOVED: This was clearing ALL cached dates
         $from           = Date::create($from);
         $to             = Date::create($to);
         while ($from->isLte($to)) {
@@ -104,17 +105,62 @@ class SLN_Wrapper_Booking_AbstractCache
         $hb = $ah->getHoursBeforeHelper();
         $from = $hb->getFromDate();
         $to = $hb->getToDate();
+        
+        $day_obj = new Date($day);
+        
+        // PERFORMANCE OPTIMIZATION: Check basic availability rules FIRST (fast)
+        // before calling expensive getTimes() operation
+        
+        // Check if day is valid according to booking rules (day of week, date range)
+        if (!$ah->getItems()->isValidDate($day_obj)) {
+            $data['status'] = 'booking_rules';
+            $data['free_slots'] = array();
+            $data['busy_slots'] = array();
+            $this->settings[$day_obj->toString()] = $data;
+            return $data;
+        }
+        
+        // FIX: Check if ENTIRE day is outside booking time range
+        // Issue: Was comparing day start (00:00) with $from, blocking days with evening slots
+        // Example: Jan 7 at 00:00 < Jan 7 at 20:15 = blocked entire day (wrong!)
+        // Solution: Only block if the LAST moment of day (23:59:59) is before $from
+        $dayEnd = clone $d;
+        $dayEnd->setTime(23, 59, 59);
+        if ($dayEnd < $from || $d > $to) {
+            // Entire day is outside the booking range
+            $data['status'] = 'booking_rules';
+            $data['free_slots'] = array();
+            $data['busy_slots'] = array();
+            $this->settings[$day_obj->toString()] = $data;
+            return $data;
+        }
+        
+        if (!$ah->getHolidaysItems()->isValidDate($day_obj)) {
+            // Date is a holiday - no need to check times
+            $data['status'] = 'holiday_rules';
+            $data['free_slots'] = array();
+            $data['busy_slots'] = array();
+            $this->settings[$day_obj->toString()] = $data;
+            return $data;
+        }
 
-        $data['free_slots'] = array_map(function ($item) { return $item->format('H:i'); }, array_values($ah->getTimes($day)));
-        $day = new Date($day);
+        // Only call getTimes() if date passes basic checks (EXPENSIVE OPERATION)
+        // PHP 8+ compatibility: Ensure getTimes returns array and map result is always an array
+        $times = $ah->getTimes($day);
+        if (!is_array($times)) {
+            $times = array();
+        }
+        $data['free_slots'] = array_map(function ($item) { 
+            return is_object($item) && method_exists($item, 'format') ? $item->format('H:i') : (string)$item; 
+        }, array_values($times));
+        
+        // Final safety: Ensure free_slots is an array
+        if (!is_array($data['free_slots'])) {
+            $data['free_slots'] = array();
+        }
+        
         if (!$data['free_slots']) {
-            if (!$ah->getItems()->isValidDate($day) ||  $d < $from || $d > $to ) {
-                $data['status'] = 'booking_rules';
-            } elseif (!$ah->getHolidaysItems()->isValidDate($day)) {
-                $data['status'] = 'holiday_rules';
-            } else {
-                $data['status'] = 'full';
-            }
+            $data['status'] = 'full';
         } else {
             $data['status'] = 'free';
         }
@@ -124,7 +170,7 @@ class SLN_Wrapper_Booking_AbstractCache
                 $data['busy_slots'][$k] = $v;
             }
         }
-        $this->settings[$day->toString()] = $data;
+        $this->settings[$day_obj->toString()] = $data;
 
         return $data;
     }
@@ -179,10 +225,33 @@ class SLN_Wrapper_Booking_AbstractCache
     {
     	$k = $day->toString();
         if (!isset($this->settings[$k])) {
-            $ret = null;
+            // Return empty structure instead of null to prevent PHP 8+ errors
+            $ret = array(
+                'free_slots' => array(),
+                'busy_slots' => array(),
+                'status' => 'unknown'
+            );
         } else {
             $ret = $this->settings[$k];
         }
+        
+        // PHP 8+ compatibility: Ensure return is always an array
+        if (!is_array($ret)) {
+            return array(
+                'free_slots' => array(),
+                'busy_slots' => array(),
+                'status' => 'error'
+            );
+        }
+        
+        // PHP 8+ compatibility: Ensure free_slots and busy_slots are arrays
+        if (!isset($ret['free_slots']) || !is_array($ret['free_slots'])) {
+            $ret['free_slots'] = array();
+        }
+        if (!isset($ret['busy_slots']) || !is_array($ret['busy_slots'])) {
+            $ret['busy_slots'] = array();
+        }
+        
         return $ret;
     }
 }

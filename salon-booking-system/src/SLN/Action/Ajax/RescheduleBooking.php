@@ -7,7 +7,25 @@ class SLN_Action_Ajax_RescheduleBooking extends SLN_Action_Ajax_Abstract {
 			return array( 'redirect' => wp_login_url() );
 		}
 
-		$id = $_POST['_sln_booking_id'];
+		// Verify nonce for CSRF protection
+		if (!isset($_POST['security']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['security'])), 'ajax_post_validation')) {
+			wp_die(
+				'<p>' . esc_html__('Invalid security token. Please refresh the page and try again.', 'salon-booking-system') . '</p>',
+				403
+			);
+			return;
+		}
+
+		// Validate booking ID
+		if (!isset($_POST['_sln_booking_id']) || !is_numeric($_POST['_sln_booking_id'])) {
+			wp_die(
+				'<p>' . esc_html__('Invalid booking ID.', 'salon-booking-system') . '</p>',
+				403
+			);
+			return;
+		}
+
+		$id = intval($_POST['_sln_booking_id']);
 
 		if(get_post_type($id) !== SLN_Plugin::POST_TYPE_BOOKING){
 			wp_die(
@@ -17,7 +35,7 @@ class SLN_Action_Ajax_RescheduleBooking extends SLN_Action_Ajax_Abstract {
 		}
 		if(get_current_user_id() != get_post_field('post_author', $id, 'edit')){
 			wp_die(
-				'<p>'. get_post_field('post_author', $id) . esc_html__('Sorry, you are not allowed to reshedule this booking.'). get_current_user_id(). '</p>',
+				'<p>' . esc_html__('Sorry, you are not allowed to reschedule this booking.', 'salon-booking-system') . '</p>',
 				403
 			);
 		}

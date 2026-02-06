@@ -33,7 +33,7 @@ class SLN_Admin_Reports_RevenuesByAssistantsReport extends SLN_Admin_Reports_Abs
 						),
 				),
 				array(
-						'label' => __('Bookings', 'salon-booking-system'),
+						'label' => __('Services', 'salon-booking-system'),
 						'type'  => 'number',
 				),
 		);
@@ -51,30 +51,67 @@ class SLN_Admin_Reports_RevenuesByAssistantsReport extends SLN_Admin_Reports_Abs
 		}
 
 
-		foreach($this->bookings as $k => $bookings) {
-			/** @var SLN_Wrapper_Booking $booking */
-			foreach($bookings as $booking) {
-				$attWasAdded = array();
-				foreach($booking->getBookingServices()->getItems() as $bookingService) {
-					if ($bookingService->getAttendant()) {
-                                            $attendants = is_array($bookingService->getAttendant()) ? $bookingService->getAttendant() : array($bookingService->getAttendant());
-                                            foreach ($attendants as $attendant) {
-                                                    if (!in_array($attendant->getId(), $attWasAdded)) {
-
-                                                            if (isset($ret['data'][$attendant->getId()])) {
-                                                                $ret['data'][$attendant->getId()][2] ++;
-                                                            }
-
-                                                            $attWasAdded[] = $attendant->getId();
-                                                    }
-                                                    if (isset($ret['data'][$attendant->getId()])) {
-                                                        $ret['data'][$attendant->getId()][1] += $booking->getAmount() > 0 ? $booking->getAmount() : 0;
-                                                    }
+	foreach($this->bookings as $k => $bookings) {
+		/** @var SLN_Wrapper_Booking $booking */
+		foreach($bookings as $booking) {
+			$attCountedInBooking = array();
+			foreach($booking->getBookingServices()->getItems() as $bookingService) {
+				if ($bookingService->getAttendant()) {
+                                        $attendants = is_array($bookingService->getAttendant()) ? $bookingService->getAttendant() : array($bookingService->getAttendant());
+                                        
+                                        // Count total assistants for this service to split revenue/counts fairly
+                                        $attendantCount = count($attendants);
+                                        
+                                        // ✅ FIX: Get service price with fallback for missing prices
+                                        $service_price = $bookingService->getPrice();
+                                        
+                                        // ✅ FALLBACK: If price is 0 or missing, calculate from service base price
+                                        if (empty($service_price) || $service_price == 0) {
+                                            $service = $bookingService->getService();
+                                            
+                                            // Get variable price by attendant if enabled
+                                            $attendant_id = is_array($bookingService->getAttendant()) ? 
+                                                (isset($attendants[0]) ? $attendants[0]->getId() : null) : 
+                                                $bookingService->getAttendant()->getId();
+                                            
+                                            if ($service->getVariablePriceEnabled() && $attendant_id && $service->getVariablePrice($attendant_id) !== '') {
+                                                $service_price = floatval($service->getVariablePrice($attendant_id));
+                                            } else {
+                                                $service_price = floatval($service->getPrice());
                                             }
-					}
+                                            
+                                            // Apply quantity multiplier for variable duration services
+                                            $variable_duration = get_post_meta($service->getId(), '_sln_service_variable_duration', true);
+                                            if ($variable_duration) {
+                                                $service_price = $service_price * $bookingService->getCountServices();
+                                            }
+                                        }
+                                        
+                                        // ✅ FIX: Handle negative prices from excessive discounts (clamp to 0)
+                                        $service_price = max(0, $service_price);
+                                        
+                                        foreach ($attendants as $attendant) {
+                                                if (isset($ret['data'][$attendant->getId()])) {
+                                                    // ✅ FIX: Split revenue equally among all assistants for this service
+                                                    // This prevents over-counting when multiple assistants work on one service
+                                                    $revenueShare = $attendantCount > 0 ? $service_price / $attendantCount : 0;
+                                                    $ret['data'][$attendant->getId()][1] += $revenueShare;
+                                                    
+                                                    // Count services performed, avoiding double-counting
+                                                    $countKey = $attendant->getId() . '_' . $bookingService->getService()->getId();
+                                                    if (!in_array($countKey, $attCountedInBooking)) {
+                                                        // ✅ FIX: Also split service count for multiple assistants
+                                                        // Each assistant gets proportional credit for the service
+                                                        $serviceCountShare = $attendantCount > 0 ? $bookingService->getCountServices() / $attendantCount : 0;
+                                                        $ret['data'][$attendant->getId()][2] += $serviceCountShare;
+                                                        $attCountedInBooking[] = $countKey;
+                                                    }
+                                                }
+                                        }
 				}
 			}
 		}
+	}
 
 		$this->data = $ret;
 	}

@@ -57,6 +57,7 @@ class SLN_Service_Messages
             }
             $forAdmin = true;
             $p->sendMail('mail/status_canceled', compact('booking', 'forAdmin', 'sendToAdmin'));
+            $this->sendSmsCanceledBooking($booking);
         } elseif ($status == SLN_Enum_BookingStatus::PENDING_PAYMENT && $booking->getNotifyCustomer() && $sendToCustomer) {
             $settings = $this->plugin->getSettings();
             if (!$settings->get('disable_first_pending_payment_email_to_customer')) {
@@ -70,7 +71,7 @@ class SLN_Service_Messages
 
     public function sendConfirmedmation($booking, $oldStatus, $newStatus){
         if($oldStatus == SLN_Enum_BookingStatus::PENDING && $newStatus == SLN_Enum_BookingStatus::CONFIRMED){
-            if ($this->plugin->getSettings()->get('confirmation')) {
+            if ($this->plugin->getSettings()->get('confirmation') && $booking->getMeta('origin_source') == 'Direct' && false) {
                 $sendToAdmin = $this->sendToAdmin;
                 $sendToCustomer = $this->sendToCustomer;
                 $this->plugin->sendMail('mail/status_confirmed', compact('booking', 'sendToAdmin', 'sendToCustomer'));
@@ -82,6 +83,7 @@ class SLN_Service_Messages
     private function sendBookingConfirmed(SLN_Wrapper_Booking $booking, $sendToAdmin = true, $sendToCustomer = true)
     {
         if ($this->plugin->getSettings()->get('confirmation')) {
+            // Send confirmation email to both admin and customer
             $this->plugin->sendMail('mail/status_confirmed', compact('booking', 'sendToAdmin', 'sendToCustomer'));
         } else {
             $this->sendSummaryMail($booking, $sendToAdmin, $sendToCustomer);
@@ -187,6 +189,50 @@ class SLN_Service_Messages
         do_action('sln.messages.modified_booking_sms',$booking);
     }
 
+    private function sendSmsCanceledBooking($booking) {
+        do_action('sln.messages.before_booking_send_message', $booking);
+
+        $p   = $this->plugin;
+        $sms = $p->sms();
+        $s   = $p->getSettings();
+
+        if ($s->get('sms_canceled')) {
+
+            $phone = $s->get('sms_new_number');
+            if ($phone) {
+                $sms->send($phone, $p->loadView('sms/status_canceled', compact('booking')));
+            }
+
+            $phone = $booking->getPhone();
+            if ($phone && $booking->getNotifyCustomer()) {
+                $sms->send($phone, $p->loadView('sms/status_canceled', compact('booking')), $booking->getSmsPrefix());
+            }
+        }
+
+        if ($s->get('sms_canceled_attendant')) {
+
+            $tmpAttendants = $booking->getAttendants();
+            $tmpAttendants = $tmpAttendants && is_array($tmpAttendants) ? $tmpAttendants : array();
+
+            $attendants = array();
+
+            foreach ($tmpAttendants as $a) {
+                $attendants[$a->getId()] = $a;
+            }
+
+            foreach ($attendants as $attendant) {
+
+                $phone = $attendant->getPhone();
+
+                if ($phone) {
+                    $sms->send($phone, $p->loadView('sms/status_canceled', compact('booking')), $attendant->getSmsPrefix());
+                }
+            }
+        }
+
+        do_action('sln.messages.canceled_booking_sms',$booking);
+    }
+
     public function sendRescheduledMail($booking)
     {
         do_action('sln.messages.before_booking_send_message', $booking);
@@ -199,6 +245,11 @@ class SLN_Service_Messages
             $p->sendMail('mail/summary', compact('booking', 'rescheduled', 'updated'));
         }
         $p->sendMail('mail/summary_admin', compact('booking', 'rescheduled', 'updated'));
+        
+        // Send SMS notifications when customer reschedules their booking
+        // This ensures customers receive SMS updates when they reschedule from "My Account" page
+        // Respects sms_modified and sms_modified_attendant settings
+        $this->sendSmsModifiedBooking($booking);
     }
 
     public function sendSummaryMail($booking, $sendToAdmin = true, $sendToCustomer = true)

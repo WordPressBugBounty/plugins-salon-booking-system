@@ -31,18 +31,48 @@ pipelines:
           runs-on:
             - "self.hosted"
           script:
+            - set -o pipefail  # Ensure pipeline failures are detected
             - apt-get update && apt-get install -y rsync zip
             - apt-get update && apt-get install -y curl
             - curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
             - apt-get install -y nodejs
             - export PLUGIN_VERSION=$(egrep -o "Version:\s+(.*)" salon.php | awk '{ print $2 }')
+            - echo 'Building version' $PLUGIN_VERSION
+            - test -f plugin-build && echo 'Build script exists' || echo 'Build script NOT found'
+            - chmod +x plugin-build
             - cd build
-            - mkdir "releases"
-            - php ../plugin-build pay $PLUGIN_VERSION
-            - echo 'n' |php ../plugin-build free $PLUGIN_VERSION
-            - php ../plugin-build cc $PLUGIN_VERSION
-            - php ../plugin-build pay $PLUGIN_VERSION dev
-            - echo 'n' |php ../plugin-build free $PLUGIN_VERSION dev
+            - mkdir -p "releases"
+            - echo 'PWD:' $(pwd)
+            - echo 'Running PRO build...'
+            - php ../plugin-build pay $PLUGIN_VERSION 2>&1 | tee /tmp/pro-build.log || echo 'PRO build failed - check log'
+            - cat /tmp/pro-build.log | tail -20
+            - echo 'Running FREE build...'
+            - echo 'n' |php ../plugin-build free $PLUGIN_VERSION 2>&1 || echo 'FREE build failed'
+            - echo 'Running CodeCanyon build...'
+            - php ../plugin-build cc $PLUGIN_VERSION 2>&1 || echo 'CC build failed'
+            - echo 'Running PRO dev build...'
+            - php ../plugin-build pay $PLUGIN_VERSION dev 2>&1 || echo 'PRO dev build failed'
+            - echo 'Running FREE dev build...'
+            - echo 'n' |php ../plugin-build free $PLUGIN_VERSION dev 2>&1 || echo 'FREE dev build failed'
+            - echo 'Build complete. Checking output...'
+            - ls -lh releases/ || echo 'No releases directory'
+            - ls -lh releases/*.zip 2>/dev/null || echo 'No zip files found (this may indicate build failures)'
+            - echo 'Current directory:' $(pwd)
+            - echo 'Listing files for artifact capture:'
+            - find releases/ -name "*.zip" -type f
+            - cd ..
+            - echo 'Back to root, PWD:' $(pwd)
+            - ls -la build/releases/*.zip 2>/dev/null || echo 'No zips in build/releases from root'
+            - |
+              # Verify at least some builds succeeded
+              ZIP_COUNT=$(ls build/releases/*.zip 2>/dev/null | wc -l)
+              if [ "$ZIP_COUNT" -eq 0 ]; then
+                echo "ERROR: Build failed - no zip files created!"
+                echo "Check the build logs above for errors."
+                exit 1
+              else
+                echo "SUCCESS: Created $ZIP_COUNT zip file(s)"
+              fi
           artifacts:
             - 'build/releases/**'
       - step:
@@ -51,13 +81,46 @@ pipelines:
           runs-on:
             - "self.hosted"
           script:
-            - ls -li build/releases/
+            - echo 'Checking for build artifacts from previous step...'
+            - ls -la build/ || echo "No build directory found"
+            - ls -la build/releases/ || echo "No releases directory found"
+            - 'ls build/releases/*.zip 2>/dev/null || echo "WARNING: No zip files found"'
+            - |
+              # Check if zip files exist before trying to deploy
+              # Note: Version number is appended by plugin-build script (e.g., -10.30.3.zip)
+              FREE_ZIP=$(ls build/releases/salon-booking-system-dev-*.zip 2>/dev/null | head -1 || echo "")
+              PRO_ZIP=$(ls build/releases/salon-booking-plugin-pro-dev-pay-*.zip 2>/dev/null | head -1 || echo "")
+              
+              if [ -z "$FREE_ZIP" ] && [ -z "$PRO_ZIP" ]; then
+                echo "ERROR: No build artifacts found to deploy!"
+                echo "Build step may have failed. Check build logs above."
+                exit 1
+              fi
+              
+              echo "Found artifacts:"
+              [ -n "$FREE_ZIP" ] && echo "  - FREE: $FREE_ZIP"
+              [ -n "$PRO_ZIP" ] && echo "  - PRO: $PRO_ZIP"
             - apt update && apt install -y sshpass
-            - echo $SFTP_PASS
-            - sshpass -p $SFTP_PASS scp -o StrictHostKeyChecking=no build/releases/salon-booking-system-dev-*.zip sbit@free-dev.salonbooking.it:/home/sbit/web/free-dev.salonbooking.it/public_html/wp-content/plugins
-            - sshpass -p $SFTP_PASS scp -o StrictHostKeyChecking=no build/releases/salon-booking-plugin-pro-dev-pay-*.zip sbit@pro-dev.salonbooking.it:/home/sbit/web/pro-dev.salonbooking.it/public_html/wp-content/plugins
-            - sshpass -p $SFTP_PASS ssh -o StrictHostKeyChecking=no sbit@free-dev.salonbooking.it 'cd /home/sbit/web/free-dev.salonbooking.it/public_html/wp-content/plugins && rm -rf salon-booking-system-dev && unzip salon-booking-system-dev-*.zip && rm -rf salon-booking-system-dev-*.zip'
-            - sshpass -p $SFTP_PASS ssh -o StrictHostKeyChecking=no sbit@pro-dev.salonbooking.it 'cd /home/sbit/web/pro-dev.salonbooking.it/public_html/wp-content/plugins && rm -rf salon-booking-plugin-pro-dev && unzip salon-booking-plugin-pro-dev-pay-*.zip && rm -rf salon-booking-plugin-pro-dev-pay-*.zip'
+            - |
+              # Deploy FREE version if exists
+              if [ -n "$FREE_ZIP" ]; then
+                echo "Deploying FREE version: $FREE_ZIP"
+                sshpass -p $SFTP_PASS scp -o StrictHostKeyChecking=no "$FREE_ZIP" sbit@free-dev.salonbooking.it:/home/sbit/web/free-dev.salonbooking.it/public_html/wp-content/plugins
+                sshpass -p $SFTP_PASS ssh -o StrictHostKeyChecking=no sbit@free-dev.salonbooking.it 'cd /home/sbit/web/free-dev.salonbooking.it/public_html/wp-content/plugins && rm -rf salon-booking-system-dev && unzip -o salon-booking-system-dev-*.zip && rm -f salon-booking-system-dev-*.zip'
+                echo "FREE version deployed successfully"
+              else
+                echo "SKIPPED: FREE version not found"
+              fi
+            - |
+              # Deploy PRO version if exists
+              if [ -n "$PRO_ZIP" ]; then
+                echo "Deploying PRO version: $PRO_ZIP"
+                sshpass -p $SFTP_PASS scp -o StrictHostKeyChecking=no "$PRO_ZIP" sbit@pro-dev.salonbooking.it:/home/sbit/web/pro-dev.salonbooking.it/public_html/wp-content/plugins
+                sshpass -p $SFTP_PASS ssh -o StrictHostKeyChecking=no sbit@pro-dev.salonbooking.it 'cd /home/sbit/web/pro-dev.salonbooking.it/public_html/wp-content/plugins && rm -rf salon-booking-plugin-pro-dev && unzip -o salon-booking-plugin-pro-dev-pay-*.zip && rm -f salon-booking-plugin-pro-dev-pay-*.zip'
+                echo "PRO version deployed successfully"
+              else
+                echo "SKIPPED: PRO version not found"
+              fi
           needs:
             - Build project
     CI_master:

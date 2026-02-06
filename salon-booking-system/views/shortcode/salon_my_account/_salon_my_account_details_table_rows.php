@@ -12,6 +12,10 @@
             </h4>
         </header>
         <?php $booking = $plugin->createBooking($item['id']); 
+        // Add null check to prevent fatal error
+        if (!$booking) {
+            continue;
+        }
         if(class_exists('\SalonMultishop\Addon')){
             \SalonMultishop\Addon::getInstance()->setCurrentShop($booking->getMeta('shop'));
             $_GET['shop'] = $booking->getMeta('shop');
@@ -123,6 +127,9 @@
                                             <?php echo $timepicker; ?>
                                         </div>
                                         <div class="sln-notifications"></div>
+                                        <div class="sln-reschedule-selected-datetime" style="text-align: center; font-size: 16px; font-weight: 500; margin: 20px 0; color: #333;">
+                                            <!-- Selected date and time will be displayed here by JavaScript -->
+                                        </div>
                                         <div class="sln-reschedule-form__btnwrp">
                                             <div class="sln-btn sln-btn--emphasis sln-btn--medium sln-btn--borderonly sln-reschedule-form--cancel-button">
                                                 <?php esc_html_e('Cancel', 'salon-booking-system'); ?>

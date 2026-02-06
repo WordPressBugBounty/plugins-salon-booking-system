@@ -116,9 +116,6 @@ jQuery(function($) {
 		settingsInPageNavigations($);
 	}
 	Beacon("once", "ready", () => {
-		console.log(
-			"This will only get called the first time the open event is triggered"
-		);
 		$("#beacon-container .BeaconContainer").prepend(
 			'<a href="#nogo" class="sln-helpchat__close"><span class="sr-only">Close help chat</span></a>'
 		);

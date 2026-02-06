@@ -313,6 +313,12 @@ class SLB_Discount_Wrapper_Discount extends SLN_Wrapper_Abstract
         $discountServices = $this->getServicesIds();
         $attendants = $this->geAttendantsIds();
         $bookingAttendants = array_map(array('SLB_Discount_Wrapper_Discount', 'wrapperToID'), $bookingAttendants);
+        
+        // For fixed discounts, calculate total of eligible services first
+        $amountType = $this->getAmountType();
+        $eligibleServicesTotal = 0.0;
+        $eligibleServices = array();
+        
         foreach ($bookingServices->getItems() as $bookingService) {
             if(!empty($attendants)){
                 $atts = $bookingService->getAttendant();
@@ -331,12 +337,42 @@ class SLB_Discount_Wrapper_Discount extends SLN_Wrapper_Abstract
             }else{
                 $check_att = false;
             }
-            if (!empty($discountServices) && !in_array($bookingService->getService()->getId(), $discountServices)) {
-                $ret['services'][$bookingService->getService()->getId()] = 0.0;
-            }elseif($check_att){
-                $ret['services'][$bookingService->getService()->getId()] = 0.0;
-            }else{
-                $ret['services'][$bookingService->getService()->getId()] = $this->calculateDiscount(SLN_Func::filter($bookingService->getPrice(), 'float'));
+            
+            $serviceId = $bookingService->getService()->getId();
+            $servicePrice = SLN_Func::filter($bookingService->getPrice(), 'float');
+            
+            // Check if service is eligible for discount
+            $isEligible = true;
+            if (!empty($discountServices) && !in_array($serviceId, $discountServices)) {
+                $isEligible = false;
+            } elseif($check_att) {
+                $isEligible = false;
+            }
+            
+            if ($isEligible) {
+                $eligibleServices[$serviceId] = $servicePrice;
+                $eligibleServicesTotal += $servicePrice;
+            }
+        }
+        
+        // Now calculate discount for each service
+        foreach ($bookingServices->getItems() as $bookingService) {
+            $serviceId = $bookingService->getService()->getId();
+            $servicePrice = SLN_Func::filter($bookingService->getPrice(), 'float');
+            
+            if (isset($eligibleServices[$serviceId])) {
+                // Service is eligible for discount
+                if ($amountType === 'fixed' && $eligibleServicesTotal > 0) {
+                    // For fixed discounts, distribute proportionally
+                    $proportion = $servicePrice / $eligibleServicesTotal;
+                    $ret['services'][$serviceId] = round($this->getAmount() * $proportion, 2);
+                } else {
+                    // For percentage discounts, calculate normally
+                    $ret['services'][$serviceId] = $this->calculateDiscount($servicePrice);
+                }
+            } else {
+                // Service not eligible
+                $ret['services'][$serviceId] = 0.0;
             }
         }
         $ret['total'] = array_sum($ret['services']);
@@ -371,11 +407,22 @@ class SLB_Discount_Wrapper_Discount extends SLN_Wrapper_Abstract
      * @return array
      */
     public function validateDiscountFullForBB($bb) {
+        // CRITICAL FIX: Validate booking builder is not null
+        if (!$bb) {
+            return array(__('Booking session is invalid. Please start a new booking.', 'salon-booking-system'));
+        }
+        
         $customer = new SLN_Wrapper_Customer(get_current_user_id(), false);
 
         $bookingServices = $bb->getBookingServices();
         $bookingAttendants = $bb->getAttendantsIds();
         $first = $bookingServices->getFirstItem();
+        
+        // DEFENSIVE FIX: Validate booking has services
+        if (!$first) {
+            return array(__('Please select at least one service before applying a discount code.', 'salon-booking-system'));
+        }
+        
         $date  = $first->getStartsAt()->getTimestamp();
 
         $errors = $this->validateDiscountFull($date, $bookingServices, $customer, $bookingAttendants);

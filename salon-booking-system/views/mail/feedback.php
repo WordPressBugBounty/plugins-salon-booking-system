@@ -5,8 +5,8 @@
  * @var SLN_Wrapper_Customer $customer
  */
 $customer = $booking->getCustomer();
-$data['to']      = !empty($customer) ? $customer->get('user_email') : $booking->getEmail();
-$data['subject'] = $this->plugin->getSettings()->get('feedback_email_subject');
+$data['to']      = (!empty($customer) && !$customer->isEmpty()) ? $customer->get('user_email') : $booking->getEmail();
+$data['subject'] = $plugin->getSettings()->get('feedback_email_subject');
 $manageBookingsLink = true;
 
 $contentTemplate = '_feedback_content';

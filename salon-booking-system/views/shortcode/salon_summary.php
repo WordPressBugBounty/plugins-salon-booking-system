@@ -8,8 +8,14 @@
  */
 $bb = $plugin->getBookingBuilder()->getLastBooking();
 if(empty($bb) && isset($_GET['op'])){
-    $bb = $plugin->createBooking(explode('-', sanitize_text_field($_GET(['op']))));
+    $bb = $plugin->createBooking(explode('-', sanitize_text_field($_GET['op'])));
 }
+
+// Add null check to prevent fatal error
+if (!$bb) {
+    return;
+}
+
 $currencySymbol = $plugin->getSettings()->getCurrencySymbol();
 $datetime = $plugin->getSettings()->isDisplaySlotsCustomerTimezone() && $bb->getCustomerTimezone() ? $bb->getStartsAt($bb->getCustomerTimezone()) : $bb->getStartsAt();
 
@@ -31,19 +37,46 @@ $paymentMethod = ((!$confirmation || $pendingPayment) && $plugin->getSettings()-
 SLN_Enum_PaymentMethodProvider::getService($plugin->getSettings()->getPaymentMethod(), $plugin) :
 false;
 
-// packages credit
+// packages credit - check if any services are using prepaid credits and recalculate total
 $user_id = get_current_user_id();
 $prepaid_services = get_user_meta($user_id, '_sln_prepaid_services', true);
 $packages_credits = [];
-foreach ($bb->getServices() as $service) {
-    $service_id = $service->getId();
-    foreach ($prepaid_services as $pps){
-        $prepaid_service = isset($pps[$service_id]) ? $pps[$service_id] : 0;
-        if ($prepaid_service > 0) {
-            $packages_credits[] = $service->getTitle();
-            $bb->setMeta('amount', $bb->getMeta('amount') - $service->getPrice());
-            $bb->addMeta('service_credit', $service_id);
+
+// Always recalculate total if user is logged in (prepaid services filter will be applied)
+if ($user_id && !empty($prepaid_services) && is_array($prepaid_services)) {
+    // Build list of services using package credits (for display)
+    foreach ($bb->getServices() as $service) {
+        $service_id = $service->getId();
+        
+        // Check data structure - handle both old flat structure and new nested structure
+        $hasCredits = false;
+        
+        // Check if it's the new nested structure [package_order_id][service_id] => credits
+        $firstKey = key($prepaid_services);
+        if (is_array($prepaid_services[$firstKey])) {
+            // New nested structure
+            foreach ($prepaid_services as $pps){
+                $prepaid_service = isset($pps[$service_id]) ? $pps[$service_id] : 0;
+                if ($prepaid_service > 0) {
+                    $hasCredits = true;
+                    break;
+                }
+            }
+        } else {
+            // Old flat structure [service_id] => credits
+            if (isset($prepaid_services[$service_id]) && $prepaid_services[$service_id] > 0) {
+                $hasCredits = true;
+            }
         }
+        
+        if ($hasCredits) {
+            $packages_credits[] = $service->getTitle();
+        }
+    }
+    
+    // Recalculate total to apply prepaid services
+    if (!empty($packages_credits)) {
+        $bb->evalTotal();
     }
 }
 
@@ -60,6 +93,8 @@ if ($errors && in_array(SLN_Shortcode_Salon_SummaryStep::SLOT_UNAVAILABLE, $erro
 }else{
 ?>
 <form method="post" action="<?php echo $formAction ?>" role="form" id="salon-step-summary">
+    <!-- Add mode parameter for form submission -->
+    <input type="hidden" name="mode" value="confirm">
     <?php
     include '_errors.php';
     include '_additional_errors.php';

@@ -79,6 +79,9 @@ class SLN_Func
         } elseif ($filter == 'time') {
             return SLN_TimeFunc::evalPickedTime($val);
         } elseif ($filter == 'date') {
+            if (empty($val)) {
+                throw new Exception('Empty date value provided to filter');
+            }
             if (is_array($val)) {
                 $val = $val['year'] . '-' . $val['month'] . '-' . $val['day'];
             } else {
@@ -431,6 +434,91 @@ class SLN_Func
             foreach ($sites as $site) {
                 delete_blog_option($site->id, $key);
             }
+        }
+    }
+
+    /**
+     * Safe wrapper for mb_convert_encoding that handles missing mbstring extension
+     * 
+     * @param string $string The string to encode
+     * @param string $to_encoding Target encoding (default: UTF-8)
+     * @param string $from_encoding Source encoding (default: UTF-8)
+     * @return string Encoded string or original if mbstring not available
+     */
+    public static function safe_encoding($string, $to_encoding = 'UTF-8', $from_encoding = 'UTF-8')
+    {
+        // If mbstring extension is available, use it
+        if (function_exists('mb_convert_encoding')) {
+            return mb_convert_encoding($string, $to_encoding, $from_encoding);
+        }
+        
+        // Fallback: If converting UTF-8 to UTF-8, just sanitize and return
+        if ($to_encoding === 'UTF-8' && $from_encoding === 'UTF-8') {
+            // Use WordPress function to ensure UTF-8
+            return seems_utf8($string) ? $string : utf8_encode($string);
+        }
+        
+        // For other conversions, use iconv if available
+        if (function_exists('iconv')) {
+            return iconv($from_encoding, $to_encoding . '//IGNORE', $string);
+        }
+        
+        // Last resort: return original string
+        SLN_Plugin::addLog('WARNING: mbstring extension not available and no fallback worked for encoding conversion');
+        return $string;
+    }
+
+    /**
+     * Safe wrapper for creating DateTimeZone that handles deprecated timezone names
+     * 
+     * @param string $timezone Timezone identifier (e.g., 'Europe/Kiev', 'America/New_York')
+     * @return DateTimeZone Valid DateTimeZone object
+     * @throws Exception If timezone is completely invalid
+     */
+    public static function createDateTimeZone($timezone)
+    {
+        // Map of deprecated timezone names to their current equivalents
+        $deprecated_timezones = array(
+            'Europe/Kiev' => 'Europe/Kyiv',        // Renamed in PHP 8.2+
+            'Asia/Calcutta' => 'Asia/Kolkata',     // Renamed
+            'Asia/Katmandu' => 'Asia/Kathmandu',   // Renamed
+            'Asia/Saigon' => 'Asia/Ho_Chi_Minh',   // Renamed
+            'Pacific/Ponape' => 'Pacific/Pohnpei', // Renamed
+            'Pacific/Truk' => 'Pacific/Chuuk',     // Renamed
+        );
+        
+        // Check if this is a known deprecated timezone
+        if (isset($deprecated_timezones[$timezone])) {
+            $original_timezone = $timezone;
+            $timezone = $deprecated_timezones[$timezone];
+            SLN_Plugin::addLog("Timezone '$original_timezone' is deprecated, using '$timezone' instead");
+        }
+        
+        try {
+            return new DateTimeZone($timezone);
+        } catch (Exception $e) {
+            // If timezone is invalid, try to find a close match
+            SLN_Plugin::addLog("ERROR: Invalid timezone '$timezone': " . $e->getMessage());
+            
+            // Try some common fallbacks
+            $fallback_attempts = array(
+                $timezone,
+                str_replace('_', ' ', $timezone), // Try with spaces
+                'UTC', // Ultimate fallback
+            );
+            
+            foreach ($fallback_attempts as $attempt) {
+                try {
+                    SLN_Plugin::addLog("Attempting fallback timezone: $attempt");
+                    return new DateTimeZone($attempt);
+                } catch (Exception $e2) {
+                    continue;
+                }
+            }
+            
+            // If all else fails, use WordPress timezone
+            SLN_Plugin::addLog("All timezone attempts failed, using WordPress timezone");
+            return SLN_TimeFunc::getWpTimezone();
         }
     }
 }

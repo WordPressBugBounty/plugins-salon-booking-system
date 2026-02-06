@@ -4,6 +4,7 @@
 // phpcs:ignoreFile WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 use Salon\Util\Date;
+use Salon\Util\Time;
 
 class SLN_Helper_Intervals
 {
@@ -51,18 +52,39 @@ class SLN_Helper_Intervals
                 $times = $ah->getCachedTimes(Date::create($date), $duration);
             }
         }
+        if ($duration) {
+            $originalTimes = $times;
+            // Check if any service allows nested bookings (per-service setting)
+            // If yes, include break slots; otherwise use strict duration filtering
+            $times = $this->filterTimesByDurationWithBreakAllowance($times, $duration);
+            SLN_Helper_AvailabilityDebugger::logFilteredTimes($originalTimes, $times, 'Duration + Break Allowance Filter');
+        }
+
+        SLN_Helper_AvailabilityDebugger::logAvailableTimes($times, 'After all filtering');
         $this->times   = $times;
         $suggestedTime = $date->format('H:i');
-        $i             = SLN_Plugin::getInstance()->getSettings()->getInterval();
-        $timeout = 0;
+        
+        // FIX: SuggestedDate 2026 Bug - Replace buggy loop that advances date
+        // If suggested time is not in available times array, pick first available time
+        // This prevents date advancement bug that occurred after 86400 iterations
         if(!isset($times[$suggestedTime])){
-            $date->setTime(0,0);
-            $suggestedTime = $date->format('H:i');
-            while ($timeout < 86400 && !isset($times[$suggestedTime]) && $date <= $to ) {
-                $date->modify("+$i minutes");
-                $suggestedTime = $date->format('H:i');
-                $timeout++;
+            // Safety check: if no times available, keep current time
+            // CheckDateAlt will handle moving to next available day
+            if (!empty($times)) {
+                // Pick the first available time from the times array
+                // This ensures we only use validated, available times
+                reset($times);
+                $firstAvailableTime = key($times);
+                
+                // Parse time safely and update the date object
+                if ($firstAvailableTime !== null) {
+                    $timeParts = explode(':', $firstAvailableTime);
+                    if (count($timeParts) === 2) {
+                        $date->setTime((int)$timeParts[0], (int)$timeParts[1], 0);
+                    }
+                }
             }
+            // If $times is empty, do nothing - CheckDateAlt will handle it
         }
         $this->suggestedDate = $date;
         $this->bindDates($ah->getCachedDays());
@@ -113,16 +135,16 @@ class SLN_Helper_Intervals
     {
         $f = SLN_plugin::getInstance()->format();
 
-        $suggestedDate = $timezone ? $this->suggestedDate->setTimezone(new DateTimeZone($timezone)) : $this->suggestedDate;
+        $suggestedDate = $timezone ? $this->suggestedDate->setTimezone(SLN_Func::createDateTimeZone($timezone)) : $this->suggestedDate;
 
         $times = array();
         $currentTime = (new DateTime())->modify(SLN_Plugin::getInstance()->getSettings()->getHoursBeforeFrom());
         $currentTime->setTimezone(wp_timezone());
         //for SLB_API_Mobile purposes
         $customTimeFormat = $_GET['time_format'] ?? false;
-
+        
         foreach ($this->times as $v) {
-            $v = $timezone ? $v->setTimezone(new DateTimeZone($timezone)) : $v;
+            $v = $timezone ? $v->setTimezone(SLN_Func::createDateTimeZone($timezone)) : $v;
             if($currentTime <= $v){
                 $times[$v->format($customTimeFormat ?: 'H:i')] = $v->format($customTimeFormat ?: 'H:i');
             }
@@ -131,14 +153,14 @@ class SLN_Helper_Intervals
         $dates = array();
 
         foreach ($this->dates as $v) {
-            $v = $timezone ? $v->getDateTime()->setTimezone(new DateTimeZone($timezone)) : $v->getDateTime();
+            $v = $timezone ? $v->getDateTime()->setTimezone(SLN_Func::createDateTimeZone($timezone)) : $v->getDateTime();
             $dates[] = $v->format('Y-m-d');
         }
 
         $years = array();
 
         foreach ($this->years as $v) {
-            $v = $timezone ? $v->getDateTime()->setTimezone(new DateTimeZone($timezone)) : $v->getDateTime();
+            $v = $timezone ? $v->getDateTime()->setTimezone(SLN_Func::createDateTimeZone($timezone)) : $v->getDateTime();
             $years[$v->format('Y')] = $v->format('Y');
         }
 
@@ -146,28 +168,28 @@ class SLN_Helper_Intervals
         $monthsList = array();
 
         foreach ($this->months as $v) {
-            $v = $timezone ? $v->getDateTime()->setTimezone(new DateTimeZone($timezone)) : $v->getDateTime();
+            $v = $timezone ? $v->getDateTime()->setTimezone(SLN_Func::createDateTimeZone($timezone)) : $v->getDateTime();
             $monthsList[$v->format('m')] = $months[intval($v->format('m'))];
         }
 
         $days = array();
 
         foreach ($this->days as $v) {
-            $v = $timezone ? $v->getDateTime()->setTimezone(new DateTimeZone($timezone)) : $v->getDateTime();
+            $v = $timezone ? $v->getDateTime()->setTimezone(SLN_Func::createDateTimeZone($timezone)) : $v->getDateTime();
             $days[$v->format('d')] = $v->format('d');
         }
 
         $workTimes = array();
 
         foreach ($this->workTimes as $v) {
-            $v = $timezone ? $v->setTimezone(new DateTimeZone($timezone)) : $v;
+            $v = $timezone ? $v->setTimezone(SLN_Func::createDateTimeZone($timezone)) : $v;
             $workTimes[$v->format($customTimeFormat ?: 'H:i')] = $v->format($customTimeFormat ?: 'H:i');
         }
 
         $fullDays = array();
 
         foreach ($this->fullDays as $v) {
-            $v = $timezone ? $v->setTimezone(new DateTimeZone($timezone)) : $v;
+            $v = $timezone ? $v->setTimezone(SLN_Func::createDateTimeZone($timezone)) : $v;
             $fullDays[] = $v->format('Y-m-d');
         }
 
@@ -203,6 +225,15 @@ class SLN_Helper_Intervals
     public function getSuggestedDate()
     {
         return $this->suggestedDate;
+    }
+
+    /**
+     * Set suggested date directly (used by CheckDateAlt protection)
+     * @param DateTime $date
+     */
+    public function setSuggestedDate(DateTime $date)
+    {
+        $this->suggestedDate = $date;
     }
 
     /**
@@ -246,5 +277,41 @@ class SLN_Helper_Intervals
 
     public function getWorkTimes(){
         return $this->workTimes;
+    }
+
+    private function filterTimesByDurationWithBreakAllowance(array $times, Time $duration)
+    {
+        $filtered = Time::filterTimesArrayByDuration($times, $duration);
+
+        $missing = array_diff_key($times, $filtered);
+        if (empty($missing)) {
+            return $filtered;
+        }
+
+        $dayBookings = $this->availabilityHelper->getDayBookings();
+        if (!$dayBookings) {
+            return $filtered;
+        }
+
+        $breakSlots = array();
+        foreach ($missing as $label => $slot) {
+            if ($dayBookings->isBreakSlot($slot)) {
+                $filtered[$label] = $slot;
+                $breakSlots[$label] = $slot;
+            }
+        }
+
+        if (empty($filtered)) {
+            if (!empty($breakSlots)) {
+                ksort($breakSlots);
+                return $breakSlots;
+            }
+
+            return $filtered;
+        }
+
+        ksort($filtered);
+
+        return $filtered;
     }
 }

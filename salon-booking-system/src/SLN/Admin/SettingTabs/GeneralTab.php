@@ -19,6 +19,7 @@ class SLN_Admin_SettingTabs_GeneralTab extends SLN_Admin_SettingTabs_AbstractTab
 		'skip_attendants_enabled',
 		'attendant_email',
 		'choose_attendant_for_me_disabled',
+		'auto_attendant_check_enabled',
 		'sms_enabled',
 		'sms_account',
 		'sms_password',
@@ -28,11 +29,14 @@ class SLN_Admin_SettingTabs_GeneralTab extends SLN_Admin_SettingTabs_AbstractTab
 		'sms_new',
 		'sms_new_number',
 		'sms_modified',
+		'sms_canceled',
 		'sms_new_attendant',
 		'sms_modified_attendant',
+		'sms_canceled_attendant',
 		'whatsapp_enabled',
 		'sms_notification_message',
 		'sms_notification_message_modified',
+		'sms_notification_message_canceled',
 		'sms_remind_message',
 		'sms_remind',
 		'sms_remind_interval',
@@ -70,14 +74,21 @@ class SLN_Admin_SettingTabs_GeneralTab extends SLN_Admin_SettingTabs_AbstractTab
 		'sms_test_number',
 		'sms_test_message',
 		'salon_staff_manage_cap_export_csv',
-		'thankyou',
-		'pay',
-		'bookingmyaccount',
+	'thankyou',
+	'pay',
+	'bookingmyaccount',
+	// Bot Protection (reCAPTCHA v3)
+	'recaptcha_enabled',
+	'recaptcha_site_key',
+	'recaptcha_secret_key',
+	'recaptcha_score_threshold',
+	'recaptcha_fail_open',
+	// Rate Limiting
+	'rate_limit_enabled',
 	);
 
-	protected function validate() {
-
-		if (!empty($this->submitted['gen_email']) && !filter_var($this->submitted['gen_email'], FILTER_VALIDATE_EMAIL)) {
+    protected function validate() {
+        if (!empty($this->submitted['gen_email']) && !filter_var($this->submitted['gen_email'], FILTER_VALIDATE_EMAIL)) {
 			$this->showAlert('error', __('Invalid Email in Salon contact e-mail field', 'salon-booking-system'));
 			return;
 		}
@@ -248,6 +259,10 @@ class SLN_Admin_SettingTabs_GeneralTab extends SLN_Admin_SettingTabs_AbstractTab
 
 	public static function getDefaultSmsNotificationMessageModified() {
         return __("Hi [NAME],\r\nyour reservation at [SALON NAME], has been updated.\r\nWe've sent you an email with the details.","salon-booking-system");
+	}
+
+	public static function getDefaultSmsNotificationMessageCanceled() {
+        return __("Hi [NAME],\r\nyour reservation at [SALON NAME] on [DATE] at [TIME] has been canceled.\r\nThank you.","salon-booking-system");
 	}
 
     public static function getDefaultOnesignalNotificationMessage()

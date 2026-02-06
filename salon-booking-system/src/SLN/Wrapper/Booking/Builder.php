@@ -7,6 +7,10 @@ class SLN_Wrapper_Booking_Builder
     protected $plugin;
     protected $data;
     protected $lastId;
+    /** @var SLN_Service_BookingPersistence */
+    protected $persistence;
+    /** @var string|null */
+    protected $clientId;
 
     public function __construct(SLN_Plugin $plugin)
     {
@@ -14,14 +18,19 @@ class SLN_Wrapper_Booking_Builder
             session_start();
         }
         $this->plugin = $plugin;
-        $this->data = isset($_SESSION[__CLASS__]) ? $_SESSION[__CLASS__] : $this->getEmptyValue();
-        $this->lastId = isset($_SESSION[__CLASS__.'last_id']) ? $_SESSION[__CLASS__.'last_id'] : null;
+        $clientId      = $this->extractClientIdFromRequest();
+
+        $this->persistence = new SLN_Service_BookingPersistence(__CLASS__, __CLASS__ . 'last_id', $clientId);
+        $initialState      = $this->persistence->load($this->getEmptyValue());
+
+        $this->data   = $initialState['data'];
+        $this->lastId = $initialState['last_id'];
+        $this->clientId = $this->persistence->ensureClientId();
     }
 
     public function save()
     {
-        $_SESSION[__CLASS__] = $this->data;
-        $_SESSION[__CLASS__.'last_id'] = $this->lastId;
+        $this->persistence->save($this->data, $this->lastId);
     }
 
     public function clear($id = null, $empty = true)
@@ -30,13 +39,13 @@ class SLN_Wrapper_Booking_Builder
             $this->emptyData();
         }
         $this->lastId = $id;
-        $this->save();
+        $this->persistence->save($this->data, $this->lastId);
     }
 
     public function emptyData()
     {
         $this->data = $this->getEmptyValue();
-        $this->save();
+        $this->persistence->save($this->data, $this->lastId);
     }
 
     /**
@@ -44,7 +53,7 @@ class SLN_Wrapper_Booking_Builder
      */
     public function removeLastId()
     {
-        unset($_SESSION[__CLASS__.'last_id']);
+        $this->persistence->removeLastId();
         $this->lastId = null;
 
         return $this;
@@ -58,6 +67,46 @@ class SLN_Wrapper_Booking_Builder
         if ($this->lastId) {
             return $this->plugin->createBooking($this->lastId);
         }
+    }
+
+    public function getClientId()
+    {
+        return $this->clientId;
+    }
+
+    public function forceTransientStorage()
+    {
+        if (method_exists($this->persistence, 'switchToTransient')) {
+            $this->clientId = $this->persistence->switchToTransient($this->data, $this->lastId);
+        }
+        return $this->clientId;
+    }
+
+    public function isUsingTransient()
+    {
+        return $this->persistence->isUsingTransient();
+    }
+
+    /**
+     * Get last booking or throw exception if not found
+     * Use this method in critical paths where null booking would cause problems
+     * 
+     * @return SLN_Wrapper_Booking
+     * @throws Exception if booking is not found
+     */
+    public function getLastBookingOrFail()
+    {
+        $booking = $this->getLastBooking();
+        
+        if (empty($booking)) {
+            SLN_Plugin::addLog("ERROR: getLastBooking returned null/empty");
+            SLN_Plugin::addLog("lastId: " . var_export($this->lastId, true));
+            SLN_Plugin::addLog("Session exists: " . (isset($_SESSION) ? 'yes' : 'no'));
+            SLN_Plugin::addLog("Session status: " . session_status());
+            throw new Exception(__('Booking data not found. Your session may have expired. Please start the booking process again.', 'salon-booking-system'));
+        }
+        
+        return $booking;
     }
 
     public function getEmptyValue()
@@ -164,6 +213,38 @@ class SLN_Wrapper_Booking_Builder
     public function getShopsIds()
     {
         return $this->data['shop'];
+    }
+
+    private function extractClientIdFromRequest()
+    {
+        $clientId = '';
+
+        if (isset($_REQUEST['sln_client_id'])) {
+            $clientId = $this->sanitizeClientId($_REQUEST['sln_client_id']);
+        } elseif (!empty($_SERVER['HTTP_X_SLN_CLIENT_ID'])) {
+            $clientId = $this->sanitizeClientId($_SERVER['HTTP_X_SLN_CLIENT_ID']);
+        }
+
+        if (empty($clientId)) {
+            return null;
+        }
+
+        return substr($clientId, 0, 64);
+    }
+
+    private function sanitizeClientId($value)
+    {
+        if (function_exists('wp_unslash')) {
+            $value = wp_unslash($value);
+        }
+
+        if (function_exists('sanitize_text_field')) {
+            $value = sanitize_text_field($value);
+        } else {
+            $value = preg_replace('/[^a-zA-Z0-9_-]/', '', $value);
+        }
+
+        return $value;
     }
 
     /**
@@ -317,6 +398,40 @@ class SLN_Wrapper_Booking_Builder
 
 	$id = wp_insert_post($args);
 
+	// Error handling for wp_insert_post failure
+	if (is_wp_error($id)) {
+	    $error_msg = $id->get_error_message();
+	    SLN_Plugin::addLog("ERROR: wp_insert_post failed: " . $error_msg);
+	    
+	    // Send error notification to support
+	    if (class_exists('SLN_Helper_ErrorNotification')) {
+	        SLN_Helper_ErrorNotification::send(
+	            'BOOKING_CREATION_FAILED',
+	            'wp_insert_post returned WP_Error: ' . $error_msg,
+	            "Booking details:\nName: {$name}\nDateTime: {$datetime}\nStatus: {$status}"
+	        );
+	    }
+	    
+	    throw new Exception(__('Unable to create booking: ', 'salon-booking-system') . $error_msg);
+	}
+
+	if (!$id || $id === 0) {
+	    SLN_Plugin::addLog("ERROR: wp_insert_post returned invalid ID: " . var_export($id, true));
+	    
+	    // Send error notification to support
+	    if (class_exists('SLN_Helper_ErrorNotification')) {
+	        SLN_Helper_ErrorNotification::send(
+	            'BOOKING_CREATION_FAILED',
+	            'wp_insert_post returned invalid ID (0 or false)',
+	            "Booking details:\nName: {$name}\nDateTime: {$datetime}\nStatus: {$status}"
+	        );
+	    }
+	    
+	    throw new Exception(__('Unable to create booking. Please try again or contact the website administrator.', 'salon-booking-system'));
+	}
+
+	SLN_Plugin::addLog("Booking post created successfully with ID: " . $id);
+
         do_action('sln.booking_builder.create', $this);
 
 	if ($status === SLN_Enum_BookingStatus::PENDING_PAYMENT && $settings->get('disable_first_pending_payment_email_to_customer')) {
@@ -328,14 +443,18 @@ class SLN_Wrapper_Booking_Builder
         }
         $discounts = $this->get('discounts');
         $this->clear($id, $clear);
-        $lastBooking = $this->getLastBooking();
+        
+        // Use getLastBookingOrFail() to ensure we have a valid booking object
+        // This prevents null reference errors in extensions that hook into these actions
+        $lastBooking = $this->getLastBookingOrFail();
+        
         do_action('sln.api.booking.pre_eval', $lastBooking, $discounts);
         $lastBooking->evalBookingServices();
         $lastBooking->evalTotal();
         $lastBooking->evalDuration();
         $lastBooking->setStatus($status);
 
-        $userid = $this->getLastBooking()->getUserId();
+        $userid = $lastBooking->getUserId();
         if ($userid) {
             $user = new WP_User($userid);
             if (array_search('administrator', $user->roles) === false && array_search(

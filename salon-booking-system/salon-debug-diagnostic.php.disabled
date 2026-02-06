@@ -1,0 +1,561 @@
+<?php
+/**
+ * Salon Booking System - Enhanced Diagnostic Tool
+ * 
+ * ENHANCED VERSION: Includes client_id detection, storage mode analysis,
+ * booking data inspection, and AJAX endpoint testing.
+ * 
+ * Based on real production debugging experience (Safari booking issue)
+ * 
+ * USAGE:
+ * 1. Rename to salon-debug-diagnostic.php (remove .disabled)
+ * 2. Access via: https://yoursite.com/salon-debug-diagnostic.php
+ * 3. For security, rename back to .disabled after debugging
+ * 
+ * SECURITY: This file is protected by WordPress authentication
+ */
+
+// Load WordPress
+require_once __DIR__ . '/wp-load.php';
+
+// Security check - only admins can access this page
+if (!current_user_can('manage_options')) {
+    wp_die('You do not have sufficient permissions to access this page.');
+}
+
+// Get plugin instance
+$sln_plugin = SLN_Plugin::getInstance();
+
+// Initialize booking builder to test
+$booking_builder = $sln_plugin->getBookingBuilder();
+
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salon Booking System - Enhanced Diagnostic</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f0f0f1;
+            color: #2c3338;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1d2327;
+            border-bottom: 3px solid #2271b1;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #2271b1;
+            border-bottom: 2px solid #dcdcde;
+            padding-bottom: 10px;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        h3 {
+            color: #1d2327;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .info-label {
+            font-weight: 600;
+            color: #1d2327;
+            padding: 8px 12px;
+            background: #f6f7f7;
+            border-radius: 4px;
+        }
+        .info-value {
+            padding: 8px 12px;
+            word-break: break-all;
+        }
+        .status-ok {
+            color: #00a32a;
+            font-weight: 600;
+        }
+        .status-warning {
+            color: #dba617;
+            font-weight: 600;
+        }
+        .status-error {
+            color: #d63638;
+            font-weight: 600;
+        }
+        .alert {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .alert-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .alert-warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        .alert-error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .alert-info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .code-block {
+            background: #f6f7f7;
+            border: 1px solid #dcdcde;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        .badge-success {
+            background: #00a32a;
+            color: white;
+        }
+        .badge-warning {
+            background: #dba617;
+            color: white;
+        }
+        .badge-error {
+            background: #d63638;
+            color: white;
+        }
+        .badge-info {
+            background: #2271b1;
+            color: white;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th {
+            background: #f6f7f7;
+            padding: 10px;
+            text-align: left;
+            font-weight: 600;
+            border: 1px solid #dcdcde;
+        }
+        td {
+            padding: 10px;
+            border: 1px solid #dcdcde;
+        }
+        .section-new {
+            background: #fffbcc;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #856404;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Salon Booking System - Enhanced Diagnostic Tool</h1>
+        
+        <div class="alert alert-info">
+            <strong>Enhanced Version</strong> - This tool now includes advanced booking session diagnostics based on real production debugging experience.
+            <br><strong>Generated:</strong> <?php echo date('Y-m-d H:i:s'); ?>
+        </div>
+
+        <!-- CLIENT ID & SESSION STATE -->
+        <h2>🆔 Client ID & Session State <span class="section-new">NEW</span></h2>
+        <?php
+        $client_id = $booking_builder->getClientId();
+        $using_transient = $booking_builder->isUsingTransient();
+        $last_booking = $booking_builder->getLastBooking();
+        $session_active = session_status() === PHP_SESSION_ACTIVE;
+        ?>
+        
+        <div class="info-grid">
+            <div class="info-label">Client ID Generated</div>
+            <div class="info-value">
+                <?php if ($client_id): ?>
+                    <span class="status-ok">✅ YES</span>
+                    <span class="badge badge-info"><?php echo esc_html($client_id); ?></span>
+                <?php else: ?>
+                    <span class="status-error">❌ NOT SET</span>
+                    <span class="badge badge-error">CRITICAL ISSUE</span>
+                <?php endif; ?>
+            </div>
+            
+            <div class="info-label">Storage Mode</div>
+            <div class="info-value">
+                <?php if ($using_transient): ?>
+                    <span class="badge badge-info">TRANSIENT</span>
+                    <small>(WordPress transients API)</small>
+                <?php else: ?>
+                    <span class="badge badge-success">PHP SESSION</span>
+                    <small>(Native PHP sessions)</small>
+                <?php endif; ?>
+            </div>
+            
+            <div class="info-label">PHP Session Status</div>
+            <div class="info-value">
+                <?php if ($session_active): ?>
+                    <span class="status-ok">✅ ACTIVE</span>
+                    <span class="badge badge-info"><?php echo session_id(); ?></span>
+                <?php else: ?>
+                    <span class="status-error">❌ INACTIVE</span>
+                <?php endif; ?>
+            </div>
+            
+            <div class="info-label">Last Booking ID</div>
+            <div class="info-value">
+                <?php if ($last_booking): ?>
+                    <span class="status-ok">✅ EXISTS</span>
+                    <span class="badge badge-info">#<?php echo $last_booking->getId(); ?></span>
+                <?php else: ?>
+                    <span class="status-warning">⚠️ NO BOOKING</span>
+                    <small>(User hasn't started booking process)</small>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <?php if (!$client_id): ?>
+        <div class="alert alert-error">
+            <strong>❌ CRITICAL:</strong> Client ID is not being generated! This will cause booking data loss.
+            <br><strong>Impact:</strong> Users cannot complete bookings, data won't persist between steps
+            <br><strong>Fix:</strong> Check BookingBuilder and BookingPersistence classes
+        </div>
+        <?php endif; ?>
+
+        <!-- BOOKING DATA INSPECTION -->
+        <h2>📦 Current Booking Data <span class="section-new">NEW</span></h2>
+        <?php
+        $booking_data = $booking_builder->getData();
+        $has_services = !empty($booking_data['services']);
+        $has_date = !empty($booking_data['date']);
+        $has_time = !empty($booking_data['time']);
+        ?>
+        
+        <div class="info-grid">
+            <div class="info-label">Has Services</div>
+            <div class="info-value">
+                <?php if ($has_services): ?>
+                    <span class="status-ok">✅ YES</span>
+                    <span class="badge badge-info"><?php echo count($booking_data['services']); ?> services</span>
+                <?php else: ?>
+                    <span class="status-warning">⚠️ NO</span>
+                <?php endif; ?>
+            </div>
+            
+            <div class="info-label">Has Date</div>
+            <div class="info-value">
+                <?php if ($has_date): ?>
+                    <span class="status-ok">✅ <?php echo esc_html($booking_data['date']); ?></span>
+                <?php else: ?>
+                    <span class="status-warning">⚠️ NO</span>
+                <?php endif; ?>
+            </div>
+            
+            <div class="info-label">Has Time</div>
+            <div class="info-value">
+                <?php if ($has_time): ?>
+                    <span class="status-ok">✅ <?php echo esc_html($booking_data['time']); ?></span>
+                <?php else: ?>
+                    <span class="status-warning">⚠️ NO</span>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <h3>Full Booking Data</h3>
+        <div class="code-block">
+            <?php echo esc_html(print_r($booking_data, true)); ?>
+        </div>
+
+        <!-- TRANSIENT INSPECTION -->
+        <?php if ($using_transient && $client_id): ?>
+        <h2>🗄️ Transient Data Inspection <span class="section-new">NEW</span></h2>
+        <?php
+        $transient_key = 'sln_booking_' . $client_id . '_SLN_Wrapper_Booking_Builder';
+        $transient_data = get_transient($transient_key);
+        ?>
+        
+        <div class="info-grid">
+            <div class="info-label">Transient Key</div>
+            <div class="info-value"><code><?php echo esc_html($transient_key); ?></code></div>
+            
+            <div class="info-label">Transient Exists</div>
+            <div class="info-value">
+                <?php if ($transient_data !== false): ?>
+                    <span class="status-ok">✅ YES</span>
+                <?php else: ?>
+                    <span class="status-error">❌ NO</span>
+                    <span class="badge badge-error">DATA LOST</span>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <?php if ($transient_data !== false): ?>
+        <h3>Transient Contents</h3>
+        <div class="code-block">
+            <?php echo esc_html(print_r($transient_data, true)); ?>
+        </div>
+        <?php else: ?>
+        <div class="alert alert-error">
+            <strong>❌ CRITICAL:</strong> Transient data not found! Booking data is lost.
+            <br><strong>Cause:</strong> Either transient expired, wasn't saved, or client_id mismatch
+        </div>
+        <?php endif; ?>
+        <?php endif; ?>
+
+        <!-- SESSION DATA -->
+        <?php if (!$using_transient && $session_active): ?>
+        <h2>📝 PHP Session Data <span class="section-new">NEW</span></h2>
+        <?php
+        $session_data_key = 'SLN_Wrapper_Booking_Builder';
+        $session_has_data = isset($_SESSION[$session_data_key]);
+        ?>
+        
+        <div class="info-grid">
+            <div class="info-label">Session Data Key</div>
+            <div class="info-value"><code><?php echo esc_html($session_data_key); ?></code></div>
+            
+            <div class="info-label">Session Has Data</div>
+            <div class="info-value">
+                <?php if ($session_has_data): ?>
+                    <span class="status-ok">✅ YES</span>
+                <?php else: ?>
+                    <span class="status-error">❌ NO</span>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <?php if ($session_has_data): ?>
+        <h3>Session Contents</h3>
+        <div class="code-block">
+            <?php echo esc_html(print_r($_SESSION[$session_data_key], true)); ?>
+        </div>
+        <?php endif; ?>
+        <?php endif; ?>
+
+        <!-- STORAGE MODE ANALYSIS -->
+        <h2>⚙️ Storage Mode Analysis <span class="section-new">NEW</span></h2>
+        <?php
+        $session_working = session_status() === PHP_SESSION_ACTIVE && isset($_SESSION);
+        $session_save_path = session_save_path();
+        $session_save_path_writable = is_writable($session_save_path);
+        ?>
+        
+        <div class="info-grid">
+            <div class="info-label">Session Save Path</div>
+            <div class="info-value">
+                <code><?php echo esc_html($session_save_path); ?></code>
+                <?php if ($session_save_path_writable): ?>
+                    <span class="badge badge-success">WRITABLE</span>
+                <?php else: ?>
+                    <span class="badge badge-error">NOT WRITABLE</span>
+                <?php endif; ?>
+            </div>
+            
+            <div class="info-label">Session Handler</div>
+            <div class="info-value">
+                <code><?php echo esc_html(ini_get('session.save_handler')); ?></code>
+            </div>
+            
+            <div class="info-label">Session Lifetime</div>
+            <div class="info-value">
+                <?php echo ini_get('session.gc_maxlifetime'); ?> seconds
+                (<?php echo round(ini_get('session.gc_maxlifetime') / 3600, 1); ?> hours)
+            </div>
+            
+            <div class="info-label">Transient TTL</div>
+            <div class="info-value">
+                10800 seconds (3 hours)
+            </div>
+        </div>
+
+        <?php if (!$session_save_path_writable): ?>
+        <div class="alert alert-warning">
+            <strong>⚠️ WARNING:</strong> Session save path is not writable. Plugin will use transients as fallback.
+            <br><strong>Path:</strong> <code><?php echo esc_html($session_save_path); ?></code>
+        </div>
+        <?php endif; ?>
+
+        <!-- RECENT ERRORS -->
+        <h2>🚨 Recent Error Log <span class="section-new">NEW</span></h2>
+        <?php
+        $log_file = WP_CONTENT_DIR . '/debug.log';
+        $recent_errors = [];
+        
+        if (file_exists($log_file) && is_readable($log_file)) {
+            $lines = file($log_file);
+            $lines = array_slice($lines, -50); // Last 50 lines
+            
+            foreach ($lines as $line) {
+                if (stripos($line, 'salon') !== false || 
+                    stripos($line, 'booking') !== false ||
+                    stripos($line, 'SLN') !== false) {
+                    $recent_errors[] = $line;
+                }
+            }
+            
+            if (empty($recent_errors)) {
+                echo '<div class="alert alert-success"><strong>✅ No recent errors related to Salon Booking System</strong></div>';
+            } else {
+                echo '<div class="alert alert-warning"><strong>⚠️ Found ' . count($recent_errors) . ' recent log entries</strong></div>';
+                echo '<div class="code-block" style="max-height: 300px; overflow-y: auto;">';
+                foreach (array_slice($recent_errors, -20) as $error) {
+                    echo esc_html($error) . "\n";
+                }
+                echo '</div>';
+            }
+        } else {
+            echo '<div class="alert alert-info"><strong>ℹ️ Debug log not found or not readable</strong><br>Enable WP_DEBUG and WP_DEBUG_LOG in wp-config.php</div>';
+        }
+        ?>
+
+        <!-- PLUGIN INFORMATION -->
+        <h2>ℹ️ Plugin Information</h2>
+        <div class="info-grid">
+            <div class="info-label">Plugin Version</div>
+            <div class="info-value"><?php echo esc_html(SLN_VERSION); ?></div>
+            
+            <div class="info-label">Plugin Path</div>
+            <div class="info-value"><code><?php echo esc_html(SLN_PLUGIN_DIR); ?></code></div>
+            
+            <div class="info-label">Plugin URL</div>
+            <div class="info-value"><code><?php echo esc_html(SLN_PLUGIN_URL); ?></code></div>
+        </div>
+
+        <!-- PHP ENVIRONMENT -->
+        <h2>🖥️ PHP Environment</h2>
+        <div class="info-grid">
+            <div class="info-label">PHP Version</div>
+            <div class="info-value">
+                <?php echo PHP_VERSION; ?>
+                <?php if (version_compare(PHP_VERSION, '7.4', '>=')): ?>
+                    <span class="badge badge-success">SUPPORTED</span>
+                <?php else: ?>
+                    <span class="badge badge-error">OUTDATED</span>
+                <?php endif; ?>
+            </div>
+            
+            <div class="info-label">WordPress Version</div>
+            <div class="info-value"><?php echo get_bloginfo('version'); ?></div>
+            
+            <div class="info-label">Server Software</div>
+            <div class="info-value"><?php echo esc_html($_SERVER['SERVER_SOFTWARE']); ?></div>
+            
+            <div class="info-label">Max Execution Time</div>
+            <div class="info-value"><?php echo ini_get('max_execution_time'); ?> seconds</div>
+            
+            <div class="info-label">Memory Limit</div>
+            <div class="info-value"><?php echo ini_get('memory_limit'); ?></div>
+            
+            <div class="info-label">Upload Max Filesize</div>
+            <div class="info-value"><?php echo ini_get('upload_max_filesize'); ?></div>
+        </div>
+
+        <!-- WORDPRESS DEBUG INFO -->
+        <h2>🐛 WordPress Debug Settings</h2>
+        <div class="info-grid">
+            <div class="info-label">WP_DEBUG</div>
+            <div class="info-value">
+                <?php if (defined('WP_DEBUG') && WP_DEBUG): ?>
+                    <span class="status-ok">✅ ENABLED</span>
+                <?php else: ?>
+                    <span class="status-warning">⚠️ DISABLED</span>
+                <?php endif; ?>
+            </div>
+            
+            <div class="info-label">WP_DEBUG_LOG</div>
+            <div class="info-value">
+                <?php if (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG): ?>
+                    <span class="status-ok">✅ ENABLED</span>
+                <?php else: ?>
+                    <span class="status-warning">⚠️ DISABLED</span>
+                <?php endif; ?>
+            </div>
+            
+            <div class="info-label">WP_DEBUG_DISPLAY</div>
+            <div class="info-value">
+                <?php if (defined('WP_DEBUG_DISPLAY') && WP_DEBUG_DISPLAY): ?>
+                    <span class="status-warning">⚠️ ENABLED</span> (Should be disabled in production)
+                <?php else: ?>
+                    <span class="status-ok">✅ DISABLED</span>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <!-- RECOMMENDATIONS -->
+        <h2>💡 Recommendations</h2>
+        <div class="alert alert-info">
+            <h3 style="margin-top: 0;">Based on Current State:</h3>
+            <ul style="margin-bottom: 0;">
+                <?php if (!$client_id): ?>
+                <li><strong>CRITICAL:</strong> Client ID is not generated - booking system won't work</li>
+                <?php endif; ?>
+                
+                <?php if (!$session_active && !$using_transient): ?>
+                <li><strong>ERROR:</strong> Neither sessions nor transients are working</li>
+                <?php endif; ?>
+                
+                <?php if ($using_transient): ?>
+                <li><strong>INFO:</strong> Using transient storage (sessions not available/reliable)</li>
+                <?php endif; ?>
+                
+                <?php if (!defined('WP_DEBUG') || !WP_DEBUG): ?>
+                <li><strong>TIP:</strong> Enable WP_DEBUG for better error visibility during development</li>
+                <?php endif; ?>
+                
+                <?php if (!$has_services && !$has_date): ?>
+                <li><strong>INFO:</strong> No active booking - user hasn't started booking process</li>
+                <?php endif; ?>
+                
+                <li><strong>TIP:</strong> Start a booking on the frontend, then refresh this page to see live data</li>
+            </ul>
+        </div>
+
+        <!-- SECURITY REMINDER -->
+        <div class="alert alert-error" style="margin-top: 30px;">
+            <h3 style="margin-top: 0;">🔒 SECURITY REMINDER</h3>
+            <p style="margin-bottom: 0;">
+                <strong>This diagnostic page exposes sensitive information!</strong><br>
+                After debugging, rename this file back to <code>salon-debug-diagnostic.php.disabled</code>
+            </p>
+        </div>
+
+        <p style="text-align: center; color: #8c8f94; font-size: 12px; margin-top: 30px;">
+            Enhanced Diagnostic Tool v2.0 - Based on Production Debugging Experience
+        </p>
+    </div>
+</body>
+</html>

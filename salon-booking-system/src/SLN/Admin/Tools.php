@@ -279,13 +279,6 @@ class SLN_Admin_Tools extends SLN_Admin_AbstractPage
     public function enqueueAssets()
     {
         parent::enqueueAssets();
-
-        $event = 'Page views of back-end plugin pages';
-        $data  = array(
-            'page' => 'tools',
-        );
-
-        SLN_Action_InitScripts::mixpanelTrack($event, $data);
     }
 
 }

@@ -1,17 +1,19 @@
 <?php
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 /**
- *
+ * @var $statusCounts
  */
 
 $isPro = defined('SLN_VERSION_PAY') && SLN_VERSION_PAY;
 
 ?>
+
+
 <a class="calbar day-calbar" data-toggle="tooltip" href="#" data-day="<?php echo $start->format('Y-m-d'); ?>"
-   data-html="true" data-original-title='<?php echo $stats[$start->format('Y-m-d')]["text"]; ?>'>
+    data-html="true" data-original-title='<?php echo $stats[$start->format('Y-m-d')]["text"]; ?>'>
     <?php if (isset($stats[$start->format('Y-m-d')]['free'])): ?>
-        <span class="busy" style="width: <?php echo $stats[$start->format('Y-m-d')]['busy']; ?>%"></span>
-        <span class="free" style="width: <?php echo $stats[$start->format('Y-m-d')]['free']; ?>%"></span>
+        <span class="busy busy-<?php echo $stats[$start->format('Y-m-d')]['busy']; ?>" style="width: <?php echo $stats[$start->format('Y-m-d')]['busy']; ?>%"></span>
+        <span class="free free-<?php echo $stats[$start->format('Y-m-d')]['free']; ?>" style="width: <?php echo $stats[$start->format('Y-m-d')]['free']; ?>%"></span>
     <?php endif; ?>
 </a>
 <div id="cal-day-box">
@@ -20,12 +22,26 @@ $isPro = defined('SLN_VERSION_PAY') && SLN_VERSION_PAY;
             <?php if (!empty($headers) && count($headers)): ?>
                 <div class="cal-day-assistants">
                     <?php foreach ($headers as $head):
-                        if (!is_null($head)): ?>
-                            <div class="cal-day-assistant"
-                                 data-assistant="<?php echo $head['id']; ?>"><?php echo $head['name']; ?></div>
+                        if (!is_null($head)):
+                            $assistant_id = $head['id'];
+                            $has_thumbnail = has_post_thumbnail($assistant_id);
+                            $thumbnail_url = $has_thumbnail ? get_the_post_thumbnail_url($assistant_id, 'thumbnail') : '';
+                    ?>
+                            <div class="cal-day-assistant" data-assistant="<?php echo $assistant_id; ?>">
+                                <span class="assistant-name"><?php echo $head['name']; ?></span>
+                                <?php if ($has_thumbnail): ?>
+                                    <div class="assistant-avatar">
+                                        <span class="assistant-image"><img src="<?php echo esc_url($thumbnail_url); ?>" alt="<?php echo esc_attr($head['name']); ?>" class=""></span>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="assistant-avatar assistant-placeholder">
+                                        <span class="assistant-initials"><?php echo strtoupper(substr($head['name'], 0, 1)); ?></span>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
                         <?php else: ?>
                             <div class="cal-day-assistant"></div>
-                        <?php endif;
+                    <?php endif;
                     endforeach; ?>
                 </div>
             <?php endif; ?>
@@ -53,36 +69,34 @@ $isPro = defined('SLN_VERSION_PAY') && SLN_VERSION_PAY;
                             } elseif ($is_attendant_blocked) {
                                 $block_title = __('Attendant holiday', 'salon-booking-system');
                             }
-                            ?>
+            ?>
                             <div style="margin-left: <?php echo ($attCol + 1) * 200; ?>px; top: <?php echo $line * 100; ?>px;"
-                                 class="att-time-slot<?php echo $css_classes; ?>"
-                                 data-index="<?php echo $line; ?>"
-                                 data-att-id="<?php echo $att['id']; ?>"
+                                class="att-time-slot<?php echo $css_classes; ?>"
+                                data-index="<?php echo $line; ?>"
+                                data-att-id="<?php echo $att['id']; ?>"
                                 <?php echo $block_title ? 'title="' . $block_title . '"' : ''; ?>>
                                 <button type="button"
-                                        class="sln-btn sln-btn--cal-day-select sln-btn--icon sln-icon--checkmark"><?php esc_html_e('SELECT', 'salon-booking-system'); ?></button>
+                                    class="sln-btn sln-btn--cal-day-select sln-btn--calendar-view--pill"><?php esc_html_e('SELECT', 'salon-booking-system'); ?></button>
                                 <div class="att-row-actions">
                                     <span class="cal-day-click-tip"><?php esc_html_e('Click on the "ending time" row', 'salon-booking-system') ?></span>
                                     <button type="button"
-                                            class="sln-btn sln-btn--cal-day sln-btn--cal-day--add sln-btn--icon sln-icon--plus"
-                                            data-action="add-event-by-date"
-                                            data-event-date="<?php echo $start->format('Y-m-d'); ?>"
-                                            data-event-time="<?php echo $calendar->getTimeByLine($line); ?>"
-                                            data-att-id="<?php echo $att['id']; ?>"
-                                            data-pos="<?php echo $attCol; ?>"
-                                    ></button>
+                                        class="sln-btn--new sln-btn--cal-day sln-btn--cal-day--add sln-icon--new sln-icononly-new sln-icon--new--plus"
+                                        data-action="add-event-by-date"
+                                        data-event-date="<?php echo $start->format('Y-m-d'); ?>"
+                                        data-event-time="<?php echo $calendar->getTimeByLine($line); ?>"
+                                        data-att-id="<?php echo $att['id']; ?>"
+                                        data-pos="<?php echo $attCol; ?>"></button>
                                     <button
-                                            type="button"
-                                            class="block_date sln-btn sln-btn--cal-day sln-btn--cal-day--lock sln-btn--icon sln-icon--lock"
-                                            data-att-id="<?php echo $att['id']; ?>"
-                                    ></button>
+                                        type="button"
+                                        class="block_date sln-btn--new sln-btn--cal-day sln-btn--cal-day--lock sln-icon--new sln-icononly-new sln-icon--new--lock"
+                                        data-att-id="<?php echo $att['id']; ?>"></button>
                                 </div>
                             </div>
                             <?php if ($calendar->isTimeUnavailable($line, $att['unavailable_times'])): ?>
-                            <div style="margin-left: <?php echo ($attCol + 1) * 200; ?>px; top: <?php echo $line * 100; ?>px;"
-                                 class="att-unavailable-highlight"></div>
-                        <?php endif; ?>
-                        <?php endfor;
+                                <div style="margin-left: <?php echo ($attCol + 1) * 200; ?>px; top: <?php echo $line * 100; ?>px;"
+                                    class="att-unavailable-highlight"></div>
+                            <?php endif; ?>
+            <?php endfor;
                     }
                 }
             } ?>
@@ -93,149 +107,107 @@ $isPro = defined('SLN_VERSION_PAY') && SLN_VERSION_PAY;
             endif;
             $counter = 0;
             foreach ($by_hour as $bsEvent): ?>
-                <div class="day-event day-highlight day-event-main-block dh-<?php echo $bsEvent->displayClass;
-                echo ($counter != $bsEvent->id && !str_contains($bsEvent->displayClass, 'break-down')) ? ' day-event--bdtop' : ' '; ?>"
-                     style="margin-left: <?php echo ($bsEvent->left + 1) * 200; ?>px; top: <?php echo $bsEvent->top * 100; ?>px; height: <?php echo $bsEvent->lines * 100; ?>px !important;"
-                     data-toggle="tooltip" data-option="day" data-event-id="<?php echo $bsEvent->id; ?>"
-                     data-tooltip-id="<?php echo $bsEvent->id; ?>" data-html="true"
-                     title="<div class='sln-mouth-tooltip'><?php echo $bsEvent->main ? $bsEvent->title : ''; ?><div style='display: grid; margin-top:0.5rem; margin-left:0.7rem;'>
-					<span class='sln-value-tooltip' style='text-align: left;'>
-						<div class='head-info-tooltip'><?php echo $bsEvent->amount; ?></div>
-						<div class='title-info-tooltip'><?php esc_html_e('Total amount', 'salon-booking-system'); ?></div>
-					</span>
-					<span class='sln-value-tooltip' id='discount-tooltip'  style='text-align: left; margin-top:0.5rem; <?php echo $isPro ? '' : 'display: none'; ?>'>
-						<div class='head-info-tooltip'><?php echo $isPro ? $bsEvent->discount : '- -'; ?></div>
-						<div class='title-info-tooltip'><?php esc_html_e('Discount', 'salon-booking-system'); ?></div>
-					</span>
-					<span class='sln-value-tooltip' id='deposit-tooltip' style='text-align: left; margin-top:0.5rem; <?php echo $isPro ? '' : 'display: none'; ?>'>
-						<div class='head-info-tooltip'><?php echo $isPro ? $bsEvent->deposit : '- -'; ?></div>
-						<div class='title-info-tooltip'><?php esc_html_e('Deposit', 'salon-booking-system'); ?></div>
-					</span>
-					<span class='sln-value-tooltip' id='due-tooltip' style='text-align: left; margin-top:0.5rem; <?php echo $isPro ? '' : 'display: none;'; ?>'>
-						<div class='head-info-tooltip'><?php echo $isPro ? $bsEvent->due : '- -'; ?></div>
-						<div class='title-info-tooltip'><?php esc_html_e('Due', 'salon-booking-system'); ?></div>
-					</span>
-				</div>
-				<div class='icons-container' style='margin-top:0.5rem' data-event-id='<?php echo $bsEvent->id; ?>' data-event-class='<?php echo $bsEvent->displayClass; ?>'>
-					<div>
-						<a style='text-decoration: none;' class='sln-pen-icon-tooltip' href='' data-bookingid='<?php echo $bsEvent->id; ?>'></a>
-					</div>
-					<div data-dup-icon='<?php echo $isPro ? 'true' : 'false'; ?>' >
-						<a class='sln-dup-icon-tooltip' data-bookingid='<?php echo $bsEvent->id; ?>'></a>
-					</div>
-					<div>
-						<a target='_blanck' class='sln-user-icon-tooltip <?php echo $plugin->getSettings()->get('enabled_force_guest_checkout') ? 'disabled' : '' ?>' href='admin.php?page=salon-customers&id=<?php echo $bsEvent->customerId; ?>'></a>
-					</div>
-					<div class='sln-trash-icon-tooltip'></div>
-				</div>
-				<div class='sln-confirm-delete-tooltip'>
-					<div style='display:block;'>
-						<div><strong><?php esc_html_e('Are you sure?', 'salon-booking-system'); ?></strong></div>
-						<div style='display:inline-block;'>
-							<a class='sln-dtn-danger-tooltip' href='<?php echo get_delete_post_link($bsEvent->id); ?>'>
-								<?php esc_html_e('Yes, delete', 'salon-booking-system'); ?>
-							</a>
-							<a class='sln-dtn-close-tooltip' aria-label='Close'>
-								<span aria-hidden='true'>&times;</span>
-							</a>
-						</div>
-					</div>
-				</div>
-				</div>">
+                <div class="<?php echo (get_post_meta($bsEvent->id, 'no_show', true) == 1 ? 'no-show' : ''); ?> day-event day-highlight day-event-main-block dh-<?php echo $bsEvent->displayClass;
+                                                                                                                                                                echo ($counter != $bsEvent->id && !str_contains($bsEvent->displayClass, 'break-down')) ? ' day-event--bdtop' : ' '; ?> booking-id-<?php echo $bsEvent->id; ?>"
+                    style="margin-left: <?php echo ($bsEvent->left + 1) * 200; ?>px; top: <?php echo $bsEvent->top * 100; ?>px; height: <?php echo $bsEvent->lines * 100; ?>px !important;"
+                    <?php
+                    // Include the centralized data attributes function
+                    include_once SLN_PLUGIN_DIR . '/views/admin/_calendar_tooltip_data_attributes.php';
+                    echo generateTooltipDataAttributes($bsEvent, $isPro, 'bsEvent');
+                    ?>>
                     <?php $counter = $bsEvent->id; ?>
                     <span data-event-id="<?php echo $bsEvent->id; ?>"
-                          data-event-class="<?php echo $bsEvent->displayClass; ?>" class="event-item day-event-item"
-                          style="display: <?php echo $bsEvent->display_state; ?>;">
-						<span class="day-event-item__customer hide"><?php echo $bsEvent->customer; ?></span>
-						<span class="day-event-item__from-time hide"><?php esc_html_e('from', 'salon-booking-system'); ?><?php echo $bsEvent->from; ?></span>
-						<span class="day-event-item__to-time hide"><?php esc_html_e('to', 'salon-booking-system'); ?><?php echo $bsEvent->to; ?></span>
-						<span class="day-event-item__calendar-day <?php echo $isPro ? '' : 'sln-free-version'; ?>"
-                              data-card-id="<?php echo $bsEvent->id; ?>"><?php echo $bsEvent->calendar_day;
-                            if ($bsEvent->main): ?>
+                        data-event-class="<?php echo $bsEvent->displayClass; ?>" class="event-item day-event-item"
+                        style="display: <?php echo $bsEvent->display_state; ?>;">
+                        <span class="day-event-item__customer hide"><?php echo $bsEvent->customer; ?></span>
+                        <span class="day-event-item__from-time hide"><?php esc_html_e('from', 'salon-booking-system'); ?><?php echo $bsEvent->from; ?></span>
+                        <span class="day-event-item__to-time hide"><?php esc_html_e('to', 'salon-booking-system'); ?><?php echo $bsEvent->to; ?></span>
+                        <span class="day-event-item__calendar-day <?php echo $isPro ? '' : 'sln-free-version'; ?>"
+                            data-card-id="<?php echo $bsEvent->id; ?>"><?php echo $bsEvent->calendar_day;
+                                                                        if ($bsEvent->main): ?>
                                 <div class="more_details">
-									<ul>
-										<li class="booking-total-amount">
-											<?php esc_html_e('Total amount', 'salon-booking-system'); ?>
-											<span class="amount_value"><?php echo $isPro ? $bsEvent->amount : '- -'; ?></span>
-										</li>
-										<li class="booking_discount_amount">
-											<?php esc_html_e('Discount', 'salon-booking-system'); ?>
-											<span class='amount_value'><?php echo $isPro ? $bsEvent->discount : '- -'; ?></span>
-										</li>
-										<li class="booking_deposit_amount">
-											<?php esc_html_e('Deposit', 'salon-booking-system'); ?>
-											<span class="amount_value"><?php echo $isPro ? $bsEvent->deposit : '- -'; ?></span>
-										</li>
-										<li class="booking_due_amount">
-											<?php esc_html_e('Due', 'salon-booking-system'); ?>
-											<span class="amount_value"><?php echo $isPro ? $bsEvent->due : '- -'; ?></span>
-										</li>
-										<?php if (!$isPro): ?>
+                                    <ul>
+                                        <li class="booking-total-amount">
+                                            <?php esc_html_e('Total amount', 'salon-booking-system'); ?>
+                                            <span class="amount_value"><?php echo $isPro ? $bsEvent->amount : '- -'; ?></span>
+                                        </li>
+                                        <li class="booking_discount_amount">
+                                            <?php esc_html_e('Discount', 'salon-booking-system'); ?>
+                                            <span class='amount_value'><?php echo $isPro ? $bsEvent->discount : '- -'; ?></span>
+                                        </li>
+                                        <li class="booking_deposit_amount">
+                                            <?php esc_html_e('Deposit', 'salon-booking-system'); ?>
+                                            <span class="amount_value"><?php echo $isPro ? $bsEvent->deposit : '- -'; ?></span>
+                                        </li>
+                                        <li class="booking_due_amount">
+                                            <?php esc_html_e('Due', 'salon-booking-system'); ?>
+                                            <span class="amount_value"><?php echo $isPro ? $bsEvent->due : '- -'; ?></span>
+                                        </li>
+                                        <?php if (!$isPro): ?>
                                             <a href="https://www.salonbookingsystem.com/homepage/plugin-pricing/?utm_source=free%20version&utm_medium=booking%20details&utm_campaign=go_pro"
-                                               class="booking_tool_item_promolink"
-                                               target="_blank"
-                                            ><?php esc_html_e('unlock this feature for', 'salon-booking-system'); ?>
-											<strong><79 € / <?php esc_html_e('year', 'salon-booking-system'); ?></strong></a>
+                                                class="booking_tool_item_promolink"
+                                                target="_blank"><?php esc_html_e('unlock this feature for', 'salon-booking-system'); ?>
+                                                <strong>
+                                                    <79 € / <?php esc_html_e('year', 'salon-booking-system'); ?></strong></a>
                                         <?php endif; ?>
-									</ul>
-									<div class="booking_tools">
-										<div class="booking_tools_item">
-											<a href="#"><i class="sln-btn--icon sln-icon--pen"></i></a>
-										</div>
-										<div class="booking_tools_item <?php echo $isPro ? '' : 'disabled'; ?>">
-											<a href="#"><i class="sln-btn--icon sln-icon-trash"
-                                                           style="--font-weight: 800;"></i></a>
-											<?php if (!$isPro): ?>
+                                    </ul>
+                                    <div class="booking_tools">
+                                        <div class="booking_tools_item">
+                                            <a href="#"><i class="sln-btn--icon sln-icon--pen"></i></a>
+                                        </div>
+                                        <div class="booking_tools_item <?php echo $isPro ? '' : 'disabled'; ?>">
+                                            <a href="#"><i class="sln-btn--icon sln-icon-trash"
+                                                    style="--font-weight: 800;"></i></a>
+                                            <?php if (!$isPro): ?>
                                                 <a href="https://www.salonbookingsystem.com/homepage/plugin-pricing/?utm_source=free%20version&utm_medium=booking%20details&utm_campaign=go_pro"
-                                                   class="booking_tool_item_promolink"
-                                                   target="_blank"
-                                                ><?php esc_html_e('unlock this feature for', 'salon-booking-system'); ?>
-												<strong><79 € / <?php esc_html_e('year', 'salon-booking-system'); ?></strong></a>
+                                                    class="booking_tool_item_promolink"
+                                                    target="_blank"><?php esc_html_e('unlock this feature for', 'salon-booking-system'); ?>
+                                                    <strong>
+                                                        <79 € / <?php esc_html_e('year', 'salon-booking-system'); ?></strong></a>
                                             <?php endif; ?>
-										</div>
-										<div class="booking_tools_item <?php echo $isPro ? '' : 'disabled'; ?>">
-											<a class="dusplicate_link"
-                                               href="<?php echo $isPro && !empty($bsEvent->duplicate_url) ? $bsEvent->duplicate_url : '#'; ?>"><i
-                                                        class="sln-btn--icon sln-icon--copy"
-                                                        style="--font-weight: 800;"></i></a>
-											<?php if (!$isPro): ?>
+                                        </div>
+                                        <div class="booking_tools_item <?php echo $isPro ? '' : 'disabled'; ?>">
+                                            <a class="dusplicate_link"
+                                                href="<?php echo $isPro && !empty($bsEvent->duplicate_url) ? $bsEvent->duplicate_url : '#'; ?>"><i
+                                                    class="sln-btn--icon sln-icon--copy"
+                                                    style="--font-weight: 800;"></i></a>
+                                            <?php if (!$isPro): ?>
                                                 <a href="https://www.salonbookingsystem.com/homepage/plugin-pricing/?utm_source=free%20version&utm_medium=booking%20details&utm_campaign=go_pro"
-                                                   class="booking_tool_item_promolink"
-                                                   target="_blank"
-                                                ><?php esc_html_e('unlock this feature for', 'salon-booking-system'); ?>
-												<strong><79 € / <?php esc_html_e('year', 'salon-booking-system'); ?></strong></a>
+                                                    class="booking_tool_item_promolink"
+                                                    target="_blank"><?php esc_html_e('unlock this feature for', 'salon-booking-system'); ?>
+                                                    <strong>
+                                                        <79 € / <?php esc_html_e('year', 'salon-booking-system'); ?></strong></a>
                                             <?php endif; ?>
-										</div>
-										<div class="booking_tools_item <?php echo $isPro ? '' : 'disabled'; ?>">
-											<a href="#"><i class="sln-btn--icon sln-icon--user-check"></i></a>
-											<?php if (!$isPro): ?>
+                                        </div>
+                                        <div class="booking_tools_item <?php echo $isPro ? '' : 'disabled'; ?>">
+                                            <a href="#"><i class="sln-btn--icon sln-icon--user-check"></i></a>
+                                            <?php if (!$isPro): ?>
                                                 <a href="https://www.salonbookingsystem.com/homepage/plugin-pricing/?utm_source=free%20version&utm_medium=booking%20details&utm_campaign=go_pro"
-                                                   class="booking_tool_item_promolink"
-                                                   target="_blank"
-                                                ><?php esc_html_e('unlock this feature for', 'salon-booking-system'); ?>
-												<strong><79 € / <?php esc_html_e('year', 'salon-booking-system'); ?></strong></a>
+                                                    class="booking_tool_item_promolink"
+                                                    target="_blank"><?php esc_html_e('unlock this feature for', 'salon-booking-system'); ?>
+                                                    <strong>
+                                                        <79 € / <?php esc_html_e('year', 'salon-booking-system'); ?></strong></a>
                                             <?php endif; ?>
-										</div>
-										<?php if (!$isPro): ?>
+                                        </div>
+                                        <?php if (!$isPro): ?>
                                             <a href="https://www.salonbookingsystem.com/homepage/plugin-pricing/?utm_source=free%20version&utm_medium=booking%20details_mobile_device&utm_campaign=go_pro"
-                                               class="more_details_promolink" target="_blank"
-                                            ><span><?php esc_html_e('unlock this feature', 'salon-booking-system'); ?> </span>
-											<strong><?php esc_html_e('buy pro', 'salon-booking-system'); ?></strong></a>
+                                                class="more_details_promolink" target="_blank"><span><?php esc_html_e('unlock this feature', 'salon-booking-system'); ?> </span>
+                                                <strong><?php esc_html_e('buy pro', 'salon-booking-system'); ?></strong></a>
                                         <?php endif; ?>
-									</div>
-									<div role="alert">
-										<strong><?php esc_html_e('Are you sure?', 'salon-booking-system'); ?></strong>
-										<a class="btn btn-danger btn-ok"
-                                           href="<?php echo get_delete_post_link($bsEvent->id); ?>"><?php esc_html_e('Yes, delete.', 'salon-booking-system'); ?></a>
-										<button type="button" class="close" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-									</div>
-								</div>
+                                    </div>
+                                    <div role="alert">
+                                        <strong><?php esc_html_e('Are you sure?', 'salon-booking-system'); ?></strong>
+                                        <a class="btn btn-danger btn-ok"
+                                            href="<?php echo get_delete_post_link($bsEvent->id); ?>"><?php esc_html_e('Yes, delete.', 'salon-booking-system'); ?></a>
+                                        <button type="button" class="close" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                    </div>
+                                </div>
                             <?php endif; ?>
-						</span>
-					</span>
+                        </span>
+                    </span>
                     <div class="events-list--title">
                         <div class="sln-event-popup"
-                             data-event-id="<?php echo $bsEvent->id; ?>"><?php echo $bsEvent->tooltipTitle; ?></div>
+                            data-event-id="<?php echo $bsEvent->id; ?>"><?php echo $bsEvent->tooltipTitle; ?></div>
                     </div>
                 </div>
             <?php endforeach; ?>
@@ -268,24 +240,22 @@ $isPro = defined('SLN_VERSION_PAY') && SLN_VERSION_PAY;
                     ?>
                     <div class="row-fluid cal-day-hour-part <?= $locked ?>"
                         <?= $title ? 'title="' . $title . '"' : '' ?>>
-                        <div class="span1 col-xs-1"><b><?= $calendar->getTimeByLine($line) ?></b></div>
+                        <div class="span1 col-xs-1"><b><?= $calendar->getTimeByLineFormatted($line) ?></b></div>
                         <div class="span1 col-xs-3 cal-day-hour-part-first-column"></div>
                         <div class="span10 col-xs-8"></div>
                         <button type="button"
-                                class="sln-btn sln-btn--cal-day-select sln-btn--icon sln-icon--checkmark"><?php esc_html_e('SELECT', 'salon-booking-system'); ?></button>
+                            class="sln-btn sln-btn--cal-day-select sln-btn--calendar-view--pill"><?php esc_html_e('Select', 'salon-booking-system'); ?></button>
                         <div class="cal-day-hour-part__rowactions">
                             <span class="cal-day-click-tip"><?php esc_html_e('Click on the "ending time" row', 'salon-booking-system') ?></span>
                             <button
-                                    type="button"
-                                    class="sln-btn sln-btn--cal-day sln-btn--cal-day--add sln-btn--icon sln-icon--plus"
-                                    data-action="add-event-by-date"
-                                    data-event-date="<?php echo $start->format('Y-m-d'); ?>"
-                                    data-event-time="<?php echo $calendar->getTimeByLine($line); ?>"
-                            ></button>
+                                type="button"
+                                class="sln-btn--new sln-btn--cal-day sln-btn--cal-day--add sln-icon--new sln-icononly-new sln-icon--new--plus"
+                                data-action="add-event-by-date"
+                                data-event-date="<?php echo $start->format('Y-m-d'); ?>"
+                                data-event-time="<?php echo $calendar->getTimeByLine($line); ?>"></button>
                             <button
-                                    type="button"
-                                    class="block_date sln-btn sln-btn--cal-day sln-btn--cal-day--lock sln-btn--icon sln-icon--lock"
-                            ></button>
+                                type="button"
+                                class="block_date sln-btn--new sln-btn--cal-day sln-btn--cal-day--lock sln-icon--new sln-icononly-new sln-icon--new--lock"></button>
                         </div>
                     </div>
                 <?php endfor; ?>

@@ -20,7 +20,7 @@ class SLN_Shortcode_Salon_DateStep extends SLN_Shortcode_Salon_Step
             $obj->setDate(SLN_Func::filter($date, 'date'))->setTime(SLN_Func::filter($date, 'time'));
             $intervalsArray = $obj->getintervalsArray($customerTimezone);
             $date = new SLN_DateTime($intervalsArray['suggestedYear'].'-'.$intervalsArray['suggestedMonth'].'-'.$intervalsArray['suggestedDay'].' '.$intervalsArray['suggestedTime']);
-            $dateTime = $customerTimezone ? (new SLN_DateTime($date, new DateTimeZone($customerTimezone)))->setTimezone(SLN_DateTime::getWpTimezone()) : $date;
+            $dateTime = $customerTimezone ? (new SLN_DateTime($date, SLN_Func::createDateTimeZone($customerTimezone)))->setTimezone(SLN_DateTime::getWpTimezone()) : $date;
             $this->addErrors($obj->checkDateTimeServicesAndAttendants($bb->getAttendantsIds(), $dateTime));
         }else{
             $intervalsArray = $intervals->toArray($customerTimezone);
@@ -37,7 +37,6 @@ class SLN_Shortcode_Salon_DateStep extends SLN_Shortcode_Salon_Step
             'errors'            => $this->getErrors(),
             'additional_errors' => array_merge($this->getAddtitionalErrors(), $rescheduledErrors),
             'settings'          => $plugin->getSettings(),
-            'mixpanelTrackScript' => $this->getMixpanelTrackScript(),
             'intervalsArray' => $intervalsArray,
             'date' => $date,
         );
@@ -52,7 +51,7 @@ class SLN_Shortcode_Salon_DateStep extends SLN_Shortcode_Salon_Step
                 $timezone = SLN_Func::filter(sanitize_text_field( wp_unslash( $_POST['sln']['customer_timezone']  ) ), '');
         }
         if ($this->getPlugin()->getSettings()->isDisplaySlotsCustomerTimezone() && $timezone) {
-            $dateTime = (new SLN_DateTime(SLN_Func::filter($date, 'date') . ' ' . SLN_Func::filter($time, 'time'.':00'), new DateTimeZone($timezone)))->setTimezone(SLN_DateTime::getWpTimezone());
+            $dateTime = (new SLN_DateTime(SLN_Func::filter($date, 'date') . ' ' . SLN_Func::filter($time, 'time'.':00'), SLN_Func::createDateTimeZone($timezone)))->setTimezone(SLN_DateTime::getWpTimezone());
             $date = SLN_Func::filter($this->getPlugin()->format()->date($dateTime), 'date');
             $time = SLN_Func::filter($this->getPlugin()->format()->time($dateTime), 'time');
         }

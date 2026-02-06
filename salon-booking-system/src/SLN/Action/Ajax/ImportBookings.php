@@ -136,6 +136,9 @@ class SLN_Action_Ajax_ImportBookings extends SLN_Action_Ajax_AbstractImport{
             $booking_service = array('service' => $services[$i]->getId());
             if($services[$i]->isAttendantsEnabled()){
                 $service = $services[$i];
+                if(empty($attendants)){
+                    return $this->dataToErrorRespons($data, esc_html__('Service requires attendant but no attendants provided', 'salon-booking-system'));
+                }
                 if($service->isMultipleAttendantsForServiceEnabled()){
                     $attendants = array_slice($attendants, 0, $service->getCountMultipleAttendants());
                     $attendants = array_map(function($att){return $att->getId();}, $attendants);
@@ -161,7 +164,14 @@ class SLN_Action_Ajax_ImportBookings extends SLN_Action_Ajax_AbstractImport{
         }
         
         $booking_id = wp_insert_post($args);
-        $date = new SLN_DateTime($this->getData('datetime'));
+        
+        // Normalize date format to handle localized month names
+        $datetime_string = $this->getData('datetime');
+        $date = $this->parseDateTime($datetime_string);
+        
+        if (!$date) {
+            return $this->dataToErrorRespons($data, esc_html__('Invalid date format', 'salon-booking-system'));
+        }
         $bookingServices = SLN_Wrapper_Booking_Services::build($booking_services, $date, 0, explode(', ', $this->getData('count_services')));
         update_post_meta($booking_id, '_'.SLN_Plugin::POST_TYPE_BOOKING.'_services', $bookingServices->toArrayRecursive());
         update_post_meta($booking_id, '_'.SLN_Plugin::POST_TYPE_BOOKING.'_services_processed', 1);
@@ -190,5 +200,53 @@ class SLN_Action_Ajax_ImportBookings extends SLN_Action_Ajax_AbstractImport{
             'email' => $this->getData('email'),
             'error' => $error_message,
         );
+    }
+    
+    /**
+     * Parse datetime string from various formats including localized month names
+     * 
+     * @param string $datetime_string Date/time string from CSV
+     * @return SLN_DateTime|false DateTime object or false on failure
+     */
+    protected function parseDateTime($datetime_string) {
+        // Try direct parsing first (standard formats)
+        try {
+            return new SLN_DateTime($datetime_string);
+        } catch (Exception $e) {
+            // Continue to try other formats
+        }
+        
+        // Map of localized month abbreviations to English
+        $month_map = array(
+            // Polish
+            'Sty' => 'Jan', 'Lut' => 'Feb', 'Mar' => 'Mar', 'Kwi' => 'Apr',
+            'Maj' => 'May', 'Cze' => 'Jun', 'Lip' => 'Jul', 'Sie' => 'Aug',
+            'Wrz' => 'Sep', 'Paź' => 'Oct', 'Lis' => 'Nov', 'Gru' => 'Dec',
+            // Spanish
+            'Ene' => 'Jan', 'Feb' => 'Feb', 'Abr' => 'Apr', 'Jun' => 'Jun',
+            'Jul' => 'Jul', 'Ago' => 'Aug', 'Sep' => 'Sep', 'Oct' => 'Oct',
+            'Nov' => 'Nov', 'Dic' => 'Dec',
+            // French
+            'Jan' => 'Jan', 'Fév' => 'Feb', 'Avr' => 'Apr', 'Mai' => 'May',
+            'Jui' => 'Jun', 'Juil' => 'Jul', 'Aoû' => 'Aug', 'Déc' => 'Dec',
+            // German
+            'Mär' => 'Mar', 'Mai' => 'May', 'Okt' => 'Oct', 'Dez' => 'Dec',
+            // Italian
+            'Gen' => 'Jan', 'Feb' => 'Feb', 'Mag' => 'May', 'Giu' => 'Jun',
+            'Lug' => 'Jul', 'Ago' => 'Aug', 'Set' => 'Sep', 'Ott' => 'Oct',
+            'Dic' => 'Dec',
+        );
+        
+        // Replace localized month names with English equivalents
+        $normalized = str_replace(array_keys($month_map), array_values($month_map), $datetime_string);
+        
+        // Try parsing the normalized string
+        try {
+            return new SLN_DateTime($normalized);
+        } catch (Exception $e) {
+            // Log the error for debugging
+            error_log('ImportBookings: Failed to parse datetime: ' . $datetime_string . ' (normalized: ' . $normalized . ')');
+            return false;
+        }
     }
 }

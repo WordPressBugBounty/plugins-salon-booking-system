@@ -20,6 +20,7 @@ class SLN_Metabox_Service extends SLN_Metabox_Abstract
         'variable_price_enabled' => 'bool',
         'variable_price' => '',
         'variable_duration' => 'bool',
+        'max_variable_duration' => 'int',
 	    'multiple_attendants_for_service' => 'bool',
         'multiple_count_attendants' => 'int',
         'offset_for_service' => 'bool',
@@ -117,5 +118,21 @@ class SLN_Metabox_Service extends SLN_Metabox_Abstract
         if(isset($_POST[$k]))
             $_POST[$k] = SLN_Helper_AvailabilityItems::processSubmission($_POST[$k]);
         parent::save_post($post_id, $post);
+        
+        // Force clear ALL caches - WordPress object cache + options
+        SLN_Plugin::addLog('[Service Save] Clearing all caches');
+        wp_cache_delete('salon_cache', 'options');
+        wp_cache_flush(); // Clear all object cache
+        delete_option('salon_cache');
+        delete_transient('salon_cache'); // Clear any transients too
+        SLN_Plugin::addLog('[Service Save] All caches cleared, now rebuilding...');
+        
+        // Refresh booking cache when service settings change (e.g., break duration)
+        $this->getPlugin()->getBookingCache()->refreshAll();
+        
+        // Force the cache to be saved immediately
+        $this->getPlugin()->getBookingCache()->save();
+        
+        SLN_Plugin::addLog('[Service Save] Cache rebuild and save complete');
     }
 }

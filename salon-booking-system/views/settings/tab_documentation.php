@@ -70,6 +70,14 @@ sum(
                 </div>
             </div>
         </div>
+        <div class="col-xs-12 col-md-4">
+            <div class="sln-box sln-box--main">
+                <div class="sln-checkbox">
+                <?php $this->row_input_checkbox('enable_debug_logs', __('Enable debug logs', 'salon-booking-system'));?>
+                <p><?php esc_html_e( 'Enable detailed logging to log.txt file in the plugin directory for troubleshooting. Logs can be found at: wp-content/plugins/salon-booking-system/log.txt', 'salon-booking-system') ?></p>
+                </div>
+            </div>
+        </div>
     <?php endif; ?>
 
  <?php

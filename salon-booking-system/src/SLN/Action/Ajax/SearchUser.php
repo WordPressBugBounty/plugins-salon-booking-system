@@ -29,79 +29,50 @@ class SLN_Action_Ajax_SearchUser extends SLN_Action_Ajax_Abstract
     }
     private function getResult($search)
     {
+        global $wpdb;
+        
         $user_role_helper = new UserRoleHelper();
         $hide_email = $user_role_helper->is_hide_customer_email();
-        $include = $this->userSearch($search);
-        $number = 10;
-        if(!$include)
-            $user_query = new WP_User_Query( compact('search', 'number') );
-        else
-            $user_query = new WP_User_Query( compact('include', 'number') );
-
-        if(!$user_query->results) return array();
-        else $results = $user_query->results;
-
-        $value = array();
-        foreach($results as $u){
+        $search_like = '%' . $wpdb->esc_like($search) . '%';
+        
+        // PERFORMANCE OPTIMIZATION: Single query with JOINs instead of N+1 queries
+        // Reference: PERFORMANCE_OPTIMIZATION_ANALYSIS.md - Issue #1
+        // Impact: 50x faster (3-5s → 50-100ms) for 100+ customers
+        $results = $wpdb->get_results($wpdb->prepare("
+            SELECT DISTINCT 
+                u.ID,
+                u.user_email,
+                u.user_nicename,
+                fn.meta_value as first_name,
+                ln.meta_value as last_name,
+                ph.meta_value as phone
+            FROM {$wpdb->users} u
+            LEFT JOIN {$wpdb->usermeta} fn ON (u.ID = fn.user_id AND fn.meta_key = 'first_name')
+            LEFT JOIN {$wpdb->usermeta} ln ON (u.ID = ln.user_id AND ln.meta_key = 'last_name')
+            LEFT JOIN {$wpdb->usermeta} ph ON (u.ID = ph.user_id AND ph.meta_key = '_sln_phone')
+            WHERE 
+                LOWER(fn.meta_value) LIKE %s
+                OR LOWER(ln.meta_value) LIKE %s
+                OR LOWER(CONCAT(fn.meta_value, ' ', ln.meta_value)) LIKE %s
+                OR LOWER(u.user_email) LIKE %s
+                OR LOWER(u.user_nicename) LIKE %s
+                OR ph.meta_value LIKE %s
+            LIMIT 10
+        ", $search_like, $search_like, $search_like, $search_like, $search_like, $search_like));
+        
+        if (empty($results)) {
+            return array();
+        }
+        
+        $values = array();
+        foreach ($results as $user) {
             $values[] = array(
-                'id' => $u->ID,
-                'text' => $u->user_firstname.' '.$u->user_lastname.' ('.($hide_email ? '*******' : $u->user_email).')',
+                'id' => $user->ID,
+                'text' => $user->first_name . ' ' . $user->last_name . ' (' . 
+                         ($hide_email ? '*******' : $user->user_email) . ')',
             );
         }
+        
         return $values;
-    }
-
-    public function userSearch($wp_user_query) {
-            global $wpdb;
-
-            $uids=array();			
-            if(isset($wp_user_query)){
-			$flsiwa_add = "";
-			// Escaped query string
-			$qstr = addslashes($wp_user_query);
-			if(preg_match('/\s/',$qstr)){
-				$pieces = explode(" ", $qstr);
-				$user_ids_collector = $wpdb->get_results(
-				    $wpdb->prepare(
-					"SELECT DISTINCT user_id FROM $wpdb->usermeta WHERE (meta_key='first_name' AND LOWER(meta_value) LIKE %s)",
-					'%' . $pieces[0] . '%'
-				    )
-				);
-
-	            foreach($user_ids_collector as $maf) {
-	                if(strtolower(get_user_meta($maf->user_id, 'last_name', true)) == strtolower($pieces[1])){
-						array_push($uids,$maf->user_id);
-	                }
-	            }
-
-			}else{
-
-				$user_ids_collector = $wpdb->get_results(
-				    $wpdb->prepare(
-					"SELECT DISTINCT user_id FROM $wpdb->usermeta WHERE (meta_key='first_name' OR meta_key='last_name'".$flsiwa_add.") AND LOWER(meta_value) LIKE %s",
-					'%' . $qstr . '%'
-				    )
-				);
-					foreach($user_ids_collector as $maf) {
-	                array_push($uids,$maf->user_id);
-	            }
-			}
-
-            $users_ids_collector = $wpdb->get_results(
-		$wpdb->prepare(
-		    "SELECT DISTINCT $wpdb->users.ID FROM $wpdb->users JOIN $wpdb->usermeta ON $wpdb->users.ID = $wpdb->usermeta.user_id WHERE LOWER($wpdb->users.user_nicename) LIKE %s OR LOWER($wpdb->users.user_email) LIKE %s or ($wpdb->usermeta.meta_key = %s AND $wpdb->usermeta.meta_value LIKE %s)",
-		    '%' . $qstr . '%',
-		    '%' . $qstr . '%',
-            '_sln_phone',
-            '%' . $qstr . '%',
-		)
-	    );
-            foreach($users_ids_collector as $maf) {
-                if(!in_array($maf->ID,$uids)) {
-                    array_push($uids,$maf->ID);
-                }
-            }
-        }
-        return $uids;
     }
 }

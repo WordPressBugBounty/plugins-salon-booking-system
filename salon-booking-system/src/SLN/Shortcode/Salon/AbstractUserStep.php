@@ -3,11 +3,17 @@
 abstract class SLN_Shortcode_Salon_AbstractUserStep extends SLN_Shortcode_Salon_Step
 {
     protected function successRegistration($values){
+        SLN_Plugin::addLog("Attempting user registration for email: " . (isset($values['email']) ? $values['email'] : 'unknown'));
+        
         $errors = wp_create_user($values['email'], $values['password'], $values['email']);
         if (is_wp_error($errors)) {
+            SLN_Plugin::addLog("ERROR: User registration failed: " . $errors->get_error_message());
             $this->addError($errors->get_error_message());
 	    return false;
         }
+        
+        SLN_Plugin::addLog("User created successfully with ID: " . $errors);
+        
         $update = [
             'ID' => $errors,
             'role' => SLN_Plugin::USER_ROLE_CUSTOMER,
@@ -18,9 +24,12 @@ abstract class SLN_Shortcode_Salon_AbstractUserStep extends SLN_Shortcode_Salon_
         if(isset($values['lastname'])){
             $update['last_name'] = $values['lastname'];
         }
-        wp_update_user(
-            $update
-        );
+        
+        $update_result = wp_update_user($update);
+        if (is_wp_error($update_result)) {
+            SLN_Plugin::addLog("WARNING: User update failed: " . $update_result->get_error_message());
+        }
+        
         $additional_fields = SLN_Enum_CheckoutFields::forRegistration()->appendSmsPrefix()->keys();
         foreach($additional_fields as $k){
             if(in_array($k,['firstname','lastname', 'sms_prefix'])) continue;
@@ -38,8 +47,14 @@ abstract class SLN_Shortcode_Salon_AbstractUserStep extends SLN_Shortcode_Salon_
                 }
             }
         }
+        
         if (!$this->getPlugin()->getSettings()->isDisableNewUserWelcomeEmail()) {
-            wp_new_user_notification($errors, null, 'both');
+            try {
+                wp_new_user_notification($errors, null, 'both');
+                SLN_Plugin::addLog("Welcome email sent successfully for user ID: " . $errors);
+            } catch (Exception $e) {
+                SLN_Plugin::addLog("WARNING: Welcome email failed: " . $e->getMessage());
+            }
         }
 
 	do_action('sln.shortcode.details.successRegistration.after_create_user', $errors, $values, $this);
@@ -60,6 +75,24 @@ abstract class SLN_Shortcode_Salon_AbstractUserStep extends SLN_Shortcode_Salon_
         if(empty($username) || empty($password)){
             return;
         }
+        
+        // CRITICAL FIX: Preserve booking data before login (Safari/Edge compatibility)
+        // WordPress login creates a NEW session with new PHPSESSID
+        // This causes booking data stored in old session to become inaccessible
+        // Solution: Force save to transient BEFORE login, restore AFTER
+        // Fixes "blank page with 0" issue after customer login
+        $bb = $this->getPlugin()->getBookingBuilder();
+        $clientId = $bb->getClientId();
+        
+        if ($clientId) {
+            // Save current booking data to transient using client_id
+            // This preserves data even when session ID changes
+            // Force switch to transient storage to persist data across session change
+            $bb->forceTransientStorage();
+            
+            SLN_Plugin::addLog(sprintf('[Login] Saved booking data to transient with client_id: %s', $clientId));
+        }
+        
         global $user;
         $creds                  = array();
         $creds['user_login']    = $username;
@@ -73,6 +106,15 @@ abstract class SLN_Shortcode_Salon_AbstractUserStep extends SLN_Shortcode_Salon_
             return false;
         }else{
             wp_set_current_user($user->ID);
+        }
+        
+        // AFTER login: Ensure client_id is available in new session context
+        // This allows BookingBuilder to retrieve data from transient
+        if ($clientId) {
+            $_GET['sln_client_id'] = $clientId;
+            $_POST['sln_client_id'] = $clientId;
+            
+            SLN_Plugin::addLog(sprintf('[Login] Login successful, client_id preserved: %s', $clientId));
         }
 
         return true;

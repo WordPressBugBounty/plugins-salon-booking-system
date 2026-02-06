@@ -167,6 +167,21 @@ class SLN_Settings {
 		return $ret ? $ret : 'basic';
 	}
 
+	/**
+	 * Check if nested bookings (bookings during service breaks) are enabled globally
+	 * When enabled, all services with breaks will allow nested bookings
+	 * Note: This is a PRO-only feature
+	 * 
+	 * @return bool
+	 */
+	public function isNestedBookingsEnabled() {
+		// PRO-only feature
+		if (!defined('SLN_VERSION_PAY')) {
+			return false;
+		}
+		return (bool) $this->get('nested_bookings_enabled');
+	}
+
 	public function getPaymentMethod() {
 		$val = $this->get('pay_method');
 
@@ -283,6 +298,17 @@ class SLN_Settings {
 
 	public function isFormStepsAltOrder() {
 		return $this->get('form_steps_alt_order') ? true : false;
+	}
+
+	/**
+	 * Check if auto-attendant availability check is enabled
+	 * Feature flag for attendant-aware time slot filtering
+	 * 
+	 * @return bool True if enabled (default), false if disabled
+	 */
+	public function isAutoAttendantCheckEnabled() {
+		// Default to enabled (true) unless explicitly disabled
+		return $this->get('auto_attendant_check_enabled') !== '0';
 	}
 
 	public function getDecimalSeparator() {

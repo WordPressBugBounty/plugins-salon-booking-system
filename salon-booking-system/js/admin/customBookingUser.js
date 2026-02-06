@@ -9,6 +9,18 @@ jQuery(function ($) {
 		sln_adminDate($);
 	}
 	$("#calculate-total").on("click", sln_calculateTotal);
+	
+	// Auto-calculate when discount selection changes
+	$(document).on("change", 'select[name="_sln_booking[discounts][]"]', function () {
+		sln_calculateTotal();
+	});
+	
+	// Auto-calculate when services change
+	$(document).on("change", 'select[name="_sln_booking[service][]"]', function () {
+		sln_calculateTotal();
+	});
+	
+	// Recalculate "Amount to be paid" when Amount or Deposit changes
 	$("#_sln_booking_amount,#_sln_booking_deposit").on("change", function () {
 		var tot = $("#_sln_booking_amount").val();
 		var bookingDeposit = $("#_sln_booking_deposit").val();
@@ -244,8 +256,8 @@ function sln_validateBooking() {
 		sln_customer_fields !== undefined
 			? sln_customer_fields
 			: jQuery("#salon-step-date")
-					.attr("data-customer_fields")
-					.split(",");
+				.attr("data-customer_fields")
+				.split(",");
 	var fields = $("#salon-step-date")
 		.attr("data-required_user_fields")
 		.split(",");
@@ -318,8 +330,8 @@ function sln_validateBooking_dym() {
 		sln_customer_fields !== undefined
 			? sln_customer_fields
 			: jQuery("#salon-step-date")
-					.attr("data-customer_fields")
-					.split(",");
+				.attr("data-customer_fields")
+				.split(",");
 	var fields = $("#salon-step-date")
 		.attr("data-required_user_fields")
 		.split(",");
@@ -360,6 +372,22 @@ function sln_validateBooking_dym() {
 }
 
 function sln_func_customBookingUser($) {
+	// Check on page load if booking already has a customer assigned
+	// If so, hide the "Save as new customer" checkbox
+	function checkAndHideNewCustomerOption() {
+		var postAuthor = $("#post_author").val();
+		var customerEmail = $("#_sln_booking_email").val();
+
+		// If there's a customer ID (post_author > 0) or email is populated
+		if ((postAuthor && postAuthor !== "" && postAuthor !== "0") ||
+			(customerEmail && customerEmail !== "")) {
+			$('#sln-save-new-customer-wrapper').hide();
+		}
+	}
+
+	// Run check on page load
+	checkAndHideNewCustomerOption();
+
 	$("#sln-update-user-field").select2({
 		containerCssClass: "sln-select-rendered",
 		dropdownCssClass: "sln-select-dropdown",
@@ -411,8 +439,8 @@ function sln_func_customBookingUser($) {
 					sln_customer_fields !== undefined
 						? sln_customer_fields
 						: jQuery("#salon-step-date")
-								.attr("data-customer_fields")
-								.split(",");
+							.attr("data-customer_fields")
+							.split(",");
 				if (!data.success) {
 					var alertBox = $('<div class="alert alert-danger"></div>');
 					$(data.errors).each(function () {
@@ -422,8 +450,8 @@ function sln_func_customBookingUser($) {
 				} else {
 					var alertBox = $(
 						'<div class="alert alert-success">' +
-							data.message +
-							"</div>"
+						data.message +
+						"</div>"
 					);
 					$("#sln-update-user-message").html(alertBox).fadeIn(500);
 					$.each(data.result, function (key, value) {
@@ -448,10 +476,12 @@ function sln_func_customBookingUser($) {
 							}
 						}
 					});
-					$('[name="_sln_booking_createuser"]').attr(
+					$('[name="_sln_booking_createuser"]').prop(
 						"checked",
 						false
 					);
+					// Hide "Save as new customer" option when existing user is selected
+					$('#sln-save-new-customer-wrapper').hide();
 					if ($("#_sln_booking_sms_prefix").val() == "") {
 						$("#_sln_booking_sms_prefix").val(
 							$("#_sln_booking_default_sms_prefix").val()
@@ -484,8 +514,55 @@ function sln_func_customBookingUser($) {
 			$("#_sln_booking_sms_prefix").trigger("change");
 			$(this).addClass("hide");
 			$(".sln-trigger--customerfile").addClass("hide");
+			// Clear post_author to reset customer
+			$("#post_author").val("");
+			// Uncheck and show "Save as new customer" option again when fields are reset
+			$('[name="_sln_booking_createuser"]').prop("checked", false);
+			$('#sln-save-new-customer-wrapper').show();
 		}
 	);
+}
+
+function sln_buildBreakdownHtml(data) {
+	var $ = jQuery;
+	var currencySymbol = salon.currency_symbol || "$";
+	var html = '<div class="sln-box__fl__item sln-input--simple sln-box__fl__item--full sln-booking-breakdown">';
+	html += '<div class="sln-booking-breakdown__content">';
+	html += '<h5 class="sln-booking-breakdown__title">Booking Total Breakdown</h5>';
+	html += '<div class="sln-breakdown-line">';
+	html += '<span class="sln-breakdown-label">Services Subtotal:</span>';
+	html += '<span class="sln-breakdown-value">' + currencySymbol + parseFloat(data.subtotal).toFixed(2) + '</span>';
+	html += '</div>';
+	
+	if (data.discount_amount > 0) {
+		html += '<div class="sln-breakdown-line sln-breakdown-discount">';
+		html += '<span class="sln-breakdown-label">Discount:</span>';
+		html += '<span class="sln-breakdown-value">-' + currencySymbol + parseFloat(data.discount_amount).toFixed(2) + '</span>';
+		html += '</div>';
+	}
+	
+	if (data.tax_amount > 0) {
+		html += '<div class="sln-breakdown-line">';
+		html += '<span class="sln-breakdown-label">Tax (' + data.tax_rate + '%):</span>';
+		html += '<span class="sln-breakdown-value">+' + currencySymbol + parseFloat(data.tax_amount).toFixed(2) + '</span>';
+		html += '</div>';
+	}
+	
+	if (data.tips > 0) {
+		html += '<div class="sln-breakdown-line">';
+		html += '<span class="sln-breakdown-label">Tip:</span>';
+		html += '<span class="sln-breakdown-value">+' + currencySymbol + parseFloat(data.tips).toFixed(2) + '</span>';
+		html += '</div>';
+	}
+	
+	html += '<div class="sln-breakdown-line sln-breakdown-total">';
+	html += '<span class="sln-breakdown-label"><strong>Total Amount:</strong></span>';
+	html += '<span class="sln-breakdown-value"><strong>' + currencySymbol + parseFloat(data.total).toFixed(2) + '</strong></span>';
+	html += '</div>';
+	html += '</div>';
+	html += '</div>';
+	
+	return html;
 }
 
 function sln_calculateTotal() {
@@ -511,8 +588,19 @@ function sln_calculateTotal() {
 			jQuery("#_sln_booking_deposit").val(data.deposit);
 			jQuery("#sln-duration").val(data.duration);
 			jQuery("#_sln_booking_tips").val(data.tips);
+			
+			// Remove old discount and breakdown displays
 			jQuery(".sln-booking-discounts").remove();
+			jQuery(".sln-booking-breakdown").remove();
+			
+			// Add discount info
 			jQuery("#calculate-total").parent().after(data.discounts);
+			
+			// Add breakdown display if discount was applied or tax exists
+			if (data.discount_amount > 0 || data.tax_amount > 0 || data.tips > 0) {
+				var breakdownHtml = sln_buildBreakdownHtml(data);
+				jQuery("#calculate-total").parent().after(breakdownHtml);
+			}
 
 			jQuery('select[name="_sln_booking[services][]"][disabled]').each(
 				function (i, e) {
@@ -600,7 +688,7 @@ function sln_adminDate($) {
 					$("#sln-notifications").html("").fadeIn(500);
 					firstValidate = false;
 				} else if (!data.success) {
-					window.parent.close_btn_save();
+					// Show validation errors
 					var alertBox = $('<div class="alert alert-danger"></div>');
 					$(data.errors).each(function () {
 						alertBox.append("<p>").html(this);
@@ -609,14 +697,22 @@ function sln_adminDate($) {
 						.html("")
 						.append(alertBox)
 						.fadeIn(500);
+					
+					// For admin/staff: show warnings but keep SAVE button active
+					// For others: disable SAVE button
+					if (!data.can_override_validation) {
+						window.parent.close_btn_save();
+					} else {
+						window.parent.show_btn_save();
+					}
 				} else {
 					window.parent.show_btn_save();
 					$("#sln-notifications")
 						.html("")
 						.append(
 							'<div class="alert alert-success">' +
-								$("#sln-notifications").data("valid-message") +
-								"</div>"
+							$("#sln-notifications").data("valid-message") +
+							"</div>"
 						)
 						.fadeIn(500);
 					setTimeout(function () {
@@ -760,6 +856,14 @@ function sln_manageAddNewService($) {
 }
 function sln_checkServices($) {
 	var form = $("#post");
+	
+	// Validate date exists before making AJAX call (admin uses _sln_booking_date)
+	var dateValue = form.find('input[name="_sln_booking_date"]').val();
+	if (!dateValue || dateValue === '') {
+		console.warn('[Salon Booking Admin] CheckServices skipped: No date selected');
+		return; // Exit early - don't make AJAX call
+	}
+	
 	var data =
 		form.serialize() +
 		"&action=salon&method=CheckServices&part=allServices&security=" +
@@ -785,6 +889,14 @@ function sln_checkServices($) {
 
 function sln_checkServices_on_preselection($) {
 	var form = $("#post");
+	
+	// Validate date exists before making AJAX call (admin uses _sln_booking_date)
+	var dateValue = form.find('input[name="_sln_booking_date"]').val();
+	if (!dateValue || dateValue === '') {
+		console.warn('[Salon Booking Admin] CheckServices (preselection) skipped: No date selected');
+		return; // Exit early - don't make AJAX call
+	}
+	
 	var data =
 		form.serialize() +
 		"&action=salon&method=CheckServices&part=allServices&all_services=true&security=" +
@@ -803,28 +915,28 @@ function sln_checkServices_on_preselection($) {
 				);
 				var options = options_ids.length
 					? $(".select2-results__option span[data-value]").filter(
-							function (el) {
-								return (
-									options_ids.indexOf(
-										$(this).attr("data-value")
-									) !== -1
-								);
-							}
-					  )
+						function (el) {
+							return (
+								options_ids.indexOf(
+									$(this).attr("data-value")
+								) !== -1
+							);
+						}
+					)
 					: false;
 				var error_ids = Object.keys(data.services).filter(function (i) {
 					return data.services[i].errors.length;
 				});
 				var elems = error_ids.length
 					? $(".select2-results__option span[data-value]").filter(
-							function (el) {
-								return (
-									error_ids.indexOf(
-										$(this).attr("data-value")
-									) !== -1
-								);
-							}
-					  )
+						function (el) {
+							return (
+								error_ids.indexOf(
+									$(this).attr("data-value")
+								) !== -1
+							);
+						}
+					)
 					: false;
 				if (elems)
 					elems
@@ -865,14 +977,14 @@ function sln_checkAttendants_on_preselection($) {
 				);
 				var elems = error_ids.length
 					? $(".select2-results__option span[data-value]").filter(
-							function (el) {
-								return (
-									error_ids.indexOf(
-										$(this).attr("data-value")
-									) !== -1
-								);
-							}
-					  )
+						function (el) {
+							return (
+								error_ids.indexOf(
+									$(this).attr("data-value")
+								) !== -1
+							);
+						}
+					)
 					: false;
 				if (elems)
 					elems
@@ -912,14 +1024,14 @@ function sln_checkResources_on_preselection($) {
 				);
 				var elems = error_ids.length
 					? $(".select2-results__option span[data-value]").filter(
-							function (el) {
-								return (
-									error_ids.indexOf(
-										$(this).attr("data-value")
-									) !== -1
-								);
-							}
-					  )
+						function (el) {
+							return (
+								error_ids.indexOf(
+									$(this).attr("data-value")
+								) !== -1
+							);
+						}
+					)
 					: false;
 				if (elems)
 					elems
@@ -949,8 +1061,8 @@ function sln_after_selectService($, select) {
 		.find(".sln-alert.sln-alert--multiple");
 	$(alert).text(
 		servicesData[service_id].countMultipleAttendants +
-			" " +
-			$(alert).attr("data-alert")
+		" " +
+		$(alert).attr("data-alert")
 	);
 	if (servicesData[service_id].isMultipleAttendants) {
 		$(attendant_select).attr("multiple", true);
@@ -976,10 +1088,10 @@ function sln_after_selectService($, select) {
 				if (!state.id) return state.text;
 				return $(
 					'<span data-value="' +
-						state.id +
-						'">' +
-						state.text +
-						"</span>"
+					state.id +
+					'">' +
+					state.text +
+					"</span>"
 				);
 			},
 			placeholder: function () {
@@ -1039,12 +1151,12 @@ function sln_processServices($, services) {
 			$.each(value.errors, function (index, value) {
 				var alertBox = $(
 					'<div class="row col-xs-12 col-sm-12 col-md-12"><div class="' +
-						($("#salon-step-date").attr("data-m_attendant_enabled")
-							? "col-md-offset-2 col-md-6"
-							: "col-md-8") +
-						'"><p class="alert alert-danger">' +
-						value +
-						"</p></div></div>"
+					($("#salon-step-date").attr("data-m_attendant_enabled")
+						? "col-md-offset-2 col-md-6"
+						: "col-md-8") +
+					'"><p class="alert alert-danger">' +
+					value +
+					"</p></div></div>"
 				);
 				serviceItem.parent().parent().next().after(alertBox);
 			});
@@ -1160,9 +1272,9 @@ function sln_changeServices($, selected) {
 	attendant_select.attr(
 		"name",
 		"_sln_booking[attendants][" +
-			s_id +
-			"]" +
-			(service_data.isMultipleAttendants ? "[]" : "")
+		s_id +
+		"]" +
+		(service_data.isMultipleAttendants ? "[]" : "")
 	);
 	let html = !service_data.isMultipleAttendants
 		? '<option value="' + 0 + '">' + attendantsData[0] + "</option>"
@@ -1184,8 +1296,8 @@ function sln_changeServices($, selected) {
 	$('form input[name="_sln_booking_service_select"]').remove();
 	$("form").append(
 		'<input name="_sln_booking_service_select" value="' +
-			s_id +
-			'" type="hidden">'
+		s_id +
+		'" type="hidden">'
 	);
 	sln_checkAttendants_on_preselection($);
 	sln_checkResources_on_preselection($);
@@ -1193,33 +1305,33 @@ function sln_changeServices($, selected) {
 	inputs.find("input").remove();
 	inputs.append(
 		'<input type="hidden" name="_sln_booking[service][' +
-			s_id +
-			']" id="_sln_booking_service_' +
-			s_id +
-			'" value="' +
-			s_id +
-			'" class="sln-input sln-input--text">' +
-			'<input type="hidden" name="_sln_booking[price][' +
-			s_id +
-			']" id="_sln_booking_price_' +
-			s_id +
-			'" value="' +
-			service_data.price +
-			'" class="sln-input sln-input--text">' +
-			'<input type="hidden" name="_sln_booking[duration][' +
-			s_id +
-			']" id="_sln_booking_duration_' +
-			s_id +
-			'" value="' +
-			service_data.duration +
-			'" class="sln-input sln-input--text">' +
-			'<input type="hidden" name="_sln_booking[break_duration][' +
-			s_id +
-			']" id="_sln_booking_break_duration_' +
-			s_id +
-			'" value="' +
-			service_data.break_duration +
-			'" class="sln-input sln-input--text"></input>'
+		s_id +
+		']" id="_sln_booking_service_' +
+		s_id +
+		'" value="' +
+		s_id +
+		'" class="sln-input sln-input--text">' +
+		'<input type="hidden" name="_sln_booking[price][' +
+		s_id +
+		']" id="_sln_booking_price_' +
+		s_id +
+		'" value="' +
+		service_data.price +
+		'" class="sln-input sln-input--text">' +
+		'<input type="hidden" name="_sln_booking[duration][' +
+		s_id +
+		']" id="_sln_booking_duration_' +
+		s_id +
+		'" value="' +
+		service_data.duration +
+		'" class="sln-input sln-input--text">' +
+		'<input type="hidden" name="_sln_booking[break_duration][' +
+		s_id +
+		']" id="_sln_booking_break_duration_' +
+		s_id +
+		'" value="' +
+		service_data.break_duration +
+		'" class="sln-input sln-input--text"></input>'
 	);
 	$(selected).data("price", service_data.price);
 	$(selected).data("duration", service_data.duration);
@@ -1283,6 +1395,16 @@ function sln_bindRemoveBookingsServices(removeButton) {
 		sln_toggleSavePost(save_is_disabled);
 		sln_checkServicesAddedAlert(button);
 		button.closest(".sln-booking-service-line").remove();
+		
+		// Trigger validation after service removal to update SAVE button state
+		setTimeout(function() {
+			var validateBooking = sln_validateBooking_dym();
+			if (validateBooking) {
+				window.parent.show_btn_save();
+			} else {
+				window.parent.close_btn_save();
+			}
+		}, 100);
 	}
 
 	removeButton.on("click", sln_bindRemoveBookingsServicesFunction);
@@ -1326,10 +1448,10 @@ function sln_bindServicesSelects(line) {
 				.on("mousemove", function (e) {
 					if (
 						element.position().top >
-							element.parent().position().top &&
+						element.parent().position().top &&
 						element.position().top + element.height() <
-							element.parent().position().top +
-								element.parent().height()
+						element.parent().position().top +
+						element.parent().height()
 					) {
 						$(element).animate(
 							{ top: e.pageY - pos - 3 + "px" },
@@ -1365,7 +1487,7 @@ function sln_bindServicesSelects(line) {
 					if (
 						iter == 0 &&
 						element.position().top <
-							$(elem).position().top + $(elem).height()
+						$(elem).position().top + $(elem).height()
 					) {
 						$(element).insertBefore($(elem));
 						$(element.next()).insertBefore($(elem));
@@ -1377,7 +1499,7 @@ function sln_bindServicesSelects(line) {
 					} else if (
 						element.position().top > $(elem).position().top &&
 						element.position().top <
-							$(elem).position().top + $(elem).height()
+						$(elem).position().top + $(elem).height()
 					) {
 						$(element.next()).insertAfter($(elem));
 						$(element).insertAfter($(elem));
@@ -1387,8 +1509,8 @@ function sln_bindServicesSelects(line) {
 						return false;
 					} else if (
 						iter + 1 ==
-							element.parent().find(".sln-booking-service-line")
-								.length &&
+						element.parent().find(".sln-booking-service-line")
+							.length &&
 						element.position().top > $(elem).position().top
 					) {
 						$(element.next()).insertAfter($(elem));
@@ -1464,8 +1586,8 @@ function sln_bindResourceSelects(line) {
 			$('form input[name="_sln_booking_service_select"]').remove();
 			$("form").append(
 				'<input name="_sln_booking_service_select" value="' +
-					$(this).data("service") +
-					'" type="hidden">'
+				$(this).data("service") +
+				'" type="hidden">'
 			);
 			sln_checkResources_on_preselection($);
 			let service = servicesData[$(this).data("service")];
@@ -1520,18 +1642,18 @@ function sln_bindAttendantSelects(line) {
 			});
 		var service_data =
 			servicesData[
-				$(this)
-					.closest(".sln-row")
-					.find('[data-selection="attendant-selected"]')
-					.data("service")
+			$(this)
+				.closest(".sln-row")
+				.find('[data-selection="attendant-selected"]')
+				.data("service")
 			];
 		if (+service_data.isMultipleAttendants) {
 			if (
 				Array.isArray($(this).val()) &&
 				+service_data.countMultipleAttendants ===
-					$(this)
-						.val()
-						.filter((item) => item).length
+				$(this)
+					.val()
+					.filter((item) => item).length
 			) {
 				sln_checkServices($);
 			}
@@ -1561,8 +1683,8 @@ function sln_bindAttendantSelects(line) {
 			$('form input[name="_sln_booking_service_select"]').remove();
 			$("form").append(
 				'<input name="_sln_booking_service_select" value="' +
-					$(this).data("service") +
-					'" type="hidden">'
+				$(this).data("service") +
+				'" type="hidden">'
 			);
 			sln_checkAttendants_on_preselection($);
 			let service = servicesData[$(this).data("service")];
@@ -1598,14 +1720,14 @@ function sln_bindAttendantSelects(line) {
 				.find(".sln-alert.sln-alert--multiple");
 			$(alert).text(
 				servicesData[serviceVal].countMultipleAttendants +
-					" " +
-					$(alert).attr("data-alert")
+				" " +
+				$(alert).attr("data-alert")
 			);
 			if (
 				Array.isArray(attendantVal) &&
 				servicesData[serviceVal]["isMultipleAttendants"] &&
 				servicesData[serviceVal]["countMultipleAttendants"] !==
-					attendantVal.length
+				attendantVal.length
 			) {
 				$(alert).removeClass("hide");
 			} else {
@@ -1642,14 +1764,14 @@ function sln_initResendNotification() {
 				if (data.success)
 					$("#resend-notification-message").html(
 						'<div class="alert alert-success">' +
-							data.success +
-							"</div>"
+						data.success +
+						"</div>"
 					);
 				else if (data.error)
 					$("#resend-notification-message").html(
 						'<div class="alert alert-danger">' +
-							data.error +
-							"</div>"
+						data.error +
+						"</div>"
 					);
 			},
 		});
@@ -1683,14 +1805,14 @@ function sln_initResendPaymentSubmit() {
 				if (data.success)
 					$("#resend-payment-message").html(
 						'<div class="alert alert-success">' +
-							data.success +
-							"</div>"
+						data.success +
+						"</div>"
 					);
 				else if (data.error)
 					$("#resend-payment-message").html(
 						'<div class="alert alert-danger">' +
-							data.error +
-							"</div>"
+						data.error +
+						"</div>"
 					);
 			},
 		});
@@ -1720,7 +1842,7 @@ function sln_checkServicesAddedAlert(node) {
 					resource_id) &&
 				((Array.isArray(attendant_select.val()) &&
 					+service_data.countMultipleAttendants ===
-						attendant_select.val().filter((item) => item).length) ||
+					attendant_select.val().filter((item) => item).length) ||
 					attendant_select.hasClass("hide") ||
 					attendant_select.length === 0)
 			) {
@@ -1903,11 +2025,11 @@ function sln_booking_list_view() {
 					: "Booking editor view disabled."
 			);
 		};
-        function getCookie(name) {
-            const value = `; ${document.cookie}`;
-            const parts = value.split(`; ${name}=`);
-            if (parts.length === 2) return parts.pop().split(';').shift();
-        }
+		function getCookie(name) {
+			const value = `; ${document.cookie}`;
+			const parts = value.split(`; ${name}=`);
+			if (parts.length === 2) return parts.pop().split(';').shift();
+		}
 
 		// Initial state on load
 		let cookieValue = getCookie("bookingEditorChecked");
@@ -1930,3 +2052,84 @@ function sln_booking_list_view() {
 	})(jQuery);
 }
 sln_booking_list_view();
+
+// No-Show Toggle Handler for Booking Metabox
+(function($) {
+	'use strict';
+	
+	$(document).on('click', '.sln-noshow-toggle__button', function(e) {
+		e.preventDefault();
+		
+		var $button = $(this);
+		var bookingId = $button.data('bookingid');
+		var currentNoShow = parseInt($button.data('no-show'));
+		var nonce = $button.data('nonce');
+		
+		// Prevent double-clicks
+		if ($button.hasClass('processing')) {
+			return;
+		}
+		
+		$button.addClass('processing');
+		
+		// Call the OnNoShow AJAX action
+		$.ajax({
+			url: ajaxurl,
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				action: 'sln_ajax_noshow',
+				bookingId: bookingId,
+				noShow: currentNoShow,
+				security: nonce
+			},
+			success: function(response) {
+				console.log('No-show AJAX response:', response);
+				
+				// Handle WordPress error response format
+				if (!response.success) {
+					console.error('No-show toggle error:', response.data);
+					alert(response.data.error || 'Failed to update no-show status.');
+					return;
+				}
+				
+				// Handle WordPress success response format
+				var data = response.data;
+				if (data && data.noShow !== undefined) {
+					// Update button state
+					$button.data('no-show', data.noShow);
+					
+					if (data.noShow == 1) {
+						$button.addClass('active');
+						console.log('Added active class - icon should be red');
+					} else {
+						$button.removeClass('active');
+						console.log('Removed active class - icon should be blue');
+					}
+					
+					// Update customer no-show count if we have customer info
+					if (data.customerId) {
+						// Increment or decrement the count
+						var $countElement = $('.sln-noshow-count__value');
+						var currentCount = parseInt($countElement.text()) || 0;
+						var newCount = data.noShow == 1 ? currentCount + 1 : Math.max(0, currentCount - 1);
+						$countElement.text(newCount);
+						console.log('Updated count from', currentCount, 'to', newCount);
+					}
+				}
+			},
+			error: function(xhr, status, error) {
+				console.error('No-show toggle failed:', {
+					status: status,
+					error: error,
+					response: xhr.responseText,
+					xhr: xhr
+				});
+				alert('Failed to update no-show status. Please try again.');
+			},
+			complete: function() {
+				$button.removeClass('processing');
+			}
+		});
+	});
+})(jQuery);

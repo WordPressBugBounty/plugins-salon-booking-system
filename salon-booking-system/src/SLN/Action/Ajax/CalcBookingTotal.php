@@ -22,27 +22,56 @@ class SLN_Action_Ajax_CalcBookingTotal extends SLN_Action_Ajax_Abstract
 	    $startsAt = $this->getStartsAt(wp_unslash($_POST['_sln_booking_date']), wp_unslash($_POST['_sln_booking_time']));
 	    $services = $this->processServicesSubmission($_POST['_sln_booking']);
 
-	    $bookingServices = SLN_Wrapper_Booking_Services::build(
-	        apply_filters('sln.calc_booking_total.get_services', $services, SLN_Wrapper_Booking_Services::build($services, $startsAt, 0, $booking->getCountServices()), $booking->getAttendantsIds()),
-	        $startsAt,
-            0,
-            $booking->getCountServices()
-	    );
+	    // Build booking services WITHOUT discount to get original prices
+	    $bookingServicesOriginal = SLN_Wrapper_Booking_Services::build($services, $startsAt, 0, $booking->getCountServices());
+	    $originalSubtotal = $this->getServicesSubtotal($bookingServicesOriginal);
 
+	    // Apply discount filter - this modifies $bookingServicesOriginal in place and returns modified $services array
+	    $servicesWithDiscount = apply_filters('sln.calc_booking_total.get_services', $services, $bookingServicesOriginal, $booking->getAttendantsIds());
+	    
+	    // Apply prepaid services filter - allows packages add-on to reduce prices for prepaid services
+	    $bookingServicesOriginal = apply_filters('sln.calc_booking_total.apply_prepaid_services', $bookingServicesOriginal, $booking);
+	    
+	    // Use the modified bookingServicesOriginal which now has discounted prices
+	    $bookingServices = $bookingServicesOriginal;
+
+	    // Calculate breakdown
         $tips = isset($_POST['_sln_booking_tips'])? floatval($_POST['_sln_booking_tips']) : 0;
-	    $total    = $this->getTotal($bookingServices, $booking, $tips);
+	    $discountedSubtotal = $this->getServicesSubtotal($bookingServices);
+	    $discountAmount = $originalSubtotal - $discountedSubtotal;
+	    $taxAmount = 0;
+	    
+	    if($settings->get('enable_booking_tax_calculation') && 'inclusive' !== $settings->get('enter_tax_price')){
+	        $taxAmount = $discountedSubtotal * (floatval($settings->get('tax_value')) / 100);
+	    }
+	    
+	    $total = $discountedSubtotal + $taxAmount + $tips;
         $deposit  = $this->getDeposit($total, $settings, $booking);
         $deposit = floatval($deposit);
         $duration = $this->getDuration($bookingServices);
 
         return array(
-	    'total'	=> round($total, 2),
-	    'deposit'	=> round($deposit, 2),
-	    'duration'	=> $duration,
-	    'discounts'	=> apply_filters('sln.calc_booking_total.get_discounts_html', ''),
-	    'services'  => $this->getServicesPrices($bookingServices),
-        'tips'      => round($tips, 2),
+	    'total'	            => round($total, 2),
+	    'deposit'	        => round($deposit, 2),
+	    'duration'	        => $duration,
+	    'discounts'	        => apply_filters('sln.calc_booking_total.get_discounts_html', ''),
+	    'services'          => $this->getServicesPrices($bookingServices),
+        'tips'              => round($tips, 2),
+        // Breakdown data
+        'subtotal'          => round($originalSubtotal, 2),
+        'discount_amount'   => round($discountAmount, 2),
+        'tax_amount'        => round($taxAmount, 2),
+        'tax_rate'          => $settings->get('enable_booking_tax_calculation') && 'inclusive' !== $settings->get('enter_tax_price') ? floatval($settings->get('tax_value')) : 0,
 	    );
+    }
+
+    protected function getServicesSubtotal($bookingServices) {
+        $subtotal = 0;
+        foreach ($bookingServices->getItems() as $bookingService) {
+            $price = $bookingService->getPrice();
+            $subtotal += $price;
+        }
+        return $subtotal;
     }
 
     protected function getTotal($bookingServices, $booking, $tips=0) {
@@ -117,7 +146,7 @@ class SLN_Action_Ajax_CalcBookingTotal extends SLN_Action_Ajax_Abstract
     protected function getStartsAt( $date, $time, $timezone = '' )
     {
 	if($timezone) {
-	    return new SLN_DateTime(SLN_Func::filter($date, 'date').' '.SLN_Func::filter($time, 'time'), new DateTimeZone($timezone) );
+	    return new SLN_DateTime(SLN_Func::filter($date, 'date').' '.SLN_Func::filter($time, 'time'), SLN_Func::createDateTimeZone($timezone) );
 	} else {
 	    return new SLN_DateTime(SLN_Func::filter($date, 'date').' '.SLN_Func::filter($time, 'time'));
 	}

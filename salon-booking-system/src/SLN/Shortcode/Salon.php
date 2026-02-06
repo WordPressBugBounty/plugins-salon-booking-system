@@ -48,6 +48,7 @@ class SLN_Shortcode_Salon
     {
         $found = false;
         $settings = $this->plugin->getSettings();
+        SLN_Plugin::addLog(sprintf('[Wizard] dispatchStep requested="%s"', $curr));
 
         $steps = $this->maybeReverseSteps($this->getSteps());
         $stepsList = $this->maybeReverseSteps($this->getStepsList());
@@ -57,31 +58,38 @@ class SLN_Shortcode_Salon
                 $this->currentStep = $step;
                 $obj = $this->getStepObject($step);
                 if (!$obj->isValid()) {
+                    SLN_Plugin::addLog(sprintf('[Wizard] step="%s" is not valid, rendering current output', $step));
                     return $this->render($obj->render());
                 }
 
                 if (!$settings->isFormStepsAltOrder()) {
                     if ($step === 'details' && $curr === 'details') {
                         if (!$obj->setResources()) {
+                            SLN_Plugin::addLog('[Wizard] details step setResources() returned false');
                             return $this->render($obj->render());
                         }
                         if ($settings->isAttendantsEnabled() && !$obj->setAttendantsAuto()) {
+                            SLN_Plugin::addLog('[Wizard] details step setAttendantsAuto() returned false');
                             return $this->render($obj->render());
                         }
                     }
                 }else{
                     if ($step === 'date') {
                         if (!$obj->setResources()) {
+                            SLN_Plugin::addLog('[Wizard] date step setResources() returned false');
                             return $this->render($obj->render());
                         }
                         if ($settings->isAttendantsEnabled() && !$obj->setAttendantsAuto()) {
+                            SLN_Plugin::addLog('[Wizard] date step setAttendantsAuto() returned false');
                             return $this->render($obj->render());
                         }
                     }
                 }
+                SLN_Plugin::addLog(sprintf('[Wizard] step="%s" rendered successfully', $step));
             }
         }
         if (!$found) {
+            SLN_Plugin::addLog(sprintf('[Wizard] requested step "%s" not in immediate sequence, attempting fallback chain', $curr));
             $index = array_search($curr, $stepsList);
             if ($index !== false) {
                 $_stepsList = array_slice($stepsList, $index);
@@ -92,11 +100,16 @@ class SLN_Shortcode_Salon
                             $this->currentStep = $_step;
                             $obj = $this->getStepObject($_step);
                             if (!$obj->isValid()) {
+                                SLN_Plugin::addLog(sprintf('[Wizard] fallback step="%s" not valid, rendering current output', $_step));
                                 return $this->render($obj->render());
                             }
+                            SLN_Plugin::addLog(sprintf('[Wizard] fallback step="%s" rendered successfully', $_step));
                         }
                     }
                 }
+            }
+            if (!$found) {
+                SLN_Plugin::addLog(sprintf('[Wizard] unable to resolve step for request "%s"', $curr));
             }
         }
     }
@@ -128,8 +141,7 @@ class SLN_Shortcode_Salon
     {
         $salon = $this;
         $step = $this->getStepObject($this->getCurrentStep());
-        $mixpanelTrackScript = $step->getMixpanelTrackScript();
-            return $this->plugin->loadView('shortcode/salon', compact('content', 'salon', 'mixpanelTrackScript'));
+            return $this->plugin->loadView('shortcode/salon', compact('content', 'salon'));
         }
 
 
@@ -228,10 +240,41 @@ class SLN_Shortcode_Salon
 
     public function needSms()
     {
+        // SMS step is needed if SMS is enabled in backend settings
+        // Phone number will be collected in details/fbphone steps if needed
+        $sms_enabled = $this->plugin->getSettings()->get('sms_enabled');
+        
+        if (!$sms_enabled) {
+            return false; // SMS not enabled, no SMS step needed
+        }
+        
+        // SMS is enabled - show the verification step
+        // Phone collection will be handled by details or fbphone step
+        // SMS step itself will show error if phone is missing (handled in SmsStep::render())
+        return true;
+    }
+
+    public function needFbphone()
+    {
+        // fbphone step is needed when:
+        // - User is logged in but doesn't have phone number
+        // - AND (phone is required OR SMS is enabled)
+        $user_id = get_current_user_id();
+        if (!$user_id) {
+            return false; // Not logged in, fbphone not needed
+        }
+        
+        $has_phone = get_user_meta($user_id, '_sln_phone', true) || 
+                     (isset($_SESSION['sln_detail_step']) && !empty($_SESSION['sln_detail_step']['phone']));
+        
+        if ($has_phone) {
+            return false; // Already has phone, not needed
+        }
+        
+        // Need phone if required or SMS enabled
         return (
-            $this->plugin->getSettings()->get('sms_enabled')
-            && !is_user_logged_in()
-            && SLN_Enum_CheckoutFields::getField('phone')->isRequiredNotHidden()
+            SLN_Enum_CheckoutFields::getField('phone')->isRequiredNotHidden() 
+            || $this->plugin->getSettings()->get('sms_enabled')
         ) ? true : false;
     }
 
@@ -284,6 +327,9 @@ class SLN_Shortcode_Salon
         }
         if (!$this->needAttendant()) {
             unset($ret[array_search('attendant', $ret)]);
+        }
+        if (!$this->needFbphone()) {
+            unset($ret[array_search('fbphone', $ret)]);
         }
         if (!$this->needSms()) {
             unset($ret[array_search('sms', $ret)]);

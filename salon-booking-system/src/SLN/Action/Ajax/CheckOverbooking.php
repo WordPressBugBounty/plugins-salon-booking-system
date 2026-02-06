@@ -27,9 +27,11 @@ class SLN_Action_Ajax_CheckOverbooking extends SLN_Action_Ajax_Abstract
             // get settings
             $settings = SLN_Plugin::getInstance()->getSettings();
             $attendant_enabled = $settings->get('attendant_enabled');
+            $parallel = $settings->get('parallels_hour');
+
             // if assistants are enabled and a specific assistant is selected
 
-            if ($attendant_enabled && $assistant_id > 0) {
+            if ($attendant_enabled && $assistant_id > 0 && $parallel <= 1) {
                 // check only conflicts for this assistant
                 $args = [
                     'post_type' => 'sln_booking',
@@ -106,7 +108,7 @@ class SLN_Action_Ajax_CheckOverbooking extends SLN_Action_Ajax_Abstract
                         ['key' => '_sln_booking_time', 'value' => $time_clean]
                     ]
                 ]);
-                return ['success' => empty($posts)];
+                return ['success' => $parallel <= 1 ? empty($posts) : true];
             }
         } catch (Exception $e) {
             return [

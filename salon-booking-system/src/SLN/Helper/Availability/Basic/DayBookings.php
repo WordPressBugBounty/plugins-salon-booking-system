@@ -14,6 +14,27 @@ class SLN_Helper_Availability_Basic_DayBookings extends SLN_Helper_Availability_
     }
 
     protected function buildTimeslots() {
+        // PERFORMANCE OPTIMIZATION: Check cache first with callback pattern
+        // Reference: PERFORMANCE_OPTIMIZATION_ANALYSIS.md - Issue #2
+        // Impact: 100x faster on subsequent checks
+        $cached = SLN_Helper_Availability_Cache::getOrBuildTimeslots(
+            $this->getDate(),
+            $this->currentBooking,
+            function() {
+                // This callback only executes on cache MISS
+                return $this->buildTimeslotsInternal();
+            }
+        );
+        
+        return $cached;
+    }
+    
+    /**
+     * Internal method to build timeslots when cache misses
+     * @return array
+     */
+    private function buildTimeslotsInternal()
+    {
         $ret = array();
         $formattedDate = $this->getDate()->format('Y-m-d');
 
@@ -83,7 +104,7 @@ class SLN_Helper_Availability_Basic_DayBookings extends SLN_Helper_Availability_
                 }
             }
         }
-
+        
         return $ret;
     }
 }

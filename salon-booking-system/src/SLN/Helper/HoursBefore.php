@@ -34,11 +34,11 @@ class SLN_Helper_HoursBefore
         $diff = $tmp % $i;
         if($diff > 0)
             $now->modify('+'.( $i - $diff).' minutes');
-        $this->fromDate = $now;
-        $this->toDate = $now2 = clone $now;
         if ($this->from) {
             $now->modify($this->from);
         }
+        $this->fromDate = $now;
+        $this->toDate = $now2 = clone $now;
         if ($this->to) {
             $now2->modify($this->to);
         }

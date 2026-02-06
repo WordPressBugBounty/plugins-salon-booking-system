@@ -1,0 +1,6 @@
+# Ignore Playwright artifacts that are regenerated per run
+test-results/
+blob-report/
+trace/
+screenshots/
+videos/

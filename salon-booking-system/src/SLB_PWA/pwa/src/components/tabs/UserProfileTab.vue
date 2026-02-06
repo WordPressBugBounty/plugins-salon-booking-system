@@ -1,5 +1,8 @@
 <template>
   <div>
+    <!-- Toast container for notifications -->
+    <b-toaster name="b-toaster-top-center" class="toast-container-custom"></b-toaster>
+    
     <b-spinner variant="primary" v-if="isLoading"></b-spinner>
     <div v-else-if="user" class="user-profile">
       <div class="user-profile-top">
@@ -7,6 +10,25 @@
         <p class="user-profile-email">{{ user.email }}</p>
         <p class="user-profile-role">{{ user.role }}</p>
       </div>
+      
+      <!-- Admin-only: Calendar Reset Button -->
+      <div v-if="isAdmin" class="admin-tools-section">
+        <h3 class="admin-tools-title">Administrator Tools</h3>
+        <button 
+          class="btn-reset-calendar"
+          @click="resetCalendar"
+          :disabled="isResetting"
+          title="Reset calendar cache - clears all cached data and reloads from server"
+        >
+          <i class="fas fa-sync-alt" :class="{ 'fa-spin': isResetting }"></i>
+          {{ isResetting ? 'Resetting...' : 'Reset Calendar Cache' }}
+        </button>
+        <p class="admin-tools-description">
+          Use this to clear calendar cache and reload all data from the server. 
+          Only use if you experience data synchronization issues.
+        </p>
+      </div>
+      
       <b-button class="btn-logout" variant="primary" @click="logOut">Log-out</b-button>
     </div>
     <div v-else>
@@ -22,7 +44,15 @@ export default {
     return {
       isLoading: true,
       user: null,
+      isResetting: false,
     };
+  },
+  computed: {
+    isAdmin() {
+      // Check if user has administrator role
+      return this.user?.role?.toLowerCase().includes('admin') || 
+             this.user?.role?.toLowerCase().includes('administrator');
+    }
   },
   methods: {
     loadUserProfile() {
@@ -52,6 +82,61 @@ export default {
             // eslint-disable-next-line
             console.error('Logout failed:', error);
           });
+    },
+    async resetCalendar() {
+      if (this.isResetting) return;
+      
+      try {
+        this.isResetting = true;
+        
+        console.log('=== ADMIN: CALENDAR RESET INITIATED ===');
+        
+        // 1. Clear localStorage cache
+        console.log('1. Clearing localStorage cache...');
+        const localStorageKeys = Object.keys(localStorage);
+        let clearedCount = 0;
+        localStorageKeys.forEach(key => {
+          if (key.startsWith('sln_') || key.startsWith('salon_')) {
+            localStorage.removeItem(key);
+            clearedCount++;
+          }
+        });
+        console.log(`   Cleared ${clearedCount} localStorage items`);
+        
+        // 2. Clear sessionStorage cache
+        console.log('2. Clearing sessionStorage...');
+        sessionStorage.clear();
+        
+        // 3. Notify user to refresh calendar tab
+        console.log('3. Calendar cache cleared successfully');
+        console.log('=== ADMIN: CALENDAR RESET COMPLETE ===');
+        
+        // Show success message
+        this.$bvToast.toast(
+          'Calendar cache has been cleared. Please switch to the Calendar tab to reload data.',
+          {
+            title: 'Cache Cleared',
+            variant: 'success',
+            solid: true,
+            autoHideDelay: 5000,
+          }
+        );
+        
+      } catch (error) {
+        console.error('Error during calendar reset:', error);
+        
+        this.$bvToast.toast(
+          'Failed to clear calendar cache. Please try again or contact support.',
+          {
+            title: 'Reset Failed',
+            variant: 'danger',
+            solid: true,
+            autoHideDelay: 5000,
+          }
+        );
+      } finally {
+        this.isResetting = false;
+      }
     },
   },
   mounted() {
@@ -127,6 +212,91 @@ export default {
   background-color: #7f8ca2;
   border-color: #7f8ca2;
 }
+
+/* Admin Tools Section */
+.admin-tools-section {
+  width: 100%;
+  padding: 20px;
+  background-color: #FFF9E6;
+  border: 2px solid #FFC107;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+.admin-tools-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #FF9800;
+  margin: 0 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-tools-title::before {
+  content: "⚙️";
+  font-size: 20px;
+}
+
+.admin-tools-description {
+  font-size: 13px;
+  color: #7F8CA2;
+  margin: 8px 0 0;
+  line-height: 1.4;
+}
+
+.btn-reset-calendar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 16px;
+  background-color: #FFF;
+  border: 2px solid #FF9800;
+  border-radius: 6px;
+  color: #FF9800;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-reset-calendar:hover:not(:disabled) {
+  background-color: #FF9800;
+  color: #FFF;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(255, 152, 0, 0.3);
+}
+
+.btn-reset-calendar:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(255, 152, 0, 0.2);
+}
+
+.btn-reset-calendar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-reset-calendar i {
+  font-size: 16px;
+}
+
+.btn-reset-calendar i.fa-spin {
+  animation: fa-spin 1s infinite linear;
+}
+
+@keyframes fa-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.toast-container-custom {
+  z-index: 9999;
+}
+
 @media screen and (max-width: 424px){
   .user-profile p {
     font-size: 18px;

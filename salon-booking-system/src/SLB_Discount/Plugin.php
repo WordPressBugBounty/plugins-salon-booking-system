@@ -363,8 +363,8 @@ class SLB_Discount_Plugin {
 					}
 					$data["discount_score"] = array_merge(isset($data["discount_score"]) ? $data["discount_score"] : array(), $discountScores);
 				}
-				$discount->incrementUsagesNumber($booking->getUserId());
-				$discount->incrementTotalUsagesNumber();
+				//$discount->incrementUsagesNumber($booking->getUserId());
+				//$discount->incrementTotalUsagesNumber();
 			}
 			// Calculate new service price
 			foreach($bookingServices->getItems() as $bookingService){

@@ -17,6 +17,13 @@ $hoursBeforeCancellation = $plugin->getSettings()->get('hours_before_cancellatio
 	array('help' => __('Select this option if you want your users able to cancel a booking from the front-end.', 'salon-booking-system'))
 );?>
     </div>
+    <div class="col-xs-12 col-sm-8 col-md-4 form-group sln-checkbox">
+        <?php $helper->row_input_checkbox(
+	'auto_trash_cancelled',
+	__('Auto-trash cancelled bookings', 'salon-booking-system'),
+	array('help' => __('Automatically move cancelled bookings to trash. They will no longer appear in the calendar but can still be restored from the trash.', 'salon-booking-system'))
+);?>
+    </div>
     <div class="col-xs-12 col-sm-6 col-md-4 form-group sln-select ">
         <label><?php esc_html_e('Time in advance', 'salon-booking-system');?></label>
         <?php $field = "salon_settings[hours_before_cancellation]";?>

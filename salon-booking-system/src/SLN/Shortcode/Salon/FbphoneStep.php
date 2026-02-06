@@ -33,5 +33,13 @@ class SLN_Shortcode_Salon_FbphoneStep extends SLN_Shortcode_Salon_Step{
 	
 	function isValid(){
 		return $this->dispatchForm();
-}
+	}
+
+	public function getTitleKey(){
+		return 'Phone verification';
+	}
+
+	public function getTitleLabel(){
+		return __('Phone verification', 'salon-booking-system');
+	}
 }

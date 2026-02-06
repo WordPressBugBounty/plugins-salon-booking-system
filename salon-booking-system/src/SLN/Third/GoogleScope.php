@@ -26,7 +26,7 @@ function sln_my_wp_log($message, $file = null, $level = 1) {
     if ($file == null) {
         $file = 'debug.log';
     }
-    if(!SLN_Plugin::DEBUG_ENABLED){
+    if(!SLN_Plugin::isDebugEnabled()){
         return false;
     }
 

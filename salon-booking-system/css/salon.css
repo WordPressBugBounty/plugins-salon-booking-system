@@ -24,11 +24,11 @@
 }
 */
 @import "https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700";
+@import 'https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700';
 @import "https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700";
+@import 'https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700';
 @import "https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700";
-@import "https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700";
-@import "https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700";
-@import "https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700";
+@import 'https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700';
 #sln-salon *,
 #sln-salon *:before,
 #sln-salon *:after,
@@ -1827,6 +1827,10 @@ a.sln-btn.sln-btn--borderonly,
   cursor: pointer;
 }
 
+#sln-salon,
+#sln-salon #sln-salon-my-account {
+  /* Flickering prevention: During AJAX validation, make all dates look unavailable */
+}
 #sln-salon .datetimepicker table tr td.old,
 #sln-salon .datetimepicker table tr td.new,
 #sln-salon #sln-salon-my-account .datetimepicker table tr td.old,
@@ -1844,6 +1848,13 @@ a.sln-btn.sln-btn--borderonly,
   background: 0;
   color: #999;
   cursor: default;
+}
+#sln-salon .datetimepicker.sln-calendar-loading table tr td.day,
+#sln-salon #sln-salon-my-account .datetimepicker.sln-calendar-loading table tr td.day {
+  background: 0 !important;
+  color: #999 !important;
+  cursor: default !important;
+  pointer-events: none !important;
 }
 #sln-salon .datetimepicker table tr td.-today,
 #sln-salon .datetimepicker table tr td.-today:hover,
@@ -2960,6 +2971,40 @@ a.sln-btn.sln-btn--borderonly,
 #sln-salon #sln-salon-my-account .sln-input--datepicker #sln_time .minute.disabled,
 #sln-salon #sln-salon-my-account .sln-input--datepicker #_sln_booking_time .minute.disabled {
   display: none;
+}
+
+/* Solution: Show loader overlay ONLY on time picker during validation */
+.sln-timepicker--validating {
+  position: relative;
+  z-index: 1;
+}
+.sln-timepicker--validating .sln-loader-wrapper {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: 10%;
+  background-color: rgba(245, 245, 245, 0.92);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  z-index: 10;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+.sln-timepicker--validating .sln-loader-wrapper .sln-loader {
+  width: 100%;
+  max-width: 300px;
+}
+.sln-timepicker--validating .datetimepicker {
+  pointer-events: none;
+}
+
+.datetimepicker.sln-datetimepicker.sln-calendar-validating * {
+  pointer-events: none !important;
+  transition: none !important;
+  animation: none !important;
 }
 
 .sln-icon {
@@ -5490,9 +5535,44 @@ a.sln-btn.sln-btn--borderonly,
   content: "error_outline";
 }
 
+.sln-alert--warning,
+#sln-salon .alert-warning {
+  position: relative !important;
+  padding-left: 3em !important;
+}
 .sln-alert--warning:after,
 #sln-salon .alert-warning:after {
-  content: "error_outline";
+  font-family: "Material Icons";
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+  font-size: 2em;
+  line-height: 0;
+  content: "error_outline" !important;
+  position: absolute !important;
+  top: 0.6em !important;
+  left: 50% !important;
+  -webkit-transform: translateX(-50%) translateY(0) !important;
+  -ms-transform: translateX(-50%) translateY(0) !important;
+  transform: translateX(-50%) translateY(0) !important;
+}
+@media only screen and (min-width: 768px) {
+  .sln-alert--warning:after,
+  #sln-salon .alert-warning:after {
+    top: 50% !important;
+    left: 0.4em !important;
+    -webkit-transform: translateY(-50%) !important;
+    -ms-transform: translateY(-50%) !important;
+    transform: translateY(-50%) !important;
+  }
 }
 
 .sln-alert--info:after,
@@ -5514,10 +5594,10 @@ a.sln-btn.sln-btn--borderonly,
   }
 }
 
-.sln-salon--loading .sln-btn--medium #sln-step-submit {
+#sln-salon:not(.sln-step-date).sln-salon--loading .sln-btn--medium #sln-step-submit {
   position: relative;
 }
-.sln-salon--loading .sln-btn--medium #sln-step-submit:after {
+#sln-salon:not(.sln-step-date).sln-salon--loading .sln-btn--medium #sln-step-submit:after {
   display: block;
   content: "";
   width: 1.6em;
@@ -5540,7 +5620,7 @@ a.sln-btn.sln-btn--borderonly,
   animation: wait 750ms infinite linear;
 }
 @media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
-  .sln-salon--loading .sln-btn--medium #sln-step-submit:after {
+  #sln-salon:not(.sln-step-date).sln-salon--loading .sln-btn--medium #sln-step-submit:after {
     font-family: "FontAwesome";
     font-weight: 900;
     font-size: 1em;
@@ -6360,6 +6440,14 @@ body.modal-open {
   align-items: center;
   flex-wrap: wrap;
   padding: 0 1.2em 1.5em 1.2em;
+}
+#sln-salon-my-account .sln-account__card .sln-account__card__actions .datetimepicker div.datetimepicker-minutes,
+#sln-salon #sln-salon-my-account .sln-account__card .sln-account__card__actions .datetimepicker div.datetimepicker-minutes,
+.sln-bootstrap #sln-salon-my-account .sln-account__card .sln-account__card__actions .datetimepicker div.datetimepicker-minutes {
+  display: block;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  height: 250px;
 }
 #sln-salon-my-account .sln-account__card .sln-account__card__showmore__history .sln-account__card__showmore__item,
 #sln-salon #sln-salon-my-account .sln-account__card .sln-account__card__showmore__history .sln-account__card__showmore__item,
@@ -12927,9 +13015,3 @@ body:not(.sln-salon-page)
 .sln-salon-page.elementor-page .e-con.e-con > .e-con-inner > .elementor-widget.elementor-widget-shortcode {
   width: 100%;
 }
-
-.sln-alert.sln-alert--warning:after {
-  left: 100% !important;
-}
-
-/*# sourceMappingURL=salon.css.map */

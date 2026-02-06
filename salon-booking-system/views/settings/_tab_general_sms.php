@@ -98,7 +98,7 @@
             </div>
             <div class="col-xs-12">
                 <div class="row sln-input__group">
-                    <div class="col-xs-12 col-sm-6 col-md-6">
+                    <div class="col-xs-12 col-sm-6 col-md-4">
                         <div class="sln-checkbox">
                             <?php $helper->row_input_checkbox(
                                 'sms_new',
@@ -111,11 +111,19 @@
                             </p>
                         </div>
                     </div>
-                    <div class="col-xs-12 col-sm-6 col-md-6">
+                    <div class="col-xs-12 col-sm-6 col-md-4">
                         <div class="sln-checkbox">
                             <?php $helper->row_input_checkbox(
                                 'sms_modified',
                                 __('Send SMS notification on modified bookings', 'salon-booking-system')
+                            ); ?>
+                        </div>
+                    </div>
+                    <div class="col-xs-12 col-sm-6 col-md-4">
+                        <div class="sln-checkbox">
+                            <?php $helper->row_input_checkbox(
+                                'sms_canceled',
+                                __('Send SMS notification on canceled bookings', 'salon-booking-system')
                             ); ?>
                         </div>
                     </div>
@@ -164,7 +172,7 @@
             </div>
             <div class="col-xs-12">
                 <div class="row sln-input__group">
-                    <div class="col-xs-12 col-sm-6">
+                    <div class="col-xs-12 col-sm-6 col-md-4">
                         <div class="sln-checkbox">
                             <?php $helper->row_input_checkbox(
                                 'sms_new_attendant',
@@ -177,11 +185,19 @@
                             </p>
                         </div>
                     </div>
-                    <div class="col-xs-12 col-sm-6">
+                    <div class="col-xs-12 col-sm-6 col-md-4">
                         <div class="sln-checkbox">
                             <?php $helper->row_input_checkbox(
                                 'sms_modified_attendant',
                                 __('Send an SMS to selected attendant on modified bookings', 'salon-booking-system')
+                            ); ?>
+                        </div>
+                    </div>
+                    <div class="col-xs-12 col-sm-6 col-md-4">
+                        <div class="sln-checkbox">
+                            <?php $helper->row_input_checkbox(
+                                'sms_canceled_attendant',
+                                __('Send an SMS to selected attendant on canceled bookings', 'salon-booking-system')
                             ); ?>
                         </div>
                     </div>
@@ -253,6 +269,18 @@
                             'textarea' => array(
                                 'attrs' => array(
                                     'placeholder' => str_replace("\r\n", " ", SLN_Admin_SettingTabs_GeneralTab::getDefaultSmsNotificationMessageModified()),
+                                ),
+                            ),
+                        )); ?>
+                        <p class="sln-input-help">
+                            <?php esc_html_e('You can use [NAME], [SALON NAME], [DATE], [TIME], [PRICE], [BOOKING ID]', 'salon-booking-system') ?>
+                        </p>
+                    </div>
+                    <div class="col-xs-12 col-sm-6 form-group sln-input--simple sln-input--mt">
+                        <?php $helper->row_input_textarea('sms_notification_message_canceled', __('Customize the SMS notification message on canceled bookings (max 160 characters)', 'salon-booking-system'), array(
+                            'textarea' => array(
+                                'attrs' => array(
+                                    'placeholder' => str_replace("\r\n", " ", SLN_Admin_SettingTabs_GeneralTab::getDefaultSmsNotificationMessageCanceled()),
                                 ),
                             ),
                         )); ?>

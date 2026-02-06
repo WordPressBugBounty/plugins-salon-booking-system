@@ -66,7 +66,9 @@ export default {
     return {
       processingSlots: new Set(),
       activeSlot: null,
-      timeCache: new Map()
+      timeCache: new Map(),
+      END_OF_DAY: '24:00',
+      MINUTES_IN_DAY: 1440 // 24 hours * 60 minutes
     }
   },
   props: {
@@ -116,13 +118,14 @@ export default {
     }
   },
   watch: {
-    attendantsLoaded(newVal) {
-      if (newVal) {
-        this.loadLockedTimeslots();
-      }
-    },
     lockedTimeslots: {
       immediate: true,
+      deep: true,
+      handler() {
+        this.$nextTick(() => {
+          this.$forceUpdate();
+        });
+      }
     },
   },
   computed: {
@@ -142,6 +145,7 @@ export default {
     /* method to convert time to minutes with caching */
     getTimeInMinutes(time) {
       if (!time) return 0;
+      if (time === this.END_OF_DAY || time === '24:00') return this.MINUTES_IN_DAY;
       if (this.timeCache.has(time)) return this.timeCache.get(time);
 
       const normalizedTime = this.normalizeTime(time);
@@ -206,8 +210,7 @@ export default {
     },
     /* method to check if holiday rules block a time */
     isBlockedByHolidayRule(slot, attendantId, currentDate, slotMinutes) {
-      if ((attendantId !== null && slot.assistant_id !== attendantId) ||
-          (attendantId === null && slot.assistant_id !== null)) {
+      if (slot.assistant_id !== null && slot.assistant_id !== attendantId) {
         return false;
       }
 
@@ -218,7 +221,11 @@ export default {
       if (!isDateInRange) return false;
 
       const fromMinutes = this.getTimeInMinutes(slot.from_time);
-      const toMinutes = this.getTimeInMinutes(slot.to_time);
+      let toMinutes = this.getTimeInMinutes(slot.to_time);
+      if ((slot.to_time === '00:00' || slot.to_time === '24:00') &&
+          currentDate.isSame(fromDate, 'day') && currentDate.isSame(toDate, 'day')) {
+        toMinutes = this.MINUTES_IN_DAY;
+      }
 
       if (currentDate.isSame(fromDate, 'day') && currentDate.isSame(toDate, 'day')) {
         return slotMinutes >= fromMinutes && slotMinutes < toMinutes;
@@ -291,12 +298,17 @@ export default {
       const slotMinutes = this.getTimeInMinutes(timeslot);
 
       const relevantLock = this.lockedTimeslots.find(slot => {
-        const isCorrect = slot.assistant_id === attendantId &&
-            slot.from_date === formattedDate &&
-            slotMinutes >= this.getTimeInMinutes(slot.from_time) &&
-            slotMinutes < this.getTimeInMinutes(slot.to_time);
+        if (slot.assistant_id !== attendantId || slot.from_date !== formattedDate) {
+          return false;
+        }
 
-        return isCorrect;
+        const lockStart = this.getTimeInMinutes(slot.from_time);
+        let lockEnd = this.getTimeInMinutes(slot.to_time);
+
+        if (slot.to_time === '00:00' && slot.from_date === slot.to_date) {
+          lockEnd = this.MINUTES_IN_DAY;
+        }
+        return slotMinutes >= lockStart && slotMinutes < lockEnd;
       });
 
       return !!(relevantLock?.is_manual);
@@ -313,24 +325,45 @@ export default {
         const formattedDate = this.getFormattedDate();
         // prepare time values
         const formattedFromTime = this.normalizeTime(timeslot);
-        const formattedToTime = nextTimeslot ? this.normalizeTime(nextTimeslot)
-          : this.moment(formattedFromTime,'HH:mm').add(30,'minutes').format('HH:mm');
+        let formattedToTime;
+
+        if (nextTimeslot) {
+          if (nextTimeslot === '00:00' || nextTimeslot === '24:00' || nextTimeslot === this.END_OF_DAY) {
+            formattedToTime = this.END_OF_DAY;
+          } else {
+            formattedToTime = this.normalizeTime(nextTimeslot);
+          }
+        } else {
+          const endMoment = this.moment(formattedFromTime,'HH:mm').add(30,'minutes');
+          const endHours = endMoment.hours();
+          const endMinutes = endMoment.minutes();
+          if (endHours === 0 && endMinutes === 0) {
+            formattedToTime = this.END_OF_DAY;
+          } else {
+            formattedToTime = endMoment.format('HH:mm');
+          }
+        }
 
         // prepare API payload
         const payload = this.withShop({
           assistants_mode: true,
           assistant_id: attendant.id || null,
-          date: formattedDate,
+          date: formattedDate, // Include date parameter for API response
           from_date: formattedDate,
           to_date: formattedDate,
-          formattedFromTime,
-          formattedToTime,
+          from_time: formattedFromTime,
+          to_time: formattedToTime,
           daily: true,
           is_manual: true,
         });
 
         // send lock request
-        await this.axios.post('holiday-rules', payload);
+        const response = await this.axios.post('holiday-rules', payload);
+        
+        // Check if response indicates success
+        if (!response.data || (response.data.success !== 1 && !response.data.assistants_rules)) {
+          throw new Error('Lock request failed: Invalid response from server');
+        }
 
         // update locked timeslots
         await this.updateLockedTimeslots();
@@ -339,6 +372,14 @@ export default {
         this.$emit('lock', payload);
       } catch (error) {
         console.error('Slot lock error:', error);
+        // Show user-friendly error message
+        if (error.response?.data?.message) {
+          alert('Failed to lock slot: ' + error.response.data.message);
+        } else if (error.message) {
+          alert('Failed to lock slot: ' + error.message);
+        } else {
+          alert('Failed to lock slot. Please try again.');
+        }
       } finally {
         this.processingSlots.delete(slotKey);
       }
@@ -488,7 +529,11 @@ export default {
       const slotMinutes = this.getTimeInMinutes(timeslot);
       const currentLock = relevantLocks.find(lock => {
         const lockStart = this.getTimeInMinutes(lock.from_time);
-        const lockEnd = this.getTimeInMinutes(lock.to_time);
+        let lockEnd = this.getTimeInMinutes(lock.to_time);
+        if (lock.to_time === '00:00' && lock.from_date === lock.to_date) {
+          lockEnd = this.MINUTES_IN_DAY;
+        }
+
         return slotMinutes >= lockStart && slotMinutes < lockEnd;
       });
 
@@ -496,7 +541,10 @@ export default {
 
       // find the center slot in the lock period
       const lockStart = this.getTimeInMinutes(currentLock.from_time);
-      const lockEnd = this.getTimeInMinutes(currentLock.to_time);
+      let lockEnd = this.getTimeInMinutes(currentLock.to_time);
+      if (currentLock.to_time === '00:00' && currentLock.from_date === currentLock.to_date) {
+        lockEnd = this.MINUTES_IN_DAY;
+      }
 
       const slotsInLock = this.timeslots.filter(slot => {
         const slotMin = this.getTimeInMinutes(slot);
@@ -511,6 +559,7 @@ export default {
     },
     timeToMinutes(time) {
       if (!time) return 0;
+      if (time === this.END_OF_DAY || time === '24:00') return this.MINUTES_IN_DAY;
       if (this.$root.settings.time_format.js_format === 'h:iip') {
         const momentTime = this.moment(time, 'h:mm A');
         const [hours, minutes] = [momentTime.hours(), momentTime.minutes()];
@@ -619,6 +668,7 @@ export default {
         // get attendant data
         const attendant = this.sortedAttendants.find(a => a.id === attendantId);
         if (!attendant) return true;
+
         // convert time to comparable format
         const slotMinutes = this.getTimeInMinutes(timeslot);
 
@@ -628,12 +678,11 @@ export default {
         if (availableDays[weekdaySalon] !== '1') return true;
 
         /* -- step 2: hard blocks -- */
-        // 2.1: assistant‑specific holiday rule
-        const assistantHoliday = this.lockedTimeslots.find(slot =>
-            slot.assistant_id === attendantId &&
-            this.isBlockedByHolidayRule(slot, attendantId, currentDate, slotMinutes)
-        );
-        if (assistantHoliday) return true;
+        // 2.1: check all holiday rules (salon-wide and assistant-specific)
+        const holidayRule = this.lockedTimeslots.find(slot => {
+            return this.isBlockedByHolidayRule(slot, attendantId, currentDate, slotMinutes);
+        });
+        if (holidayRule) return true;
 
         // 2.2: check salon holiday periods
         const holidayPeriod = this.$root.settings?.holidays?.some(holiday => {
@@ -702,7 +751,7 @@ export default {
           return true;
         }
 
-        /* PART 5: API-PROVIDED ALLOWED TIMES */
+        /*/!* PART 5: API-PROVIDED ALLOWED TIMES *!/
         const workTimes = this.availabilityIntervals?.workTimes || {};
         const times = this.availabilityIntervals?.times || {};
         const allowedTimes = Object.keys(workTimes).length ? workTimes : times;
@@ -710,7 +759,7 @@ export default {
         if (Object.keys(allowedTimes).length) {
           const isTimeAllowed = Object.values(allowedTimes).some(time => this.getTimeInMinutes(time) === slotMinutes);
           if (!isTimeAllowed) return true; // ==> time not found in allowed times
-        }
+        }*/
 
         return false; // ==> all checks passed ==> slot is available
 
@@ -727,6 +776,7 @@ export default {
     },
     normalizeTime(time) {
       if (!time) return time;
+      if (time === this.END_OF_DAY || time === '24:00') return this.END_OF_DAY;
 
       if (this.$root.settings?.time_format?.js_format === 'h:iip') {
         const momentTime = this.moment(time, 'h:mm A');

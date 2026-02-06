@@ -30,6 +30,24 @@ class SLN_Wrapper_Service extends SLN_Wrapper_Abstract implements SLN_Wrapper_Se
         return $ret;
     }
 
+    /**
+     * Get maximum units a customer can select for variable duration
+     * Falls back to getUnitPerHour() for backward compatibility
+     * 
+     * @return int
+     */
+    function getMaxVariableDuration()
+    {
+        $ret = $this->getMeta('max_variable_duration');
+        
+        // If not set, fall back to unit value for backward compatibility
+        if (empty($ret)) {
+            return $this->getUnitPerHour();
+        }
+        
+        return intval($ret);
+    }
+
     function getDuration()
     {
         $settings = SLN_Plugin::getInstance()->getSettings();

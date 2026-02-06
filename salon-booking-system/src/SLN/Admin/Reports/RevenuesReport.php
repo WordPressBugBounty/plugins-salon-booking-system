@@ -8,8 +8,6 @@ class SLN_Admin_Reports_RevenuesReport extends SLN_Admin_Reports_AbstractReport 
 			SLN_Enum_BookingStatus::PAID,
 			SLN_Enum_BookingStatus::PAY_LATER,
 			SLN_Enum_BookingStatus::CONFIRMED,
-			SLN_Enum_BookingStatus::PENDING_PAYMENT,
-			SLN_Enum_BookingStatus::CANCELED,
 		);
 	}
 
@@ -47,18 +45,16 @@ class SLN_Admin_Reports_RevenuesReport extends SLN_Admin_Reports_AbstractReport 
 		$ret['data']   = array();
 		$ret['footer'] = array(
 				'earnings' => array(
-						'all'                                   => 0.0,
-						SLN_Enum_BookingStatus::PAID            => 0.0,
-						SLN_Enum_BookingStatus::PAY_LATER       => 0.0,
-						SLN_Enum_BookingStatus::PENDING_PAYMENT => 0.0,
-						SLN_Enum_BookingStatus::CANCELED        => 0.0,
+						'all'                             => 0.0,
+						SLN_Enum_BookingStatus::PAID      => 0.0,
+						SLN_Enum_BookingStatus::PAY_LATER => 0.0,
+						SLN_Enum_BookingStatus::CONFIRMED => 0.0,
 				),
 				'bookings' => array(
-						'all'                                   => 0,
-						SLN_Enum_BookingStatus::PAID            => 0,
-						SLN_Enum_BookingStatus::PAY_LATER       => 0,
-						SLN_Enum_BookingStatus::PENDING_PAYMENT => 0,
-						SLN_Enum_BookingStatus::CANCELED        => 0,
+						'all'                             => 0,
+						SLN_Enum_BookingStatus::PAID      => 0,
+						SLN_Enum_BookingStatus::PAY_LATER => 0,
+						SLN_Enum_BookingStatus::CONFIRMED => 0,
 				),
 		);
 
@@ -67,12 +63,9 @@ class SLN_Admin_Reports_RevenuesReport extends SLN_Admin_Reports_AbstractReport 
 			$count    = 0;
 			/** @var SLN_Wrapper_Booking $booking */
 			foreach($bookings as $booking) {
-				if (in_array($booking->getStatus(), array(SLN_Enum_BookingStatus::PAID, SLN_Enum_BookingStatus::PAY_LATER, SLN_Enum_BookingStatus::PENDING_PAYMENT, SLN_Enum_BookingStatus::CANCELED))) {
+				if (in_array($booking->getStatus(), array(SLN_Enum_BookingStatus::PAID, SLN_Enum_BookingStatus::PAY_LATER, SLN_Enum_BookingStatus::CONFIRMED))) {
 					$ret['footer']['bookings'][$booking->getStatus()]++;
 					$ret['footer']['earnings'][$booking->getStatus()] += $booking->getAmount();
-				}
-
-				if (in_array($booking->getStatus(), array(SLN_Enum_BookingStatus::PAID, SLN_Enum_BookingStatus::PAY_LATER, SLN_Enum_BookingStatus::CONFIRMED))) {
 					$earnings += $booking->getAmount();
 					$count ++;
 				}
@@ -88,30 +81,30 @@ class SLN_Admin_Reports_RevenuesReport extends SLN_Admin_Reports_AbstractReport 
 	}
 
 	protected function printFooter() {
-		$statuses = array(SLN_Enum_BookingStatus::PAID,SLN_Enum_BookingStatus::PAY_LATER,SLN_Enum_BookingStatus::PENDING_PAYMENT,SLN_Enum_BookingStatus::CANCELED);
+		$statuses = array(SLN_Enum_BookingStatus::PAID, SLN_Enum_BookingStatus::PAY_LATER, SLN_Enum_BookingStatus::CONFIRMED);
 		?>
 		<div class="col-xs-12 col-sm-6 col-md-4 report-statistics">
 			<h4><?php esc_html_e('Reservations in the selected time range', 'salon-booking-system'); ?></h4>
 			<div class="row">
-				<div class="col-xs-12 col-md-2 text-center"><?php esc_html_e('Total', 'salon-booking-system'); ?></div>
+				<div class="col-xs-12 col-md-3 text-center"><?php esc_html_e('Total', 'salon-booking-system'); ?></div>
 				<?php foreach($statuses as $status) : ?>
-					<div class="col-xs-12 col-md-<?php echo ($status === SLN_Enum_BookingStatus::PAY_LATER || $status === SLN_Enum_BookingStatus::PENDING_PAYMENT ? 3 : 2); ?> text-center">
+					<div class="col-xs-12 col-md-3 text-center">
 						<?php echo SLN_Enum_BookingStatus::getLabel($status); ?>
 					</div>
 				<?php endforeach; ?>
 			</div>
 			<div class="row">
-				<div class="col-xs-12 col-md-2 text-center"><?php echo $this->data['footer']['bookings']['all']; ?></div>
+				<div class="col-xs-12 col-md-3 text-center"><?php echo $this->data['footer']['bookings']['all']; ?></div>
 				<?php foreach($statuses as $status) : ?>
-					<div class="col-xs-12 col-md-<?php echo ($status === SLN_Enum_BookingStatus::PAY_LATER || $status === SLN_Enum_BookingStatus::PENDING_PAYMENT ? 3 : 2); ?> text-center">
+					<div class="col-xs-12 col-md-3 text-center">
 						<?php echo $this->data['footer']['bookings'][$status]; ?>
 					</div>
 				<?php endforeach; ?>
 			</div>
 			<div class="row">
-				<div class="col-xs-12 col-md-2 text-center"><?php echo $this->plugin->format()->money($this->data['footer']['earnings']['all'], false); ?></div>
+				<div class="col-xs-12 col-md-3 text-center"><?php echo $this->plugin->format()->money($this->data['footer']['earnings']['all'], false); ?></div>
 				<?php foreach($statuses as $status) : ?>
-					<div class="col-xs-12 col-md-<?php echo ($status === SLN_Enum_BookingStatus::PAY_LATER || $status === SLN_Enum_BookingStatus::PENDING_PAYMENT ? 3 : 2); ?> text-center">
+					<div class="col-xs-12 col-md-3 text-center">
 						<?php echo $this->plugin->format()->money($this->data['footer']['earnings'][$status], false); ?>
 					</div>
 				<?php endforeach; ?>

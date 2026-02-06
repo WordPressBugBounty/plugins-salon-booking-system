@@ -6,7 +6,14 @@ class SLN_Action_Ajax_CheckServicesAlt extends SLN_Action_Ajax_CheckServices
     {
         $ret      = array();
         $builder  = $this->bb;
-        $this->ah->setDate($this->bb->getDateTime());
+        
+        // Check if date is available (alternative order: services come before date)
+        $hasDate = !empty($this->date);
+        
+        // Only set date for availability helper if date exists
+        if ($hasDate) {
+            $this->ah->setDate($this->bb->getDateTime());
+        }
 
         $mergeIds = array();
         foreach($merge as $s){
@@ -47,17 +54,24 @@ class SLN_Action_Ajax_CheckServicesAlt extends SLN_Action_Ajax_CheckServices
         foreach ($this->getServices(true, true) as $service) {
             $error = '';
             if (in_array($service->getId(), $services)) {
-                $bb = $this->plugin->getBookingBuilder();
-                $bookingServices = SLN_Wrapper_Booking_Services::build(array_fill_keys($services, 0), $this->getDateTime(), 0, $bb->getCountServices());
-                $serviceErrors   = $this->ah->validateServiceFromOrder($service, $bookingServices);
-                if(empty($serviceErrors)) {
+                // Only perform date-based validation if date is available
+                if ($hasDate) {
+                    $bb = $this->plugin->getBookingBuilder();
+                    $bookingServices = SLN_Wrapper_Booking_Services::build(array_fill_keys($services, 0), $this->getDateTime(), 0, $bb->getCountServices());
+                    $serviceErrors   = $this->ah->validateServiceFromOrder($service, $bookingServices);
+                    if(empty($serviceErrors)) {
+                        $builder->addService($service);
+                        $status = self::STATUS_CHECKED;
+                    }
+                    else {
+                        unset($services[array_search($service->getId(), $services)]);
+                        $status = self::STATUS_ERROR;
+                        $error  = reset($serviceErrors);
+                    }
+                } else {
+                    // No date yet (alternative order) - just add service without validation
                     $builder->addService($service);
                     $status = self::STATUS_CHECKED;
-                }
-                else {
-                    unset($services[array_search($service->getId(), $services)]);
-                    $status = self::STATUS_ERROR;
-                    $error  = reset($serviceErrors);
                 }
             } else {
                 $status = self::STATUS_UNCHECKED;
@@ -66,12 +80,15 @@ class SLN_Action_Ajax_CheckServicesAlt extends SLN_Action_Ajax_CheckServices
         }
         $builder->save();
 
-        $servicesErrors = $this->ah->checkEachOfNewServicesForExistOrder($services, $newServices, true);
-        foreach ($servicesErrors as $sId => $error) {
-            if (empty($error)) {
-                $ret[$sId] = array('status' => self::STATUS_UNCHECKED, 'error' => '');
-            } else {
-                $ret[$sId] = array('status' => self::STATUS_ERROR, 'error' => $error[0]);
+        // Only check service order constraints if date is available
+        if ($hasDate) {
+            $servicesErrors = $this->ah->checkEachOfNewServicesForExistOrder($services, $newServices, true);
+            foreach ($servicesErrors as $sId => $error) {
+                if (empty($error)) {
+                    $ret[$sId] = array('status' => self::STATUS_UNCHECKED, 'error' => '');
+                } else {
+                    $ret[$sId] = array('status' => self::STATUS_ERROR, 'error' => $error[0]);
+                }
             }
         }
 

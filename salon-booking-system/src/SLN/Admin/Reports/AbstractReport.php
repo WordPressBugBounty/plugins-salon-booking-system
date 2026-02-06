@@ -9,6 +9,25 @@ abstract class SLN_Admin_Reports_AbstractReport {
 
 	protected abstract function processBookings();
 
+	/**
+	 * Get days in month - safe wrapper for cal_days_in_month()
+	 * Provides fallback when PHP calendar extension is not available
+	 * 
+	 * @param int $month Month (1-12)
+	 * @param int $year Year (e.g., 2025)
+	 * @return int Number of days in the month
+	 */
+	private function getDaysInMonth($month, $year) {
+		// Try to use calendar extension if available
+		if (defined('CAL_GREGORIAN') && function_exists('cal_days_in_month')) {
+			return cal_days_in_month(CAL_GREGORIAN, $month, $year);
+		}
+		
+		// Fallback: Use date() function which doesn't require calendar extension
+		// 't' format character returns number of days in given month
+		return (int) date('t', mktime(0, 0, 0, $month, 1, $year));
+	}
+
 	function __construct(SLN_Plugin $plugin, array $attr = array())
 	{
 		$this->plugin = $plugin;
@@ -32,7 +51,7 @@ abstract class SLN_Admin_Reports_AbstractReport {
 			$this->attr['day'] = 1;
 		}
 		if (!isset($this->attr['day_end'])) {
-			$this->attr['day_end'] = cal_days_in_month(CAL_GREGORIAN, $this->attr['m_end'], $this->attr['year']);
+			$this->attr['day_end'] = $this->getDaysInMonth($this->attr['m_end'], $this->attr['year']);
 		}
 
 	}
@@ -76,11 +95,11 @@ abstract class SLN_Admin_Reports_AbstractReport {
 				$hour ++;
 			}
 
-		} elseif ($dates['range'] == 'this_week' || $dates['range'] == 'last_week') {
+	} elseif ($dates['range'] == 'this_week' || $dates['range'] == 'last_week') {
 
-			$num_of_days = cal_days_in_month(CAL_GREGORIAN, $dates['m_start'], $dates['year']);
+		$num_of_days = $this->getDaysInMonth($dates['m_start'], $dates['year']);
 
-			$report_dates = array();
+		$report_dates = array();
 			$i            = 0;
 			while ($i <= 6) {
 
@@ -146,11 +165,11 @@ abstract class SLN_Admin_Reports_AbstractReport {
 
 							}
 
-						} else {
+					} else {
 
-							$num_of_days = cal_days_in_month(CAL_GREGORIAN, $i, $y);
+						$num_of_days = $this->getDaysInMonth($i, $y);
 
-						}
+					}
 
 
 						while ($d <= $num_of_days) {
@@ -164,10 +183,10 @@ abstract class SLN_Admin_Reports_AbstractReport {
 
 					} else {
 
-						$this->getDataByDate(null, $i, $y);
+					$this->getDataByDate(null, $i, $y);
 
-						if ($i == $month_end && $last_year) {
-							$num_of_days = cal_days_in_month(CAL_GREGORIAN, $i, $y);
+					if ($i == $month_end && $last_year) {
+						$num_of_days = $this->getDaysInMonth($i, $y);
 						} else {
 							$num_of_days = 1;
 						}
@@ -247,13 +266,33 @@ abstract class SLN_Admin_Reports_AbstractReport {
 				'post_status'    => $this->getBookingStatuses(),
 				'nopaging'       => true,
 				'meta_query' => array(
+						'relation' => 'AND',
 						array(
 								'key' => '_sln_booking_date',
 								'value' => "$year-$month_num-$day",
 								'compare' => 'LIKE',
 								'type' => 'STRING',
 						),
-
+						// Exclude no-show bookings from revenue/turnover reports
+						// This ensures no-show bookings don't affect financial calculations
+						// Uses OR relation to include bookings where no_show doesn't exist OR equals 0
+						array(
+								'relation' => 'OR',
+								array(
+										'key'     => 'no_show',
+										'compare' => 'NOT EXISTS',
+								),
+								array(
+										'key'     => 'no_show',
+										'value'   => '0',
+										'compare' => '=',
+								),
+								array(
+										'key'     => 'no_show',
+										'value'   => '',
+										'compare' => '=',
+								),
+						),
 				)
 		);
 		if ($hour) {
@@ -272,6 +311,33 @@ abstract class SLN_Admin_Reports_AbstractReport {
         $args = apply_filters('sln.action.report.criteria', $args);
 
 		$posts = new WP_Query($args);
+		
+		// Log query results for debugging no-show exclusion
+		if (method_exists('SLN_Plugin', 'addLog')) {
+			$totalFound = $posts->found_posts;
+			$noShowExcluded = 0;
+			
+			foreach($posts->get_posts() as $p) {
+				$noShowMeta = get_post_meta($p->ID, 'no_show', true);
+				if ($noShowMeta == '1' || $noShowMeta === 1) {
+					$noShowExcluded++;
+					SLN_Plugin::addLog(sprintf(
+						'Reports: WARNING - No-show booking #%d was NOT excluded by meta_query (no_show=%s)',
+						$p->ID,
+						var_export($noShowMeta, true)
+					));
+				}
+			}
+			
+			if ($totalFound > 0) {
+				SLN_Plugin::addLog(sprintf(
+					'Reports: Query returned %d bookings, %d no-shows found (should be 0)',
+					$totalFound,
+					$noShowExcluded
+				));
+			}
+		}
+		
 		foreach($posts->get_posts() as $p) {
 			$booking = SLN_Plugin::getInstance()->createBooking($p->ID);
 			$bookings[$p->ID] = $booking;
@@ -301,14 +367,14 @@ abstract class SLN_Admin_Reports_AbstractReport {
 		// Modify dates based on predefined ranges
 		switch ($dates['range']) :
 
-			case 'this_month' :
-				$dates['m_start']  = current_time('n');
-				$dates['m_end']    = current_time('n');
-				$dates['day']      = 1;
-				$dates['day_end']  = cal_days_in_month(CAL_GREGORIAN, $dates['m_end'], $dates['year']);
-				$dates['year']     = current_time('Y');
-				$dates['year_end'] = current_time('Y');
-				break;
+		case 'this_month' :
+			$dates['m_start']  = current_time('n');
+			$dates['m_end']    = current_time('n');
+			$dates['day']      = 1;
+			$dates['day_end']  = $this->getDaysInMonth($dates['m_end'], $dates['year']);
+			$dates['year']     = current_time('Y');
+			$dates['year_end'] = current_time('Y');
+			break;
 
 			case 'last_month' :
 				if(current_time('n') == 1) {
@@ -317,12 +383,12 @@ abstract class SLN_Admin_Reports_AbstractReport {
 					$dates['year']     = current_time('Y') - 1;
 					$dates['year_end'] = current_time('Y') - 1;
 				} else {
-					$dates['m_start']  = current_time('n') - 1;
-					$dates['m_end']    = current_time('n') - 1;
-					$dates['year_end'] = $dates['year'];
-				}
-				$dates['day_end'] = cal_days_in_month(CAL_GREGORIAN, $dates['m_end'], $dates['year']);
-				break;
+				$dates['m_start']  = current_time('n') - 1;
+				$dates['m_end']    = current_time('n') - 1;
+				$dates['year_end'] = $dates['year'];
+			}
+			$dates['day_end'] = $this->getDaysInMonth($dates['m_end'], $dates['year']);
+			break;
 
 			case 'today' :
 				$dates['day']     = current_time('d');
@@ -337,16 +403,16 @@ abstract class SLN_Admin_Reports_AbstractReport {
 				$month = current_time('n');
 				$day   = current_time('d');
 
-				if ($month == 1 && $day == 1) {
+			if ($month == 1 && $day == 1) {
 
-					$year  -= 1;
-					$month = 12;
-					$day   = cal_days_in_month(CAL_GREGORIAN, $month, $year);
+				$year  -= 1;
+				$month = 12;
+				$day   = $this->getDaysInMonth($month, $year);
 
-				} elseif ($month > 1 && $day == 1) {
+			} elseif ($month > 1 && $day == 1) {
 
-					$month -= 1;
-					$day   = cal_days_in_month(CAL_GREGORIAN, $month, $year);
+				$month -= 1;
+				$day   = $this->getDaysInMonth($month, $year);
 
 				} else {
 
@@ -470,7 +536,7 @@ abstract class SLN_Admin_Reports_AbstractReport {
 		$display = $dates['range'] == 'other' ? 'style="display:inline;"' : 'style="display:none;"';
 
 		if(empty($dates['day_end'])) {
-			$dates['day_end'] = cal_days_in_month(CAL_GREGORIAN, current_time('n'), current_time('Y'));
+			$dates['day_end'] = $this->getDaysInMonth(current_time('n'), current_time('Y'));
 		}
 
 		ob_start();

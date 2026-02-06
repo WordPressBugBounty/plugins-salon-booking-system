@@ -82,7 +82,7 @@ class SLN_Third_GoogleCalendarImport
 
         try {
             $timezone = $gScope->get_google_service()->settings->get('timezone')->value;
-            $this->timezone = new DateTimeZone($timezone);
+            $this->timezone = SLN_Func::createDateTimeZone($timezone);
         }catch (\Exception $e) {
             $this->timezone = SLN_TimeFunc::getWpTimezone();
         }
@@ -164,7 +164,7 @@ class SLN_Third_GoogleCalendarImport
 
         try {
             $timezone = $gScope->get_google_service()->settings->get('timezone')->value;
-            $this->timezone = new DateTimeZone($timezone);
+            $this->timezone = SLN_Func::createDateTimeZone($timezone);
         }catch (\Exception $e) {
             $this->timezone = SLN_TimeFunc::getWpTimezone();
         }
@@ -548,7 +548,7 @@ class SLN_Third_GoogleCalendarImport
         }
 
         $eventDateTime = $gEvent->getStart()->getDateTime();
-        $timezone = ($eventTimeZone = $gEvent->getStart()->getTimeZone()) ? new DateTimeZone($eventTimeZone) : $this->timezone;
+        $timezone = ($eventTimeZone = $gEvent->getStart()->getTimeZone()) ? SLN_Func::createDateTimeZone($eventTimeZone) : $this->timezone;
         if (empty($eventDateTime)) {
             throw new ErrorException('Event start time is null', self::EXCEPTION_CODE_FOR_INVALID_CALENDAR_EVENT);
         }

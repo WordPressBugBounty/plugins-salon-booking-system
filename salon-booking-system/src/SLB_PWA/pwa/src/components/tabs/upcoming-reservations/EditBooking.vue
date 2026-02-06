@@ -1019,7 +1019,13 @@ export default {
     },
     loadAttendants() {
       return this.axios
-          .get('assistants', {params: {shop: this.shop ? this.shop.id : null}})
+          .get('assistants', {
+            params: {
+              shop: this.shop ? this.shop.id : null,
+              orderby: 'order',
+              order: 'asc'
+            }
+          })
           .then(response => {
             this.elAttendantsList = response.data.items;
           });

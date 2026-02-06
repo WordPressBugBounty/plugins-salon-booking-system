@@ -50,17 +50,18 @@ class SLN_Admin_Reports_RevenuesByServicesReport extends SLN_Admin_Reports_Abstr
 			$ret['data'][$service->getId()] = array($service->getName(), 0.0, 0);
 		}
 
-		foreach($this->bookings as $k => $bookings) {
-			/** @var SLN_Wrapper_Booking $booking */
-			foreach($bookings as $booking) {
-				foreach($booking->getBookingServices()->getItems() as $bookingService) {
-					if (array_key_exists($bookingService->getService()->getId(), $ret['data'])) {
-						$ret['data'][$bookingService->getService()->getId()][1] += $bookingService->getService()->getPrice();
-						$ret['data'][$bookingService->getService()->getId()][2] ++;
-					}
+	foreach($this->bookings as $k => $bookings) {
+		/** @var SLN_Wrapper_Booking $booking */
+		foreach($bookings as $booking) {
+			foreach($booking->getBookingServices()->getItems() as $bookingService) {
+				if (array_key_exists($bookingService->getService()->getId(), $ret['data'])) {
+					// Use actual booking service price (includes discounts, variable pricing)
+					$ret['data'][$bookingService->getService()->getId()][1] += $bookingService->getPrice();
+					$ret['data'][$bookingService->getService()->getId()][2] ++;
 				}
 			}
 		}
+	}
 
 		$this->data = $ret;
 	}

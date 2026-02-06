@@ -81,9 +81,16 @@ class SLN_Helper_HolidayItem
 
     public function isValidTime($date)
     {
+        // FIX: Handle end-of-day locks (24:00 or 00:00 means end of day)
+        // When to_time is 24:00 or 00:00 and it's a same-day lock, treat it as 23:59:59 (end of day)
+        $toTime = $this->data['to_time'];
+        if (($toTime === '24:00' || $toTime === '00:00') && $this->data['from_date'] === $this->data['to_date']) {
+            $toTime = '23:59:59';
+        }
+        
         $date = self::getCachedTimestamp( $date );
         $from = self::getCachedTimestamp( $this->data['from_date'].' '.$this->data['from_time'] );
-        $to   = self::getCachedTimestamp( $this->data['to_date'].' '.$this->data['to_time'] );
+        $to   = self::getCachedTimestamp( $this->data['to_date'].' '.$toTime );
 
         return !($date >= $from && $date < $to);
     }

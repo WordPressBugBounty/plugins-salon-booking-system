@@ -18,9 +18,21 @@ $class_salon_content = $class . '__content';
 $class_salon_content .= ' sln-salon__content-step-' . $salon->getCurrentStep();
 
 $bookingMyAccountPageId = $plugin->getSettings()->getBookingmyaccountPageId();
+$builder = $plugin->getBookingBuilder();
+$clientId = $builder->getClientId();
+$storageStrategy = $builder->isUsingTransient() ? 'transient' : 'session';
 ?>
 
-<div id="sln-salon-booking" class="sln-shortcode <?php echo $class_salon ?>">
+<script>
+window.SLN_BOOKING_CLIENT = {
+    id: <?php echo $clientId ? "'" . esc_js($clientId) . "'" : 'null'; ?>,
+    storage: '<?php echo esc_js($storageStrategy); ?>'
+};
+</script>
+
+<div id="sln-salon-booking" class="sln-shortcode <?php echo $class_salon ?>"
+     data-client-id="<?php echo esc_attr($clientId); ?>"
+     data-storage="<?php echo esc_attr($storageStrategy); ?>">
     <div id="sln-salon-booking__content" class="<?php echo $class_salon_content ?>">
         <?php
         if ($bookingMyAccountPageId && !$plugin->getSettings()->get('enabled_force_guest_checkout')) {
@@ -49,7 +61,6 @@ $bookingMyAccountPageId = $plugin->getSettings()->getBookingmyaccountPageId();
         $errors = !empty($errors) ? $errors : $step->getErrors();
         echo $plugin->loadView('shortcode/_errors', ['errors' => $errors]);
         echo $plugin->loadView('shortcode/_additional_errors', ['additional_errors' => $additional_errors]);
-        include '_mixpanel_track.php';
         echo apply_filters('sln.booking.salon.' . $step->getStep() . '-step.add-params-html', '');
         $args = array(
             'key' => $step->getTitleKey(),

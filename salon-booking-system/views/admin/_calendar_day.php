@@ -55,3 +55,9 @@ foreach ($booking->getBookingServices()->getItems() as $bookingService): ?>
         <?php endif; ?>
     <?php endforeach; ?>
 </ul>
+
+<?php if ( $booking->getMeta( 'is_walkin' ) ): ?>
+<div class="sln-walkin-badge" style="position: absolute; bottom: 8px; left: 8px; font-size: 18px; opacity: 0.7;" title="<?php esc_attr_e( 'Walk-In', 'salon-booking-system' ); ?>">
+	🚶
+</div>
+<?php endif; ?>

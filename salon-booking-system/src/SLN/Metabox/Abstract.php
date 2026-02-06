@@ -79,6 +79,44 @@ abstract class SLN_Metabox_Abstract
 
     public function wp_insert_post_data($data, $postarr)
     {
+        // CRITICAL FIX: Prevent paid bookings from being reverted to auto-draft
+        // This happens when WordPress auto-save tries to restore cached status
+        if (isset($postarr['ID']) && $postarr['ID'] > 0) {
+            $post = get_post($postarr['ID']);
+            
+            if ($post && $post->post_type === SLN_Plugin::POST_TYPE_BOOKING) {
+                $current_status = get_post_status($postarr['ID']);
+                $new_status = isset($data['post_status']) ? $data['post_status'] : '';
+                
+                // If booking is currently paid/confirmed, don't allow reverting to auto-draft/draft
+                if (in_array($current_status, ['sln-b-paid', 'sln-b-confirmed'])) {
+                    if (in_array($new_status, ['auto-draft', 'draft'])) {
+                        // Log this attempted reversion (only when debug mode enabled)
+                        $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 5);
+                        $caller = isset($backtrace[1]) ? basename($backtrace[1]['file'] ?? 'unknown') . ':' . ($backtrace[1]['line'] ?? '?') : 'unknown';
+                        
+                        $context_flags = array();
+                        if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) $context_flags[] = 'AUTOSAVE';
+                        if (defined('DOING_AJAX') && DOING_AJAX) $context_flags[] = 'AJAX';
+                        $context = !empty($context_flags) ? ' [' . implode(',', $context_flags) . ']' : '';
+                        
+                        // Use plugin's standard logging (respects sln_debug_enabled option)
+                        SLN_Plugin::addLog(sprintf(
+                            '🛑 BLOCKED STATUS REVERSION! Booking #%d: %s → %s (attempted)%s | Caller: %s',
+                            $postarr['ID'],
+                            $current_status,
+                            $new_status,
+                            $context,
+                            $caller
+                        ));
+                        
+                        // Keep the current paid status instead
+                        $data['post_status'] = $current_status;
+                    }
+                }
+            }
+        }
+        
         return $data;
     }
 

@@ -146,6 +146,9 @@
                             </div>
                             <div class="sln-data-desc">
                                 <?php esc_html_e('Total amount', 'salon-booking-system') ?>
+                                <?php if (!empty($packages_credits)): ?>
+                                    - <?php esc_html_e('Package credit used', 'salon-booking-system') ?>
+                                <?php endif; ?>
                             </div>
                         </div>
                     <?php }; ?>

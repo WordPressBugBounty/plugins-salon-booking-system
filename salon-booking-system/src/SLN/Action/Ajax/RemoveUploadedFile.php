@@ -14,14 +14,34 @@ class SLN_Action_Ajax_RemoveUploadedFile extends SLN_Action_Ajax_Abstract
 
                 return $ret;
             }
-            $file_name = wp_unslash($_POST['file']);
+            // Sanitize and validate filename
+            $file_name = sanitize_file_name(basename(wp_unslash($_POST['file'])));
+            if (empty($file_name)) {
+                $ret = array(
+                    'success' => 0,
+                    'error' => __('Invalid filename.', 'salon-booking-system'),
+                );
+                return $ret;
+            }
+            
             $user_id = get_current_user_id();
             $upload_dir = wp_upload_dir();
-            $user_id = get_current_user_id();
             $target_dir = $upload_dir['basedir'] . '/salonbookingsystem/user/' . $user_id . '/';
-            $file = $target_dir . sanitize_file_name($file_name);
+            
+            // Use realpath to prevent path traversal attacks
+            $file = realpath($target_dir . $file_name);
+            $target_dir_real = realpath($target_dir);
+            
+            // Verify file is within the allowed directory (prevent path traversal)
+            if ($file === false || $target_dir_real === false || strpos($file, $target_dir_real) !== 0) {
+                $ret = array(
+                    'success' => 0,
+                    'error' => __('Invalid file path.', 'salon-booking-system'),
+                );
+                return $ret;
+            }
 
-            if (file_exists($file) && is_user_logged_in()) {
+            if (file_exists($file) && is_user_logged_in() && is_file($file)) {
                 unlink($file);
             }
 

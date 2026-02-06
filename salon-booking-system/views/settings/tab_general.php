@@ -12,6 +12,7 @@ sum(
     array('#sln-automatic_follow-up', __('Automatic follow-up', 'salon-booking-system')),
     array('#sln-automatic_feedback_reminder', __('Automatic feedback reminder', 'salon-booking-system')),
     array('#sln-api_services', __('API services', 'salon-booking-system')),
+    array('#sln-bot_protection', __('Bot Protection', 'salon-booking-system')),
     array('#sln-administration_rules', __('Administration rules', 'salon-booking-system')),
     array('#sln-salon_booking_system_required_pages', __('Salon Booking System required pages', 'salon-booking-system'))
 );
@@ -73,26 +74,40 @@ sum(
             </div>
             <div class="col-xs-12 col-sm-4 form-group sln-input--simple sln-logo-box">
                 <label for="gen_logo"><?php esc_html_e('Upload your logo', 'salon-booking-system') ?></label>
-                <?php if ($this->getOpt('gen_logo')): ?>
-                    <div id="logo" class="preview-logo">
-                        <div class="preview-logo-img">
-                            <img src="<?php echo wp_get_attachment_image_url($this->getOpt('gen_logo'), 'sln_gen_logo'); ?>">
-                        </div>
-                        <button type="button" class="sln-btn sln-btn--main--tonal sln-btn--medium sln-btn--icon sln-icon--trash" data-action="delete-logo" data-target-remove="logo"
-                            data-target-reset="salon_settings_gen_logo" data-target-show="select_logo"><?php esc_html_e('Remove this image', 'salon-booking-system'); ?></button>
+                
+                <!-- Preview (always present, hidden if no logo) -->
+                <div id="logo_preview" class="sln-logo-preview <?php echo !$this->getOpt('gen_logo') ? 'hide' : '' ?>">
+                    <div class="sln-logo-preview__image">
+                        <img src="<?php echo $this->getOpt('gen_logo') ? wp_get_attachment_image_url($this->getOpt('gen_logo'), 'sln_gen_logo') : ''; ?>" alt="Logo">
                     </div>
-                <?php endif ?>
-
-                <div id="select_logo" class="select-logo <?php echo $this->getOpt('gen_logo') ? 'hide' : '' ?>" data-action="select-logo" data-target="gen_logo">
-                    <span class="dashicons dashicons-upload"></span>
+                    <button type="button" class="sln-btn sln-btn--main--tonal sln-btn--medium sln-btn--icon sln-icon--trash" id="remove_logo">
+                        <?php esc_html_e('Remove', 'salon-booking-system'); ?>
+                    </button>
                 </div>
 
-                <div class="hide">
-                    <input type="file" name="gen_logo" id="gen_logo" data-action="select-file-logo" accept="image/png">
-                    <input type="hidden" name="salon_settings[gen_logo]" id="salon_settings_gen_logo" value="<?php echo $this->getOpt('gen_logo'); ?>">
+                <!-- Dropzone -->
+                <div id="logo_dropzone" class="sln-logo-dropzone <?php echo $this->getOpt('gen_logo') ? 'hide' : '' ?>">
+                    <input type="file" name="gen_logo" id="gen_logo_input" accept="image/png,image/jpeg,image/jpg" style="display: none;">
+                    <div class="sln-logo-dropzone__content">
+                        <svg class="sln-logo-dropzone__icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <p class="sln-logo-dropzone__text">
+                            <strong><?php esc_html_e('Drop your logo here', 'salon-booking-system'); ?></strong><br>
+                            <span><?php esc_html_e('or click to browse', 'salon-booking-system'); ?></span>
+                        </p>
+                        <p class="sln-logo-dropzone__hint"><?php esc_html_e('PNG, JPG (max. 2MB)', 'salon-booking-system'); ?></p>
+                    </div>
+                    <div class="sln-logo-dropzone__progress" style="display: none;">
+                        <div class="sln-logo-dropzone__progress-bar"></div>
+                    </div>
                 </div>
 
-                <p class="help-block"><?php esc_html_e('Use a transparent png file', 'salon-booking-system') ?></p>
+                <input type="hidden" name="salon_settings[gen_logo]" id="salon_settings_gen_logo" value="<?php echo $this->getOpt('gen_logo'); ?>">
+                
+                <p class="help-block"><?php esc_html_e('Recommended: PNG with transparent background, 240x135px', 'salon-booking-system') ?></p>
             </div>
         </div>
     </div>
@@ -215,6 +230,16 @@ sum(
                     <div class="sln-box-maininfo">
                         <p class="sln-box-info">
                             <?php esc_html_e('When checked the option "Choose an assistant for me" will be removed on front-end Assistants selection step.', 'salon-booking-system') ?>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xs-12 col-sm-6 col-md-4 form-group">
+                <div class="sln-checkbox">
+                    <?php $this->row_input_checkbox('auto_attendant_check_enabled', __('Smart availability for "Choose assistant for me"', 'salon-booking-system')); ?>
+                    <div class="sln-box-maininfo">
+                        <p class="sln-box-info">
+                            <?php esc_html_e('When enabled, time slots will only show if at least one assistant is actually available for the service. Works with "Change order" setting (Service → Assistant → Date/Time). Recommended: Keep enabled for accurate availability.', 'salon-booking-system') ?>
                         </p>
                     </div>
                 </div>
@@ -460,6 +485,49 @@ sum(
                         </div>
                     </div>
                 </div>
+                
+                <!-- MANUAL TRIGGER BUTTON -->
+                <div class="row" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
+                    <div class="col-xs-12">
+                        <h3 class="sln-box-title--sec">
+                            <?php esc_html_e('Manual trigger', 'salon-booking-system') ?>
+                        </h3>
+                        <p class="description" style="margin-bottom: 15px;">
+                            <?php esc_html_e('Send feedback requests to all eligible bookings that haven\'t received it yet (from the last 30 days).', 'salon-booking-system') ?>
+                        </p>
+                        <div id="sln-feedback-preview" style="padding: 10px; background: #f0f0f1; border-left: 4px solid #2271b1; margin-bottom: 15px; display: none;">
+                            <strong><?php esc_html_e('Eligible bookings:', 'salon-booking-system') ?></strong> 
+                            <span id="sln-feedback-count">-</span>
+                        </div>
+                        <div style="margin: 20px 0;">
+                            <button 
+                                type="button" 
+                                id="sln-send-bulk-feedback" 
+                                class="button button-primary"
+                                data-nonce="<?php echo esc_attr(wp_create_nonce('sln_send_bulk_feedback')); ?>"
+                                style="min-width: 200px; margin-right: 15px; height: 40px; padding: 8px 16px; line-height: 1.5;"
+                            >
+                                <span class="sln-btn__text">
+                                    <?php esc_html_e('Send feedback requests now', 'salon-booking-system') ?>
+                                </span>
+                                <span class="sln-btn__loader" style="display:none;">
+                                    <span class="dashicons dashicons-update" style="animation: rotation 1s infinite linear;"></span>
+                                    <?php esc_html_e('Sending...', 'salon-booking-system') ?>
+                                </span>
+                            </button>
+                            <button 
+                                type="button" 
+                                id="sln-preview-bulk-feedback" 
+                                class="button button-secondary"
+                                data-nonce="<?php echo esc_attr(wp_create_nonce('sln_send_bulk_feedback')); ?>"
+                                style="height: 40px; padding: 8px 16px; line-height: 1.5;"
+                            >
+                                <?php esc_html_e('Check eligible bookings', 'salon-booking-system') ?>
+                            </button>
+                        </div>
+                        <div id="sln-bulk-feedback-result" style="margin-top: 15px;"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -513,6 +581,12 @@ sum(
                 </div>
             </div>
         </div>
+    </div>
+</div>
+<div id="sln-bot_protection" class="sln-box sln-box--main sln-box--haspanel">
+    <h2 class="sln-box-title sln-box__paneltitle"><?php esc_html_e('Bot Protection', 'salon-booking-system') ?></h2>
+    <div class="collapse sln-box__panelcollapse">
+        <?php echo SLN_Plugin::getInstance()->loadView('settings/_tab_general_bot_protection', array('helper' => $this)); ?>
     </div>
 </div>
 <?php do_action('sln.template.settings.general.before_date_time', $this) ?>

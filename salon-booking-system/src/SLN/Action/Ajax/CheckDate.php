@@ -22,19 +22,36 @@ class SLN_Action_Ajax_CheckDate extends SLN_Action_Ajax_Abstract
     {
         if (!isset($this->date)) {
             if(isset($_POST['sln'])){
-                $this->date = sanitize_text_field(wp_unslash($_POST['sln']['date']));
-                $this->time = sanitize_text_field(wp_unslash($_POST['sln']['time']));
+                $date = isset($_POST['sln']['date']) ? sanitize_text_field(wp_unslash($_POST['sln']['date'])) : '';
+                $time = isset($_POST['sln']['time']) ? sanitize_text_field(wp_unslash($_POST['sln']['time'])) : '';
+                
+                // Only set if not empty to prevent errors
+                if (!empty($date)) {
+                    $this->date = $date;
+                }
+                if (!empty($time)) {
+                    $this->time = $time;
+                }
+                
                 $settings = SLN_Plugin::getInstance()->getSettings();
                 $settings->set( 'debug', $_POST['sln']['debug'] ?? false );
                 $settings->save();
             }
             if(isset($_POST['_sln_booking_date'])) {
-                $this->date = sanitize_text_field(wp_unslash($_POST['_sln_booking_date']));
-                $this->time = sanitize_text_field(wp_unslash($_POST['_sln_booking_time']));
+                $date = sanitize_text_field(wp_unslash($_POST['_sln_booking_date']));
+                $time = isset($_POST['_sln_booking_time']) ? sanitize_text_field(wp_unslash($_POST['_sln_booking_time'])) : '';
+                
+                // Only set if not empty to prevent errors
+                if (!empty($date)) {
+                    $this->date = $date;
+                }
+                if (!empty($time)) {
+                    $this->time = $time;
+                }
             }
             $timezone   = $this->plugin->getSettings()->isDisplaySlotsCustomerTimezone() ? sanitize_text_field(wp_unslash($_POST['sln']['customer_timezone'])) : '';
-            if (!empty($timezone)) {
-                $dateTime = (new SLN_DateTime(SLN_Func::filter($this->date, 'date') . ' ' . SLN_Func::filter($this->time, 'time'.':00'), new DateTimeZone($timezone)))->setTimezone(SLN_DateTime::getWpTimezone());
+            if (!empty($timezone) && isset($this->date) && isset($this->time)) {
+                $dateTime = (new SLN_DateTime(SLN_Func::filter($this->date, 'date') . ' ' . SLN_Func::filter($this->time, 'time'.':00'), SLN_Func::createDateTimeZone($timezone)))->setTimezone(SLN_DateTime::getWpTimezone());
                 $this->date = $this->plugin->format()->date($dateTime);
                 $this->time = $this->plugin->format()->time($dateTime);
             }
@@ -46,6 +63,14 @@ class SLN_Action_Ajax_CheckDate extends SLN_Action_Ajax_Abstract
         } else {
             $ret = array('success' => 1);
         }
+        
+        // Check if current user is administrator or salon staff
+        $currentUser = wp_get_current_user();
+        $isAdminOrStaff = current_user_can('administrator') || 
+                          in_array(SLN_Plugin::USER_ROLE_STAFF, $currentUser->roles);
+        
+        // Send flag to frontend indicating user can override validation
+        $ret['can_override_validation'] = $isAdminOrStaff;
 
         if (isset($timezone)) {
             $ret['intervals'] = $this->getIntervalsArray($timezone);
@@ -153,8 +178,22 @@ class SLN_Action_Ajax_CheckDate extends SLN_Action_Ajax_Abstract
 
     protected function getDateTime()
     {
-        $date = $this->date;
-        $time = $this->time;
+        $date = isset($this->date) ? $this->date : null;
+        $time = isset($this->time) ? $this->time : null;
+        
+        // Validate date is not empty
+        if (empty($date)) {
+            throw new Exception(
+                'Missing date in request. Date: "' . ($date ?? 'null') . '". Please select a date before proceeding.'
+            );
+        }
+        
+        // If time is empty, use a default placeholder time
+        // This allows checking date availability without requiring a specific time
+        if (empty($time)) {
+            $time = '00:00';
+        }
+        
         $ret = new SLN_DateTime(
             SLN_Func::filter($date, 'date') . ' ' . SLN_Func::filter($time, 'time')
         );

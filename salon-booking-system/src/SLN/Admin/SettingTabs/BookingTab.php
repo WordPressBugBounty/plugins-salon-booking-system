@@ -7,8 +7,10 @@ class SLN_Admin_SettingTabs_BookingTab extends SLN_Admin_SettingTabs_AbstractTab
 		'availabilities',
 		'holidays', // algolplus
 		'availability_mode',
+		'nested_bookings_enabled', // nested bookings feature
 		'cancellation_enabled', // algolplus
 		'hours_before_cancellation', // algolplus
+		'auto_trash_cancelled', // auto-trash cancelled bookings
 		'disabled',
 		'disabled_message',
 		'confirmation',
@@ -26,6 +28,11 @@ class SLN_Admin_SettingTabs_BookingTab extends SLN_Admin_SettingTabs_AbstractTab
 	protected function validate() {
 		if (!isset($this->submitted['disabled'])) {
 			$this->submitted['disabled'] = 0;
+		}
+
+		// Nested bookings is a PRO-only feature
+		if (!isset($this->submitted['nested_bookings_enabled']) || !defined('SLN_VERSION_PAY')) {
+			$this->submitted['nested_bookings_enabled'] = 0;
 		}
 
 		if (isset($this->submitted['availabilities'])) {

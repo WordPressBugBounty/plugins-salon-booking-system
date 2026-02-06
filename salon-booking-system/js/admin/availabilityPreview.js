@@ -132,7 +132,9 @@ class SalonAvailabilityPreview {
         const fromTime = $fromInput.val();
         const toTime = $toInput.val();
 
-        if (fromTime && toTime && !$fromInput.is(':disabled') && !$toInput.is(':disabled')) {
+        // Only include shifts that are enabled (not disabled) and have valid times
+        // Second shift can be disabled via the disable_second_shift checkbox
+        if (fromTime && toTime && fromTime !== '00:00' && !$fromInput.is(':disabled') && !$toInput.is(':disabled')) {
           ruleData.shifts.push({from: fromTime, to: toTime});
         }
       });
@@ -150,13 +152,22 @@ class SalonAvailabilityPreview {
     const range = this.calculateTimeRange(rules);
     const timeSlots = [];
 
-    const stepHours = sessionDuration / 60;
-    for (let hour = range.start; hour < range.end; hour += stepHours) {
-      const wholeHour = Math.floor(hour);
-      const minutes = Math.floor((hour - wholeHour) * 60);
-      if (wholeHour < range.end) {
-        timeSlots.push(this.formatTime(wholeHour, minutes));
+    // Generate time slots starting from 00:00 (midnight) to match backend behavior
+    // Backend uses SLN_Func::getMinutesIntervals() which always starts from 00:00
+    // This ensures slots align correctly with opening hours like 9:20, 9:40, etc.
+    let currentMinutes = 0;
+    const maxMinutes = Math.ceil(range.end) * 60;
+    const rangeStartMinutes = Math.floor(range.start * 60);
+    const rangeEndMinutes = Math.ceil(range.end * 60);
+
+    while (currentMinutes < maxMinutes) {
+      // Only include slots within the visible range
+      if (currentMinutes >= rangeStartMinutes && currentMinutes < rangeEndMinutes) {
+        const hours = Math.floor(currentMinutes / 60);
+        const minutes = currentMinutes % 60;
+        timeSlots.push(this.formatTime(hours, minutes));
       }
+      currentMinutes += sessionDuration;
     }
 
     const daysMapping = this.settings.days_mapping || {};
@@ -183,6 +194,8 @@ class SalonAvailabilityPreview {
               const slotTime = this.timeToMinutes(timeSlot);
               const slotEnd = slotTime + sessionDuration;
 
+              // A slot is available if the entire session (slot + duration) fits within the shift
+              // This matches the backend logic in SLN_Helper_AvailabilityItem::isValidTimeInterval
               if (slotTime >= shiftStart && slotEnd <= shiftEnd) {
                 availability[dayNum][timeSlot] = true;
               }
@@ -256,7 +269,11 @@ class SalonAvailabilityPreview {
       }
     }
 
-    const startIndex = weekStart - 1;
+    // weekStart comes as 0-6 (0=Sunday, 1=Monday, etc.) from SLN_Enum_DaysOfWeek
+    // Internal system uses 1-7 (1=Sunday, 2=Monday, etc.) from SLN_Func::getDays()
+    // allDays array is 0-indexed: [Sunday, Monday, Tuesday, ...]
+    // So weekStart=0 (Sunday) should use startIndex=0, weekStart=1 (Monday) should use startIndex=1, etc.
+    const startIndex = weekStart;
 
     return {
       orderedDays: [...allDays.slice(startIndex), ...allDays.slice(0, startIndex)],

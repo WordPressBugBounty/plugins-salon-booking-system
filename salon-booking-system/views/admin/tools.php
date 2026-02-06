@@ -8,6 +8,7 @@
 	<?php if (!empty($versionToRollback)): ?>
             <?php echo $plugin->loadView('admin/_tools_rollback', compact('versionToRollback', 'currentVersion', 'isFree')) ?>
 	<?php endif ?>
+	
 	<?php wp_nonce_field('_sln_action_import'); ?>
 	<form>
 		<div class="sln-tab" id="sln-tab-general">

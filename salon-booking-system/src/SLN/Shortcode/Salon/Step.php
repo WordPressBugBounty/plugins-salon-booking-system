@@ -43,6 +43,12 @@ abstract class SLN_Shortcode_Salon_Step
 
 	SLN_Action_RescheduleBooking::clearErrors();
 
+        // Check if this is the first step and validate session/cookie availability
+        $sessionWarning = '';
+        if ($this->isFirstStep()) {
+            $sessionWarning = $this->checkSessionAndCookies();
+        }
+
         return array(
             'formAction'        => add_query_arg(array('sln_step_page' => $this->shortcode->getCurrentStep()), SLN_Func::currPageUrl()),
             'backUrl'           => apply_filters('sln_shortcode_step_view_data_back_url', add_query_arg(array('sln_step_page' => $this->shortcode->getPrevStep())), $this->step),
@@ -51,6 +57,7 @@ abstract class SLN_Shortcode_Salon_Step
             'errors'            => $this->errors,
             'additional_errors' => array_merge($this->additional_errors, $rescheduledErrors),
             'settings'          => $this->plugin->getSettings(),
+            'sessionWarning'    => $sessionWarning,
         );
     }
 
@@ -111,7 +118,7 @@ abstract class SLN_Shortcode_Salon_Step
         $booking_attendants = $bb->getAttendantsIds();
         foreach ($bb->getServices() as $service) {
             $sId = $service->getId();
-            if ($service->isAttendantsEnabled() && (!isset($booking_attendants[$sId]) || empty($booking_attendants[$sId]))) {
+            if ($service->isAttendantsEnabled() && (!isset($booking_attendants[$sId]) || empty($booking_attendants[$sId]) || $booking_attendants[$sId] === false)) {
                 $attendantsNeeds = true;
                 break;
             }
@@ -132,6 +139,48 @@ abstract class SLN_Shortcode_Salon_Step
             return true;
         }
 
+        // SMART AVAILABILITY: When feature enabled, use direct assignment
+        // This bypasses random attendant pre-selection and assigns based on actual availability
+        if ($this->getPlugin()->getSettings()->isAutoAttendantCheckEnabled()) {
+            try {
+                $ah = $this->getPlugin()->getAvailabilityHelper();
+                $ah->setDate($bb->getDateTime());
+                $bookingServices = $bb->getBookingServices();
+                
+                // This method checks ALL available attendants and assigns appropriately
+                $ah->addAttendantForServices($bookingServices);
+                
+                // Extract assigned attendant IDs and save to booking builder
+                $assignedIds = array();
+                foreach ($bookingServices->getItems() as $bookingService) {
+                    $service = $bookingService->getService();
+                    if ($service->isAttendantsEnabled()) {
+                        $attendant = $bookingService->getAttendant();
+                        if ($attendant) {
+                            if (is_array($attendant)) {
+                                $assignedIds[$service->getId()] = array_map(function($att) {
+                                    return $att->getId();
+                                }, $attendant);
+                            } else {
+                                $assignedIds[$service->getId()] = $attendant->getId();
+                            }
+                        }
+                    } else {
+                        $assignedIds[$service->getId()] = 0;
+                    }
+                }
+                
+                $bb->setServicesAndAttendants($assignedIds);
+                $bb->save();
+                
+                return true;
+            } catch (Exception $e) {
+                $this->addError($e->getMessage());
+                return false;
+            }
+        }
+
+        // LEGACY BEHAVIOR: Use old random assignment flow
         if ($this->getPlugin()->getSettings()->isMultipleAttendantsEnabled()) {
 
             $ids = $bb->getAttendantsIds();
@@ -208,33 +257,81 @@ abstract class SLN_Shortcode_Salon_Step
         return false;
     }
 
-    public function getMixpanelTrackScript()
-    {
-        $event       = 'Front-end booking form';
-        $currentStep = $this->getStep();
-        $version     = defined('SLN_VERSION_PAY') && SLN_VERSION_PAY ? 'pro' : 'free';
-
-        if ($currentStep === 'summary') {
-            $currentStep = 'payment';
-        }
-
-        $style  = $this->getShortcode()->getStyleShortcode();
-        $data   = array(
-            'step'      => $currentStep,
-            'version'   => $version,
-            'layout'    => $style,
-            'enviroment' => defined('SLN_VERSION_DEV') && SLN_VERSION_DEV ? 'dev' : 'live',
-        );
-        
-        $script = SLN_Helper_Mixpanel_MixpanelWeb::trackScript($event, $data);
-
-        return sprintf(
-            "<script>%s</script>",
-            $script
-        );
-    }
-
     public function isNeedTotal(){
         return false;
+    }
+
+    /**
+     * Check if this is the first step in the booking flow
+     * 
+     * @return bool
+     */
+    protected function isFirstStep()
+    {
+        $steps = $this->shortcode->getSteps();
+        if (empty($steps)) {
+            return false;
+        }
+        $firstStep = reset($steps);
+        return $this->getStep() === $firstStep;
+    }
+
+    /**
+     * Check if sessions and cookies are working properly
+     * Returns warning message if there are issues, empty string otherwise
+     * 
+     * @return string Warning message or empty string
+     */
+    protected function checkSessionAndCookies()
+    {
+        $warnings = array();
+
+        // Check if PHP sessions are working
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            $warnings[] = __('PHP sessions are not active. The booking process requires sessions to work properly.', 'salon-booking-system');
+        }
+
+        // Test if session data can be stored and retrieved
+        $testKey = '_sln_session_test_' . time();
+        $testValue = 'test_' . rand(1000, 9999);
+        $_SESSION[$testKey] = $testValue;
+        
+        if (!isset($_SESSION[$testKey]) || $_SESSION[$testKey] !== $testValue) {
+            $warnings[] = __('Session data cannot be stored. Please enable cookies and sessions in your browser.', 'salon-booking-system');
+        } else {
+            // Clean up test session
+            unset($_SESSION[$testKey]);
+        }
+
+        // Check if booking builder session data exists (for subsequent visits)
+        // If user has been through steps before, session should have data
+        $bb = $this->getPlugin()->getBookingBuilder();
+        $sessionData = $bb->get('services');
+        
+        // Only warn about cookies on the very first load (no session data yet)
+        // We'll use JavaScript to detect cookie support
+        if (empty($sessionData)) {
+            // Add JavaScript-based cookie check (will be handled by the view)
+            $warnings[] = 'CHECK_COOKIES_JS';
+        }
+
+        if (!empty($warnings)) {
+            // Build user-friendly message with admin contact info
+            $admin_email = get_option('admin_email');
+            $message = implode(' ', array_filter($warnings, function($w) { return $w !== 'CHECK_COOKIES_JS'; }));
+            
+            if (!empty($message)) {
+                // Add helpful instructions and admin contact
+                $message .= ' ' . sprintf(
+                    // translators: %s is the website administrator email address
+                    __('If the problem persists after enabling cookies and refreshing this page, please report this issue to the website administrator at %s', 'salon-booking-system'),
+                    '<a href="mailto:' . esc_attr($admin_email) . '">' . esc_html($admin_email) . '</a>'
+                );
+            }
+            
+            return $message;
+        }
+
+        return '';
     }
 }

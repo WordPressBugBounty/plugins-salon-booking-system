@@ -79,9 +79,15 @@ class SLN_Enum_CheckoutFields
     }
 
     static function update_wpml($settings){
+        // Check if SimpleXML extension is available
+        if (!function_exists('simplexml_load_file')) {
+            error_log('SimpleXML extension not available - WPML config update skipped');
+            return;
+        }
+        
         $wpml_file = simplexml_load_file(SLN_PLUGIN_DIR.'/wpml-config.xml');
         if(!$wpml_file){
-            error_log('Can open file wpml-config.xml');
+            error_log('Cannot open file wpml-config.xml');
             return;
         }
         if(empty($settings)){

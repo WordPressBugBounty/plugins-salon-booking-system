@@ -1,6 +1,11 @@
 <template>
   <div class="reservations-calendar">
-    <h5 class="title">{{ this.getLabel("reservationsCalendarTitle") }}</h5>
+    <!-- Toast container for error notifications -->
+    <b-toaster name="b-toaster-top-center" class="toast-container-custom"></b-toaster>
+    
+    <div class="calendar-header">
+      <h5 class="title">{{ this.getLabel("reservationsCalendarTitle") }}</h5>
+    </div>
 
     <SearchInput
       v-model="search"
@@ -70,12 +75,19 @@
                         :key="booking.id + (booking._serviceTime?.start || '')">
                 <BookingCard
                   v-if="booking._assistantId"
+                  ref="bookingCard"
                   :booking="booking"
                   :style="getBookingStyle(booking)"
                   :class="{ 'booking-card--default-duration': booking._isDefaultDuration }"
+                  :is-saving="savingBookingIds.has(booking.id)"
+                  :max-duration-minutes="getMaxDurationForBooking(booking)"
+                  :px-per-minute="pxPerMinute"
                   @deleteItem="deleteItem"
                   @showDetails="showDetails"
                   @viewCustomerProfile="viewCustomerProfile"
+                  @resize-start="handleResizeStart"
+                  @resize-update="handleResizeUpdate"
+                  @resize-end="handleResizeEnd"
                 />
               </template>
             </div>
@@ -118,11 +130,18 @@
 
               <template v-for="booking in bookingsList" :key="booking.id">
                 <BookingCard
+                  ref="bookingCard"
                   :booking="booking"
                   :style="getBookingStyle(booking)"
+                  :is-saving="savingBookingIds.has(booking.id)"
+                  :max-duration-minutes="getMaxDurationForBooking(booking)"
+                  :px-per-minute="pxPerMinute"
                   @deleteItem="deleteItem"
                   @showDetails="showDetails"
                   @viewCustomerProfile="viewCustomerProfile"
+                  @resize-start="handleResizeStart"
+                  @resize-update="handleResizeUpdate"
+                  @resize-end="handleResizeEnd"
                 />
               </template>
             </div>
@@ -152,6 +171,9 @@ import BookingCalendar from './BookingCalendar.vue';
 import BookingCard from "./BookingCard.vue";
 import AttendantTimeSlots from './AttendantTimeSlots.vue';
 import mixins from '@/mixin';
+
+// Debug flag - set to false in production
+const DEBUG = process.env.NODE_ENV === 'development';
 
 export default {
   name: "ReservationsCalendar",
@@ -213,7 +235,11 @@ export default {
       scrollLeft: 0,
 
       // timeouts and intervals
-      intervalId: null,
+      updateIntervalId: null,
+      timelineIntervalId: null,
+      
+      // axios abort controllers (for request cancellation in Axios 1.x)
+      abortControllers: {},
 
       // attendants
       isAttendantView: localStorage.getItem('isAttendantView') === 'true' || false,
@@ -227,9 +253,23 @@ export default {
       slotProcessingStates: new Map(),
       slotProcessing: {},
       selectedTimeSlots: [],
+      
+      // resize handling
+      resizingBookingId: null,
+      tempDurations: {},
+      originalBookingStates: {}, // Store original state for revert
+      savingBookingIds: new Set(), // Track which bookings are being saved
+
+      END_OF_DAY: '24:00',
+      MINUTES_IN_DAY: 1440
     };
   },
   computed: {
+    pxPerMinute() {
+      // Calculate pixels per minute based on slot height and slot step
+      // This ensures consistency between parent and child calculations
+      return this.slotHeight / this.calcSlotStep();
+    },
     dragHandlers() {
       return {
         mousedown: this.onMouseDown,
@@ -328,30 +368,10 @@ export default {
     },
     sortedAttendants() {
       if (!Array.isArray(this.attendants) || this.attendants.length === 0) return [];
-      const bookingsMap = new Map();
-      this.bookingsList.forEach((booking) => {
-        if (booking.services) {
-          booking.services.forEach((service) => {
-            if (service.assistant_id) {
-              if (!bookingsMap.has(service.assistant_id)) {
-                bookingsMap.set(service.assistant_id, []);
-              }
-              bookingsMap.get(service.assistant_id).push(booking);
-            }
-          });
-        }
-      });
-      return [...this.attendants].sort((a, b) => {
-        const aHas = bookingsMap.has(a.id);
-        const bHas = bookingsMap.has(b.id);
-
-        if (aHas && !bHas) return -1;
-        if (!aHas && bHas) return 1;
-        if (aHas && bHas) {
-          return bookingsMap.get(b.id).length - bookingsMap.get(a.id).length;
-        }
-        return a.name.localeCompare(b.name);
-      });
+      
+      // Simply return attendants in the order received from API
+      // The API already returns them sorted by plugin settings (_sln_attendant_order)
+      return this.attendants;
     },
     shouldShowAttendants() {
       return this.isAttendantView && this.attendants && this.attendants.length > 0;
@@ -491,8 +511,8 @@ export default {
       }
     }, 0);
 
-    setInterval(() => this.update(), 60000);
-    this.intervalId = setInterval(() => {
+    this.updateIntervalId = setInterval(() => this.update(), 60000);
+    this.timelineIntervalId = setInterval(() => {
       this.updateCurrentTimeLinePosition();
     }, 60000);
 
@@ -513,7 +533,18 @@ export default {
     }
   },
   beforeUnmount() {
-    if (this.intervalId) clearInterval(this.intervalId);
+    // Clear both intervals to prevent memory leaks
+    if (this.updateIntervalId) clearInterval(this.updateIntervalId);
+    if (this.timelineIntervalId) clearInterval(this.timelineIntervalId);
+    
+    // Cancel all pending API requests (Axios 1.x uses AbortController)
+    Object.values(this.abortControllers).forEach(controller => {
+      if (controller && controller.abort) {
+        controller.abort();
+      }
+    });
+    this.abortControllers = {};
+    
     const container = this.$refs.dragScrollContainer;
     if (container) {
       container.removeEventListener("touchmove", this.onTouchMove);
@@ -589,14 +620,37 @@ export default {
       this.loadingQueue = [];
     },
     async loadTimeslots() {
+      const requestKey = 'timeslots';
+      
+      // Cancel previous timeslots request (Axios 1.x uses AbortController)
+      if (this.abortControllers[requestKey]) {
+        this.abortControllers[requestKey].abort();
+      }
+      
+      // Create new abort controller
+      const controller = new AbortController();
+      this.abortControllers[requestKey] = controller;
+      
       this.isLoadingTimeslots = true;
       try {
         const response = await this.axios.get('calendar/intervals', {
           params: this.withShop({}),
+          signal: controller.signal,
         });
-        this.timeslots = response.data.items || [];
+        this.timeslots = (response.data.items || []).map(time =>
+          time === '00:00' ? this.END_OF_DAY : time
+        );
         this.updateCurrentTimeLinePosition();
+        
+        // Clear abort controller after success
+        delete this.abortControllers[requestKey];
         return response;
+      } catch (error) {
+        if (error.name === 'AbortError' || error.name === 'CanceledError') {
+          console.log('Timeslots request cancelled');
+          return;
+        }
+        throw error;
       } finally {
         this.isLoadingTimeslots = false;
       }
@@ -624,6 +678,7 @@ export default {
             rules.map(rule => ({
               ...rule,
               assistant_id: Number(assistantId) || null,
+              is_manual: rule.is_manual === true,
             }))
           );
 
@@ -659,19 +714,33 @@ export default {
       });
     },
     async loadBookingsList() {
-      return this.axios.get('bookings', {
-        params: {
-          start_date: this.moment(this.date).format('YYYY-MM-DD'),
-          end_date: this.moment(this.date).format('YYYY-MM-DD'),
-          per_page: -1,
-          statuses: [
-            'sln-b-pendingpayment', 'sln-b-pending', 'sln-b-paid',
-            'sln-b-paylater',
-            'sln-b-confirmed',
-          ],
-          shop: this.shop?.id || null,
-        },
-      }).then(response => {
+      const requestKey = 'bookings';
+      
+      // Cancel previous bookings request (Axios 1.x uses AbortController)
+      if (this.abortControllers[requestKey]) {
+        this.abortControllers[requestKey].abort();
+      }
+      
+      // Create new abort controller
+      const controller = new AbortController();
+      this.abortControllers[requestKey] = controller;
+      
+      try {
+        const response = await this.axios.get('bookings', {
+          params: {
+            start_date: this.moment(this.date).format('YYYY-MM-DD'),
+            end_date: this.moment(this.date).format('YYYY-MM-DD'),
+            per_page: -1,
+            statuses: [
+              'sln-b-pendingpayment', 'sln-b-pending', 'sln-b-paid',
+              'sln-b-paylater',
+              'sln-b-confirmed',
+            ],
+            shop: this.shop?.id || null,
+          },
+          signal: controller.signal,
+        });
+        
         const newBookings = response.data.items || [];
         const newBookingsMap = new Map(newBookings.map(b => [b.id, b]));
         this.bookingsList = [];
@@ -686,11 +755,18 @@ export default {
             this.bookingsList.push(newBooking);
           }
         });
+        
+        // Clear abort controller after success
+        delete this.abortControllers[requestKey];
         return response;
-      }).catch(error => {
+      } catch (error) {
+        if (error.name === 'AbortError' || error.name === 'CanceledError') {
+          console.log('Bookings request cancelled');
+          return;
+        }
         console.error('Error loading bookings list:', error);
         throw error;
-      });
+      }
     },
     updateSlotProcessing({slot, status}) {
       this.slotProcessing = {
@@ -720,23 +796,73 @@ export default {
       }
     },
     async loadAvailabilityIntervals() {
+      const requestKey = 'availabilityIntervals';
+      
+      // Cancel previous availability intervals request (Axios 1.x uses AbortController)
+      if (this.abortControllers[requestKey]) {
+        this.abortControllers[requestKey].abort();
+      }
+      
+      // Create new abort controller
+      const controller = new AbortController();
+      this.abortControllers[requestKey] = controller;
+      
       const timeParam = this.timeslots.length > 0 ? this.timeslots[0] : '09:00';
+      const requestedDate = this.moment(this.date).format('YYYY-MM-DD');
+      
       try {
         const response = await this.axios.post('availability/intervals', this.withShop({
-          date: this.moment(this.date).format('YYYY-MM-DD'),
+          date: requestedDate,
           time: timeParam,
-        }));
-        this.availabilityIntervals = response.data.intervals;
+        }), {
+          signal: controller.signal,
+        });
+        
+        const intervals = response.data.intervals;
+        const returnedDate = intervals?.universalSuggestedDate;
+        
+        // Check if backend returned data for a different date
+        if (returnedDate && returnedDate !== requestedDate) {
+          console.warn(`Date mismatch: requested ${requestedDate}, got ${returnedDate}`);
+          
+          // If backend suggests a different date due to validation errors,
+          // clear intervals to prevent showing incorrect availability
+          // This will cause all slots to appear unavailable, which is correct
+          // since the requested date/time combination is invalid
+          this.availabilityIntervals = {
+            times: {},
+            workTimes: {},
+            dates: intervals.dates || [],
+            fullDays: intervals.fullDays || []
+          };
+          
+          // Optionally, you could navigate to the suggested date:
+          // this.date = new Date(returnedDate);
+          // this.loadTimeslots();
+        } else {
+          this.availabilityIntervals = intervals;
+        }
+        
+        // Clear abort controller after success
+        delete this.abortControllers[requestKey];
         return response;
-      } catch (e) {
-        console.error('Error loading availability intervals:', e);
-        throw e;
+      } catch (error) {
+        if (error.name === 'AbortError' || error.name === 'CanceledError') {
+          console.log('Availability intervals request cancelled');
+          return;
+        }
+        console.error('Error loading availability intervals:', error);
+        throw error;
       }
     },
     async loadAttendants() {
       try {
         const response = await this.axios.get('assistants', {
-          params: this.withShop({per_page: -1}),
+          params: this.withShop({
+            per_page: -1,
+            orderby: 'order',
+            order: 'asc'
+          }),
         });
         this.attendants = response.data.items;
         this.attendantsLoaded = true;
@@ -1180,6 +1306,7 @@ export default {
     },
     normalizeTime(time) {
       if (!time) return time;
+      if (time === this.END_OF_DAY || time === '24:00') return this.END_OF_DAY;
 
       if (this.$root.settings?.time_format?.js_format === 'h:iip') {
         const momentTime = this.moment(time, 'h:mm A');
@@ -1191,6 +1318,7 @@ export default {
     },
     timeToMinutes(time) {
       if (!time) return 0;
+      if (time === this.END_OF_DAY || time === '24:00') return this.MINUTES_IN_DAY;
       const [hours, minutes] = time.split(':').map(Number);
       return hours * 60 + minutes;
     },
@@ -1218,6 +1346,222 @@ export default {
     },
     showDetails(booking) {
       this.$emit("showItem", booking);
+    },
+    handleResizeStart({ bookingId, originalDuration, originalHeight }) {
+      this.resizingBookingId = bookingId;
+      
+      // Store original state for potential revert
+      const booking = this.bookingsList.find(b => b.id === bookingId);
+      if (booking) {
+        this.originalBookingStates[bookingId] = {
+          duration: originalDuration,
+          height: originalHeight,
+          services: JSON.parse(JSON.stringify(booking.services)), // Deep copy
+        };
+      }
+      
+      if (DEBUG) {
+        console.log('📍 Resize started, original state saved:', this.originalBookingStates[bookingId]);
+      }
+    },
+    handleResizeUpdate({ bookingId, newDuration, heightPx }) {
+      if (DEBUG) {
+        console.log('📏 handleResizeUpdate RECEIVED:', { bookingId, newDuration, heightPx });
+      }
+      
+      const booking = this.bookingsList.find(b => b.id === bookingId);
+      if (!booking) {
+        console.warn('⚠️ Booking not found during resize update:', bookingId);
+        return;
+      }
+      
+      // Validate duration during drag (client-side validation)
+      const validation = this.validateResizeDuration(booking, newDuration);
+      
+      if (!validation.valid) {
+        // Don't update tempDurations if invalid, but allow visual drag
+        // The interaction library will handle constraints
+        if (DEBUG) {
+          console.warn('⚠️ Invalid duration during drag:', validation.error);
+        }
+        return;
+      }
+      
+      // Update temporary duration for visual preview
+      this.tempDurations[bookingId] = newDuration;
+      
+      if (DEBUG) {
+        console.log('📏 tempDurations updated:', this.tempDurations);
+      }
+    },
+    async handleResizeEnd({ bookingId, finalDuration }) {
+      if (DEBUG) {
+        console.log('🎯 handleResizeEnd CALLED:', { bookingId, finalDuration });
+      }
+      
+      const duration = finalDuration || this.tempDurations[bookingId];
+      
+      if (DEBUG) {
+        console.log('🎯 Using duration:', duration);
+      }
+      
+      if (!duration) {
+        console.error('❌ No duration found! Aborting save.');
+        this.revertBookingResize(bookingId);
+        return;
+      }
+      
+      const booking = this.bookingsList.find(b => b.id === bookingId);
+      if (!booking) {
+        console.error('❌ Booking not found! ID:', bookingId);
+        this.revertBookingResize(bookingId);
+        return;
+      }
+      
+      // STEP 1: Validate duration constraints
+      const validation = this.validateResizeDuration(booking, duration);
+      if (!validation.valid) {
+        this.showResizeError(validation.error);
+        this.revertBookingResize(bookingId);
+        this.resizingBookingId = null;
+        return;
+      }
+      
+      // STEP 2: Check for overlaps
+      const overlapCheck = this.checkBookingOverlap(booking, duration);
+      if (overlapCheck.hasOverlap) {
+        const conflictName = `${overlapCheck.conflictingBooking.customer_first_name} ${overlapCheck.conflictingBooking.customer_last_name}`;
+        this.showResizeError(`Time slot conflicts with another booking (${conflictName})`);
+        this.revertBookingResize(bookingId);
+        this.resizingBookingId = null;
+        return;
+      }
+      
+      // STEP 3: Set loading state and save
+      this.savingBookingIds.add(bookingId);
+      this.tempDurations[bookingId] = duration; // Keep visual state during save
+      
+      try {
+        const hours = Math.floor(duration / 60);
+        const mins = duration % 60;
+        const durationStr = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+        
+        const payload = {
+          date: booking.date,
+          time: booking.time,
+          services: booking.services.map(s => ({
+            service_id: s.service_id,
+            assistant_id: s.assistant_id || 0,
+            resource_id: s.resource_id || 0,
+            duration: durationStr
+          }))
+        };
+        
+        if (DEBUG) {
+          console.log('📤 SENDING PUT request:', payload);
+        }
+        
+        const response = await this.axios.put(`bookings/${bookingId}`, payload);
+        
+        console.log('📥 PUT response:', response.data);
+        console.log(`✅ Duration saved: ${durationStr} (${duration} min)`);
+        
+        // Update booking locally to maintain visual state
+        const updatedBooking = this.bookingsList.find(b => b.id === bookingId);
+        if (updatedBooking && updatedBooking.services && updatedBooking.services.length > 0) {
+          updatedBooking.services.forEach(service => {
+            service.duration = durationStr;
+          });
+        }
+        
+        // Load fresh data from server
+        await this.loadBookingsList();
+        
+        // Wait for Vue to update the DOM before cleaning up
+        await this.$nextTick();
+        
+        // Clear inline height style that was set during resize (let Vue handle styling)
+        const bookingCardRefs = this.$refs.bookingCard;
+        if (bookingCardRefs) {
+          const cards = Array.isArray(bookingCardRefs) ? bookingCardRefs : [bookingCardRefs];
+          for (const card of cards) {
+            if (card && (card.booking?.id === bookingId || card.$attrs?.booking?.id === bookingId)) {
+              const bookingWrapper = card.$el?.querySelector?.('.booking-wrapper') || card.$el;
+              if (bookingWrapper) {
+                bookingWrapper.style.height = '';
+                console.log('🧹 Cleared inline height style for booking', bookingId);
+              }
+              break;
+            }
+          }
+        }
+        
+        // Verify the booking was updated correctly before cleaning up
+        const reloadedBooking = this.bookingsList.find(b => b.id === bookingId);
+        if (reloadedBooking) {
+          // Get duration using the same logic as BookingCard.getBookingDuration()
+          const service = reloadedBooking.services && reloadedBooking.services[0];
+          let reloadedDuration = 30; // default
+          
+          if (service) {
+            // Try service.duration first
+            if (service.duration) {
+              const [hours, mins] = service.duration.split(':').map(Number);
+              reloadedDuration = hours * 60 + mins;
+            }
+            // Calculate from start_at and end_at (backend response format)
+            else if (service.start_at && service.end_at) {
+              const [startH, startM] = service.start_at.split(':').map(Number);
+              const [endH, endM] = service.end_at.split(':').map(Number);
+              const startMinutes = startH * 60 + startM;
+              const endMinutes = endH * 60 + endM;
+              reloadedDuration = endMinutes - startMinutes;
+            }
+          }
+          
+          // Fallback to booking.duration if available
+          if (reloadedDuration === 30 && reloadedBooking.duration) {
+            const [hours, mins] = reloadedBooking.duration.split(':').map(Number);
+            reloadedDuration = hours * 60 + mins;
+          }
+          
+          console.log('🔍 Duration verification:', {
+            expected: duration,
+            reloaded: reloadedDuration,
+            service: service ? { start_at: service.start_at, end_at: service.end_at, duration: service.duration } : null,
+            bookingDuration: reloadedBooking.duration
+          });
+          
+          if (Math.abs(reloadedDuration - duration) <= 1) { // Allow 1 minute tolerance
+            // Booking was updated correctly, clean up temp state
+            delete this.tempDurations[bookingId];
+            delete this.originalBookingStates[bookingId];
+            console.log('✅ Resize completed successfully, booking updated correctly');
+          } else {
+            // Duration mismatch, keep temp state to maintain visual
+            console.warn('⚠️ Duration mismatch after reload. Expected:', duration, 'Got:', reloadedDuration);
+            // Keep tempDurations to maintain visual state
+          }
+        } else {
+          console.error('❌ Booking not found after reload!');
+        }
+        
+      } catch (error) {
+        console.error('❌ Failed to save duration:', error);
+        
+        // Show error message
+        const errorMessage = error.response?.data?.message || 'Failed to update booking. Please try again.';
+        this.showResizeError(errorMessage);
+        
+        // Revert visual state on error
+        this.revertBookingResize(bookingId);
+        
+      } finally {
+        // Clean up loading state
+        this.savingBookingIds.delete(bookingId);
+        this.resizingBookingId = null;
+        this.$forceUpdate();
+      }
     },
     updateCurrentTimeLinePosition() {
       if (!this.timeslots || !this.timeslots.length) {
@@ -1377,6 +1721,12 @@ export default {
           endMin = startMin + duration;
         }
       }
+      
+      // OVERRIDE duration if booking is being resized
+      if (this.tempDurations[booking.id]) {
+        duration = this.tempDurations[booking.id];
+        endMin = startMin + duration;
+      }
 
       const pxPerMin = this.slotHeight / this.calcSlotStep();
       const topPx = (startMin - openMin) * pxPerMin;
@@ -1462,6 +1812,7 @@ export default {
       return position * this.cardWidth;
     },
     getMinutes(str) {
+      if (str === this.END_OF_DAY || str === '24:00') return this.MINUTES_IN_DAY;
       const [hh, mm] = str.split(":").map(Number);
       return hh * 60 + mm;
     },
@@ -1563,6 +1914,149 @@ export default {
     },
     viewCustomerProfile(customer) {
       this.$emit("viewCustomerProfile", customer);
+    },
+    
+    // RESIZE VALIDATION AND HELPER METHODS
+    
+    getDayBounds() {
+      // Calculate the available time range for the current day
+      if (!this.timeslots || this.timeslots.length === 0) {
+        return { minTime: 0, maxTime: this.MINUTES_IN_DAY };
+      }
+      
+      const firstSlot = this.timeslots[0];
+      const lastSlot = this.timeslots[this.timeslots.length - 1];
+      
+      return {
+        minTime: this.getMinutes(firstSlot),
+        maxTime: this.getMinutes(lastSlot === this.END_OF_DAY ? '23:59' : lastSlot),
+      };
+    },
+    
+    validateResizeDuration(booking, newDuration) {
+      // Get minimum duration from settings (interval)
+      const intervalSetting = this.$root.settings?.interval;
+      let minDuration = 10; // default fallback
+      
+      if (typeof intervalSetting === 'number') {
+        minDuration = intervalSetting;
+      } else if (typeof intervalSetting === 'string') {
+        const [hours, mins] = intervalSetting.split(':').map(Number);
+        minDuration = hours * 60 + mins;
+      }
+      
+      // Check minimum duration
+      if (newDuration < minDuration) {
+        return {
+          valid: false,
+          error: `Duration too short (minimum: ${minDuration} minutes)`,
+        };
+      }
+      
+      // Check maximum bounds (day boundaries)
+      const bookingStart = this.getMinutes(booking.time);
+      const newEndTime = bookingStart + newDuration;
+      const dayBounds = this.getDayBounds();
+      
+      if (newEndTime > dayBounds.maxTime) {
+        return {
+          valid: false,
+          error: 'Cannot extend beyond opening hours',
+        };
+      }
+      
+      return { valid: true };
+    },
+    
+    checkBookingOverlap(booking, newDuration) {
+      // Calculate new end time
+      const bookingStart = this.getMinutes(booking.time);
+      const newEndTime = bookingStart + newDuration;
+      
+      // Get list of other bookings to check against
+      const bookingsToCheck = this.isAttendantView 
+        ? this.processedBookings.filter(b => {
+            // In attendant view, only check bookings with same assistant
+            return b.id !== booking.id && b._assistantId === booking._assistantId;
+          })
+        : this.bookingsList.filter(b => b.id !== booking.id);
+      
+      // Check for overlaps
+      for (const otherBooking of bookingsToCheck) {
+        const otherStart = this.getBookingStart(otherBooking);
+        const otherEnd = this.getBookingEnd(otherBooking);
+        
+        // Check if time ranges overlap
+        if (bookingStart < otherEnd && newEndTime > otherStart) {
+          return {
+            hasOverlap: true,
+            conflictingBooking: otherBooking,
+          };
+        }
+      }
+      
+      return { hasOverlap: false };
+    },
+    
+    revertBookingResize(bookingId) {
+      // Restore original state
+      const originalState = this.originalBookingStates[bookingId];
+      if (!originalState) {
+        console.warn('⚠️ No original state found for booking:', bookingId);
+        return;
+      }
+      
+      // Remove temporary duration to restore original visual state
+      delete this.tempDurations[bookingId];
+      
+      // Call revert method on BookingCard component if accessible
+      const bookingCardRefs = this.$refs.bookingCard;
+      if (bookingCardRefs) {
+        // Note: Since we're using v-for, refs might be an array
+        const cards = Array.isArray(bookingCardRefs) ? bookingCardRefs : [bookingCardRefs];
+        const card = cards.find(c => c && c.booking && c.booking.id === bookingId);
+        if (card && typeof card.revertResize === 'function') {
+          card.revertResize();
+        }
+      }
+      
+      // Force Vue to update the UI
+      this.$nextTick(() => {
+        this.$forceUpdate();
+      });
+      
+      if (DEBUG) {
+        console.log('🔄 Reverted booking resize:', bookingId);
+      }
+      
+      // Clean up stored state
+      delete this.originalBookingStates[bookingId];
+    },
+    
+    showResizeError(message) {
+      // Use Bootstrap Vue 3 toast notification
+      this.$bvToast?.toast(message, {
+        title: 'Resize Error',
+        variant: 'danger',
+        solid: true,
+        autoHideDelay: 5000,
+        toaster: 'b-toaster-top-center',
+      });
+      
+      // Fallback to console if toast is not available
+      if (!this.$bvToast) {
+        console.error('Resize error:', message);
+        alert(message); // Simple fallback
+      }
+    },
+    
+    getMaxDurationForBooking(booking) {
+      // Calculate maximum duration based on day boundaries
+      const bookingStart = this.getMinutes(booking.time);
+      const dayBounds = this.getDayBounds();
+      const maxDuration = dayBounds.maxTime - bookingStart;
+      
+      return Math.max(maxDuration, this.calcSlotStep()); // At least one slot
     }
   },
   emits: [
@@ -1585,11 +2079,16 @@ export default {
   margin-bottom: 48px;
 }
 
+.calendar-header {
+  margin-bottom: 16px;
+}
+
 .title {
   text-align: left;
   font-weight: bold;
   color: #322d38;
   font-size: 22px;
+  margin: 0;
 }
 
 .slots {
@@ -1710,5 +2209,9 @@ export default {
   z-index: 20;
   left: 50%;
   transform: translateX(-50%);
+}
+
+.toast-container-custom {
+  z-index: 9999;
 }
 </style>

@@ -22,6 +22,32 @@ class Plugin {
     {
         add_action('parse_request', array($this, 'render_page'));
     }
+    
+    /**
+     * Ensure template files exist by copying from source files
+     * Only runs once when templates don't exist
+     *
+     * @param string $dist_directory_path Path to dist directory
+     */
+    private function ensure_templates_exist($dist_directory_path)
+    {
+        $templates = array(
+            '/js/app.template.js' => '/js/app.js',
+            '/js/app.js.template.map' => '/js/app.js.map',
+            '/service-worker.template.js' => '/service-worker.js',
+            '/service-worker.js.template.map' => '/service-worker.js.map',
+            '/index.template.html' => '/index.html',
+        );
+        
+        foreach ($templates as $template => $source) {
+            $template_path = $dist_directory_path . $template;
+            $source_path = $dist_directory_path . $source;
+            
+            if (!file_exists($template_path) && file_exists($source_path)) {
+                file_put_contents($template_path, file_get_contents($source_path));
+            }
+        }
+    }
 
     public function render_page()
     {
@@ -48,6 +74,10 @@ class Plugin {
 	}
 
         $dist = SLN_PLUGIN_URL . '/src/SLB_PWA/pwa/dist';
+        
+        // Cache-busting: Use build time from app.js modification time
+        $app_js_path = SLN_PLUGIN_DIR . '/src/SLB_PWA/pwa/dist/js/app.js';
+        $cache_buster = file_exists($app_js_path) ? filemtime($app_js_path) : time();
 
         $labels = LabelProvider::getInstance()->getLabels();
 
@@ -61,34 +91,60 @@ class Plugin {
         );
 
         $dist_directory_path = SLN_PLUGIN_DIR . '/src/SLB_PWA/pwa/dist';
-
-        if (!file_exists($dist_directory_path . '/js/app.template.js')) {
-            file_put_contents($dist_directory_path . '/js/app.template.js', file_get_contents($dist_directory_path . '/js/app.js'));
-        }
-
-        if (!file_exists($dist_directory_path . '/js/app.js.template.map')) {
-            file_put_contents($dist_directory_path . '/js/app.js.template.map', file_get_contents($dist_directory_path . '/js/app.js.map'));
-        }
-
-        if (!file_exists($dist_directory_path . '/service-worker.template.js')) {
-            file_put_contents($dist_directory_path . '/service-worker.template.js', file_get_contents($dist_directory_path . '/service-worker.js'));
-        }
-
-        if (!file_exists($dist_directory_path . '/service-worker.js.template.map')) {
-            file_put_contents($dist_directory_path . '/service-worker.js.template.map', file_get_contents($dist_directory_path . '/service-worker.js.map'));
-        }
-
-        if (!file_exists($dist_directory_path . '/index.template.html')) {
-            file_put_contents($dist_directory_path . '/index.template.html', file_get_contents($dist_directory_path . '/index.html'));
-        }
-
         $dist_url_path = trim(str_replace(home_url(), '', $dist), '/');
-
-        file_put_contents($dist_directory_path . '/js/app.js', str_replace('{SLN_PWA_DIST_PATH}', $dist_url_path, file_get_contents($dist_directory_path . '/js/app.template.js')));
-        file_put_contents($dist_directory_path . '/js/app.js.map', str_replace('{SLN_PWA_DIST_PATH}', $dist_url_path, file_get_contents($dist_directory_path . '/js/app.js.template.map')));
-        file_put_contents($dist_directory_path . '/service-worker.js', str_replace('{SLN_PWA_DIST_PATH}', $dist_url_path, file_get_contents($dist_directory_path . '/service-worker.template.js')));
-        file_put_contents($dist_directory_path . '/service-worker.js.map', str_replace('{SLN_PWA_DIST_PATH}', $dist_url_path, file_get_contents($dist_directory_path . '/service-worker.js.template.map')));
-        file_put_contents($dist_directory_path . '/index.html', str_replace(array('{SLN_PWA_DIST_PATH}', '{SLN_PWA_DATA}'), array($dist_url_path, addslashes(wp_json_encode($data))), file_get_contents($dist_directory_path . '/index.template.html')));
+        
+        // Cache key to track if files need regeneration
+        $cache_key = 'sln_pwa_dist_path_' . md5($dist_url_path);
+        $cached_path = get_transient($cache_key);
+        
+        // Check if source files are newer than cache (e.g., after rebuild)
+        $app_js_mtime = file_exists($app_js_path) ? filemtime($app_js_path) : 0;
+        $cache_timestamp_key = $cache_key . '_timestamp';
+        $cached_timestamp = get_transient($cache_timestamp_key);
+        
+        // Regenerate if: path changed, cache expired, OR source files are newer than cache
+        if ($cached_path !== $dist_url_path || $cached_timestamp < $app_js_mtime) {
+            // Ensure template files exist (only create once)
+            $this->ensure_templates_exist($dist_directory_path);
+            
+            // Regenerate processed files with current path
+            file_put_contents(
+                $dist_directory_path . '/js/app.js', 
+                str_replace('{SLN_PWA_DIST_PATH}', $dist_url_path, 
+                    file_get_contents($dist_directory_path . '/js/app.template.js'))
+            );
+            
+            file_put_contents(
+                $dist_directory_path . '/js/app.js.map', 
+                str_replace('{SLN_PWA_DIST_PATH}', $dist_url_path, 
+                    file_get_contents($dist_directory_path . '/js/app.js.template.map'))
+            );
+            
+            file_put_contents(
+                $dist_directory_path . '/service-worker.js', 
+                str_replace('{SLN_PWA_DIST_PATH}', $dist_url_path, 
+                    file_get_contents($dist_directory_path . '/service-worker.template.js'))
+            );
+            
+            file_put_contents(
+                $dist_directory_path . '/service-worker.js.map', 
+                str_replace('{SLN_PWA_DIST_PATH}', $dist_url_path, 
+                    file_get_contents($dist_directory_path . '/service-worker.js.template.map'))
+            );
+            
+            file_put_contents(
+                $dist_directory_path . '/index.html', 
+                str_replace(
+                    array('{SLN_PWA_DIST_PATH}', '{SLN_PWA_DATA}'), 
+                    array($dist_url_path, addslashes(wp_json_encode($data))), 
+                    file_get_contents($dist_directory_path . '/index.template.html')
+                )
+            );
+            
+            // Cache for 1 hour to avoid regenerating on every request
+            set_transient($cache_key, $dist_url_path, HOUR_IN_SECONDS);
+            set_transient($cache_timestamp_key, $app_js_mtime, HOUR_IN_SECONDS);
+        }
 
     ?>
     <!doctype html>
@@ -99,11 +155,14 @@ class Plugin {
             <meta name="viewport" content="width=device-width,initial-scale=1">
             <!--[if IE]><link rel="icon" href="<?php echo $dist ?>/favicon.ico"><![endif]-->
             <title>salon-booking-plugin-pwa</title>
-            <script defer="defer" src="<?php echo $dist ?>/js/chunk-vendors.js"></script>
-            <script defer="defer" src="<?php echo $dist ?>/js/app.js"></script>
-            <link href="<?php echo $dist ?>/css/chunk-vendors.css" rel="stylesheet">
-            <link href="<?php echo $dist ?>/css/app.css" rel="stylesheet">
+            <script defer="defer" src="<?php echo $dist ?>/js/fontawesome.js?v=<?php echo $cache_buster ?>"></script>
+            <script defer="defer" src="<?php echo $dist ?>/js/chunk-vendors.js?v=<?php echo $cache_buster ?>"></script>
+            <script defer="defer" src="<?php echo $dist ?>/js/app.js?v=<?php echo $cache_buster ?>"></script>
+            <link href="<?php echo $dist ?>/css/chunk-vendors.css?v=<?php echo $cache_buster ?>" rel="stylesheet">
+            <link href="<?php echo $dist ?>/css/app.css?v=<?php echo $cache_buster ?>" rel="stylesheet">
+            <?php if (file_exists(SLN_PLUGIN_DIR . '/src/SLB_PWA/pwa/dist/img/icons/favicon.svg')): ?>
             <link rel="icon" type="image/svg+xml" href="<?php echo $dist ?>/img/icons/favicon.svg">
+            <?php endif; ?>
             <link rel="icon" type="image/png" sizes="32x32" href="<?php echo $dist ?>/img/icons/favicon-32x32.png">
             <link rel="icon" type="image/png" sizes="16x16" href="<?php echo $dist ?>/img/icons/favicon-16x16.png">
             <link rel="manifest" href="<?php echo $dist ?>/manifest.json">

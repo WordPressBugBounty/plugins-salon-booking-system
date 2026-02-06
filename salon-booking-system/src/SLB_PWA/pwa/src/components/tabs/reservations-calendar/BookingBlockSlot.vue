@@ -74,15 +74,21 @@ export default {
   data() {
     return {
       isLoading: false,
+      END_OF_DAY: '24:00',
+      MINUTES_IN_DAY: 1440
     };
   },
   computed: {
     holidayRule() {
+      const toTime = (this.end === '00:00' || this.end === this.END_OF_DAY)
+        ? this.END_OF_DAY
+        : this.normalizeTime(this.end);
+
       const rule = {
         from_date: this.date,
         to_date: this.date,
         from_time: this.normalizeTime(this.start),
-        to_time: this.normalizeTime(this.end),
+        to_time: toTime,
         daily: true
       };
 
@@ -117,6 +123,7 @@ export default {
       }, 300);
     },
     normalizeTime(time) {
+      if (time === this.END_OF_DAY) return this.END_OF_DAY;
       return this.moment(time, this.getTimeFormat()).format('HH:mm');
     }
   },

@@ -7,6 +7,7 @@ use WP_REST_Server;
 use WP_Error;
 use SLN_Plugin;
 use SLN_Enum_DaysOfWeek;
+use SLN_Enum_BookingStatus;
 use WP_Query;
 
 class Services_Controller extends REST_Controller
@@ -100,6 +101,52 @@ class Services_Controller extends REST_Controller
                 'permission_callback' => array( $this, 'delete_item_permissions_check' ),
             ),
             'schema' => array( $this, 'get_public_item_schema' ),
+        ) );
+
+        register_rest_route( $this->namespace, '/' . $this->rest_base . '/stats', array(
+            array(
+                'methods'             => WP_REST_Server::READABLE,
+                'callback'            => array( $this, 'get_stats' ),
+                'permission_callback' => array( $this, 'get_items_permissions_check' ),
+                'args' => array(
+                    'start_date' => array(
+                        'description'       => __('Start date.', 'salon-booking-system'),
+                        'type'              => 'string',
+                        'format'            => 'YYYY-MM-DD',
+                        'required'          => true,
+                        'validate_callback' => array($this, 'rest_validate_request_arg'),
+                    ),
+                    'end_date' => array(
+                        'description'       => __('End date.', 'salon-booking-system'),
+                        'type'              => 'string',
+                        'format'            => 'YYYY-MM-DD',
+                        'required'          => true,
+                        'validate_callback' => array($this, 'rest_validate_request_arg'),
+                    ),
+                    'order_by' => array(
+                        'description' => __( 'Order by.', 'salon-booking-system' ),
+                        'type'        => 'string',
+                        'enum'        => array('revenue', 'bookings', 'avg_value'),
+                        'default'     => 'revenue',
+                    ),
+                    'order' => array(
+                        'description' => __( 'Order.', 'salon-booking-system' ),
+                        'type'        => 'string',
+                        'enum'        => array('asc', 'desc'),
+                        'default'     => 'desc',
+                    ),
+                    'limit' => array(
+                        'description' => __( 'Limit results.', 'salon-booking-system' ),
+                        'type'        => 'integer',
+                        'default'     => 10,
+                    ),
+                    'shop' => array(
+                        'description' => __( 'Shop ID for multi-shop filtering (0 = all shops).', 'salon-booking-system' ),
+                        'type'        => 'integer',
+                        'default'     => 0,
+                    ),
+                ),
+            ),
         ) );
     }
 
@@ -722,6 +769,148 @@ class Services_Controller extends REST_Controller
         );
 
         return apply_filters('sln_api_services_get_item_schema', $schema);
+    }
+
+    /**
+     * Get service performance statistics
+     *
+     * @param \WP_REST_Request $request
+     * @return \WP_REST_Response
+     */
+    public function get_stats( $request )
+    {
+        $start_date = $request->get_param('start_date');
+        $end_date = $request->get_param('end_date');
+        $order_by = $request->get_param('order_by');
+        $order = $request->get_param('order');
+        $limit = $request->get_param('limit');
+        $shop_id = (int) $request->get_param('shop');
+
+        // Get all services
+        $services_query = new WP_Query(array(
+            'post_type'      => self::POST_TYPE,
+            'post_status'    => 'publish',
+            'posts_per_page' => -1,
+        ));
+
+        $services_stats = array();
+
+        // Build meta query for bookings
+        $meta_query = array(
+            array(
+                'key'     => '_sln_booking_date',
+                'value'   => array($start_date, $end_date),
+                'compare' => 'BETWEEN',
+                'type'    => 'DATE',
+            ),
+        );
+
+        // Add shop filter for Multi-Shop support
+        // Apply shop manager restrictions if user is a manager
+        $shop_id = $this->apply_shop_manager_filter($request);
+        
+        if ($shop_id === -1) {
+            // Manager has no shops assigned or no access to requested shop
+            return $this->success_response(array('services' => array()));
+        } elseif ($shop_id > 0 && class_exists('\SalonMultishop\Addon')) {
+            $meta_query[] = array(
+                'key'     => '_sln_booking_shop',
+                'value'   => $shop_id,
+                'compare' => '=',
+            );
+        } elseif ($shop_id === 0 && $this->is_shop_manager() && class_exists('\SalonMultishop\Addon')) {
+            // Manager with multiple shops - filter by all assigned shops
+            $assigned_shops = $this->get_shop_manager_filter_ids();
+            if ($assigned_shops) {
+                $meta_query[] = array(
+                    'key'     => '_sln_booking_shop',
+                    'value'   => $assigned_shops,
+                    'compare' => 'IN',
+                );
+            }
+        }
+
+        // Exclude no-show bookings from performance calculations
+        $meta_query[] = array(
+            'relation' => 'OR',
+            array(
+                'key'     => 'no_show',
+                'compare' => 'NOT EXISTS',
+            ),
+            array(
+                'key'     => 'no_show',
+                'value'   => '1',
+                'compare' => '!=',
+            ),
+        );
+
+        // Query all bookings in period
+        $bookings_query = new WP_Query(array(
+            'post_type'      => SLN_Plugin::POST_TYPE_BOOKING,
+            'post_status'    => array(
+                SLN_Enum_BookingStatus::PAID,
+                SLN_Enum_BookingStatus::PAY_LATER,
+                SLN_Enum_BookingStatus::CONFIRMED,
+            ),
+            'posts_per_page' => -1,
+            'meta_query'     => $meta_query,
+        ));
+
+        // Initialize stats for each service
+        foreach ($services_query->posts as $service_post) {
+            $service = SLN_Plugin::getInstance()->createService($service_post->ID);
+            $services_stats[$service_post->ID] = array(
+                'service_id'        => $service_post->ID,
+                'service_name'      => $service->getName(),
+                'bookings_count'    => 0,
+                'total_revenue'     => 0.0,
+                'avg_revenue'       => 0.0,
+                'growth_rate'       => 0.0,
+                'cancellation_rate' => 0.0,
+            );
+        }
+
+        // Process bookings
+        foreach ($bookings_query->posts as $booking_post) {
+            $booking = SLN_Plugin::getInstance()->createBooking($booking_post->ID);
+            
+            foreach ($booking->getBookingServices()->getItems() as $bookingService) {
+                $service = $bookingService->getService();
+                $service_id = $service->getId();
+                
+                if (isset($services_stats[$service_id])) {
+                    $services_stats[$service_id]['bookings_count']++;
+                    $services_stats[$service_id]['total_revenue'] += $service->getPrice();
+                }
+            }
+        }
+
+        // Calculate averages
+        foreach ($services_stats as $service_id => $stats) {
+            if ($stats['bookings_count'] > 0) {
+                $services_stats[$service_id]['avg_revenue'] = round($stats['total_revenue'] / $stats['bookings_count'], 2);
+            }
+            $services_stats[$service_id]['total_revenue'] = round($stats['total_revenue'], 2);
+        }
+
+        // Sort based on order_by
+        usort($services_stats, function($a, $b) use ($order_by, $order) {
+            $field_map = array(
+                'revenue'  => 'total_revenue',
+                'bookings' => 'bookings_count',
+                'avg_value'=> 'avg_revenue',
+            );
+            
+            $field = $field_map[$order_by] ?? 'total_revenue';
+            $comparison = $a[$field] <=> $b[$field];
+            
+            return $order === 'asc' ? $comparison : -$comparison;
+        });
+
+        // Limit results
+        $services_stats = array_slice($services_stats, 0, $limit);
+
+        return $this->success_response(array('items' => $services_stats));
     }
 
 }

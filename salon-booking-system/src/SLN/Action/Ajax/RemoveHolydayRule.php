@@ -23,6 +23,10 @@ class SLN_Action_Ajax_RemoveHolydayRule extends SLN_Action_Ajax_Abstract
 			$data['to_time']	= sanitize_text_field(wp_unslash($_POST['rule']['to_time']));
 			$data['daily']		= true;
 
+			// FIX: Don't truncate overnight locks when unlocking
+			// Must match the exact time range that was saved (which is no longer truncated)
+			// Otherwise the unlock operation won't find the lock to delete
+			/*
 			if($data['from_date'] != $data['to_date']) {
 				$toTime = new DateTime($data['to_date'] . ' ' . $data['to_time']);
 				$toTimeHour = (int)$toTime->format('H');
@@ -35,6 +39,7 @@ class SLN_Action_Ajax_RemoveHolydayRule extends SLN_Action_Ajax_Abstract
 					$data['to_time'] = $endTime->format('H:i');
 				}
 			}
+			*/
                         $attId                  = sanitize_text_field(wp_unslash($_POST['attendant_id']));
 
                         if (empty($attId)) {
@@ -54,12 +59,12 @@ class SLN_Action_Ajax_RemoveHolydayRule extends SLN_Action_Ajax_Abstract
                                         )) $search_rule[] = $rule;
                                 }
 
-                                $settings->set('holidays_daily',$search_rule);
-                                $settings->save();
-                            }
+                            $settings->set('holidays_daily',$search_rule);
+                            $settings->save();
+                        }
 
-                            $bc = $plugin->getBookingCache();
-                            $bc->refresh($data['from_date'],$data['to_date']);
+                        $bc = $plugin->getBookingCache();
+                        $bc->refreshAll(); // Full refresh - holiday rules affect all dates
                         } else {
                             $applied = apply_filters('sln.remove-holiday-rule.remove-holidays-daily-assistants', false, $data, $attId);
 
@@ -92,10 +97,10 @@ class SLN_Action_Ajax_RemoveHolydayRule extends SLN_Action_Ajax_Abstract
                                                 $data['to_time']	=== $rule['to_time']
                                         )) $search_holidays[] = $rule;
                                 }
-                                $attendant->setMeta('holidays', $search_holidays);
-                            }
-                            $bc = $plugin->getBookingCache();
-                            $bc->refresh($data['from_date'],$data['to_date']);
+                            $attendant->setMeta('holidays', $search_holidays);
+                        }
+                        $bc = $plugin->getBookingCache();
+                        $bc->refreshAll(); // Full refresh - assistant rules affect all dates
                         }
 		} else {
 			$this->addError(__("You don't have permissions", 'salon-booking-system'));

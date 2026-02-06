@@ -85,12 +85,6 @@ class SLN_PostType_Resource extends SLN_PostType_Abstract
                 isset($_GET['post_type']) &&
             $this->getPostType() === $_GET['post_type']) {
 
-            $event = 'Page views of back-end plugin pages';
-            $data  = array(
-                'page' => 'resources',
-            );
-
-            SLN_Action_InitScripts::mixpanelTrack($event, $data);
         }
     }
 

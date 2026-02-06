@@ -86,10 +86,117 @@ abstract class SLN_Wrapper_Abstract
      */
     public function setStatus($status)
     {
+        // Debug logging (only when debug mode enabled)
+        $currentStatusBeforeCheck = $this->object->post_status;
+        $postObject = get_post($this->getId());
+        SLN_Plugin::addLog(sprintf(
+            'setStatus() called for Booking #%d: %s → %s | DB status: %s, post_date_gmt: %s',
+            $this->getId(),
+            $currentStatusBeforeCheck,
+            $status,
+            $postObject ? $postObject->post_status : 'null',
+            $postObject ? $postObject->post_date_gmt : 'null'
+        ));
+        
         $post = array();
         $post['ID'] = $this->getId();
         $post['post_status'] = $status;
-        wp_update_post($post);
+        
+        // CRITICAL FIX: When transitioning from auto-draft status, WordPress requires
+        // post_date and post_date_gmt to be set properly. Auto-draft posts have
+        // post_date_gmt = '0000-00-00 00:00:00' which can cause wp_update_post to fail silently.
+        $currentStatus = $this->object->post_status;
+        if ($currentStatus === 'auto-draft' && $status !== 'auto-draft') {
+            // Set post_date to current time when transitioning from auto-draft
+            $now = current_time('mysql');
+            $now_gmt = current_time('mysql', true);
+            $post['post_date'] = $now;
+            $post['post_date_gmt'] = $now_gmt;
+            
+            // Debug logging (only when debug mode enabled)
+            SLN_Plugin::addLog(sprintf(
+                'AUTO-DRAFT FIX TRIGGERED for Booking #%d: Setting post_date=%s, post_date_gmt=%s',
+                $this->getId(),
+                $now,
+                $now_gmt
+            ));
+            
+            // Log the transition for debugging
+            if (method_exists('SLN_Plugin', 'addLog')) {
+                SLN_Plugin::addLog(sprintf(
+                    'setStatus: Transitioning post #%d from auto-draft to %s (setting post_date=%s)',
+                    $this->getId(),
+                    $status,
+                    $now
+                ));
+            }
+        }
+        
+        $result = wp_update_post($post);
+        
+        // CRITICAL: If wp_update_post fails, use direct database update as fallback
+        // This is especially important for IPN processing when user doesn't return from PayPal
+        if (is_wp_error($result) || $result === 0) {
+            if (method_exists('SLN_Plugin', 'addLog')) {
+                $error_msg = is_wp_error($result) ? $result->get_error_message() : 'wp_update_post returned 0';
+                SLN_Plugin::addLog(sprintf(
+                    'setStatus ERROR: wp_update_post failed for post #%d from %s to %s: %s. Attempting direct DB update...',
+                    $this->getId(),
+                    $currentStatus,
+                    $status,
+                    $error_msg
+                ));
+            }
+            
+            // Attempt direct database update as fallback
+            global $wpdb;
+            
+            $updateData = array('post_status' => $status);
+            $updateFormat = array('%s');
+            
+            // Include post_date fields if transitioning from auto-draft
+            if ($currentStatus === 'auto-draft' && $status !== 'auto-draft') {
+                $updateData['post_date'] = current_time('mysql');
+                $updateData['post_date_gmt'] = current_time('mysql', true);
+                $updateFormat[] = '%s';
+                $updateFormat[] = '%s';
+            }
+            
+            $directResult = $wpdb->update(
+                $wpdb->posts,
+                $updateData,
+                array('ID' => $this->getId()),
+                $updateFormat,
+                array('%d')
+            );
+            
+            if ($directResult !== false) {
+                // Success - clear cache and reload object
+                clean_post_cache($this->getId());
+                $this->reload();
+                
+                if (method_exists('SLN_Plugin', 'addLog')) {
+                    SLN_Plugin::addLog(sprintf(
+                        'setStatus: Direct DB update SUCCEEDED for post #%d from %s to %s (wp_update_post had failed)',
+                        $this->getId(),
+                        $currentStatus,
+                        $status
+                    ));
+                }
+            } else {
+                // Both methods failed - log critical error
+                if (method_exists('SLN_Plugin', 'addLog')) {
+                    SLN_Plugin::addLog(sprintf(
+                        'setStatus CRITICAL ERROR: Both wp_update_post and direct DB update failed for post #%d from %s to %s. DB Error: %s',
+                        $this->getId(),
+                        $currentStatus,
+                        $status,
+                        $wpdb->last_error
+                    ));
+                }
+            }
+        }
+        
         $this->object->post_status = $status;
 
         return $this;

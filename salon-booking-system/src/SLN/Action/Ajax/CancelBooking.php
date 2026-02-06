@@ -11,6 +11,16 @@ class SLN_Action_Ajax_CancelBooking extends SLN_Action_Ajax_Abstract
 			return array( 'redirect' => wp_login_url());
 		}
 
+		// Verify nonce for CSRF protection
+		if (!isset($_POST['security']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['security'])), 'ajax_post_validation')) {
+			return array('errors' => array(__('Invalid security token. Please refresh the page and try again.', 'salon-booking-system')));
+		}
+
+		// Validate booking ID
+		if (!isset($_POST['id']) || !is_numeric($_POST['id'])) {
+			return array('errors' => array(__('Invalid booking ID.', 'salon-booking-system')));
+		}
+
 		$ret = array();
 		$plugin = SLN_Plugin::getInstance();
 		$booking = $plugin->createBooking(intval($_POST['id']));
@@ -23,6 +33,10 @@ class SLN_Action_Ajax_CancelBooking extends SLN_Action_Ajax_Abstract
 			$booking->setStatus(SLN_Enum_BookingStatus::CANCELED);
 			$booking = $plugin->createBooking(intval($_POST['id']));
 			$plugin->getBookingCache()->processBooking($booking);
+
+			// Auto-trash if enabled
+			$trashAction = new SLN_Action_TrashCancelledBooking($plugin);
+			$trashAction->execute($booking);
 
 		} elseif (!$available) {
 			$this->addError(__("You don't have access", 'salon-booking-system'));

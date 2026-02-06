@@ -20,6 +20,14 @@ class SLN_Action_Ajax_DuplicateClone extends SLN_Action_Ajax_Abstract
     {
         $bookingId = (int)$_POST['bookingId'];
         $unit = (int)$_POST['unit'];
+        $week_time = (int)$_POST['week_time'];
+        $weeks_map = [
+            1 => 1, // every week
+            2 => 2, // every two weeks
+            3 => 3, // every three weeks
+            4 => 4, // every four weeks
+        ];
+        $interval_weeks = $weeks_map[$week_time] ?? 1;
 
         for ($i = 0; $i < $unit; $i++) {
             $booking = SLN_Plugin::getInstance()->createBooking($bookingId);
@@ -27,7 +35,10 @@ class SLN_Action_Ajax_DuplicateClone extends SLN_Action_Ajax_Abstract
             $bb = new SLN_Wrapper_Booking_Builder(SLN_Plugin::getInstance());
             $dateString = $booking->getMeta('date');
             $date = new DateTime($dateString);
-            $date->modify('+'.($i+1).' week');
+
+            //$date->modify('+'.($i+1).' week');
+            $weeks_to_add = $interval_weeks * ($i + 1);
+            $date->modify('+' . $weeks_to_add . ' week');
 
             $bb->setDate($date->format('Y-m-d'));
             $bb->setTime($booking->getMeta('time'));

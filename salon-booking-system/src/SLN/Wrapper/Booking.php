@@ -80,6 +80,18 @@ class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
 		$this->setMeta('origin_source', $origin);
 	}
 
+	function getCreatedByUserId(){
+		return $this->getMeta('created_by_user_id');
+	}
+
+	function getLastEditedByUserId(){
+		return $this->getMeta('last_edited_by_user_id');
+	}
+
+	function getLastEditedAt(){
+		return $this->getMeta('last_edited_at');
+	}
+
     function getPhone()
     {
         return $this->getMeta('phone');
@@ -223,8 +235,66 @@ class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
         $amount = 0;
 
         SLN_Plugin::addLog(__CLASS__ . ' eval total of' . $this->getId());
+        
+        // Check for prepaid services (package credits)
+        $user_id = $this->getUserId();
+        if ($user_id) {
+            $prepaid_services = get_user_meta($user_id, '_sln_prepaid_services', true);
+            
+            SLN_Plugin::addLog('Checking prepaid services for user ' . $user_id);
+            SLN_Plugin::addLog('Prepaid services data: ' . print_r($prepaid_services, true));
+            
+            if (!empty($prepaid_services) && is_array($prepaid_services)) {
+                // Apply prepaid services to booking services
+                foreach ($this->getBookingServices()->getItems() as $bookingService) {
+                    $service_id = $bookingService->getService()->getId();
+                    $original_price = $bookingService->getPrice();
+                    
+                    SLN_Plugin::addLog('Checking service #' . $service_id . ' (current price: ' . $original_price . ')');
+                    
+                    // Check data structure - handle both old flat structure and new nested structure
+                    $hasCredits = false;
+                    $packageOrderId = null;
+                    $creditsAvailable = 0;
+                    
+                    // Check if it's the new nested structure [package_order_id][service_id] => credits
+                    $firstKey = key($prepaid_services);
+                    if (is_array($prepaid_services[$firstKey])) {
+                        // New nested structure
+                        foreach ($prepaid_services as $package_order_id => $services) {
+                            if (isset($services[$service_id]) && $services[$service_id] > 0) {
+                                $hasCredits = true;
+                                $packageOrderId = $package_order_id;
+                                $creditsAvailable = $services[$service_id];
+                                break;
+                            }
+                        }
+                    } else {
+                        // Old flat structure [service_id] => credits
+                        if (isset($prepaid_services[$service_id]) && $prepaid_services[$service_id] > 0) {
+                            $hasCredits = true;
+                            $packageOrderId = 'unknown';
+                            $creditsAvailable = $prepaid_services[$service_id];
+                        }
+                    }
+                    
+                    if ($hasCredits) {
+                        // User has credits for this service - set price to 0
+                        $bookingService->setPrice(0);
+                        
+                        SLN_Plugin::addLog('Prepaid service applied - Service #' . $service_id . ' price set from ' . $original_price . ' to 0 (Package Order #' . $packageOrderId . ' has ' . $creditsAvailable . ' credits)');
+                        
+                        // Mark this service as using a credit
+                        $this->addMeta('service_credit', $service_id);
+                    }
+                }
+            }
+        }
+        
+        // Apply prepaid services filter (for add-ons)
+        $bookingServices = apply_filters('sln.calc_booking_total.apply_prepaid_services', $this->getBookingServices(), $this);
 
-        foreach ($this->getBookingServices()->getItems() as $bookingService) {
+        foreach ($bookingServices->getItems() as $bookingService) {
             if(isset($bookingService->toArray()['service'])){
                 $variable = get_post_meta($bookingService->toArray()['service'],'_sln_service_variable_duration', true);
             }
@@ -418,7 +488,7 @@ class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
     function getStartsAt( $timezone='' )
     {
 		if($timezone)
-			return new SLN_DateTime($this->getDate()->format('Y-m-d').' '.$this->getTime()->format('H:i'), new DateTimeZone($timezone) );
+			return new SLN_DateTime($this->getDate()->format('Y-m-d').' '.$this->getTime()->format('H:i'), SLN_Func::createDateTimeZone($timezone) );
 		else
 			return new SLN_DateTime($this->getDate()->format('Y-m-d').' '.$this->getTime()->format('H:i'));
     }
@@ -480,8 +550,36 @@ class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
 
     public function markPaid($transactionId, $remainedAmount = 0)
     {
+        // Debug logging (only when debug mode enabled)
+        SLN_Plugin::addLog(sprintf(
+            'markPaid() called for Booking #%d: current_status=%s, transaction_id=%s',
+            $this->getId(),
+            $this->getStatus(),
+            $transactionId
+        ));
+        
         $transactions = $this->getTransactionId();
-        $this->setMeta('transaction_id', array_merge($transactions, array($transactionId)));
+        
+        // CRITICAL FIX: Check if transaction ID already exists before adding
+        if (!in_array($transactionId, $transactions)) {
+            $this->setMeta('transaction_id', array_merge($transactions, array($transactionId)));
+            
+            SLN_Plugin::addLog(sprintf(
+                'markPaid: Added transaction ID "%s" to booking #%d (total transactions: %d)',
+                $transactionId,
+                $this->getId(),
+                count($transactions) + 1
+            ));
+        } else {
+            SLN_Plugin::addLog(sprintf(
+                'markPaid: Transaction ID "%s" already exists for booking #%d (existing: %s), skipping duplicate',
+                $transactionId,
+                $this->getId(),
+                implode(', ', $transactions)
+            ));
+            // Continue processing to ensure status is updated if needed
+        }
+        
         if ($remainedAmount) {
             $this->setMeta('deposit', $this->getDeposit() + $remainedAmount);
             $this->setMeta('paid_remained_amount', $remainedAmount);
@@ -490,7 +588,22 @@ class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
         if (class_exists('SalonPackages\Addon') && slnpackages_is_pro_version_salon() && slnpackages_is_license_active()) {
             $this->setPrepaidServices();
         }
-        $this->setStatus(SLN_Enum_BookingStatus::PAID);
+        
+        // Only change status if not already paid/confirmed
+        if (!in_array($this->getStatus(), [SLN_Enum_BookingStatus::PAID, SLN_Enum_BookingStatus::CONFIRMED])) {
+            $this->setStatus(SLN_Enum_BookingStatus::PAID);
+            
+            SLN_Plugin::addLog(sprintf(
+                'markPaid: Changed booking #%d status to PAID',
+                $this->getId()
+            ));
+        } else {
+            SLN_Plugin::addLog(sprintf(
+                'markPaid: Booking #%d already has paid status (%s), skipping status change',
+                $this->getId(),
+                $this->getStatus()
+            ));
+        }
 
 	do_action('sln_booking_mark_paid_after', $this);
     }

@@ -119,24 +119,22 @@ $hide_email = $user_role_helper->is_hide_customer_email();
     						<?php SLN_Form::fieldText('sln_customer_meta[_sln_sms_prefix]', $customer_fields->getField('sms_prefix')->getValue($customer->getId()) ? $customer_fields->getField('sms_prefix')->getValue($customer->getId()) : $plugin->getSettings()->get('sms_prefix'), array('type' => 'hidden')); ?>
 						<?php endif; ?>
 
-					<?php do_action('sln.template.customer.metabox', $customer); ?>
-					
-				</div>
-				<div >
-				<div class="sln-box--sub row">
-					<div class="col-xs-12  form-group sln_meta_field sln-input--simple">
-							<label for="_sln_customer_sln_personal_note"><?php esc_html_e('Personal note', 'salon-booking-system') ?></label>
-							<textarea type="text" name="sln_customer_meta[_sln_personal_note]" id="_sln_customer_sln_personal_note" class="form-control" rows="5"><?php echo $customer->get('_sln_personal_note'); ?></textarea>
-					</div>
-				</div>
-				</div>
-				<div class="sln-box--sub row">
-					<div class="col-xs-12  form-group sln_meta_field sln-input--simple">
-							<label for="_sln_customer_sln_admininstration_note"><?php esc_html_e('Administration note', 'salon-booking-system') ?></label>
-							<textarea type="text" name="sln_customer_meta[_sln_administration_note]" id="_sln_customer_sln_administration_note" class="form-control" rows="5"><?php echo $customer->get('_sln_administration_note'); ?></textarea>
-					</div>
+				<?php do_action('sln.template.customer.metabox', $customer); ?>
+				
+			</div>
+			<div class="sln-box--sub row">
+				<div class="col-xs-12  form-group sln_meta_field sln-input--simple">
+						<label for="_sln_customer_sln_personal_note"><?php esc_html_e('Personal note', 'salon-booking-system') ?></label>
+						<textarea type="text" name="sln_customer_meta[_sln_personal_note]" id="_sln_customer_sln_personal_note" class="form-control" rows="5"><?php echo $customer->get('_sln_personal_note'); ?></textarea>
 				</div>
 			</div>
+			<div class="sln-box--sub row">
+				<div class="col-xs-12  form-group sln_meta_field sln-input--simple">
+						<label for="_sln_customer_sln_admininstration_note"><?php esc_html_e('Administration note', 'salon-booking-system') ?></label>
+						<textarea type="text" name="sln_customer_meta[_sln_administration_note]" id="_sln_customer_sln_administration_note" class="form-control" rows="5"><?php echo $customer->get('_sln_administration_note'); ?></textarea>
+				</div>
+			</div>
+		</div>
 		<div class="sln-box sln-box--main">
 			<h2 class="sln-box-title"><?php esc_html_e('Customer\'s bookings', 'salon-booking-system') ?></h2>
 			<div class="sln-box--sub row">
@@ -257,6 +255,133 @@ $hide_email = $user_role_helper->is_hide_customer_email();
 				</div>
 			<!-- .sln-box-sub.row END-->
 			</div>
+
+		<!-- No-Show History Section -->
+		<?php if (!$customer->isEmpty()): // Only show for existing customers ?>
+		<div class="sln-box--sub row">
+			<div class="col-xs-12"><h2 class="sln-box-title"><?php esc_html_e('No-Show History', 'salon-booking-system') ?></h2></div>
+			<div class="col-xs-12">
+			<?php
+			// Get no-show bookings for this customer
+			// Use 'any' status to include all booking statuses (paid, confirmed, cancelled, etc.)
+			$noShowArgs = array(
+				'post_type' => SLN_Plugin::POST_TYPE_BOOKING,
+				'posts_per_page' => -1,
+				'author' => $customer->getId(),
+				'post_status' => 'any', // Include all statuses for accurate no-show tracking
+				'meta_query' => array(
+					array(
+						'key' => '_sln_booking_no_show',
+						'value' => '1',
+					),
+				),
+				'orderby' => 'meta_value',
+				'meta_key' => '_sln_booking_no_show_marked_at',
+				'order' => 'DESC',
+			);
+			
+			$noShowBookings = get_posts($noShowArgs);
+			$noShowCount = count($noShowBookings);
+			
+			// Get total bookings count (all statuses) for accurate rate calculation
+			// Using 'any' status ensures we count all bookings regardless of their status
+			$allBookingsArgs = array(
+				'post_type' => SLN_Plugin::POST_TYPE_BOOKING,
+				'posts_per_page' => -1,
+				'author' => $customer->getId(),
+				'post_status' => 'any', // All statuses
+				'fields' => 'ids', // Only get IDs for performance
+			);
+			$allBookings = get_posts($allBookingsArgs);
+			$totalBookings = count($allBookings);
+			
+			// Calculate no-show rate based on total bookings (not just completed ones)
+			$noShowRate = $totalBookings > 0 ? round(($noShowCount / $totalBookings) * 100, 2) : 0;
+			?>
+					
+					<div class="sln-customer-noshow-summary" style="padding: 15px; background: <?php echo $noShowCount > 0 ? '#ffebee' : '#e8f5e9'; ?>; border-radius: 8px; margin-bottom: 15px;">
+						<div style="display: flex; gap: 30px; flex-wrap: wrap;">
+							<div>
+								<strong><?php esc_html_e('Total No-Shows:', 'salon-booking-system') ?></strong>
+								<span style="color: <?php echo $noShowCount > 0 ? '#d32f2f' : '#388e3c'; ?>; font-size: 18px; font-weight: 700; margin-left: 5px;">
+									<?php echo $noShowCount; ?>
+								</span>
+							</div>
+							<div>
+								<strong><?php esc_html_e('No-Show Rate:', 'salon-booking-system') ?></strong>
+								<span style="color: <?php echo $noShowRate > 5 ? '#d32f2f' : '#388e3c'; ?>; font-size: 18px; font-weight: 700; margin-left: 5px;">
+									<?php echo $noShowRate; ?>%
+								</span>
+							</div>
+							<div>
+								<strong><?php esc_html_e('Total Bookings:', 'salon-booking-system') ?></strong>
+								<span style="font-size: 18px; font-weight: 700; margin-left: 5px;">
+									<?php echo $totalBookings; ?>
+								</span>
+							</div>
+						</div>
+					</div>
+
+				<?php if ($noShowCount > 0): ?>
+					<div class="sln-customer-noshow-list" style="margin-top: 15px;">
+						<?php foreach ($noShowBookings as $bookingPost): 
+							$booking = $plugin->createBooking($bookingPost);
+							$markedAt = get_post_meta($bookingPost->ID, '_sln_booking_no_show_marked_at', true);
+							$markedBy = get_post_meta($bookingPost->ID, '_sln_booking_no_show_marked_by', true);
+							$markedByUser = $markedBy ? get_user_by('id', $markedBy) : null;
+						?>
+							<div class="sln-noshow-history-item" style="background: #fff; border: 1px solid #e0e0e0; border-radius: 6px; padding: 15px; margin-bottom: 10px;">
+								<div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+									<div>
+										<strong style="color: #d32f2f; font-size: 14px;">
+											<span class="dashicons dashicons-warning" style="font-size: 16px; vertical-align: middle;"></span>
+											<?php esc_html_e('No-Show Booking', 'salon-booking-system') ?>
+										</strong>
+									<div style="color: #666; font-size: 13px; margin-top: 5px;">
+										<?php echo esc_html(SLN_TimeFunc::transformDateTime($booking->getStartsAt()->format('Y-m-d H:i:s'))); ?>
+									</div>
+									</div>
+									<div style="text-align: right;">
+										<a href="<?php echo admin_url('post.php?post=' . $bookingPost->ID . '&action=edit'); ?>" class="button button-small">
+											<?php esc_html_e('View Booking', 'salon-booking-system') ?>
+										</a>
+									</div>
+								</div>
+								
+								<div style="font-size: 13px; color: #666; margin-bottom: 8px;">
+									<strong><?php esc_html_e('Services:', 'salon-booking-system') ?></strong>
+									<?php 
+									$services = array();
+									foreach ($booking->getBookingServices()->getItems() as $bookingService) {
+										$services[] = $bookingService->getService()->getName();
+									}
+									echo esc_html(implode(', ', $services));
+									?>
+								</div>
+								
+								<?php if ($markedAt): ?>
+								<div style="font-size: 12px; color: #999; padding-top: 8px; border-top: 1px solid #f0f0f0;">
+									<?php esc_html_e('Marked on:', 'salon-booking-system') ?>
+									<?php echo esc_html(SLN_TimeFunc::transformDateTime($markedAt)); ?>
+									<?php if ($markedByUser): ?>
+										<?php esc_html_e('by', 'salon-booking-system') ?>
+										<?php echo esc_html($markedByUser->display_name); ?>
+									<?php endif; ?>
+								</div>
+								<?php endif; ?>
+							</div>
+							<?php endforeach; ?>
+						</div>
+					<?php else: ?>
+						<p style="text-align: center; color: #666; padding: 40px 20px; font-style: italic;">
+							<?php esc_html_e('This customer has no no-show history.', 'salon-booking-system') ?>
+						</p>
+					<?php endif; ?>
+				</div>
+			</div>
+		</div>
+		<?php endif; // End customer isEmpty check ?>
+		<!-- No-Show History Section END -->
 
 		<?php if ($customer->getBookings()): ?>
 			<div class="sln-box--sub row">

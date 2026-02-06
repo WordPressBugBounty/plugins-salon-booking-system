@@ -65,13 +65,13 @@ jQuery(function ($) {
         .trigger("change");
 
     $("#_sln_service_lock_for_service")
-    .on("change", function () {
-        $(this)
-            .closest(".row")
-            .find(".sln-service-lock-interval")
-            .toggleClass("hide", !$(this).prop("checked"));
-    })
-    .trigger("change");
+        .on("change", function () {
+            $(this)
+                .closest(".row")
+                .find(".sln-service-lock-interval")
+                .toggleClass("hide", !$(this).prop("checked"));
+        })
+        .trigger("change");
 
     $("#_sln_service_multiple_attendants_for_service")
         .on("change", function () {
@@ -237,4 +237,20 @@ function sln_dataAttendant($) {
         });
         $(this).html(selectHtml).trigger("change");
     });
+
+    // Show/hide max variable duration field based on variable duration checkbox
+    $('#_sln_service_variable_duration').on('change', function () {
+        if ($(this).is(':checked')) {
+            $('.sln-service-max-variable-duration-wrapper').removeClass('hide');
+        } else {
+            $('.sln-service-max-variable-duration-wrapper').addClass('hide');
+        }
+    });
+
+    // Initialize on page load
+    if ($('#_sln_service_variable_duration').is(':checked')) {
+        $('.sln-service-max-variable-duration-wrapper').removeClass('hide');
+    } else {
+        $('.sln-service-max-variable-duration-wrapper').addClass('hide');
+    }
 }

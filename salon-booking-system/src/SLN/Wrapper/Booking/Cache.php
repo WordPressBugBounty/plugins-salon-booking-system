@@ -27,7 +27,18 @@ class SLN_Wrapper_Booking_Cache extends SLN_Wrapper_Booking_AbstractCache
     {
         $ret = parent::getDay($day);
 
-        return apply_filters('sln.booking_cache.getDay', $ret, $day);
+        $filtered = apply_filters('sln.booking_cache.getDay', $ret, $day);
+        
+        // PHP 8+ compatibility: Ensure filtered result is always an array
+        if (!is_array($filtered)) {
+            return array(
+                'free_slots' => array(),
+                'busy_slots' => array(),
+                'status' => 'filter_error'
+            );
+        }
+        
+        return $filtered;
     }
 
     public function getFullDays()

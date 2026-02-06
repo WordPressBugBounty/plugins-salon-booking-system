@@ -58,11 +58,11 @@ class SLN_Helper_CalendarEvent implements ArrayAccess{
 		$event = new SLN_Helper_CalendarEvent;
 		$event->setPlugin($plugin);
 		$event->id = $booking->getId();
-		$event->title = mb_convert_encoding($calendar->getTitle($booking), 'UTF-8', 'UTF-8');
-		$event->customer = mb_convert_encoding($booking->getDisplayName(), 'UTF-8', 'UTF-8');
+		$event->title = SLN_Func::safe_encoding($calendar->getTitle($booking), 'UTF-8', 'UTF-8');
+		$event->customer = SLN_Func::safe_encoding($booking->getDisplayName(), 'UTF-8', 'UTF-8');
 		$event->customerId = $booking->getUserId();
 		$event->amount = $format->money($booking->getAmount()+$discountAmount, false, true);
-		$event->deposit = $format->money($discountAmount, false, true);
+		$event->discount = $format->money($discountAmount, false, true);
 		$event->deposit = $format->money($booking->getDeposit(), false, true);
 		$event->due = $format->money($booking->getAmount(), false, true);
 		$event->displayClass = ($event->isNonWorkingTime($booking) ? '' : "event-" . SLN_Enum_BookingStatus::getColor($booking->getStatus()));
@@ -91,11 +91,11 @@ class SLN_Helper_CalendarEvent implements ArrayAccess{
 		$event = new SLN_Helper_CalendarEvent();
 		$event->setPlugin($plugin);
 		$event->id = $booking->getId();
-		$event->title = $isMain ? mb_convert_encoding($calendar->getTitle($booking), 'UTF-8', 'UTF-8') : '';
+		$event->title = $isMain ? SLN_Func::safe_encoding($calendar->getTitle($booking), 'UTF-8', 'UTF-8') : '';
 		$event->from = $isMain ? $format->time($booking->getStartsAt()) : '';
 		$event->to = $isMain ? $format->time($booking->getEndsAt()) : '';
 		$event->main = $isMain;
-		$event->customer = mb_convert_encoding($booking->getDisplayName(), 'UTF-8', 'UTF-8');
+		$event->customer = SLN_Func::safe_encoding($booking->getDisplayName(), 'UTF-8', 'UTF-8');
 		$event->customerId = $booking->getUserId();
 		$event->amount = $format->money($booking->getAmount() + $discountAmount, false, true);
 		$event->discount = $format->money($discountAmount, false, true);
@@ -106,9 +106,9 @@ class SLN_Helper_CalendarEvent implements ArrayAccess{
 		$event->top = $top;
 		$event->lines = max($linesInEvent, 1);
 		$event->display_state = $displayState;
-		$event->calendar_day = $calendar->getAttendantMode() ? $event->getCalendarDayAssistant($booking, $bookingService) : ($isMain ? mb_convert_encoding($event->getCalendarDay($booking), 'UTF-8', 'UTF-8'): '');
+		$event->calendar_day = $calendar->getAttendantMode() ? $event->getCalendarDayAssistant($booking, $bookingService) : ($isMain ? SLN_Func::safe_encoding($event->getCalendarDay($booking), 'UTF-8', 'UTF-8'): '');
 		$event = apply_filters('sln.action.ajaxcalendar.wrapBooking', $event, $booking);
-		$event->tooltipTitle = mb_convert_encoding($calendar->getTitle($booking), 'UTF-8', 'UTF-8');
+		$event->tooltipTitle = SLN_Func::safe_encoding($calendar->getTitle($booking), 'UTF-8', 'UTF-8');
 		return $event;
 	}
 

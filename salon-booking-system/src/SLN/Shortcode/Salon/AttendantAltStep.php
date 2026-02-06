@@ -14,7 +14,8 @@ class SLN_Shortcode_Salon_AttendantAltStep extends SLN_Shortcode_Salon_Attendant
 
         foreach ($bookingServices->getItems() as $bookingService) {
             $service = $bookingService->getService();
-            if (!$service->isAttendantsEnabled()) {
+            // Add null check to prevent fatal error
+            if (!$service || !$service->isAttendantsEnabled()) {
                 continue;
             }
             $tmp = $service->getAttendantsIds();
@@ -63,12 +64,27 @@ class SLN_Shortcode_Salon_AttendantAltStep extends SLN_Shortcode_Salon_Attendant
 
         foreach ($bookingServices->getItems() as $bookingService) {
             $service = $bookingService->getService();
-            if (!$service->isAttendantsEnabled()) {
-                $ret[$service->getId()] = 0;
+            // Add null check to prevent fatal error
+            if (!$service || !$service->isAttendantsEnabled()) {
+                if ($service) {
+                    $ret[$service->getId()] = 0;
+                }
                 continue;
             }
 
-            if (empty($selected[$service->getId()]) || (isset($_POST['attendant_auto']) && $_POST['attendant_auto'] !== true)) {
+            // Check if "Choose assistant for me" was selected (empty value)
+            $isAutoAttendant = empty($selected[$service->getId()]);
+            
+            if ($isAutoAttendant) {
+                // SMART AVAILABILITY: When "Choose assistant for me" + feature enabled
+                // Don't pre-assign random assistant - let date/time check ALL assistants
+                if ($this->getPlugin()->getSettings()->isAutoAttendantCheckEnabled()) {
+                    // Set to false (marker for auto-assignment after date/time selection)
+                    $ret[$service->getId()] = false;
+                    continue;
+                }
+                
+                // LEGACY BEHAVIOR: Random assignment when feature disabled
                 $errors = 1;
                 while (!empty($errors)) {
                     $index = mt_rand(0, count($availAttsForEachService[$service->getId()]) - 1);
@@ -111,7 +127,8 @@ class SLN_Shortcode_Salon_AttendantAltStep extends SLN_Shortcode_Salon_Attendant
         $availAtts = null;
         foreach ($bookingServices->getItems() as $bookingService) {
             $service = $bookingService->getService();
-            if (!$service->isAttendantsEnabled()) {
+            // Add null check to prevent fatal error
+            if (!$service || !$service->isAttendantsEnabled()) {
                 continue;
             }
             if (is_null($availAtts)) {
@@ -125,7 +142,8 @@ class SLN_Shortcode_Salon_AttendantAltStep extends SLN_Shortcode_Salon_Attendant
 
                 return false;
             }
-            if($service->isMultipleAttendantsForServiceEnabled() && count($availAtts) < $service->getCountMultipleAttendants()){
+            // Add null/array check for PHP 8.x compatibility
+            if($service->isMultipleAttendantsForServiceEnabled() && is_array($availAtts) && count($availAtts) < $service->getCountMultipleAttendants()){
                 $this->addError(
                     sprintf(
                         // translators: %1$s will be replaced by the service name, %2$s will be replaced by the service count multiple attendants
@@ -137,8 +155,36 @@ class SLN_Shortcode_Salon_AttendantAltStep extends SLN_Shortcode_Salon_Attendant
                 return false;
             }
         }
-        if (!$selected || isset($_POST['attendant_auto']) && $_POST['attendant_auto'] == true) {
-            $attId = 0;
+        
+        // Check if "Choose assistant for me" was selected (empty value)
+        $isAutoAttendant = !$selected;
+        
+        if ($isAutoAttendant) {
+            // SMART AVAILABILITY: When "Choose assistant for me" + feature enabled
+            // Don't pre-assign random assistant - let date/time check ALL assistants
+            if ($this->getPlugin()->getSettings()->isAutoAttendantCheckEnabled()) {
+                // Return false for all services (marker for auto-assignment after date/time selection)
+                $ret = array();
+                foreach ($bookingServices->getItems() as $bookingService) {
+                    $service = $bookingService->getService();
+                    if ($service && $service->isAttendantsEnabled()) {
+                        $ret[$service->getId()] = false;
+                    } elseif ($service) {
+                        $ret[$service->getId()] = 0;
+                    }
+                }
+                return $ret;
+            }
+            
+            // LEGACY BEHAVIOR: Random assignment when feature disabled
+            // Add null check for PHP 8.x compatibility
+            if (is_array($availAtts) && count($availAtts)) {
+                $index = mt_rand(0, count($availAtts) - 1);
+                $attId = array_values($availAtts)[$index];
+                $selected = $attId;
+            } else {
+                $attId = 0;
+            }
         }
         else {
             $attId = $selected;
@@ -149,8 +195,11 @@ class SLN_Shortcode_Salon_AttendantAltStep extends SLN_Shortcode_Salon_Attendant
         foreach ($bookingServices->getItems() as $bookingService) {
             $service = $bookingService->getService();
 
-            if (!$service->isAttendantsEnabled()) {
-                $ret[$service->getId()] = 0;
+            // Add null check to prevent fatal error
+            if (!$service || !$service->isAttendantsEnabled()) {
+                if ($service) {
+                    $ret[$service->getId()] = 0;
+                }
                 continue;
             }
             if($service->isMultipleAttendantsForServiceEnabled() && !empty($atId)){

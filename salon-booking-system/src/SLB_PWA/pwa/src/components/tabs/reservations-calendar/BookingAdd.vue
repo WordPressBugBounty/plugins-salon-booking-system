@@ -34,14 +34,19 @@ export default {
 </script>
 
 <style scoped>
-.booking-add.available,
+/* Base styling - unavailable slots (RED) */
 .booking-add {
   display: flex;
   align-items: center;
-  color: #04409F;
+  color: #dc3545; /* Red for unavailable slots */
   font-size: 35px;
   cursor: pointer !important;
   line-height: 1;
+}
+
+/* Available slots (BLUE) - keep current brand color */
+.booking-add.available {
+  color: #04409F; /* Blue for available slots */
 }
 
 .booking-add svg,

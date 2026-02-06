@@ -84,13 +84,6 @@ class SLN_PostType_Attendant extends SLN_PostType_Abstract {
 			$this->getPostType() === $_GET['post_type']) {
 
 			wp_enqueue_script('salon-admin-attendant-edit-js', SLN_PLUGIN_URL . '/js/admin/adminAttendantEdit.js', array('jquery'), SLN_Action_InitScripts::ASSETS_VERSION, true);
-
-                        $event = 'Page views of back-end plugin pages';
-                        $data  = array(
-                            'page' => 'assistants',
-                        );
-
-                        SLN_Action_InitScripts::mixpanelTrack($event, $data);
                 }
 
 	}

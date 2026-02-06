@@ -26,6 +26,15 @@ if ($plugin->getSettings()->isDisabled()) {
 	<?php
 	include '_errors.php';
 	include '_additional_errors.php';
+	
+	// Display session/cookie warning if present
+	if (!empty($sessionWarning)) {
+		?>
+		<div class="sln-alert sln-alert--problem sln-alert--session-warning">
+			<p><strong><?php esc_html_e('Warning:', 'salon-booking-system'); ?></strong> <?php echo wp_kses_post($sessionWarning); ?></p>
+		</div>
+		<?php
+	}
 	?>
 	<?php if ($size == '900') { ?>
 		<div class="row sln-box--main sln-box--flatbottom--phone">
@@ -40,5 +49,32 @@ if ($plugin->getSettings()->isDisabled()) {
 	<?php include "_form_actions.php" ?>
         <input type="hidden" name="sln[customer_timezone]" value="<?php echo esc_html($bb->get('customer_timezone')) ?>">
 	</form>
+	
+	<script>
+	jQuery(document).ready(function($) {
+		// Check if cookies are enabled in the browser
+		function checkCookiesEnabled() {
+			// Try to set a test cookie
+			document.cookie = "sln_cookie_test=1; path=/; SameSite=Lax";
+			var cookiesEnabled = document.cookie.indexOf("sln_cookie_test=") !== -1;
+			
+			// Clean up test cookie
+			document.cookie = "sln_cookie_test=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+			
+			return cookiesEnabled;
+		}
+		
+		// Only show warning on first step
+		if ($('#salon-step-services').length && !checkCookiesEnabled()) {
+			var warningHtml = '<div class="sln-alert sln-alert--problem sln-alert--cookie-warning">' +
+				'<p><strong><?php esc_html_e('Warning:', 'salon-booking-system'); ?></strong> ' +
+				'<?php esc_html_e('Cookies are disabled in your browser.', 'salon-booking-system'); ?></p>' +
+				'<p><?php esc_html_e('The booking process requires cookies to work properly. Please enable cookies and reload the page.', 'salon-booking-system'); ?></p>' +
+				'</div>';
+			
+			$('#salon-step-services form').prepend(warningHtml);
+		}
+	});
+	</script>
 	<?php
 }

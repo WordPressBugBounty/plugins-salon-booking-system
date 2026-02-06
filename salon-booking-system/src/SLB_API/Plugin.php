@@ -40,7 +40,7 @@ class Plugin {
 
     public function rest_api_init()
     {
-        add_filter('rest_pre_dispatch', array($this, 'handle_rest_user'), 10, 3);
+        add_filter('rest_authentication_errors', array($this, 'handle_rest_authentication'), 100, 1);
         $this->register_rest_routes();
     }
 
@@ -60,6 +60,8 @@ class Plugin {
             '\\SLB_API\\Controller\\Users_Controller',
             '\\SLB_API\\Controller\\AvailabilityBooking_Controller',
             '\\SLB_API\\Controller\\App_Controller',
+            '\\SLB_API\\Controller\\Shops_Controller',
+            '\\SLB_API\\Controller\\NoShow_Controller',
         );
 
         foreach ( $controllers as $controller ) {
@@ -68,28 +70,53 @@ class Plugin {
         }
     }
 
-    public function handle_rest_user($dispatch_result, $server, $request)
+    public function handle_rest_authentication($result)
     {
-        if (stristr($request->get_route(), self::BASE_API) === false) {
-            return $dispatch_result;
+        // If another authentication method already succeeded or failed, respect it
+        if ($result !== null) {
+            return $result;
         }
 
-        if (stristr($request->get_route(), '/login') !== false) {
-            return $dispatch_result;
+        // Only handle our API routes
+        $request_uri = $_SERVER['REQUEST_URI'] ?? '';
+        $is_salon_api = (stristr($request_uri, self::BASE_API) !== false);
+        
+        if (!$is_salon_api) {
+            return $result;
         }
 
+        // Allow login endpoint without authentication
+        if (stristr($request_uri, '/login') !== false) {
+            return $result;
+        }
+
+        // Check if user is already logged in via WordPress cookies
+        // This happens when API is called from admin area
+        $current_user_id = get_current_user_id();
+        if ($current_user_id > 0) {
+            // User is authenticated via WordPress session
+            return true;
+        }
+
+        // Check for Bearer token (external API access)
         $token_helper   = new TokenHelper();
         $request_helper = new RequestHelper();
 
         $access_token = $request_helper->getAccessToken();
 
-        if (empty($access_token) || !$token_helper->isValidUserAccessToken($access_token)) {
-            return new WP_Error( 'salon_rest_cannot_view', __( 'Sorry, you access token incorrect.', 'salon-booking-system' ), array( 'status' => rest_authorization_required_code() ));
+        if (!empty($access_token) && $token_helper->isValidUserAccessToken($access_token)) {
+            // Valid Bearer token, set current user
+            $user_id = $token_helper->getUserIdByAccessToken($access_token);
+            wp_set_current_user($user_id);
+            return true;
         }
-
-	$user_id = $token_helper->getUserIdByAccessToken($access_token);
-
-        wp_set_current_user($user_id);
+        
+        // No valid authentication found
+        return new WP_Error(
+            'salon_rest_cannot_view',
+            __('Sorry, you access token incorrect.', 'salon-booking-system'),
+            array('status' => rest_authorization_required_code())
+        );
     }
 
 }

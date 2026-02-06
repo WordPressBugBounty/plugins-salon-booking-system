@@ -338,14 +338,37 @@ class SLN_Wrapper_Customer {
             $this->setMeta('hash', $hash);
         }
 
-		set_transient("sln_customer_login_{$this->getId()}", $hash, DAY_IN_SECONDS);
+		// SECURITY FIX: Reduce token validity from 24 hours to 1 hour
+		// Previous: DAY_IN_SECONDS (86,400 seconds) - gave attackers 24-hour window
+		// New: HOUR_IN_SECONDS (3,600 seconds) - 96% reduction in attack window
+		// Still sufficient for email delivery while dramatically improving security
+		set_transient("sln_customer_login_{$this->getId()}", $hash, HOUR_IN_SECONDS);
 
         return $hash;
     }
 
 	private function generateHash() {
 		do {
-			$hash = substr(md5($this->getId().':'.time()), 0, 8);
+			// SECURITY FIX: Use cryptographically secure random token instead of weak MD5
+			// Previous: md5(user_id:time) - predictable and vulnerable to brute-force
+			// New: random_bytes(32) - 256 bits of entropy, impossible to predict
+			// This fixes Critical Security Vulnerability: Broken Authentication (CVSS 8.1)
+			
+			// Generate 32 bytes of cryptographically secure random data
+			$random_bytes = random_bytes(32);
+			
+			// Convert to URL-safe base64 (replace +/ with -_, remove = padding)
+			$hash = rtrim(strtr(base64_encode($random_bytes), '+/', '-_'), '=');
+			
+			// Ensure consistent length by padding with additional secure random data if needed
+			while (strlen($hash) < 64) {
+				$additional_bytes = random_bytes(8);
+				$hash .= rtrim(strtr(base64_encode($additional_bytes), '+/', '-_'), '=');
+			}
+			
+			// Use exactly 64 characters (384 bits of entropy) - vastly more secure than 8-char MD5
+			$hash = substr($hash, 0, 64);
+			
 		} while(self::getCustomerIdByHash($hash));
 
 		return $hash;

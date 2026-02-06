@@ -5,15 +5,20 @@ class SLN_Action_Ajax_RescheduleBookingCheckDate extends SLN_Action_Ajax_Abstrac
 	public function execute() {
 		$handler = new SLN_Action_Ajax_CheckDateAlt( $this->plugin );
 
-		$date = sanitize_text_field( wp_unslash( $_POST['_sln_booking_date'] ) );
-		$time = sanitize_text_field( wp_unslash( $_POST['_sln_booking_time'] ) );
+		$date = isset($_POST['_sln_booking_date']) ? sanitize_text_field( wp_unslash( $_POST['_sln_booking_date'] ) ) : '';
+		$time = isset($_POST['_sln_booking_time']) ? sanitize_text_field( wp_unslash( $_POST['_sln_booking_time'] ) ) : '';
 
-		$timezone = sanitize_text_field( wp_unslash( $_POST['customer_timezone'] ) );
+		// Validate date is not empty
+		if (empty($date)) {
+			throw new Exception('Missing date in rescheduling request. Please select a date.');
+		}
+
+		$timezone = isset($_POST['customer_timezone']) ? sanitize_text_field( wp_unslash( $_POST['customer_timezone'] ) ) : '';
 
                 if ($this->plugin->getSettings()->isDisplaySlotsCustomerTimezone() && $timezone) {
                     $date = SLN_Func::filter( sanitize_text_field( wp_unslash( $_POST['_sln_booking_date'] ) ), 'date' );
                     $time = SLN_Func::filter( sanitize_text_field( wp_unslash( $_POST['_sln_booking_time'] ) ), 'time' );
-                    $dateTime = (new SLN_DateTime($date . ' ' . $time, new DateTimeZone($timezone)))->setTimezone(SLN_DateTime::getWpTimezone());
+                    $dateTime = (new SLN_DateTime($date . ' ' . $time, SLN_Func::createDateTimeZone($timezone)))->setTimezone(SLN_DateTime::getWpTimezone());
                     $date = $this->plugin->format()->date($dateTime);
                     $time = $this->plugin->format()->time($dateTime);
                 }
@@ -37,7 +42,7 @@ class SLN_Action_Ajax_RescheduleBookingCheckDate extends SLN_Action_Ajax_Abstrac
 		$time = SLN_Func::filter( sanitize_text_field( wp_unslash( $_POST['_sln_booking_time'] ) ), 'time' );
 
                 if ($this->plugin->getSettings()->isDisplaySlotsCustomerTimezone() && $timezone) {
-                    $dateTime = (new SLN_DateTime($date . ' ' . $time, new DateTimeZone($timezone)))->setTimezone(SLN_DateTime::getWpTimezone());
+                    $dateTime = (new SLN_DateTime($date . ' ' . $time, SLN_Func::createDateTimeZone($timezone)))->setTimezone(SLN_DateTime::getWpTimezone());
                     $date = $dateTime->format('Y-m-d');
                     $time = $dateTime->format('H:i');
                 }

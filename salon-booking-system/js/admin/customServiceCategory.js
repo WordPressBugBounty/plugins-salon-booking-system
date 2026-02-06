@@ -91,11 +91,7 @@ function sln_categoryLogo($) {
     });
 
     $("[data-action=select-file-logo]").on("change", function() {
-        $(this)
-            .closest("form")
-            .find("input:first")
-            .trigger("click");
-            var reader = new FileReader();
+        var reader = new FileReader();
 
         reader.onload = function (e) {
             $("#logo img").attr("src", e.target.result);

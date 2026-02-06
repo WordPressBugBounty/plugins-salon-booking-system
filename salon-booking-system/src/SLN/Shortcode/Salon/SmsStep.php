@@ -12,13 +12,31 @@ class SLN_Shortcode_Salon_SmsStep extends SLN_Shortcode_Salon_AbstractUserStep
 
         if (!$valid) {
             if (!isset($_POST['sln_verification'])) {
+                // Check phone from multiple sources
                 $values = isset($_SESSION['sln_detail_step']) ? $_SESSION['sln_detail_step'] : array();
-                if (isset($values['phone'])) {
+                $phone = isset($values['phone']) ? $values['phone'] : '';
+                
+                // If not in session, check logged-in user's phone
+                if (empty($phone) && is_user_logged_in()) {
+                    $user_id = get_current_user_id();
+                    $phone = get_user_meta($user_id, '_sln_phone', true);
+                }
+                
+                // Get booking builder for phone and SMS prefix
+                $bb = $this->getPlugin()->getBookingBuilder();
+                
+                // If still empty, check booking builder
+                if (empty($phone)) {
+                    $phone = $bb->get('phone');
+                }
+                
+                if (!empty($phone)) {
                     $_SESSION['sln_sms_tests']++;
                     $_SESSION['sln_sms_code'] = rand(0, 999999);
                     try {
-						$sms_prefix = $_SESSION['sln_detail_step']['sms_prefix'] ?? '';
-                        $this->sendSms($values['phone'], $_SESSION['sln_sms_code'], $sms_prefix);
+                        $sms_prefix = isset($values['sms_prefix']) ? $values['sms_prefix'] : 
+                                     ($bb->get('sms_prefix') ?? '');
+                        $this->sendSms($phone, $_SESSION['sln_sms_code'], $sms_prefix);
                     } catch (Exception $e) {
                         $this->addError($e->getMessage());
                     }
@@ -91,9 +109,14 @@ class SLN_Shortcode_Salon_SmsStep extends SLN_Shortcode_Salon_AbstractUserStep
         return __('SMS', 'salon-booking-system');
     }
     public function isValid() {
-        $check = isset($_SESSION['sln_sms_dontcheck']) && $_SESSION['sln_sms_dontcheck'];
+        // Skip SMS step if already verified
+        $already_verified = isset($_SESSION['sln_sms_valid']) && $_SESSION['sln_sms_valid'];
+        
+        // Skip SMS step if explicitly told to skip (e.g., after fbphone step)
+        $dont_check = isset($_SESSION['sln_sms_dontcheck']) && $_SESSION['sln_sms_dontcheck'];
         unset($_SESSION['sln_sms_dontcheck']);
 
-        return $check || parent::isValid();
+        // Skip if verified or told to skip, otherwise validate normally
+        return $already_verified || $dont_check || parent::isValid();
     }
 }

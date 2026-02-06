@@ -18,6 +18,24 @@ $current = $salon->getCurrentStep();
 $count   = count($steps);
 $style = $salon->getStyleShortcode();
 $size = SLN_Enum_ShortcodeStyle::getSize($style);
+$ajaxSecurity = wp_create_nonce('ajax_post_validation');
+$builder = $plugin->getBookingBuilder();
+$clientIdFieldValue = $builder->getClientId();
+$lastBookingObject = $builder->getLastBooking();
+$lastBookingId = $lastBookingObject ? $lastBookingObject->getId() : null;
+if (!empty($clientIdFieldValue)) {
+    echo '<input type="hidden" name="sln_client_id" value="' . esc_attr($clientIdFieldValue) . '">';
+}
+echo '<input type="hidden" name="action" value="salon">';
+echo '<input type="hidden" name="method" value="salonStep">';
+echo '<input type="hidden" name="security" value="' . esc_attr($ajaxSecurity) . '">';
+if (!empty($lastBookingId)) {
+    echo '<input type="hidden" name="sln_booking_id" value="' . esc_attr($lastBookingId) . '">';
+}
+if (isset($_GET['lang'])) {
+    echo '<input type="hidden" name="lang" value="' . esc_attr(sanitize_text_field(wp_unslash($_GET['lang']))) . '">';
+}
+
 foreach ($steps as $step_iter) {
     $i++;
     if ($current == $step_iter) {

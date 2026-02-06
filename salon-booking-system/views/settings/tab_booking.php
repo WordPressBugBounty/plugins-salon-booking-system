@@ -6,6 +6,7 @@ sum(
 	// link anchor, link text
 	array('#sln-pause_booking_service', __('Pause booking service', 'salon-booking-system')),
 	array('#sln-availability_mode', __('Availability mode', 'salon-booking-system')),
+	array('#sln-nested_bookings', __('Nested bookings', 'salon-booking-system')),
 	array('#sln-customers_per_session', __('Customers per session', 'salon-booking-system')),
 	array('#sln-session_average_duration', __('Session average duration', 'salon-booking-system')),
 	array('#sln-booking_steps_order', __('Booking steps order', 'salon-booking-system')),
@@ -22,6 +23,7 @@ sum(
 <?php
 echo $plugin->loadView('settings/_tab_booking_status');
 echo $plugin->loadView('settings/_tab_booking_availability');
+echo $plugin->loadView('settings/_tab_booking_nested_bookings');
 ?>
 <div class="row">
     <div id="sln-customers_per_session" class="col-xs-12 col-sm-6 col-md-6">

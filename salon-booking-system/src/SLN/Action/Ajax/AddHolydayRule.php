@@ -23,7 +23,15 @@ class SLN_Action_Ajax_AddHolydayRule extends SLN_Action_Ajax_Abstract
 			$data['to_time']	= sanitize_text_field(wp_unslash($_POST['rule']['to_time']));
 			$data['daily']		= true;
 			$data['is_manual']	= true;
+			
+			// DEBUG: Log what we're storing
+			error_log('AddHolydayRule: Storing rule - ' . print_r($data, true));
 
+			// FIX: Don't truncate overnight locks for manual time slot blocking
+			// The original logic would destroy locks that span midnight (e.g., 23:00-01:00)
+			// by truncating them to just one interval (e.g., 23:00-23:30)
+			// This is now commented out to preserve the full time range selected by users
+			/*
 			if($data['from_date'] != $data['to_date']) {
 				$toTime = new DateTime($data['to_date'] . ' ' . $data['to_time']);
 				$toTimeHour = (int)$toTime->format('H');
@@ -36,6 +44,7 @@ class SLN_Action_Ajax_AddHolydayRule extends SLN_Action_Ajax_Abstract
 					$data['to_time'] = $endTime->format('H:i');
 				}
 			}
+			*/
 			$attId                  = sanitize_text_field(wp_unslash($_POST['attendant_id']));
 			if(!empty($data['from_date']) && !empty($data['to_date']) && !empty($data['from_time']) && !empty($data['to_time']) && $this->validateDate($data['from_date']) && $this->validateDate($data['to_date']) ){
                             if (empty($attId)) {
@@ -46,23 +55,23 @@ class SLN_Action_Ajax_AddHolydayRule extends SLN_Action_Ajax_Abstract
 
                                     $holidays_rules[] = $data;
 
-                                    $settings->set('holidays_daily', $holidays_rules);
-                                    $settings->save();
-                                }
+                                $settings->set('holidays_daily', $holidays_rules);
+                                $settings->save();
+                            }
 
-                                $bc = $plugin->getBookingCache();
-                                $bc->refresh($data['from_date'],$data['to_date']);
+                            $bc = $plugin->getBookingCache();
+                            $bc->refreshAll(); // Full refresh - holiday rules affect all dates
                             } else {
                                 $applied = apply_filters('sln.add-holiday-rule.add-holidays-daily-assistants', false, $data, $attId);
 
                                 if (!$applied) {
                                     $attendant        = $plugin->createAttendant($attId);
-                                    $holidays_rules   = $attendant->getMeta('holidays_daily')?:array();
-                                    $holidays_rules[] = $data;
-                                    $attendant->setMeta('holidays_daily', $holidays_rules);
-                                }
-                                $bc = $plugin->getBookingCache();
-                                $bc->refresh($data['from_date'],$data['to_date']);
+                                $holidays_rules   = $attendant->getMeta('holidays_daily')?:array();
+                                $holidays_rules[] = $data;
+                                $attendant->setMeta('holidays_daily', $holidays_rules);
+                            }
+                            $bc = $plugin->getBookingCache();
+                            $bc->refreshAll(); // Full refresh - assistant rules affect all dates
                             }
 			}else{
 				$this->addError(__("Something gone wrong with the selection. Please reselect the holyday.", 'salon-booking-system'));
@@ -77,13 +86,13 @@ class SLN_Action_Ajax_AddHolydayRule extends SLN_Action_Ajax_Abstract
                 $assistants                 = $plugin->getRepository(SLN_Plugin::POST_TYPE_ATTENDANT)->getAll();
 
                 foreach ($assistants as $att) {
-                    $holidays_rules = $att->getMeta('holidays_daily')?:array();
+                    $att_holidays_rules = $att->getMeta('holidays_daily')?:array();
 
-                    foreach ($holidays_rules as &$rule) {
+                    foreach ($att_holidays_rules as &$rule) {
                         $rule['assistant_id'] = $att->getId();
                     }
 
-                    $holidays_assistants_rules[$att->getId()] = $holidays_rules;
+                    $holidays_assistants_rules[$att->getId()] = $att_holidays_rules;
                 }
 
 		$holidays_assistants_rules = apply_filters('sln.get-day-holidays-assistants-rules', $holidays_assistants_rules, $assistants);

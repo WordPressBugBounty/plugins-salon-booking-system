@@ -132,6 +132,13 @@ abstract class SLN_Helper_Availability_AbstractDayBookings
         $now = clone $this->getDate();
         $now->setTime($hour, $minutes ? $minutes : 0);
         $time = $now->format('H:i');
+        
+        // Don't count bookings in break slots (where nested bookings are allowed)
+        if (isset($this->timeslots[$time]['break']) && !empty($this->timeslots[$time]['break'])) {
+            SLN_Plugin::addLog(sprintf('[countBookingsByHour] %s is a break slot - returning 0 (allows nested)', $time));
+            return 0;
+        }
+        
         $bookings = isset($this->timeslots[$time]['booking']) ? $this->timeslots[$time]['booking'] : array();
         return count($bookings);
     }
@@ -199,7 +206,7 @@ abstract class SLN_Helper_Availability_AbstractDayBookings
     /**
      * @return SLN_Wrapper_Booking[]
      */
-    protected function getBookings()
+    public function getBookings()
     {
         return $this->bookings;
     }
@@ -212,6 +219,17 @@ abstract class SLN_Helper_Availability_AbstractDayBookings
     public function getTimeslots()
     {
         return $this->timeslots;
+    }
+
+    public function isBreakSlot(\DateTimeInterface $time)
+    {
+        $now = $this->getTime($time->format('H'), $time->format('i'));
+        $key = $now->format('H:i');
+        if (!isset($this->timeslots[$key]['break'])) {
+            return false;
+        }
+
+        return !empty($this->timeslots[$key]['break']);
     }
 
 }

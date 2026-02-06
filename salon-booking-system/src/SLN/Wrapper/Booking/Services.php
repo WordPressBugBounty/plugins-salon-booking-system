@@ -104,13 +104,14 @@ final class SLN_Wrapper_Booking_Services {
                 if (isset($item['service'])) {
                     $sId = intval($item['service']);
                 }
-				if (isset($item['attendant'])) {
-					if(!is_array($item['attendant'])){
-						$atId = intval($item['attendant']);
-					}else{
-						$atId = array_map('intval', $item['attendant']);
-					}
+			if (isset($item['attendant'])) {
+				if(!is_array($item['attendant'])){
+					// SMART AVAILABILITY: Preserve false marker for auto-assignment
+					$atId = ($item['attendant'] === false) ? false : intval($item['attendant']);
+				}else{
+					$atId = array_map('intval', $item['attendant']);
 				}
+			}
 				if (isset($item['price'])) {
 					$price = floatval($item['price']);
 				}
@@ -129,7 +130,8 @@ final class SLN_Wrapper_Booking_Services {
 			} else {
                 $sId  = intval($i);
 				if(!is_array($item)){
-					$atId = intval($item);
+					// SMART AVAILABILITY: Preserve false marker for auto-assignment
+					$atId = ($item === false) ? false : intval($item);
 				}else{
 					$atId = array_map('intval', $item);
 				}
@@ -180,7 +182,18 @@ final class SLN_Wrapper_Booking_Services {
                 'resource'      => $resource,
 			);
 			if(!$parallelExec){
-				$minutes = SLN_Func::getMinutesFromDuration($duration) + SLN_Func::getMinutesFromDuration($break) + $offset;
+				// Optimize scheduling: next service starts during previous service's break
+				// This maximizes attendant utilization and minimizes customer waiting time
+				$breakMinutes = SLN_Func::getMinutesFromDuration($break);
+				$breakFrom = isset($break_duration_data['from']) ? intval($break_duration_data['from']) : 0;
+				
+				if ($breakMinutes > 0 && $breakFrom > 0 && isset($break_duration_data['to']) && $break_duration_data['to'] > $breakFrom) {
+					// Service has a break - next service starts at break position
+					$minutes = $breakFrom + $offset;
+				} else {
+					// No break - next service starts after current service ends
+					$minutes = SLN_Func::getMinutesFromDuration($duration) + $offset;
+				}
 				$startsAtClone->modify('+'.$minutes.' minutes');
 			}
 		}

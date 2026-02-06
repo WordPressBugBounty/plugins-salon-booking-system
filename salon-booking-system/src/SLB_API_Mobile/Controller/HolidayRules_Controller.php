@@ -136,6 +136,10 @@ class HolidayRules_Controller extends REST_Controller
             $data['daily'] = true;
             $data['is_manual'] = (bool)$request->get_param('is_manual');
 
+            // FIX: Prevent same-day end-of-day locks from extending to next day
+            // When to_time is '00:00' and dates are the same, this represents locking until
+            // end of day (e.g., 23:30-24:00). The problematic logic below would incorrectly
+            // treat this as an overnight lock and truncate it. Skip this logic for same-day locks.
             if ($data['from_date'] != $data['to_date']) {
                 $toTime = new DateTime($data['to_date'] . ' ' . $data['to_time']);
                 $toTimeHour = (int)$toTime->format('H');
@@ -151,6 +155,8 @@ class HolidayRules_Controller extends REST_Controller
 
             $assistants_mode = (bool)$request->get_param('assistants_mode');
             $shop_id = $request->get_param('shop');
+            // Get date parameter for assistants_rules response (use from_date if date not provided)
+            $date = $request->get_param('date') ?: $data['from_date'];
 
             if ($this->validateDate($data['from_date']) && $this->validateDate($data['to_date'])) {
                 if (!empty($data['assistant_id'])) {
@@ -168,24 +174,24 @@ class HolidayRules_Controller extends REST_Controller
                     if (!$applied) {
                         $holidays_rules = $settings->get('holidays_daily') ?: array();
                         $holidays_rules[] = $data;
-                        $settings->set('holidays_daily', $holidays_rules);
-                        $settings->save();
-                    }
+                    $settings->set('holidays_daily', $holidays_rules);
+                    $settings->save();
                 }
-
-                $bc = $plugin->getBookingCache();
-                $bc->refresh($data['from_date'], $data['to_date']);
-
-                if ($assistants_mode) {
-                    return $this->success_response([
-                        'success' => 1,
-                        'rules' => $settings->get('holidays_daily') ?: array(),
-                        'assistants_rules' => $this->get_assistants_rules($shop_id, $date)
-                    ]);
-                }
-
-                return $this->success_response(['items' => $this->get_holidays($data['from_date'])]);
             }
+            }
+
+            $bc = $plugin->getBookingCache();
+            $bc->refreshAll(); // Full refresh - holiday rules affect all dates
+
+            if ($assistants_mode) {
+                return $this->success_response([
+                    'success' => 1,
+                    'rules' => $settings->get('holidays_daily') ?: array(),
+                    'assistants_rules' => $this->get_assistants_rules($shop_id, $date)
+                ]);
+            }
+
+            return $this->success_response(['items' => $this->get_holidays($data['from_date'])]);
 
             throw new \Exception(__('Invalid date format', 'salon-booking-system'));
 
@@ -259,7 +265,7 @@ class HolidayRules_Controller extends REST_Controller
                     $attendant->setMeta('holidays', $search_holidays);
 
                     $bc = $plugin->getBookingCache();
-                    $bc->refresh($data['from_date'], $data['to_date']);
+                    $bc->refreshAll(); // Full refresh - assistant rules affect all dates
                 }
             } else {
                 $applied = apply_filters('sln.remove-holiday-rule.remove-holidays-daily', false, $data);
@@ -286,7 +292,7 @@ class HolidayRules_Controller extends REST_Controller
             }
 
             $bc = $plugin->getBookingCache();
-            $bc->refresh($data['from_date'], $data['to_date']);
+            $bc->refreshAll(); // Full refresh - holiday rules affect all dates
 
             if ($assistants_mode) {
                 $holidays_rules = $settings->get('holidays_daily') ?: array();

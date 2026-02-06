@@ -1,0 +1,544 @@
+[2025-10-22 12:20:12] === EARLY REQUEST LOG ===
+Array
+(
+    [timestamp] => 2025-10-22 12:20:12
+    [action] => salon
+    [method] => CheckServices
+    [session_status] => 1
+    [session_id] => 
+    [has_session_class] => NO
+    [user_logged_in] => NO
+    [user_ip] => ::1
+    [user_agent] => Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.
+    [referer] => http://localhost:10018/booking/
+    [request_uri] => /wp-admin/admin-ajax.php?lang=en
+)
+
+[2025-10-22 12:20:12] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:20:12] Session data keys: SLN_Wrapper_Booking_Builder, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:20:14] === EARLY REQUEST LOG ===
+Array
+(
+    [timestamp] => 2025-10-22 12:20:14
+    [action] => salon
+    [method] => CheckServices
+    [session_status] => 1
+    [session_id] => 
+    [has_session_class] => NO
+    [user_logged_in] => NO
+    [user_ip] => ::1
+    [user_agent] => Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.
+    [referer] => http://localhost:10018/booking/
+    [request_uri] => /wp-admin/admin-ajax.php?lang=en
+)
+
+[2025-10-22 12:20:14] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:20:14] Session data keys: SLN_Wrapper_Booking_Builder, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:20:16] === EARLY REQUEST LOG ===
+Array
+(
+    [timestamp] => 2025-10-22 12:20:16
+    [action] => salon
+    [method] => salonStep
+    [session_status] => 1
+    [session_id] => 
+    [has_session_class] => NO
+    [user_logged_in] => NO
+    [user_ip] => ::1
+    [user_agent] => Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.
+    [referer] => http://localhost:10018/booking/
+    [request_uri] => /wp-admin/admin-ajax.php?lang=en
+)
+
+[2025-10-22 12:20:16] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:20:16] Session data keys: SLN_Wrapper_Booking_Builder, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:20:16] === EARLY REQUEST LOG ===
+Array
+(
+    [timestamp] => 2025-10-22 12:20:16
+    [action] => salon
+    [method] => CheckServices
+    [session_status] => 1
+    [session_id] => 
+    [has_session_class] => NO
+    [user_logged_in] => NO
+    [user_ip] => ::1
+    [user_agent] => Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.
+    [referer] => http://localhost:10018/booking/
+    [request_uri] => /wp-admin/admin-ajax.php?lang=en
+)
+
+[2025-10-22 12:20:16] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:20:16] Session data keys: SLN_Wrapper_Booking_Builder, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:20:17] === EARLY REQUEST LOG ===
+Array
+(
+    [timestamp] => 2025-10-22 12:20:17
+    [action] => salon
+    [method] => salonStep
+    [session_status] => 1
+    [session_id] => 
+    [has_session_class] => NO
+    [user_logged_in] => NO
+    [user_ip] => ::1
+    [user_agent] => Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.
+    [referer] => http://localhost:10018/booking/
+    [request_uri] => /wp-admin/admin-ajax.php?lang=en
+)
+
+[2025-10-22 12:20:17] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:20:17] Session data keys: SLN_Wrapper_Booking_Builder, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:20:18] === EARLY REQUEST LOG ===
+Array
+(
+    [timestamp] => 2025-10-22 12:20:18
+    [action] => salon
+    [method] => salonStep
+    [session_status] => 1
+    [session_id] => 
+    [has_session_class] => NO
+    [user_logged_in] => NO
+    [user_ip] => ::1
+    [user_agent] => Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.
+    [referer] => http://localhost:10018/booking/
+    [request_uri] => /wp-admin/admin-ajax.php?lang=en
+)
+
+[2025-10-22 12:20:18] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:20:18] Session data keys: SLN_Wrapper_Booking_Builder, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:20:20] === EARLY REQUEST LOG ===
+Array
+(
+    [timestamp] => 2025-10-22 12:20:20
+    [action] => salon
+    [method] => checkDate
+    [session_status] => 1
+    [session_id] => 
+    [has_session_class] => NO
+    [user_logged_in] => NO
+    [user_ip] => ::1
+    [user_agent] => Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.
+    [referer] => http://localhost:10018/booking/
+    [request_uri] => /wp-admin/admin-ajax.php?lang=en
+)
+
+[2025-10-22 12:20:21] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:20:21] Session data keys: SLN_Wrapper_Booking_Builder, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:20:21] === EARLY REQUEST LOG ===
+Array
+(
+    [timestamp] => 2025-10-22 12:20:21
+    [action] => salon
+    [method] => salonStep
+    [session_status] => 1
+    [session_id] => 
+    [has_session_class] => NO
+    [user_logged_in] => NO
+    [user_ip] => ::1
+    [user_agent] => Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.
+    [referer] => http://localhost:10018/booking/
+    [request_uri] => /wp-admin/admin-ajax.php?lang=en
+)
+
+[2025-10-22 12:20:21] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:20:21] Session data keys: SLN_Wrapper_Booking_Builder, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:20:29] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:20:29] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:20:49] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:20:49] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:21:08] === EARLY REQUEST LOG ===
+Array
+(
+    [timestamp] => 2025-10-22 12:21:08
+    [action] => salon
+    [method] => salonStep
+    [session_status] => 1
+    [session_id] => 
+    [has_session_class] => NO
+    [user_logged_in] => NO
+    [user_ip] => ::1
+    [user_agent] => Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.
+    [referer] => http://localhost:10018/booking/
+    [request_uri] => /wp-admin/admin-ajax.php?lang=en
+)
+
+[2025-10-22 12:21:08] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:21:08] Session data keys: SLN_Wrapper_Booking_Builder, SLN_Wrapper_Booking_Builderlast_id, sln_sms_dontcheck
+[2025-10-22 12:21:20] === EARLY REQUEST LOG ===
+Array
+(
+    [timestamp] => 2025-10-22 12:21:20
+    [action] => salon
+    [method] => salonStep
+    [session_status] => 1
+    [session_id] => 
+    [has_session_class] => NO
+    [user_logged_in] => YES
+    [user_ip] => ::1
+    [user_agent] => Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.
+    [referer] => http://localhost:10018/booking/
+    [request_uri] => /wp-admin/admin-ajax.php?lang=en
+)
+
+[2025-10-22 12:21:20] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:21:20] Session data keys: SLN_Wrapper_Booking_Builder, SLN_Wrapper_Booking_Builderlast_id, sln_sms_dontcheck
+[2025-10-22 12:21:54] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:21:54] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:22:54] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:22:54] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:24:55] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:24:55] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:26:56] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:26:56] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:27:38] === EARLY REQUEST LOG ===
+Array
+(
+    [timestamp] => 2025-10-22 12:27:38
+    [action] => salon
+    [method] => CheckServices
+    [session_status] => 1
+    [session_id] => 
+    [has_session_class] => NO
+    [user_logged_in] => YES
+    [user_ip] => ::1
+    [user_agent] => Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.
+    [referer] => http://localhost:10018/booking/
+    [request_uri] => /wp-admin/admin-ajax.php?lang=en
+)
+
+[2025-10-22 12:27:38] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:27:38] Session data keys: SLN_Wrapper_Booking_Builder, SLN_Wrapper_Booking_Builderlast_id, sln_sms_dontcheck
+[2025-10-22 12:28:57] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:28:57] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:30:59] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:30:59] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:32:59] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:32:59] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:35:50] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:35:50] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:36:51] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:36:51] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:38:11] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:38:11] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:44:15] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:44:15] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:44:57] === EARLY REQUEST LOG ===
+Array
+(
+    [timestamp] => 2025-10-22 12:44:57
+    [action] => salon
+    [method] => CheckServices
+    [session_status] => 1
+    [session_id] => 
+    [has_session_class] => NO
+    [user_logged_in] => NO
+    [user_ip] => ::1
+    [user_agent] => Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.
+    [referer] => http://localhost:10018/booking/
+    [request_uri] => /wp-admin/admin-ajax.php?lang=nb
+)
+
+[2025-10-22 12:44:57] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:44:57] Session data keys: SLN_Wrapper_Booking_Builder, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:44:59] === EARLY REQUEST LOG ===
+Array
+(
+    [timestamp] => 2025-10-22 12:44:59
+    [action] => salon
+    [method] => CheckServices
+    [session_status] => 1
+    [session_id] => 
+    [has_session_class] => NO
+    [user_logged_in] => NO
+    [user_ip] => ::1
+    [user_agent] => Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.
+    [referer] => http://localhost:10018/booking/
+    [request_uri] => /wp-admin/admin-ajax.php?lang=nb
+)
+
+[2025-10-22 12:44:59] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:44:59] Session data keys: SLN_Wrapper_Booking_Builder, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:45:00] === EARLY REQUEST LOG ===
+Array
+(
+    [timestamp] => 2025-10-22 12:45:00
+    [action] => salon
+    [method] => salonStep
+    [session_status] => 1
+    [session_id] => 
+    [has_session_class] => NO
+    [user_logged_in] => NO
+    [user_ip] => ::1
+    [user_agent] => Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.
+    [referer] => http://localhost:10018/booking/
+    [request_uri] => /wp-admin/admin-ajax.php?lang=nb
+)
+
+[2025-10-22 12:45:00] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:45:00] Session data keys: SLN_Wrapper_Booking_Builder, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:45:00] === EARLY REQUEST LOG ===
+Array
+(
+    [timestamp] => 2025-10-22 12:45:00
+    [action] => salon
+    [method] => CheckServices
+    [session_status] => 1
+    [session_id] => 
+    [has_session_class] => NO
+    [user_logged_in] => NO
+    [user_ip] => ::1
+    [user_agent] => Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.
+    [referer] => http://localhost:10018/booking/
+    [request_uri] => /wp-admin/admin-ajax.php?lang=nb
+)
+
+[2025-10-22 12:45:00] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:45:00] Session data keys: SLN_Wrapper_Booking_Builder, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:45:02] === EARLY REQUEST LOG ===
+Array
+(
+    [timestamp] => 2025-10-22 12:45:02
+    [action] => salon
+    [method] => salonStep
+    [session_status] => 1
+    [session_id] => 
+    [has_session_class] => NO
+    [user_logged_in] => NO
+    [user_ip] => ::1
+    [user_agent] => Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.
+    [referer] => http://localhost:10018/booking/
+    [request_uri] => /wp-admin/admin-ajax.php?lang=nb
+)
+
+[2025-10-22 12:45:02] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:45:02] Session data keys: SLN_Wrapper_Booking_Builder, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:45:03] === EARLY REQUEST LOG ===
+Array
+(
+    [timestamp] => 2025-10-22 12:45:03
+    [action] => salon
+    [method] => salonStep
+    [session_status] => 1
+    [session_id] => 
+    [has_session_class] => NO
+    [user_logged_in] => NO
+    [user_ip] => ::1
+    [user_agent] => Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.
+    [referer] => http://localhost:10018/booking/
+    [request_uri] => /wp-admin/admin-ajax.php?lang=nb
+)
+
+[2025-10-22 12:45:03] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:45:03] Session data keys: SLN_Wrapper_Booking_Builder, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:45:05] === EARLY REQUEST LOG ===
+Array
+(
+    [timestamp] => 2025-10-22 12:45:05
+    [action] => salon
+    [method] => checkDate
+    [session_status] => 1
+    [session_id] => 
+    [has_session_class] => NO
+    [user_logged_in] => NO
+    [user_ip] => ::1
+    [user_agent] => Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.
+    [referer] => http://localhost:10018/booking/
+    [request_uri] => /wp-admin/admin-ajax.php?lang=nb
+)
+
+[2025-10-22 12:45:06] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:45:06] Session data keys: SLN_Wrapper_Booking_Builder, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:45:06] === EARLY REQUEST LOG ===
+Array
+(
+    [timestamp] => 2025-10-22 12:45:06
+    [action] => salon
+    [method] => salonStep
+    [session_status] => 1
+    [session_id] => 
+    [has_session_class] => NO
+    [user_logged_in] => NO
+    [user_ip] => ::1
+    [user_agent] => Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.
+    [referer] => http://localhost:10018/booking/
+    [request_uri] => /wp-admin/admin-ajax.php?lang=nb
+)
+
+[2025-10-22 12:45:06] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:45:06] Session data keys: SLN_Wrapper_Booking_Builder, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:45:08] === EARLY REQUEST LOG ===
+Array
+(
+    [timestamp] => 2025-10-22 12:45:08
+    [action] => salon
+    [method] => salonStep
+    [session_status] => 1
+    [session_id] => 
+    [has_session_class] => NO
+    [user_logged_in] => NO
+    [user_ip] => ::1
+    [user_agent] => Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.
+    [referer] => http://localhost:10018/booking/
+    [request_uri] => /wp-admin/admin-ajax.php?lang=nb
+)
+
+[2025-10-22 12:45:08] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:45:08] Session data keys: SLN_Wrapper_Booking_Builder, SLN_Wrapper_Booking_Builderlast_id, sln_sms_dontcheck
+[2025-10-22 12:45:13] === EARLY REQUEST LOG ===
+Array
+(
+    [timestamp] => 2025-10-22 12:45:13
+    [action] => salon
+    [method] => salonStep
+    [session_status] => 1
+    [session_id] => 
+    [has_session_class] => NO
+    [user_logged_in] => YES
+    [user_ip] => ::1
+    [user_agent] => Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.
+    [referer] => http://localhost:10018/booking/
+    [request_uri] => /wp-admin/admin-ajax.php?lang=nb
+)
+
+[2025-10-22 12:45:15] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:45:15] Session data keys: SLN_Wrapper_Booking_Builder, SLN_Wrapper_Booking_Builderlast_id, sln_sms_dontcheck
+[2025-10-22 12:45:33] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:45:33] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:47:37] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:47:37] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:48:37] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:48:37] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:50:38] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:50:38] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:52:40] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:52:40] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:53:40] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:53:40] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:55:41] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:55:41] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:57:42] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:57:42] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 12:59:44] WARNING: Session being destroyed with booking data present
+[2025-10-22 12:59:44] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 13:01:45] WARNING: Session being destroyed with booking data present
+[2025-10-22 13:01:45] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 13:02:44] WARNING: Session being destroyed with booking data present
+[2025-10-22 13:02:44] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 13:03:44] WARNING: Session being destroyed with booking data present
+[2025-10-22 13:03:44] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 13:04:45] WARNING: Session being destroyed with booking data present
+[2025-10-22 13:04:45] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 16:03:42] WARNING: Session being destroyed with booking data present
+[2025-10-22 16:03:42] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 16:03:44] WARNING: Session being destroyed with booking data present
+[2025-10-22 16:03:44] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 16:04:50] === EARLY REQUEST LOG ===
+Array
+(
+    [timestamp] => 2025-10-22 16:04:50
+    [action] => salon
+    [method] => calendar
+    [session_status] => 1
+    [session_id] => 
+    [has_session_class] => NO
+    [user_logged_in] => YES
+    [user_ip] => ::1
+    [user_agent] => Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.
+    [referer] => http://localhost:10018/wp-admin/admin.php?page=salon
+    [request_uri] => /wp-admin/admin-ajax.php?lang=en&action=salon&method=calendar&security=f2c6e18ead&from=1759269600000&to=1761951600000&offset=-120&offsetEnd=-60&assistant_position=&_assistants_mode=false
+)
+
+[2025-10-22 16:04:50] WARNING: Session being destroyed with booking data present
+[2025-10-22 16:04:50] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 16:04:50] === EARLY REQUEST LOG ===
+Array
+(
+    [timestamp] => 2025-10-22 16:04:50
+    [action] => salon
+    [method] => calendar
+    [session_status] => 1
+    [session_id] => 
+    [has_session_class] => NO
+    [user_logged_in] => YES
+    [user_ip] => ::1
+    [user_agent] => Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.
+    [referer] => http://localhost:10018/wp-admin/admin.php?page=salon
+    [request_uri] => /wp-admin/admin-ajax.php?lang=en&action=salon&method=calendar&security=f2c6e18ead&from=1759269600000&to=1761951600000&offset=-120&offsetEnd=-60&assistant_position=&_assistants_mode=false
+)
+
+[2025-10-22 16:04:50] WARNING: Session being destroyed with booking data present
+[2025-10-22 16:04:50] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 16:04:57] === EARLY REQUEST LOG ===
+Array
+(
+    [timestamp] => 2025-10-22 16:04:57
+    [action] => salon
+    [method] => calendar
+    [session_status] => 1
+    [session_id] => 
+    [has_session_class] => NO
+    [user_logged_in] => YES
+    [user_ip] => ::1
+    [user_agent] => Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.
+    [referer] => http://localhost:10018/wp-admin/admin.php?page=salon
+    [request_uri] => /wp-admin/admin-ajax.php?lang=en&action=salon&method=calendar&security=f2c6e18ead&from=1761170400000&to=1761256800000&offset=-120&offsetEnd=-120&assistant_position=&_assistants_mode=false
+)
+
+[2025-10-22 16:04:58] WARNING: Session being destroyed with booking data present
+[2025-10-22 16:04:58] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 16:05:00] === EARLY REQUEST LOG ===
+Array
+(
+    [timestamp] => 2025-10-22 16:05:00
+    [action] => salon
+    [method] => calendar
+    [session_status] => 1
+    [session_id] => 
+    [has_session_class] => NO
+    [user_logged_in] => YES
+    [user_ip] => ::1
+    [user_agent] => Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.
+    [referer] => http://localhost:10018/wp-admin/admin.php?page=salon
+    [request_uri] => /wp-admin/admin-ajax.php?lang=en&action=salon&method=calendar&security=f2c6e18ead&from=1761170400000&to=1761256800000&offset=-120&offsetEnd=-120&assistant_position=&_assistants_mode=true
+)
+
+[2025-10-22 16:05:00] WARNING: Session being destroyed with booking data present
+[2025-10-22 16:05:00] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 16:05:40] === EARLY REQUEST LOG ===
+Array
+(
+    [timestamp] => 2025-10-22 16:05:40
+    [action] => salon
+    [method] => calendar
+    [session_status] => 1
+    [session_id] => 
+    [has_session_class] => NO
+    [user_logged_in] => YES
+    [user_ip] => ::1
+    [user_agent] => Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.
+    [referer] => http://localhost:10018/wp-admin/admin.php?page=salon
+    [request_uri] => /wp-admin/admin-ajax.php?lang=en&action=salon&method=calendar&security=f2c6e18ead&from=1761170400000&to=1761256800000&offset=-120&offsetEnd=-120&assistant_position=6%2C7&_assistants_mode=true
+)
+
+[2025-10-22 16:05:40] WARNING: Session being destroyed with booking data present
+[2025-10-22 16:05:40] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 16:05:50] WARNING: Session being destroyed with booking data present
+[2025-10-22 16:05:50] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id
+[2025-10-22 16:06:30] === EARLY REQUEST LOG ===
+Array
+(
+    [timestamp] => 2025-10-22 16:06:30
+    [action] => salon
+    [method] => calendar
+    [session_status] => 1
+    [session_id] => 
+    [has_session_class] => NO
+    [user_logged_in] => YES
+    [user_ip] => ::1
+    [user_agent] => Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.
+    [referer] => http://localhost:10018/wp-admin/admin.php?page=salon
+    [request_uri] => /wp-admin/admin-ajax.php?lang=en&action=salon&method=calendar&security=f2c6e18ead&from=1761170400000&to=1761256800000&offset=-120&offsetEnd=-120&assistant_position=6%2C7&_assistants_mode=true
+)
+
+[2025-10-22 16:06:30] WARNING: Session being destroyed with booking data present
+[2025-10-22 16:06:30] Session data keys: SLN_Wrapper_Booking_Builder, sln_sms_dontcheck, shop_tab, SLN_Wrapper_Booking_Builderlast_id

@@ -19,8 +19,13 @@ class SLN_Action_CancelBookings {
 		if ($payOffsetEnabled) {
 			$p->addLog($type.' execution started');
 			$bookings = $this->getBookings();
+			$trashAction = new SLN_Action_TrashCancelledBooking($p);
+
 			foreach ( $bookings as $booking ) {
 				$booking->setStatus(SLN_Enum_BookingStatus::CANCELED);
+
+				// Auto-trash if enabled (applies to auto-cancelled bookings too)
+				$trashAction->execute($booking);
 			}
 			$p->addLog($type.' execution ended');
 		}

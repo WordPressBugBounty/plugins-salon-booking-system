@@ -156,8 +156,8 @@ class SLN_Shortcode_SalonMyAccount_Details
         $timezone = $this->plugin->getSettings()->isDisplaySlotsCustomerTimezone() && isset($_POST['customer_timezone']) ? $_POST['customer_timezone'] : '';
 		return array(
             'id'          => $bId,
-            'date'        => $format->date($timezone ? $booking->getStartsAt()->setTimezone(new DateTimeZone($timezone)) : $booking->getStartsAt()),
-            'time'        => $format->time($timezone ? $booking->getStartsAt()->setTimezone(new DateTimeZone($timezone)) : $booking->getStartsAt()),
+            'date'        => $format->date($timezone ? $booking->getStartsAt()->setTimezone(SLN_Func::createDateTimeZone($timezone)) : $booking->getStartsAt()),
+            'time'        => $format->time($timezone ? $booking->getStartsAt()->setTimezone(SLN_Func::createDateTimeZone($timezone)) : $booking->getStartsAt()),
             'timestamp'   => $booking->getStartsAt()->getTimestamp(),
             'services'    => $serviceNames,
             'total'       => $total,

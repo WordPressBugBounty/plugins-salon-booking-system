@@ -140,6 +140,11 @@ class SLN_TimeFunc
 
     public static function evalPickedDate($date)
     {
+        // Handle empty or null dates
+        if (empty($date)) {
+            throw new Exception('Empty date provided to evalPickedDate');
+        }
+        
         if (strpos($date, '-'))
             return $date;
         $initial = $date;
@@ -147,6 +152,28 @@ class SLN_TimeFunc
         if ($f == SLN_Enum_DateFormat::_DEFAULT) {
             if(!strpos($date, ' ')) throw new Exception('bad date format, date ' . $initial . ' format: ' . $f);
             $date = explode(' ', $date);
+            
+            // Validate date array has required parts
+            if (count($date) < 2) {
+                throw new Exception('Invalid date format: ' . $initial . '. Expected format: "day month year" or "day monthname year"');
+            }
+            
+            // Handle case where day and month are concatenated (e.g., "30Oct" instead of "30 Oct")
+            if (count($date) == 2) {
+                // Split first part into day and month (e.g., "30Oct" -> "30" + "Oct")
+                if (preg_match('/^(\d+)([A-Za-z]+)$/', $date[0], $matches)) {
+                    $date = array($matches[1], $matches[2], $date[1]); // [day, month, year]
+                } else {
+                    // If can't split, the date format is invalid
+                    throw new Exception('Invalid date format: ' . $initial . '. Expected "day month year" but got only 2 parts.');
+                }
+            }
+            
+            // Validate we have at least 3 parts now (day, month, year)
+            if (count($date) < 3) {
+                throw new Exception('Invalid date format: ' . $initial . '. Expected format: "day month year" with 3 parts.');
+            }
+            
             switch(count(explode(' ', SLN_Func::getMonths()[1]))){
                 case 1:
                     $k = self::guessMonthNum($date[1]);
@@ -180,6 +207,11 @@ class SLN_TimeFunc
 
     public static function guessMonthNum($monthName)
     {
+        // Check if the monthName is actually a year (4 digits) - indicates malformed date
+        if (preg_match('/^\d{4}$/', $monthName)) {
+            throw new \Exception(sprintf('Invalid date format: received year "%s" where month name was expected. Original date may be missing the month value.', $monthName));
+        }
+        
         $months = SLN_Func::getMonths();
         foreach ($months as $k => $v) {
             if ($monthName == $v) {
@@ -212,6 +244,22 @@ class SLN_TimeFunc
         if (empty($val)) {
             return null;
         }
+        
+        // FIRST: Handle 12-hour format (am/pm) - convert to 24-hour format
+        // This must be done BEFORE any other processing to avoid stripping am/pm indicators
+        $val = trim(strtolower($val));
+        $isPM = false;
+        $isAM = false;
+        
+        if (strpos($val, 'pm') !== false) {
+            $isPM = true;
+            $val = str_replace(['pm', ' '], '', $val);
+        } elseif (strpos($val, 'am') !== false) {
+            $isAM = true;
+            $val = str_replace(['am', ' '], '', $val);
+        }
+        
+        // Handle time strings without colon (e.g., '1100', '11')
         if (strpos($val, ':') === false) {
             if(strlen($val) == 2){
                 $val .= ':00';
@@ -219,7 +267,40 @@ class SLN_TimeFunc
                 $val = intval(substr($val, 0, 2)) . ':'. intval(substr($val, strlen($val)-2, 2));
             }
         }
-        return (new SLN_DateTime('1970-01-01 ' . sanitize_text_field($val)))->format('H:i');
+        
+        // Now handle time strings with colon (e.g., '11:', '11:5', '09:301')
+        $parts = explode(':', $val);
+        $hours = isset($parts[0]) ? intval($parts[0]) : 0;
+        $minutesStr = isset($parts[1]) && $parts[1] !== '' ? $parts[1] : '0';
+        
+        // Fix malformed minutes: if more than 2 digits, take only first 2 (09:301 -> 30)
+        if (strlen($minutesStr) > 2) {
+            $minutesStr = substr($minutesStr, 0, 2);
+        }
+        
+        $minutes = intval($minutesStr);
+        
+        // Apply 12-hour to 24-hour conversion
+        if ($isPM && $hours !== 12) {
+            $hours += 12;
+        } elseif ($isAM && $hours === 12) {
+            $hours = 0;
+        }
+        
+        // Validate hours and minutes
+        $hours = max(0, min(23, $hours));
+        $minutes = max(0, min(59, $minutes));
+        
+        // Reconstruct as properly formatted time
+        $val = sprintf('%02d:%02d', $hours, $minutes);
+        
+        try {
+            return (new SLN_DateTime('1970-01-01 ' . sanitize_text_field($val)))->format('H:i');
+        } catch (Exception $e) {
+            // If time parsing still fails, log and return default
+            SLN_Plugin::addLog('ERROR: Invalid time format "' . $val . '": ' . $e->getMessage());
+            return '00:00';
+        }
     }
 
     public static function getTimezoneWpSettingsOption() {

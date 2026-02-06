@@ -5,6 +5,7 @@
         inline
         autoApply
         noSwipe
+        :locale="this.getLabel('calendarLocale')"
         :enableTimePicker="false"
         :monthChangeOnScroll="false"
         @updateMonthYear="handleMonthYear"

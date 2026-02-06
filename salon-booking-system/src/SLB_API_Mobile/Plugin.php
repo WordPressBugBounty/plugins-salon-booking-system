@@ -100,6 +100,12 @@ class Plugin {
             return $dispatch_result;
         }
 
+        // Allow unauthenticated access to availability endpoints
+        if (stristr($request->get_route(), '/availability/intervals') !== false ||
+            stristr($request->get_route(), '/availability/stats') !== false) {
+            return $dispatch_result;
+        }
+
         $token_helper   = new TokenHelper();
         $request_helper = new RequestHelper();
 

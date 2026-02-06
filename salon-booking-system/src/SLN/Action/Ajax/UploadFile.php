@@ -15,8 +15,46 @@ class SLN_Action_Ajax_UploadFile extends SLN_Action_Ajax_Abstract
             if ( ! function_exists( 'wp_handle_upload' ) ) {
                 require_once( ABSPATH . 'wp-admin/includes/file.php' );
             }
-            $tmp_file  = $_FILES['file'];
-            $tmp_file['name'] = str_replace(' ','_',$tmp_file['name']);
+            
+            $tmp_file = $_FILES['file'];
+            
+            // Validate file before processing
+            if ($tmp_file['error'] !== UPLOAD_ERR_OK) {
+                $errors[] = __('File upload error occurred.', 'salon-booking-system');
+                $ret = array(
+                    'success' => false,
+                    'errors'  => $errors,
+                    'file'    => '',
+                );
+                return $ret;
+            }
+            
+            // Validate file type using WordPress function
+            $file_type = wp_check_filetype($tmp_file['name']);
+            if (empty($file_type['ext']) || empty($file_type['type'])) {
+                $errors[] = __('Invalid file type. Please upload a valid file.', 'salon-booking-system');
+                $ret = array(
+                    'success' => false,
+                    'errors'  => $errors,
+                    'file'    => '',
+                );
+                return $ret;
+            }
+            
+            // Validate file size (max 10MB)
+            $max_size = 10 * 1024 * 1024; // 10MB
+            if ($tmp_file['size'] > $max_size) {
+                $errors[] = __('File size exceeds maximum allowed size of 10MB.', 'salon-booking-system');
+                $ret = array(
+                    'success' => false,
+                    'errors'  => $errors,
+                    'file'    => '',
+                );
+                return $ret;
+            }
+            
+            // Sanitize filename
+            $tmp_file['name'] = sanitize_file_name(str_replace(' ','_',$tmp_file['name']));
             $file_name = $this->unique_filename(null, $tmp_file['name']);
 
             $upload_dir = wp_upload_dir();

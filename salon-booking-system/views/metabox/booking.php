@@ -338,31 +338,207 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                                 <?php esc_html_e('Rating', 'salon-booking-system') ?>
                             </label>
                             <div class="sln-rating">
-                                <input class="sln-rating__input sln-rating__input-0" checked type="radio" value="-1" id="skip-rating" name="rating-radio" autocomplete="off" />
+                                <?php $current_rating = (int) (method_exists($booking, 'getRating') ? $booking->getRating() : 0); ?>
+                                <input class="sln-rating__input sln-rating__input-0" type="radio" value="-1" id="skip-rating" name="rating-radio" autocomplete="off" <?php echo ($current_rating <= 0 ? 'checked' : ''); ?> />
                                 <label class="sln-rating__label hidden"></label>
-                                <input class="sln-rating__input sln-rating__input-1" type="radio" id="rt-1" value="1" name="rating-radio" autocomplete="off" />
+                                <input class="sln-rating__input sln-rating__input-1" type="radio" id="rt-1" value="1" name="rating-radio" autocomplete="off" <?php echo ($current_rating === 1 ? 'checked' : ''); ?> />
                                 <label class="sln-rating__label sln-rating__label-1" for="rt-1"></label>
-                                <input class="sln-rating__input sln-rating__input-2" type="radio" id="rt-2" value="2" name="rating-radio" autocomplete="off" />
+                                <input class="sln-rating__input sln-rating__input-2" type="radio" id="rt-2" value="2" name="rating-radio" autocomplete="off" <?php echo ($current_rating === 2 ? 'checked' : ''); ?> />
                                 <label class="sln-rating__label sln-rating__label-2" for="rt-2"></label>
-                                <input class="sln-rating__input sln-rating__input-3" type="radio" id="rt-3" value="3" name="rating-radio" autocomplete="off" />
+                                <input class="sln-rating__input sln-rating__input-3" type="radio" id="rt-3" value="3" name="rating-radio" autocomplete="off" <?php echo ($current_rating === 3 ? 'checked' : ''); ?> />
                                 <label class="sln-rating__label sln-rating__label-3" for="rt-3"></label>
-                                <input class="sln-rating__input sln-rating__input-4" type="radio" id="rt-4" value="4" name="rating-radio" autocomplete="off" />
+                                <input class="sln-rating__input sln-rating__input-4" type="radio" id="rt-4" value="4" name="rating-radio" autocomplete="off" <?php echo ($current_rating === 4 ? 'checked' : ''); ?> />
                                 <label class="sln-rating__label sln-rating__label-4" for="rt-4"></label>
-                                <input class="sln-rating__input sln-rating__input-5" type="radio" id="rt-5" value="5" name="rating-radio" autocomplete="off" />
+                                <input class="sln-rating__input sln-rating__input-5" type="radio" id="rt-5" value="5" name="rating-radio" autocomplete="off" <?php echo ($current_rating === 5 ? 'checked' : ''); ?> />
                                 <label class="sln-rating__label sln-rating__label-5" for="rt-5"></label>
                                 <!--<label class="skip-button" for="skip-rating">&times;</label>-->
                             </div>
+                            <?php if ($current_rating <= 0): ?>
+                                <div class="sln-rating__notice">
+                                    <small class="description"><?php esc_html_e('Not rated yet', 'salon-booking-system'); ?> &middot; 
+                                        <?php if (defined('SLN_VERSION_PAY') && SLN_VERSION_PAY): ?>
+                                            <a href="#" id="sln-request-feedback" data-booking-id="<?php echo (int) $booking->getId(); ?>" data-nonce="<?php echo esc_attr(wp_create_nonce('sln_send_feedback_' . (int) $booking->getId())); ?>"><?php esc_html_e('Request a feedback from customer by email', 'salon-booking-system'); ?></a>
+                                        <?php else: ?>
+                                            <span class="sln-profeature__tooltip-wrapper" title="<?php echo esc_attr__('Upgrade to PRO edition to use this feature', 'salon-booking-system'); ?>" style="cursor:not-allowed;opacity:.6;">
+                                                <?php esc_html_e('Request a feedback from customer by email', 'salon-booking-system'); ?>
+                                            </span>
+                                        <?php endif; ?>
+                                    </small>
+                                </div>
+                                <script>
+                                jQuery(function($){
+                                    $(document).on('click', '#sln-request-feedback', function(e){
+                                        e.preventDefault();
+                                        var $a = $(this);
+                                        var bid = $a.data('booking-id');
+                                        var nonce = $a.data('nonce');
+                                        $a.prop('disabled', true);
+                                        $.post(ajaxurl, { action: 'sln_send_feedback_email', booking_id: bid, nonce: nonce }, function(resp){
+                                            if(resp && resp.success){
+                                                alert('<?php echo esc_js(__('Feedback request sent.', 'salon-booking-system')); ?>');
+                                            } else {
+                                                alert('<?php echo esc_js(__('Could not send feedback request.', 'salon-booking-system')); ?>');
+                                            }
+                                        }).always(function(){
+                                            $a.prop('disabled', false);
+                                        });
+                                    });
+                                });
+                                </script>
+                            <?php else: ?>
+                                <?php
+                                // Fetch latest feedback comment (rating review)
+                                $comments = get_comments(array(
+                                    'post_id' => (int) $booking->getId(),
+                                    'type'    => 'sln_review',
+                                    'number'  => 1,
+                                    'status'  => 'all',
+                                    'orderby' => 'comment_date_gmt',
+                                    'order'   => 'DESC',
+                                ));
+                                if (!empty($comments)) {
+                                    $c = $comments[0];
+                                    $ts = strtotime($c->comment_date_gmt . ' GMT');
+                                    $dt = date_i18n(get_option('date_format') . ' ' . get_option('time_format'), $ts);
+                                    ?>
+                                    <div class="sln-rating__notice">
+                                        <small class="description">
+                                            <?php echo sprintf(
+                                                /* translators: 1: customer name, 2: date time */
+                                                esc_html__('Rated by %1$s on %2$s', 'salon-booking-system'),
+                                                esc_html($c->comment_author),
+                                                esc_html($dt)
+                                            ); ?>
+                                        </small>
+                                    </div>
+                                <?php } ?>
+                            <?php endif; ?>
                         </div>
                     <?php endif ?>
                     <!-- THIS IS THE BUNCH OF HTML TO SHOW FOR THE RATING -->
 
+                    <?php
+                    // No-Show Count and Toggle
+                    $customer = $booking->getCustomer();
+                    $bookingId = $booking->getId();
+                    $isNoShow = get_post_meta($bookingId, 'no_show', true);
+                    $customerId = $customer ? $customer->getId() : null;
+                    
+                    // Get customer no-show count
+                    $customerNoShowCount = 0;
+                    if ($customer && !$customer->isEmpty() && $customerId) {
+                        global $wpdb;
+                        
+                        // Get all bookings for this customer
+                        // Note: Don't filter by post_status - SLN uses custom statuses (sln-b-*)
+                        // Note: Filter by post_author in PHP to handle string/int comparison issues
+                        $allBookingsQuery = $wpdb->prepare(
+                            "SELECT p.ID, p.post_author
+                            FROM {$wpdb->posts} p
+                            WHERE p.post_type = %s",
+                            SLN_Plugin::POST_TYPE_BOOKING
+                        );
+                        $allBookingsRaw = $wpdb->get_results($allBookingsQuery);
+                        
+                        // Filter for matching customer ID (handles post_author stored as string vs int)
+                        $allBookings = array();
+                        foreach ($allBookingsRaw as $b) {
+                            if ($b->post_author == $customerId) {
+                                $allBookings[] = $b;
+                            }
+                        }
+                        
+                        // Count no-shows manually
+                        foreach ($allBookings as $customerBooking) {
+                            $noShowValue = get_post_meta($customerBooking->ID, 'no_show', true);
+                            if ($noShowValue == 1 || $noShowValue === '1') {
+                                $customerNoShowCount++;
+                            }
+                        }
+                    }
+                    ?>
+
+                    <!-- No-Show Tracking Section - 70% CTA Wrapper -->
+                    <div class="col-xs-12 col-sm-8 col-xl-6 sln-noshow-wrapper sln-profeature <?php echo !defined("SLN_VERSION_PAY") ? 'sln-profeature--disabled sln-profeature__tooltip-wrapper' : '' ?>">
+                        <?php echo $plugin->loadView(
+                            'metabox/_pro_feature_tooltip',
+                            array(
+                                'cta_url' => 'https://www.salonbookingsystem.com/homepage/plugin-pricing/?utm_source=noshow_tracking&utm_medium=free-edition-back-end&utm_campaign=unlock_feature&utm_id=GOPRO',
+                                'additional_classes' => 'sln-profeature--button--bare sln-profeature--noshow-tracking',
+                                'trigger' => 'sln-noshow-tracking',
+                            )
+                        ); ?>
+                        <label class="sln-booking-customer-score--title">
+                            <?php esc_html_e('No-show count', 'salon-booking-system') ?>
+                        </label>
+                        <div class="sln-noshow">
+                            <div class="sln-noshow-count">
+                                <span class="sln-noshow-count__value"><?php echo esc_html($customerNoShowCount); ?></span>
+                            </div>
+                            <div class="sln-noshow-toggle">
+                                <a href="#" 
+                                   id="sln-noshow-toggle-btn"
+                                   class="sln-noshow-toggle__button <?php echo $isNoShow ? 'active' : ''; ?>" 
+                                   data-bookingid="<?php echo esc_attr($bookingId); ?>" 
+                                   data-no-show="<?php echo $isNoShow ? '1' : '0'; ?>"
+                                   data-nonce="<?php echo esc_attr(wp_create_nonce('ajax_post_validation')); ?>"
+                                   aria-label="<?php esc_attr_e('Toggle no-show status', 'salon-booking-system'); ?>">
+                                    <i class="sln-icon sln-icon--no-show"></i>
+                                </a>
+                            </div>
+                        </div>
+                        <!-- Hidden field to persist no-show state on form submit -->
+                        <input type="hidden" id="_sln_booking_no_show" name="_sln_booking_no_show" value="<?php echo $isNoShow ? '1' : ''; ?>" />
+                    </div>
+                    <script type="text/javascript">
+                    jQuery(document).ready(function($) {
+                        $('#sln-noshow-toggle-btn').on('click', function(e) {
+                            e.preventDefault();
+                            
+                            // Check if in free edition disabled mode
+                            if ($(this).closest('.sln-profeature--disabled').length) {
+                                return false;
+                            }
+                            
+                            var $btn = $(this);
+                            var bookingId = $btn.data('bookingid');
+                            var currentNoShow = parseInt($btn.data('no-show'));
+                            var nonce = $btn.data('nonce');
+                            
+                            // Use unified no-show toggle function
+                            window.slnToggleNoShow({
+                                bookingId: bookingId,
+                                currentNoShow: currentNoShow,
+                                nonce: nonce,
+                                $button: $btn,
+                                onSuccess: function(data) {
+                                    // Update hidden form field for persistence on page save
+                                    $('#_sln_booking_no_show').val(data.noShow == 1 ? '1' : '');
+                                    
+                                    // Update count
+                                    var $count = $('.sln-noshow-count__value');
+                                    var oldCount = parseInt($count.text()) || 0;
+                                    var newCount = data.noShow == 1 ? oldCount + 1 : Math.max(0, oldCount - 1);
+                                    $count.text(newCount);
+                                }
+                            });
+                        });
+                    });
+                    </script>
+
                 </div>
                 <div class="row">
                     <div class="col-xs-12 col-md-6">
-                        <div class="sln-checkbox--nu- sln-switch">
+                        <div class="sln-checkbox--nu- sln-switch" id="sln-save-new-customer-wrapper">
                             <input type="checkbox" id="_sln_booking_createuser" name="_sln_booking_createuser" />
                             <label for="_sln_booking_createuser"><?php esc_html_e('Save as new customer', 'salon-booking-system') ?></label>
+                            <?php 
+                            // Only set origin on NEW bookings (preserve original booking channel)
+                            // Check if this booking already has an origin set
+                            if (!metadata_exists('post', $booking->getId(), '_sln_booking_origin_source')) : 
+                            ?>
                             <input type="hidden" id="_sln_booking_origin_source" name="_sln_booking_origin_source" value="<?php echo SLN_Enum_BookingOrigin::ORIGIN_ADMIN ?>" />
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -463,7 +639,7 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                 <div class="sln-box__fl__item sln-input--simple">
                     <div class="form-group sln_meta_field sln-select">
                         <label><?php esc_html_e('Duration', 'salon-booking-system'); ?></label>
-                        <input type="text" id="sln-duration" value="<?php echo esc_attr($booking->getDuration()->format('H:i')) ?>" class="form-control" />
+                        <input type="text" id="sln-duration" value="<?php echo esc_attr($booking->getDuration()->format('H:i')) ?>" class="form-control" readonly />
                     </div>
                 </div>
                 <div class="sln-box__fl__item sln-input--simple">
@@ -487,11 +663,13 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                 <?php endif; ?>
                 <?php if ($settings->isPayEnabled()) { ?>
                     <div class="sln-box__fl__item sln-input--simple">
-                        <?php $helper->showFieldText(
-                            $helper->getFieldName($postType, 'deposit'),
-                            __('Deposit', 'salon-booking-system') . ' ' . SLN_Enum_PaymentDepositType::getLabel($settings->getPaymentDepositValue()) . ' (' . $settings->getCurrencySymbol() . ')',
-                            $booking->getDeposit()
-                        ); ?>
+                        <div class="form-group sln_meta_field">
+                            <label for="<?php echo $helper->getFieldName($postType, 'deposit') ?>"><?php echo __('Deposit', 'salon-booking-system') . ' ' . SLN_Enum_PaymentDepositType::getLabel($settings->getPaymentDepositValue()) . ' (' . $settings->getCurrencySymbol() . ')' ?></label>
+                            <?php SLN_Form::fieldText(
+                                $helper->getFieldName($postType, 'deposit'),
+                                $booking->getDeposit()
+                            ); ?>
+                        </div>
                     </div>
                 <?php } ?>
                 <div class="sln-box__fl__item sln-input--simple">
@@ -577,10 +755,12 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                 <h4 class="sln-box-title--nu--sec">
                     <?php esc_html_e('Notes', 'salon-booking-system') ?>
                 </h4>
+                
+                <!-- Current Booking Notes (Editable) -->
                 <div class="row">
                     <div class="col-xs-12 col-sm-6">
                         <div class="form-group sln_meta_field sln-input--simple">
-                            <label><?php esc_html_e('Personal message', 'salon-booking-system'); ?></label>
+                            <label style="font-size: 0.8rem;"><?php esc_html_e('Current booking - customer message', 'salon-booking-system'); ?></label>
                             <?php SLN_Form::fieldTextarea(
                                 $helper->getFieldName($postType, 'note'),
                                 $booking->getNote()
@@ -589,7 +769,7 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                     </div>
                     <div class="col-xs-12 col-sm-6">
                         <div class="form-group sln_meta_field sln-input--simple">
-                            <label><?php esc_html_e('Administration notes', 'salon-booking-system'); ?></label>
+                            <label style="font-size: 0.8rem;"><?php esc_html_e('Current booking - administration note', 'salon-booking-system'); ?></label>
                             <?php SLN_Form::fieldTextarea(
                                 $helper->getFieldName($postType, 'admin_note'),
                                 $booking->getAdminNote()
@@ -597,9 +777,61 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                         </div>
                     </div>
                 </div>
+                
+                <!-- Customer Record Notes (Read-Only) -->
+                <?php 
+                $customer_id = $booking->getUserId();
+                // Only show customer record notes if customer has a valid user profile
+                if ($customer_id && $customer_id > 0 && get_userdata($customer_id)):
+                    $customer_personal_note = get_user_meta($customer_id, '_sln_personal_note', true);
+                    $customer_admin_note = get_user_meta($customer_id, '_sln_administration_note', true);
+                    $customer_edit_url = get_edit_user_link($customer_id);
+                ?>
+                <!-- Separator Row -->
+                <div class="row" style="margin: 20px 0;">
+                    <div class="col-xs-12">
+                        <hr style="border: 0; border-top: 1px solid #e5e5e5; margin: 0;">
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-xs-12 col-sm-6">
+                        <div class="form-group sln_meta_field sln-input--simple">
+                            <label style="display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem;">
+                                <span><?php esc_html_e('Customer record - personal note', 'salon-booking-system'); ?></span>
+                                <?php if ($customer_edit_url): ?>
+                                    <a href="<?php echo esc_url($customer_edit_url); ?>" target="_blank" class="sln-icon--customerurl" style="font-size: 13px; padding: 0; border: none; background: transparent; width: auto; height: auto;">
+                                        <?php esc_html_e('edit this field', 'salon-booking-system'); ?>
+                                    </a>
+                                <?php endif; ?>
+                            </label>
+                            <textarea class="form-control" rows="5" readonly style="background-color: #f5f5f5; cursor: not-allowed;"><?php echo esc_textarea($customer_personal_note); ?></textarea>
+                            <small class="form-text text-muted" style="color: #999; font-size: 12px; margin-top: 5px;">
+                                <?php esc_html_e('Read only field', 'salon-booking-system'); ?>
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-xs-12 col-sm-6">
+                        <div class="form-group sln_meta_field sln-input--simple">
+                            <label style="display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem;">
+                                <span><?php esc_html_e('Customer record - administration note', 'salon-booking-system'); ?></span>
+                                <?php if ($customer_edit_url): ?>
+                                    <a href="<?php echo esc_url($customer_edit_url); ?>" target="_blank" class="sln-icon--customerurl" style="font-size: 13px; padding: 0; border: none; background: transparent; width: auto; height: auto;">
+                                        <?php esc_html_e('edit this field', 'salon-booking-system'); ?>
+                                    </a>
+                                <?php endif; ?>
+                            </label>
+                            <textarea class="form-control" rows="5" readonly style="background-color: #f5f5f5; cursor: not-allowed;"><?php echo esc_textarea($customer_admin_note); ?></textarea>
+                            <small class="form-text text-muted" style="color: #999; font-size: 12px; margin-top: 5px;">
+                                <?php esc_html_e('Read only field', 'salon-booking-system'); ?>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                <?php endif; // End customer record notes check ?>
                 <!-- collapse END -->
             </div>
-        </div><!-- sln-booking__totals // END -->
+        </div><!-- sln-booking__notes // END -->
 
         <?php if (class_exists('\SalonSOAP\Addon')) { ?>
             <div id="sln-booking__soap" role="tabpanel" class="sln-box sln-box--main tab-pane sln-admin__tabpanel sln-admin__tabpanel--soap">
@@ -664,6 +896,7 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                 if( $('#_sln_booking_email').val() == ''){
                     $('[data-action="clone-edited-booking"]').addClass('hide-important');
                     $('[data-action="delete-edited-booking"]').addClass('hide-important');
+                    $('[data-action="save-edited-booking"]').addClass('hide-important');
                 }
                 jQuery('.sln-last-edit').html(jQuery('.booking-last-edit').html())
 
@@ -695,9 +928,13 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                     }
                 });
 
+                jQuery("[name=week_time]").on("change", function() {
+                    $("[name=unit_times_input]").trigger('click')
+                })
                 jQuery("[name=unit_times_input]").on("click", function() {
                         var times = parseInt($(this).val());
-
+                        var week_time = parseInt($('select[name="week_time"]').val());
+			            var label = times === 1 ? $('.times').data('text_s') : $('.times').data('text_m');
                         let dateStr = $('#_sln_booking_date').data('value').replace('00:00:00','').trim(); // '08/07/2025'
 
                         function parseFlexibleDate(dateStr) {
@@ -734,7 +971,7 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                         let date = parseFlexibleDate(dateStr);
 
                         if (date && !isNaN(date)) {
-                        date.setDate(date.getDate() + 7*times);
+                        date.setDate(date.getDate() + 7 * week_time *times);
 
                         var newDateStr =
                         String(date.getDate()).padStart(2, '0') + '/' +
@@ -742,6 +979,7 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                         date.getFullYear();
 
                         $('.time_until .time_date').text(newDateStr);
+                        $('.clone-info .times').text(label);
                         } else {
                         console.error("wrong date1: " + dateStr);
                         }
@@ -804,13 +1042,15 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                             $("[data-action=clone-edited-booking]").text($("[data-action=clone-edited-booking]").data('confirm'));
                             $("[data-action=clone-edited-booking]").addClass('confirm');
                             $('[data-action="delete-edited-booking"]').addClass('hide-important');
+                            $('[data-action="save-edited-booking"]').addClass('hide-important');
                             $('.clone-info').show();
                             return false;
                            }
                             if (sln_validateBooking()) {
                                 var bookingId = $('#post_ID').val();
                                 var unit_times = $('.clone-info input').val();
-                                var data = "&action=salon&method=DuplicateClone&bookingId="+bookingId+"&unit="+unit_times+"&security=" + salon.ajax_nonce;
+                                var week_time = $('.clone-info select').val();
+                                var data = "&action=salon&method=DuplicateClone&bookingId="+bookingId+"&unit="+unit_times+"&week_time="+week_time+"&security=" + salon.ajax_nonce;
                                 $.ajax({
                                     url: salon.ajax_url,
                                     data: data,
@@ -833,11 +1073,19 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                 <button type="button" class="sln-btn sln-btn--nu sln-btn--nu--highemph sln-btn--big" aria-hidden="true" data-action="save-edited-booking">
                     <?php esc_html_e('Save', 'salon-booking-system') ?>
                 </button>
-                <button type="button" class="sln-btn sln-btn--nu sln-btn--nu--lowhemph sln-btn--big" aria-hidden="true" data-confirm="<?php esc_html_e('Confirm', 'salon-booking-system') ?>" data-action="clone-edited-booking"><?php esc_html_e('Clone', 'salon-booking-system') ?></button>
                 <div class="clone-info" style="font-family: 'Open Sans';display:none;">
+                    <?php esc_html_e('Clone this booking', 'salon-booking-system') ?>
                     <input type="number" name="unit_times_input" min="1" value="1" style="width: 50px;"/>
-                    <span class="time_until" style="margin-left: 10px;font-size:13px;" ><?php esc_html_e('times until', 'salon-booking-system') ?> <span class="time_date">%date</span></span>
+                    <span class="times" data-text_s="<?php esc_html_e('time', 'salon-booking-system') ?>" data-text_m="<?php esc_html_e('times', 'salon-booking-system') ?>"><?php esc_html_e('time', 'salon-booking-system') ?></span>
+                    <select name="week_time" >
+                    <option value="1"><?php esc_html_e('every week', 'salon-booking-system') ?> </option>
+                    <option value="2"><?php esc_html_e('every two weeks', 'salon-booking-system') ?> </option>
+                    <option value="3"><?php esc_html_e('every three week', 'salon-booking-system') ?> </option>
+                    <option value="4"><?php esc_html_e('every four week', 'salon-booking-system') ?> </option>
+                    </select>
+                    <span class="time_until" style="margin-left: 10px;font-size:13px;" ><?php esc_html_e('until', 'salon-booking-system') ?> <span class="time_date">%date</span></span>
                 </div>
+                <button type="button" class="sln-btn sln-btn--nu sln-btn--nu--lowhemph sln-btn--big" aria-hidden="true" data-confirm="<?php esc_html_e('Confirm', 'salon-booking-system') ?>" data-action="clone-edited-booking"><?php esc_html_e('Clone', 'salon-booking-system') ?></button>
                 <button type="button" class="sln-btn sln-btn--nu sln-btn--nu--lowhemph sln-btn--big" aria-hidden="true" data-action="delete-edited-booking">
                     <?php esc_html_e('Delete', 'salon-booking-system') ?>
                 </button>

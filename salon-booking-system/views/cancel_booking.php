@@ -22,50 +22,51 @@ $format = $plugin->format();
 				<img 
 					src="<?php echo ($logo ? wp_get_attachment_image_url($logo, 'sln_gen_logo') : apply_filters('sln_default_email_logo', SLN_PLUGIN_URL . '/img/email/logo.png')); ?>"
 					<?php echo (!$logo ? '' : 'width="100"') ?>
-					alt="img"
-					border="0">
+			alt="img"
+			border="0">
+		</div>
+		<div>
+			<div class="sln-cancel-booking-block__header">
+				<?php echo ($settings->get('gen_name') ? $settings->get('gen_name') : get_bloginfo('name')); ?>
 			</div>
-			<div>
-				<div class="sln-cancel-booking-block__header">
-					<?php echo ($settings->get('gen_name') ? $settings->get('gen_name') : get_bloginfo('name')); ?>
+			<div class="sln-cancel-booking-block__body">
+				<div class="sln-cancel-booking-block__body__booking">
+					<?php esc_html_e('Booking ID'); ?> <b><?php echo $booking->getId(); ?></b> | <?php echo $format->date($booking->getDate()), ' @ ', $format->time($booking->getTime()); ?>
 				</div>
-				<div class="sln-cancel-booking-block__body">
-					<div class="sln-cancel-booking-block__body__booking">
-						<?php esc_html_e('Booking ID'); ?> <b><?php echo $booking->getId(); ?></b> | <?php echo $format->date($booking->getDate()), ' @ ', $format->time($booking->getTime()); ?>
+				<div class="sln-cancel-booking-block__body__action">
+					<?php if ($booking->hasStatus(SLN_Enum_BookingStatus::CANCELED)): ?>
+					<div class="sln-cancel-booking-block__body__action__booking-cancelled">
+						<?php esc_html_e('Booking is cancelled', 'salon-booking-system'); ?>
 					</div>
-					<div class="sln-cancel-booking-block__body__action">
-						<?php if ($booking->hasStatus(SLN_Enum_BookingStatus::CANCELED)): ?>
-						<div class="sln-cancel-booking-block__body__action__booking-cancelled">
-							<?php esc_html_e('Booking is cancelled', 'salon-booking-system'); ?>
-						</div>
-						<script>
-							setTimeout(function () {
-							window.location.href = '<?php echo $booking_url; ?>';
-							}, 1000);
-						</script>
-						<?php elseif (!$cancellation_enabled): ?>
-						<div class="sln-cancel-booking-block__body__action__cancellation-disabled">
-							<?php esc_html_e('Cancellation is disabled', 'salon-booking-system'); ?>
-						</div>
-						<?php elseif ($out_of_time): ?>
-						<div class="sln-cancel-booking-block__body__action__out_of_time">
-							<?php esc_html_e('Out of time', 'salon-booking-system'); ?>
-						</div>
-						<?php else: ?>
-						<div class="sln-cancel-booking-block__body__action__form-block">
-							<form action="<?php echo $booking->getCancelUrl(); ?>" method="post" class="sln-cancel-booking-block__body__action__form-block__form">
-								<input type="hidden" name="cancel_booking" value="1">
-								<div>
-									<button class="sln-cancel-booking-block__body__action__form-block__form__cancel-button">
-									<?php esc_html_e('Cancel Booking', 'salon-booking-system'); ?>
-									</button>
-								</div>
-							</form>
-						</div>
-						<?php endif; ?>
+				<script>
+					setTimeout(function () {
+					window.location.href = <?php echo wp_json_encode($booking_url); ?>;
+					}, 1000);
+				</script>
+					<?php elseif (!$cancellation_enabled): ?>
+					<div class="sln-cancel-booking-block__body__action__cancellation-disabled">
+						<?php esc_html_e('Cancellation is disabled', 'salon-booking-system'); ?>
 					</div>
+					<?php elseif ($out_of_time): ?>
+					<div class="sln-cancel-booking-block__body__action__out_of_time">
+						<?php esc_html_e('Out of time', 'salon-booking-system'); ?>
+					</div>
+					<?php else: ?>
+					<div class="sln-cancel-booking-block__body__action__form-block">
+						<form action="<?php echo esc_url($booking->getCancelUrl()); ?>" method="post" class="sln-cancel-booking-block__body__action__form-block__form">
+							<?php wp_nonce_field('cancel_booking_' . $booking->getId(), '_wpnonce'); ?>
+							<input type="hidden" name="cancel_booking" value="1">
+							<div>
+								<button class="sln-cancel-booking-block__body__action__form-block__form__cancel-button">
+								<?php esc_html_e('Cancel Booking', 'salon-booking-system'); ?>
+								</button>
+							</div>
+						</form>
+					</div>
+					<?php endif; ?>
 				</div>
 			</div>
+		</div>
 		</div>
     </body>
 </html>

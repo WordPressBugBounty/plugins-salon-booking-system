@@ -86,6 +86,7 @@ class SLN_Currency
         'TJS' => array('name' => 'Tajikistan', 'symbol' => 'смн', 'ASCII' => ''),
         'TMT' => array('name' => 'Turkmenistan New Manat', 'symbol' => 'm', 'ASCII' => ''),
         'TTD' => array('name' => ' Trinidad and Tobago', 'symbol' => '$', 'ASCII' => ''),
+        'TZS' => array('name' => 'Tanzanian Shilling', 'symbol' => 'TSh', 'ASCII' => ''),
         'USD' => array('name' => 'U.S. Dollar', 'symbol' => '$', 'ASCII' => '&#36;'),
         'UZS' => array('name' => 'Uzbekistan Sum', 'symbol' => 'сўм', 'ASCII' => ''),
         'UGS' => array('name' => 'Ugandan shilling', 'symbol' => 'USh', 'ASCII' => ''),

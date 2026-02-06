@@ -14,6 +14,7 @@ export default {
     name: 'App',
     mounted() {
         this.loadSettings()
+        this.displayBuildVersion()
     },
     computed: {
         isShopsEnabled() {
@@ -49,6 +50,25 @@ export default {
         },
         applyShop(shop) {
             this.shop = shop
+        },
+        async displayBuildVersion() {
+            try {
+                const response = await fetch(`${process.env.BASE_URL}version.json?t=${Date.now()}`);
+                const version = await response.json();
+                
+                console.log('\n═══════════════════════════════════════');
+                console.log('🎯 PWA BUILD VERSION');
+                console.log('═══════════════════════════════════════');
+                console.log(`📅 Build Time: ${version.buildTime}`);
+                console.log(`🔑 Build Hash: ${version.buildHash}`);
+                console.log(`⏱️  Timestamp:  ${version.timestamp}`);
+                console.log('═══════════════════════════════════════\n');
+                
+                // Store in window for debugging
+                window.PWA_BUILD_VERSION = version;
+            } catch (error) {
+                console.warn('⚠️  Could not load build version:', error);
+            }
         },
     },
     components: {

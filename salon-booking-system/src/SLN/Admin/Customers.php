@@ -166,10 +166,5 @@ class SLN_Admin_Customers extends SLN_Admin_AbstractPage {
             parent::enqueueAssets();
 
             $event = 'Page views of back-end plugin pages';
-            $data  = array(
-                'page' => 'customers',
-            );
-
-            SLN_Action_InitScripts::mixpanelTrack($event, $data);
         }
 }

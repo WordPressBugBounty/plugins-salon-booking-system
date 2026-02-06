@@ -12,7 +12,8 @@ final class SLN_Wrapper_Booking_Service
      */
     public function __construct($data)
     {
-        $hasAttendant = isset($data['attendant']) && !empty($data['attendant']);
+        // SMART AVAILABILITY: Check for false marker (auto-assignment deferred)
+        $hasAttendant = isset($data['attendant']) && $data['attendant'] !== false && !empty($data['attendant']);
         $data['break_duration'] = isset($data['break_duration']) ? $data['break_duration'] : '00:00';
         $this->data = array();
 

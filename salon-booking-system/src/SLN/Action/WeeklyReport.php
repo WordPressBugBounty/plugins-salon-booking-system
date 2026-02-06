@@ -133,6 +133,41 @@ class SLN_Action_WeeklyReport
                         }
 
                         $attendants = is_array($item->getAttendant()) ? $item->getAttendant() : array($item->getAttendant());
+                        
+                        // ✅ FIX: Count total assistants for this service to split revenue/counts fairly
+                        $attendantCount = count($attendants);
+                        
+                        // ✅ FIX: Get service price with fallback for missing prices
+                        $service_price = $item->getPrice();
+                        
+                        // ✅ FALLBACK: If price is 0 or missing, calculate from service base price
+                        if (empty($service_price) || $service_price == 0) {
+                            $service = $item->getService();
+                            
+                            // Get variable price by attendant if enabled
+                            $attendant_id = is_array($item->getAttendant()) ? 
+                                (isset($attendants[0]) ? $attendants[0]->getId() : null) : 
+                                $item->getAttendant()->getId();
+                            
+                            if ($service->getVariablePriceEnabled() && $attendant_id && $service->getVariablePrice($attendant_id) !== '') {
+                                $service_price = floatval($service->getVariablePrice($attendant_id));
+                            } else {
+                                $service_price = floatval($service->getPrice());
+                            }
+                            
+                            // Apply quantity multiplier for variable duration services
+                            $variable_duration = get_post_meta($service->getId(), '_sln_service_variable_duration', true);
+                            if ($variable_duration) {
+                                $service_price = $service_price * $item->getCountServices();
+                            }
+                        }
+                        
+                        // ✅ FIX: Handle negative prices from excessive discounts (clamp to 0)
+                        $service_price = max(0, $service_price);
+                        
+                        // ✅ FIX: Split service price and count evenly among assistants
+                        $revenueShare = $attendantCount > 0 ? $service_price / $attendantCount : 0;
+                        $serviceCountShare = $attendantCount > 0 ? $item->getCountServices() / $attendantCount : 0;
 
                         foreach ($attendants as $attendant) {
                             if (!isset($data['attendants'][$attendant->getId()])) {
@@ -142,8 +177,9 @@ class SLN_Action_WeeklyReport
                                     'name'   => $attendant->getName(),
                                 );
                             }
-                            $data['attendants'][$attendant->getId()]['count']  += $item->getCountServices();
-                            $data['attendants'][$attendant->getId()]['amount'] += $item->getPrice();
+                            // ✅ FIX: Split service count and revenue proportionally
+                            $data['attendants'][$attendant->getId()]['count']  += $serviceCountShare;
+                            $data['attendants'][$attendant->getId()]['amount'] += $revenueShare;
                         }
                     }
                 }

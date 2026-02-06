@@ -73,8 +73,8 @@ class Assistants_Controller extends REST_Controller
                     'orderby'      => array(
                         'description' => __('Order by.', 'salon-booking-system'),
                         'type'        => 'string',
-                        'enum'        => array('id', 'name'),
-                        'default'     => 'id',
+                        'enum'        => array('id', 'name', 'order'),
+                        'default'     => 'order',
                     ),
                     'per_page'      => array(
                         'description' => __('Per page.', 'salon-booking-system'),
@@ -144,7 +144,7 @@ class Assistants_Controller extends REST_Controller
 
         $prepared_args['posts_per_page'] = is_null($request['per_page']) ? -1 : $request['per_page'];
 
-        $request['orderby'] = is_null($request['orderby']) ? 'id' : $request['orderby'];
+        $request['orderby'] = is_null($request['orderby']) ? 'order' : $request['orderby'];
         $request['page']    = is_null($request['page']) ? 1 : $request['page'];
 
         if ( ! empty( $request['offset'] ) ) {
@@ -154,11 +154,30 @@ class Assistants_Controller extends REST_Controller
         }
 
         $orderby_possibles = array(
-            'id'   => 'ID',
-            'name' => 'title',
+            'id'    => 'ID',
+            'name'  => 'title',
+            'order' => 'meta_value',
         );
 
         $prepared_args['orderby']	= $orderby_possibles[ $request['orderby'] ];
+        
+        // If ordering by meta_value (order), specify the meta_key and meta_query
+        if ($request['orderby'] === 'order') {
+            $prepared_args['meta_key'] = '_sln_attendant_order';
+            // Add meta_query to handle posts with and without the order meta key
+            $prepared_args['meta_query'] = array(
+                'relation' => 'OR',
+                array(
+                    'key'     => '_sln_attendant_order',
+                    'compare' => 'EXISTS',
+                ),
+                array(
+                    'key'     => '_sln_attendant_order',
+                    'compare' => 'NOT EXISTS',
+                ),
+            );
+        }
+        
         $prepared_args['post_type']	= self::POST_TYPE;
         $prepared_args['post_status']	= 'publish';
 
@@ -166,7 +185,17 @@ class Assistants_Controller extends REST_Controller
 
         $prepared_args = apply_filters('sln_api_assistants_get_items_prepared_args', $prepared_args, $request);
 
+        // If ordering by attendant order, add filter to cast meta_value as DECIMAL for proper numeric sorting
+        if ($request['orderby'] === 'order') {
+            add_filter('posts_orderby', array($this, 'posts_orderby_numeric'), 10, 2);
+        }
+
         $query = new WP_Query( $prepared_args );
+
+        // Remove the filter after query
+        if ($request['orderby'] === 'order') {
+            remove_filter('posts_orderby', array($this, 'posts_orderby_numeric'), 10);
+        }
 
         $assistants = array();
         foreach ( $query->posts as $assistant ) {
@@ -718,6 +747,19 @@ class Assistants_Controller extends REST_Controller
         );
 
         return apply_filters('sln_api_assistants_get_item_schema', $schema);
+    }
+
+    /**
+     * Filter to cast meta_value as DECIMAL for proper numeric sorting
+     * 
+     * @param string $orderby
+     * @param WP_Query $query
+     * @return string
+     */
+    public function posts_orderby_numeric($orderby, $query) {
+        global $wpdb;
+        // Cast meta_value as DECIMAL to ensure numeric sorting (e.g., 1, 2, 10 instead of 1, 10, 2)
+        return str_replace("{$wpdb->postmeta}.meta_value", "CAST({$wpdb->postmeta}.meta_value AS DECIMAL)", $orderby);
     }
 
 }

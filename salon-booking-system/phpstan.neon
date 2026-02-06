@@ -1,0 +1,16 @@
+parameters:
+  level: 5
+  paths:
+    - src/
+    - salon.php
+  ignoreErrors:
+    - '#Call to an undefined method#'
+    - '#Access to an undefined property#'
+  excludePaths:
+    - src/SLN/Third/
+    - build/
+    - vendor/
+  bootstrapFiles:
+    - vendor/szepeviktor/phpstan-wordpress/wordpress-stubs.php
+  checkMissingIterableValueType: false
+  checkGenericClassInNonGenericObjectType: false

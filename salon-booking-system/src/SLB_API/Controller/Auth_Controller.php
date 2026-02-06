@@ -65,6 +65,17 @@ class Auth_Controller extends REST_Controller
             return new WP_Error( 'salon_rest_user_not_found', __( 'Wrong user password.', 'salon-booking-system' ), array( 'status' => 404));
         }
 
+        // SECURITY FIX: Only allow authorized users to obtain API tokens
+        // Check if user has permission to access the API
+        $user_role_helper = new UserRoleHelper();
+        if (!$user_role_helper->is_allowed_user($user)) {
+            return new WP_Error(
+                'salon_rest_forbidden',
+                __( 'Sorry, you are not authorized to access the API.', 'salon-booking-system' ),
+                array( 'status' => 403 )
+            );
+        }
+
         $token = (new TokenHelper())->getUserAccessToken($user->ID);
 
         $response = rest_ensure_response(array(

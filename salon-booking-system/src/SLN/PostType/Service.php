@@ -82,12 +82,6 @@ class SLN_PostType_Service extends SLN_PostType_Abstract
 
 	    wp_enqueue_script('salon-admin-service-edit-js', SLN_PLUGIN_URL.'/js/admin/adminServiceEdit.js', array('jquery'), SLN_Action_InitScripts::ASSETS_VERSION, true);
 
-            $event = 'Page views of back-end plugin pages';
-            $data  = array(
-                'page' => 'services',
-            );
-
-            SLN_Action_InitScripts::mixpanelTrack($event, $data);
         }
     }
 
