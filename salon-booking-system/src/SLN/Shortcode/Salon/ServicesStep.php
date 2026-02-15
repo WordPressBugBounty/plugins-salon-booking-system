@@ -8,9 +8,16 @@ class SLN_Shortcode_Salon_ServicesStep extends SLN_Shortcode_Salon_Step
     protected function dispatchForm()
     {
         $bb = $this->getPlugin()->getBookingBuilder();
+        
+        // DEBUG: Log received POST data for services
+        SLN_Plugin::addLog('[ServicesStep] RAW $_REQUEST sln data: ' . print_r(isset($_REQUEST['sln']) ? $_REQUEST['sln'] : 'NOT SET', true));
+        
         $values = isset($_REQUEST['sln']) && isset($_REQUEST['sln']['services']) && is_array($_REQUEST['sln']['services'])  ? $_REQUEST['sln']['services'] : array();
         $timezone = isset($_REQUEST['sln']['customer_timezone']) ? SLN_Func::filter(sanitize_text_field( wp_unslash( $_REQUEST['sln']['customer_timezone']  ) ), '') : '';
         $countService = isset($_REQUEST['sln']) && isset($_REQUEST['sln']['service_count']) && is_array($_REQUEST['sln']['service_count'])  ? $_REQUEST['sln']['service_count'] : array();
+        
+        // DEBUG: Log parsed services
+        SLN_Plugin::addLog('[ServicesStep] Parsed services: ' . print_r($values, true));
         foreach ($this->getServices() as $service) {
             if (isset($values) && isset($values[$service->getId()])) {
                 $bb->addService($service);

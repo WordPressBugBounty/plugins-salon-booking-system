@@ -371,8 +371,17 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
                 break;
             case 'booking_services' :
                 $name_services = array();
+                $countServices = $obj->getCountServices();
                 foreach ($obj->getServices() as $helper) {
-                    $name_services[] = esc_html($helper->getName());
+                    $serviceName = esc_html($helper->getName());
+                    $serviceId = $helper->getId();
+                    
+                    // Add quantity in parentheses if > 1
+                    if (isset($countServices[$serviceId]) && $countServices[$serviceId] > 1) {
+                        $serviceName .= ' (' . $countServices[$serviceId] . ')';
+                    }
+                    
+                    $name_services[] = $serviceName;
                 }
                 echo implode(', ', $name_services);
                 break;
@@ -699,6 +708,7 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
             );
         }
         add_action('transition_post_status', array($this, 'transitionPostStatus'), 10, 3);
+        add_action('sln.booking_builder.new_booking_ready', array($this, 'clearNewBookingCaches'), 10, 1);
     }
 
     public function transitionPostStatus($new_status, $old_status, $post)
@@ -708,6 +718,17 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
 	    && $post->post_type == SLN_Plugin::POST_TYPE_BOOKING
             && $old_status != $new_status
         ) {
+            // CRITICAL FIX: For NEW posts, transition_post_status fires during wp_insert_post,
+            // BEFORE Builder has saved services/date/time/amount meta. Sending email here would
+            // produce notifications with blank services, wrong date, and "free" price.
+            // Builder::create() handles send/action/cache for new posts after meta is saved.
+            // Only skip for brand-new post creation (new → auto-draft). Do NOT skip when
+            // transitioning FROM auto-draft (e.g. user confirming front-end booking).
+            $is_new_post = ($old_status === 'new');
+            if ($is_new_post) {
+                return;
+            }
+
             $p = $this->getPlugin();
             $booking = $p->createBooking($post);
             $p->messages()->sendByStatus($booking, $new_status);
@@ -721,6 +742,18 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
                 // PERFORMANCE: Clear intervals cache (Issue #8)
                 $this->clearIntervalsCache($booking);
             }
+        }
+    }
+
+    /**
+     * Clear availability and intervals cache for new bookings.
+     * Called from Builder after meta is saved (new posts skip transitionPostStatus).
+     */
+    public function clearNewBookingCaches($booking)
+    {
+        if ($booking && $booking->getDate()) {
+            SLN_Helper_Availability_Cache::clearDateCache($booking->getDate());
+            $this->clearIntervalsCache($booking);
         }
     }
     

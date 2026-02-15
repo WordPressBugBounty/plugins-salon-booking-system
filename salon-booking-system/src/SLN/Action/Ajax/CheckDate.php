@@ -72,11 +72,11 @@ class SLN_Action_Ajax_CheckDate extends SLN_Action_Ajax_Abstract
         // Send flag to frontend indicating user can override validation
         $ret['can_override_validation'] = $isAdminOrStaff;
 
-        if (isset($timezone)) {
-            $ret['intervals'] = $this->getIntervalsArray($timezone);
-        } else {
-            $ret['intervals'] = array();
-        }
+        // FIX RISCHIO #1: Sempre ritornare intervals, anche senza timezone
+        // Problema precedente: se !isset($timezone), ritornava array vuoto
+        // Questo causava AJAX refresh a fallire silently, usando dati stale dall'HTML
+        // Soluzione: Sempre chiamare getIntervalsArray(), passando stringa vuota se no timezone
+        $ret['intervals'] = $this->getIntervalsArray(isset($timezone) ? $timezone : '');
 
         $isFromAdmin = isset($_POST['_sln_booking_date']);
         if (!$isFromAdmin) {

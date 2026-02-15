@@ -142,6 +142,10 @@ final class SLN_Wrapper_Booking_Services {
 
 			if (is_null($price)) {
                 $price = $service->getVariablePriceEnabled() && $service->getVariablePrice($atId) !== '' ? $service->getVariablePrice($atId) : $service->getPrice();
+				$builder = SLN_Plugin::getInstance()->getBookingBuilder();
+				if ( $builder ) {
+					$price = apply_filters( 'sln.booking_builder.service_price', $price, $service, $atId, $builder );
+				}
 			}
 
 			if (empty($duration)) {

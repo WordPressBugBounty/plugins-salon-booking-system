@@ -108,6 +108,9 @@ $row['always'] = isset($row['always']) ? ($row['always'] ? true : false) : true;
                             </div>
                             <div class="clearfix"></div>
                         </div>
+                        <?php
+                        do_action( 'sln.settings.availability_row.after_shift_content', $row, $prefix, 0 );
+                        ?>
                     </div>
                 </div>
                 <div
@@ -140,6 +143,9 @@ $row['always'] = isset($row['always']) ? ($row['always'] ? true : false) : true;
                             </div>
                             <div class="clearfix"></div>
                         </div>
+                        <?php
+                        do_action( 'sln.settings.availability_row.after_shift_content', $row, $prefix, 1 );
+                        ?>
                     </div>
                     <div class="sln-switch sln-switch--inverted sln-switch--bare sln-disable-second-shift">
                         <?php SLN_Form::fieldCheckboxSwitch(
@@ -157,6 +163,19 @@ $row['always'] = isset($row['always']) ? ($row['always'] ? true : false) : true;
 
         </div>
         <div class="clearfix"></div>
+        
+        <?php
+        /**
+         * Hook to add content after shifts section in availability rule.
+         * 
+         * @param array  $row    Availability rule data
+         * @param string $prefix Field name prefix
+         * 
+         * @since 8.8.0
+         */
+        do_action('sln.settings.availability_row.after_shifts', $row, $prefix);
+        ?>
+        
         <div
             class="sln-always-valid-section <?php echo $show_specific_dates && isset($row['select_specific_dates']) && $row['select_specific_dates'] ? 'hide' : '' ?>">
             <div class="col-xs-12 col-md-4 form-group sln-switch">

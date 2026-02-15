@@ -528,10 +528,10 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
                 SLN_Helper_AutoAttendant_Logger::logError('Exception in checkAutoAttendantAvailability', $e);
             }
             
-            error_log('=== SMART AVAILABILITY ERROR ===');
-            error_log('Exception: ' . $e->getMessage());
-            error_log('Trace: ' . $e->getTraceAsString());
-            error_log('=================================');
+            SLN_Plugin::addLog('=== SMART AVAILABILITY ERROR ===');
+            SLN_Plugin::addLog('Exception: ' . $e->getMessage());
+            SLN_Plugin::addLog('Trace: ' . $e->getTraceAsString());
+            SLN_Plugin::addLog('=================================');
             
             // Allow booking on exception (fail open, not closed)
             return array();

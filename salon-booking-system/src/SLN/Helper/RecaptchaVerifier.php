@@ -50,14 +50,12 @@ class SLN_Helper_RecaptchaVerifier
         if ($secret === '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe' || 
             $siteKey === '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI') {
             SLN_Plugin::addLog('[reCAPTCHA] Using Google test keys, verification passed automatically');
-            error_log('[Salon reCAPTCHA] Using Google test keys, verification passed automatically');
             return true;
         }
         
         // Token is required if reCAPTCHA is enabled with real keys
         if (empty($token)) {
             SLN_Plugin::addLog('[reCAPTCHA] Token missing - frontend may have failed to generate token');
-            error_log('[Salon reCAPTCHA] Token missing - frontend may have failed to generate token');
             
             // Check if we should fail open (allow booking if reCAPTCHA fails)
             // SECURITY: Default to FALSE to prevent bot bypass attacks
@@ -65,12 +63,10 @@ class SLN_Helper_RecaptchaVerifier
             $failOpen = (bool) $settings->get('recaptcha_fail_open', false); // Default to false for security
             if ($failOpen) {
                 SLN_Plugin::addLog('[reCAPTCHA] Fail-open enabled, allowing booking to proceed');
-                error_log('[Salon reCAPTCHA] Fail-open enabled, allowing booking to proceed');
                 return true;
             }
             
             SLN_Plugin::addLog('[reCAPTCHA] Token missing and fail-open disabled, blocking booking');
-            error_log('[Salon reCAPTCHA] Token missing and fail-open disabled, blocking booking');
             return false;
         }
         

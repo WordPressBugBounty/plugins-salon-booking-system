@@ -5,10 +5,16 @@ class SLN_Shortcode_Salon_AttendantStep extends SLN_Shortcode_Salon_Step
 
     protected function dispatchForm()
     {
+        // DEBUG: Log received POST data for attendants
+        SLN_Plugin::addLog('[AttendantStep] RAW $_POST sln data: ' . print_r(isset($_POST['sln']) ? $_POST['sln'] : 'NOT SET', true));
 
         if(isset($_POST['sln'])){
             $attendants                 = isset($_POST['sln']['attendants']) ? array_map('intval',$_POST['sln']['attendants']) : array();
             $attendant                 = isset($_POST['sln']['attendant']) ? sanitize_text_field(wp_unslash($_POST['sln']['attendant'])) : false;
+            
+            // DEBUG: Log parsed attendants
+            SLN_Plugin::addLog('[AttendantStep] Parsed attendant: ' . ($attendant ? $attendant : 'NONE'));
+            SLN_Plugin::addLog('[AttendantStep] Parsed attendants array: ' . print_r($attendants, true));
         }
         $isMultipleAttSelection = $this->getPlugin()->getSettings()->isMultipleAttendantsEnabled();
         $bb                     = $this->getPlugin()->getBookingBuilder();

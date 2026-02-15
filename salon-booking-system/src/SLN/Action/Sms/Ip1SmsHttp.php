@@ -19,7 +19,7 @@ class SLN_Action_Sms_Ip1SmsHttp extends SLN_Action_Sms_Abstract
     {
         // Log deprecation warning
         if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_log('[IP1SMS DEPRECATION WARNING] The HTTP API is deprecated and will stop working on October 29, 2025. Please migrate to IP1SMS API V2 in SMS Settings.');
+            SLN_Plugin::addLog('[IP1SMS DEPRECATION WARNING] The HTTP API is deprecated and will stop working on October 29, 2025. Please migrate to IP1SMS API V2 in SMS Settings.');
         }
         
         // Show admin notice (will be displayed on next page load)

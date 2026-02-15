@@ -809,7 +809,7 @@ class SLN_Third_GoogleCalendarImport
 
     private function printMsg($text) {
         echo "{$text}<br/>";
-        error_log($text);
+        SLN_Plugin::addLog($text);
     }
 
     private static function updateSyncToken($syncToken)

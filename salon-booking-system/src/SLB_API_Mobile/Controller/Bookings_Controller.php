@@ -1096,8 +1096,21 @@ class Bookings_Controller extends REST_Controller
     {
 		$bb = new SLN_Wrapper_Booking_Builder(SLN_Plugin::getInstance());
 
-        $bb->setDate($request->get_param('date'));
-        $bb->setTime($request->get_param('time'));
+        // Diagnostic logging (when debug enabled) to trace PWA booking payload issues
+        if (SLN_Plugin::isDebugEnabled()) {
+            SLN_Plugin::addLog('[API Booking Create] Incoming payload: date=' . $request->get_param('date')
+                . ', time=' . $request->get_param('time')
+                . ', services=' . wp_json_encode($request->get_param('services')));
+        }
+
+        $date = $request->get_param('date');
+        $time = $request->get_param('time');
+        if (empty($date) || empty($time)) {
+            throw new \Exception(__('Date and time are required for the booking.', 'salon-booking-system'), 400);
+        }
+
+        $bb->setDate($date);
+        $bb->setTime($time);
 
         $bb->set('firstname', $request->get_param('customer_first_name'));
         $bb->set('lastname', $request->get_param('customer_last_name'));
@@ -1108,10 +1121,10 @@ class Bookings_Controller extends REST_Controller
         $bb->set('note', $request->get_param('note'));
 
         $booking_fields  = SLN_Enum_CheckoutFields::forBooking();
-        $_custom_fields  = $request->get_param('custom_fields');
+        $_custom_fields  = $request->get_param('custom_fields') ?: array();
         $custom_fields   = array();
 
-        foreach($_custom_fields as $field) {
+        foreach ((array) $_custom_fields as $field) {
             $custom_fields[$field['key']] = $field['value'];
         }
 
@@ -1130,14 +1143,26 @@ class Bookings_Controller extends REST_Controller
         $services = array();
         $resources = array();
 
-        foreach (array_filter($request->get_param('services')) as $service) {
-            $services[] = array(
-                'attendant' => isset($service['assistant_id']) ? $service['assistant_id'] : '',
-                'service'   => isset($service['service_id']) ? $service['service_id'] : '',
-            );
-            if (isset($service['service_id'])) {
-                $resources[$service['service_id']] = $service['resource_id'] ?? '';
+        $request_services = $request->get_param('services');
+        if (empty($request_services) || !is_array($request_services)) {
+            throw new \Exception(__('At least one service is required for the booking.', 'salon-booking-system'), 400);
+        }
+
+        foreach (array_filter($request_services) as $service) {
+            $service_id   = isset($service['service_id']) ? $service['service_id'] : null;
+            $assistant_id = isset($service['assistant_id']) ? $service['assistant_id'] : null;
+            if (empty($service_id)) {
+                continue;
             }
+            $services[] = array(
+                'attendant' => $assistant_id !== null && $assistant_id !== '' ? $assistant_id : 0,
+                'service'   => $service_id,
+            );
+            $resources[$service_id] = $service['resource_id'] ?? '';
+        }
+
+        if (empty($services)) {
+            throw new \Exception(__('At least one service with a valid service ID is required.', 'salon-booking-system'), 400);
         }
 
         $bb->set('services', $services);
@@ -1425,7 +1450,6 @@ class Bookings_Controller extends REST_Controller
                     'arg_options' => array(
                         'required'          => true,
                         'validate_callback' => array($this, 'rest_validate_request_arg'),
-                        'default'           => current_time('Y-m-d'),
                     ),
                 ),
                 'time' => array(
@@ -1436,7 +1460,6 @@ class Bookings_Controller extends REST_Controller
                     'arg_options' => array(
                         'required'          => true,
                         'validate_callback' => array($this, 'rest_validate_request_arg'),
-                        'default'           => current_time('H:i'),
                     ),
                 ),
                 'status' => array(

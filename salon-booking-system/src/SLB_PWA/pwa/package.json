@@ -1,9 +1,10 @@
 {
   "name": "salon-booking-plugin-pwa",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
+    "prebuild": "node scripts/update-version.js",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint"
   },
@@ -16,10 +17,11 @@
     "@onesignal/onesignal-vue3": "^1.0.2",
     "@popperjs/core": "^2.11.6",
     "@vuepic/vue-datepicker": "^3.4.8",
-    "axios": "^ 0.27.2",
+    "axios": "^1.6.5",
     "bootstrap": "^5.2.1",
     "bootstrap-vue-3": "^0.3.3",
-    "core-js": "^3.8.3",
+    "core-js": "3.35.1",
+    "interactjs": "^1.10.27",
     "moment": "^2.29.4",
     "register-service-worker": "^1.7.2",
     "vue": "^3.2.13",

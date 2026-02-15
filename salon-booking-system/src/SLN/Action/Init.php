@@ -615,7 +615,7 @@ class SLN_Action_Init
                     '[Security] BLOCKED - Auto-login brute-force attempt from IP: %s',
                     $client_ip
                 ));
-                error_log(sprintf(
+                SLN_Plugin::addLog(sprintf(
                     '[Salon Security] Auto-login rate limit exceeded from IP: %s, User-Agent: %s',
                     $client_ip,
                     $user_agent
@@ -638,7 +638,7 @@ class SLN_Action_Init
                     '[Security] FAILED - Invalid hash from IP: %s',
                     $client_ip
                 ));
-                error_log(sprintf(
+                SLN_Plugin::addLog(sprintf(
                     '[Salon Security] Auto-login failed - Invalid hash from IP: %s',
                     $client_ip
                 ));
@@ -657,7 +657,7 @@ class SLN_Action_Init
                     $stored_hash ? substr($stored_hash, 0, 16) . '...' : 'none',
                     substr($customerHash, 0, 16) . '...'
                 ));
-                error_log(sprintf(
+                SLN_Plugin::addLog(sprintf(
                     '[Salon Security] Auto-login failed - Expired/mismatched token for user %d from IP: %s',
                     $userid,
                     $client_ip
@@ -680,7 +680,7 @@ class SLN_Action_Init
                         $user->user_login,
                         $client_ip
                     ));
-                    error_log(sprintf(
+                    SLN_Plugin::addLog(sprintf(
                         '[Salon Security] Auto-login successful for user %d (%s) from IP: %s',
                         $userid,
                         $user->user_login,
@@ -700,24 +700,24 @@ class SLN_Action_Init
                     // Fallback: If translated ID is null, try getting the original page ID
                     if (!$id) {
                         $id = $this->plugin->getSettings()->get('bookingmyaccount');
-                        error_log('[Salon Auto-Login] Translated page ID was null, using original: ' . ($id ? $id : 'STILL NULL'));
+                        SLN_Plugin::addLog('[Salon Auto-Login] Translated page ID was null, using original: ' . ($id ? $id : 'STILL NULL'));
                     }
                     
                     // Debug logging
-                    error_log('[Salon Auto-Login] Customer hash: ' . substr($customerHash, 0, 16) . '...');
-                    error_log('[Salon Auto-Login] User ID: ' . $userid);
-                    error_log('[Salon Auto-Login] Booking My Account Page ID: ' . ($id ? $id : 'NOT SET'));
-                    error_log('[Salon Auto-Login] Current locale: ' . get_locale());
+                    SLN_Plugin::addLog('[Salon Auto-Login] Customer hash: ' . substr($customerHash, 0, 16) . '...');
+                    SLN_Plugin::addLog('[Salon Auto-Login] User ID: ' . $userid);
+                    SLN_Plugin::addLog('[Salon Auto-Login] Booking My Account Page ID: ' . ($id ? $id : 'NOT SET'));
+                    SLN_Plugin::addLog('[Salon Auto-Login] Current locale: ' . get_locale());
                     
                     if ($id) {
                         $url = get_permalink($id);
-                        error_log('[Salon Auto-Login] Redirecting to: ' . $url);
+                        SLN_Plugin::addLog('[Salon Auto-Login] Redirecting to: ' . $url);
                         if(!empty($feedback_id)) {
                             $url .= '?feedback_id='. $feedback_id;
                         }
                     }else{
                         $url = home_url();
-                        error_log('[Salon Auto-Login] No account page set, redirecting to home: ' . $url);
+                        SLN_Plugin::addLog('[Salon Auto-Login] No account page set, redirecting to home: ' . $url);
                     }
                     wp_redirect($url);
                     exit;

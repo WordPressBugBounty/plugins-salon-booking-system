@@ -12,7 +12,7 @@ class SLN_Plugin
     const USER_ROLE_CUSTOMER = 'sln_customer';
     const USER_ROLE_WORKER = 'sln_worker';
     const TEXT_DOMAIN = 'salon-booking-system';
-    const DEBUG_ENABLED = false;
+    const DEBUG_ENABLED = true; // TEMPORARILY ENABLED FOR DEBUGGING SAFARI/MOBILE ISSUE
     const DEBUG_CACHE_ENABLED = false;
     const CATEGORY_ORDER = 'sln_service_category_order';
 
@@ -108,6 +108,18 @@ class SLN_Plugin
             $this->phpServices['bookingBuilder'] = new SLN_Wrapper_Booking_Builder($this);
         }
         return $this->phpServices['bookingBuilder'];
+    }
+    
+    /**
+     * Reset the BookingBuilder singleton
+     * Use this when client_id or session changes (e.g., after login)
+     * Forces a new BookingBuilder to be created with current request data
+     */
+    public function resetBookingBuilder()
+    {
+        if (isset($this->phpServices['bookingBuilder'])) {
+            unset($this->phpServices['bookingBuilder']);
+        }
     }
 
     public function getViewFile($view)

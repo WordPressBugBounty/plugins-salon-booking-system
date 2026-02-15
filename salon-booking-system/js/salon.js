@@ -37,6 +37,13 @@ jQuery(function ($) {
 });
 
 function sln_init($) {
+    // CRITICAL: Initialize client_id from all available storage mechanisms
+    // Must be called on every page load and after AJAX updates
+    sln_initializeClientState($);
+    
+    // Initialize debug panel if enabled
+    sln_initDebugPanel($);
+    
     if ($("#salon-step-services").length || $("#salon-step-secondary").length) {
         let request_args = window.location.search.split("&");
         if (
@@ -518,6 +525,15 @@ function sln_init($) {
         }
 
         let formData = form.serialize();
+        
+        // CRITICAL FIX: Extract critical fields that may be disabled during validation
+        // serialize() excludes disabled fields, causing data loss on Safari and mobile browsers
+        // This explicitly extracts date/time/service/attendant regardless of disabled state
+        let criticalData = sln_extractCriticalBookingFields(form);
+        if (criticalData) {
+            formData += '&' + criticalData;
+        }
+        
         const selectedAttendant = $('input[name="sln[attendant]"]:checked').val();
 
         if (selectedAttendant && !formData.includes('sln[attendant]')) {
@@ -594,6 +610,13 @@ function sln_init($) {
     async function sln_checkOverbooking(button) {
         const form = $(button).closest('form');
         let data = form.serialize();
+        
+        // CRITICAL FIX: Extract critical fields that may be disabled during validation
+        // serialize() excludes disabled fields, causing data loss on Safari and mobile browsers
+        let criticalData = sln_extractCriticalBookingFields(form);
+        if (criticalData) {
+            data += '&' + criticalData;
+        }
 
         if (!data.includes('sln[attendant]') && !data.includes('sln[attendants]')) {
             const selectedAttendant = $('input[name="sln[attendant]"]:checked').val();
@@ -1314,13 +1337,33 @@ function sln_loadStep($, data) {
                         console.error("Stack trace:", data.trace);
                     }
                 }
-                $("#sln-notifications")
-                    .html('<div class="sln-alert sln-alert--problem">' + errorMsg + '</div>')
-                    .addClass("sln-notifications--active");
-                return;
-            }
+            $("#sln-notifications")
+                .html('<div class="sln-alert sln-alert--problem">' + errorMsg + '</div>')
+                .addClass("sln-notifications--active");
+            return;
+        }
 
-            if (typeof data.redirect != "undefined") {
+        // CRITICAL FIX: Update client_id from response (Safari/Edge compatibility)
+        // After customer login, WordPress creates a new session which changes PHPSESSID
+        // The server returns the client_id in the response so we can update it
+        // This ensures subsequent AJAX requests use the correct identifier
+        // Fixes "blank page with 0" issue after login on Safari/Edge
+        if (data.client_id) {
+            var currentStorage = sln_getClientState().storage;
+            sln_setClientState(data.client_id, currentStorage);
+            
+            sln_debugLog("✅ Client ID updated from server response", {
+                client_id: data.client_id,
+                storage: currentStorage
+            });
+        }
+        
+        // Log debug info from backend if available
+        if (data.debug) {
+            sln_debugLog("📡 Backend Debug Info", data.debug);
+        }
+
+        if (typeof data.redirect != "undefined") {
                 window.location.href = data.redirect;
             } else {
                 $("#sln-salon-booking").replaceWith(data.content);
@@ -1335,6 +1378,9 @@ function sln_loadStep($, data) {
                 $("div#sln-notifications")
                     .html("")
                     .removeClass("sln-notifications--active");
+                
+                // Trigger event for add-ons to hook into step transitions
+                $(document).trigger('sln.booking.step_loaded', [data]);
             }
         },
         error: function (xhr, status, error) {
@@ -1387,6 +1433,23 @@ function sln_loadStep($, data) {
     } else {
         data += "&action=salon&method=salonStep&security=" + salon.ajax_nonce;
     }
+    
+    // CRITICAL: Ensure client_id is included in request data
+    // This maintains booking context across AJAX requests, especially critical for:
+    // - Safari with ITP (Intelligent Tracking Prevention)
+    // - Mobile browsers with restricted storage
+    // - Sessions that change (e.g., after login)
+    data = sln_ensureClientIdInData(data);
+    
+    // Include debug parameter if debug mode is enabled
+    if (sln_isDebugMode()) {
+        if (data instanceof FormData) {
+            data.append('sln_debug', '1');
+        } else if (typeof data === 'string') {
+            data += '&sln_debug=1';
+        }
+    }
+    
     // Get reCAPTCHA token before submitting (async)
     sln_getRecaptchaToken('booking_submit').then(function(token) {
         // Add reCAPTCHA token to data if available
@@ -1399,6 +1462,18 @@ function sln_loadStep($, data) {
         }
         
         request_arr["data"] = data;
+        
+        // Debug: Log AJAX request details
+        sln_debugLog("📤 AJAX Request Sent", {
+            client_id: sln_getClientState().id,
+            storage: sln_getClientState().storage,
+            has_client_id_in_request: (typeof data === 'string' && data.indexOf('sln_client_id=') !== -1) || 
+                                      (data instanceof FormData && data.has('sln_client_id')),
+            url: salon.ajax_url,
+            localStorage_client_id: localStorage.getItem('sln_client_id'),
+            cookie_client_id: document.cookie.split('; ').find(row => row.startsWith('sln_client_id='))
+        });
+        
         $("#sln-notifications")
             .html(loadingMessage)
             .addClass("sln-notifications--active");
@@ -1419,7 +1494,8 @@ function sln_updateDatepickerTimepickerSlots($, intervals, bookingId) {
     }
 
     if (datetimepicker == undefined) {
-        var DtTime = document.getElementById('_sln_booking_time').value;
+        var timeElement = document.getElementById('_sln_booking_time');
+        var DtTime = timeElement ? timeElement.value : '';
     } else {
         var DtHours = datetimepicker.viewDate.getUTCHours();
         DtHours = DtHours >= 10 ? DtHours : "0" + DtHours;
@@ -1496,6 +1572,23 @@ function sln_stepDate($) {
         if (!form.length) return;
         
         var data = form.serialize();
+        
+        // FIX RISCHIO #1: Garantire che timezone sia sempre incluso nella richiesta AJAX
+        // Problema: CheckDate.php ritorna intervals vuoto se manca timezone
+        // Soluzione: Aggiungere sempre timezone dell'utente se non presente nel form
+        if (data.indexOf('customer_timezone') === -1) {
+            try {
+                // Ottieni timezone del browser dell'utente
+                var userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                if (userTimezone) {
+                    data += "&sln[customer_timezone]=" + encodeURIComponent(userTimezone);
+                }
+            } catch (e) {
+                // Fallback silenzioso se Intl non supportato (browser molto vecchi)
+                console.warn('[Salon] Could not detect user timezone:', e);
+            }
+        }
+        
         data += "&action=salon&method=checkDate&security=" + salon.ajax_nonce;
         
         $.ajax({
@@ -1510,10 +1603,21 @@ function sln_stepDate($) {
                     $("#salon-step-date").data("intervals", response.intervals);
                     // Refresh the calendar UI
                     updateFunc();
+                    
+                    // Trigger event per altri script (es. salon-time-filter.js)
+                    $(document).trigger('sln:intervals:refreshed', {
+                        intervals: response.intervals,
+                        timestamp: new Date()
+                    });
+                } else if (response.success && !response.intervals) {
+                    // Response OK ma intervals mancante - warning in console
+                    console.warn('[Salon] AJAX refresh received empty intervals. Using cached data.');
                 }
             },
-            error: function () {
-                // Silently fail - use cached data as fallback
+            error: function (xhr, status, error) {
+                // Log error per debugging ma fail silently per UX
+                console.warn('[Salon] AJAX refresh failed:', status, error);
+                // Continua usando dati cached dall'HTML
             }
         });
     }
@@ -1652,6 +1756,14 @@ function sln_stepDate($) {
             salon.txt_validating +
             "</div>";
         var data = form.serialize();
+        
+        // CRITICAL FIX: Extract critical fields that may be disabled during validation
+        // serialize() excludes disabled fields, causing data loss on Safari and mobile browsers
+        var criticalData = sln_extractCriticalBookingFields(form);
+        if (criticalData) {
+            data += '&' + criticalData;
+        }
+        
         data += "&action=salon&method=checkDate&security=" + salon.ajax_nonce;
         
         // Prevent flickering: Add loading class to make all dates look unavailable during AJAX
@@ -3030,3 +3142,409 @@ jQuery(function ($) {
 
     $(".sln-content__tabs__nav__item a").on("click", sln_rememberTab);
 });
+
+// ============================================================================
+// CRITICAL BOOKING FIELDS EXTRACTION
+// Safari & Mobile Browser Compatibility Fix
+// ============================================================================
+
+/**
+ * Extract critical booking fields that may be disabled during validation
+ * 
+ * PROBLEM: jQuery's serialize() excludes disabled form fields (jQuery standard behavior)
+ * This causes data loss on Safari (desktop + mobile) and Chrome mobile when fields
+ * are temporarily disabled during validation or when assistants are unavailable.
+ * 
+ * SOLUTION: Explicitly extract field values using .val() which works regardless
+ * of disabled state. This ensures date/time/service/attendant data is always captured.
+ * 
+ * AFFECTED BROWSERS:
+ * - Safari Desktop (Mac) - Stricter disabled field handling
+ * - Safari iOS - Stricter handling + slower mobile JavaScript
+ * - Chrome Mobile - Slower JavaScript creates timing windows
+ * 
+ * FIELDS EXTRACTED:
+ * - sln[date] - Hidden input, disabled during validation (line 1836-1837)
+ * - sln[time] - Hidden input, disabled during validation (line 1836-1837)
+ * - sln[services][*] - Checkboxes, may be disabled if unavailable
+ * - sln[attendant] - Radio button, disabled if unavailable (AttendantHelper.php:85)
+ * - sln[attendants][*] - Multi-assistant mode radio buttons
+ * - sln[service_count][*] - Variable quantity services
+ * 
+ * @param {jQuery} form - The form element
+ * @returns {string} - Serialized critical field data (URL-encoded)
+ */
+function sln_extractCriticalBookingFields(form) {
+    var criticalFields = [];
+    
+    // 1. DATE (hidden input - disabled during validation at line 1836)
+    var dateField = form.find('input[name="sln[date]"]');
+    if (dateField.length && dateField.val()) {
+        criticalFields.push('sln[date]=' + encodeURIComponent(dateField.val()));
+    }
+    
+    // 2. TIME (hidden input - disabled during validation at line 1837)
+    var timeField = form.find('input[name="sln[time]"]');
+    if (timeField.length && timeField.val()) {
+        criticalFields.push('sln[time]=' + encodeURIComponent(timeField.val()));
+    }
+    
+    // 3. SERVICES (checkboxes - may be disabled if unavailable)
+    form.find('input[name^="sln[services]"]').each(function() {
+        var $field = $(this);
+        // Use .val() instead of serialize() to bypass disabled state
+        if ($field.is(':checked') && $field.val()) {
+            criticalFields.push(encodeURIComponent($field.attr('name')) + '=' + encodeURIComponent($field.val()));
+        }
+    });
+    
+    // 4. ASSISTANT (radio button - disabled if unavailable per AttendantHelper.php line 85)
+    var assistantField = form.find('input[name="sln[attendant]"]:checked');
+    if (assistantField.length && assistantField.val()) {
+        criticalFields.push('sln[attendant]=' + encodeURIComponent(assistantField.val()));
+    }
+    
+    // 5. MULTI-ASSISTANTS (for multi-assistant bookings - may be disabled)
+    form.find('input[name^="sln[attendants]"]').each(function() {
+        var $field = $(this);
+        if ($field.is(':checked') && $field.val()) {
+            criticalFields.push(encodeURIComponent($field.attr('name')) + '=' + encodeURIComponent($field.val()));
+        }
+    });
+    
+    // 6. SERVICE COUNT (for variable quantity services - may be hidden/disabled)
+    form.find('input[name^="sln[service_count]"]').each(function() {
+        var $field = $(this);
+        if ($field.val()) {
+            criticalFields.push(encodeURIComponent($field.attr('name')) + '=' + encodeURIComponent($field.val()));
+        }
+    });
+    
+    return criticalFields.join('&');
+}
+
+// ============================================================================
+// CLIENT_ID MANAGEMENT FUNCTIONS
+// Safari/Mobile Compatibility - Multi-layered storage approach
+// ============================================================================
+// These functions handle client_id persistence across AJAX requests
+// Critical for Safari with ITP (Intelligent Tracking Prevention) enabled
+// ============================================================================
+
+/**
+ * Get the current client state from memory
+ * Initializes window.SLN_BOOKING_CLIENT if it doesn't exist
+ */
+function sln_getClientState() {
+    if (typeof window.SLN_BOOKING_CLIENT !== "object" || window.SLN_BOOKING_CLIENT === null) {
+        window.SLN_BOOKING_CLIENT = { id: null, storage: "session" };
+    }
+
+    return window.SLN_BOOKING_CLIENT;
+}
+
+/**
+ * Set the client state and persist it across multiple storage mechanisms
+ * Uses progressive enhancement: localStorage -> cookie -> DOM
+ * This ensures compatibility with Safari ITP and private browsing modes
+ */
+function sln_setClientState(id, storage) {
+    var state = sln_getClientState();
+    state.id = id || null;
+    state.storage = storage || state.storage || "session";
+
+    // MODERN BEST PRACTICE: Multi-layered storage with progressive enhancement
+    // Layer 1: Try localStorage (fast, modern browsers)
+    try {
+        if (state.id) {
+            window.localStorage.setItem("sln_client_id", state.id);
+        } else {
+            window.localStorage.removeItem("sln_client_id");
+        }
+    } catch (err) {
+        // Safari ITP or private mode - silently continue to cookie fallback
+    }
+
+    // Layer 2: Cookie fallback (Safari-compatible, works when localStorage is blocked)
+    // Benefits:
+    // - Works in Safari with ITP enabled
+    // - Works in private/incognito mode
+    // - Persists across page reloads
+    // - Server-side accessible if needed
+    try {
+        if (state.id) {
+            // Set secure cookie with 2-hour expiration
+            // SameSite=Strict: Only send cookie with same-site requests (CSRF protection)
+            // Secure: Only send over HTTPS (required for SameSite=None, good practice anyway)
+            var maxAge = 7200; // 2 hours in seconds
+            var cookieValue = "sln_client_id=" + encodeURIComponent(state.id);
+            var cookieAttrs = "; path=/; max-age=" + maxAge + "; SameSite=Strict";
+            
+            // Only add Secure flag if on HTTPS (development may use HTTP)
+            if (window.location.protocol === "https:") {
+                cookieAttrs += "; Secure";
+            }
+            
+            document.cookie = cookieValue + cookieAttrs;
+        } else {
+            // Clear cookie by setting max-age=0
+            document.cookie = "sln_client_id=; path=/; max-age=0";
+        }
+    } catch (err) {
+        // Cookie blocked - rare, but handle gracefully
+    }
+
+    // Layer 3: DOM attribute (always works, session-only)
+    var container = document.getElementById("sln-salon-booking");
+    if (container) {
+        container.setAttribute("data-client-id", state.id ? state.id : "");
+    }
+}
+
+/**
+ * Initialize client state from multiple storage sources
+ * Checks DOM, memory, localStorage, and cookies in priority order
+ * Called on page load and after each AJAX request
+ */
+function sln_initializeClientState($) {
+    var container = $("#sln-salon-booking");
+    if (!container.length) {
+        return;
+    }
+
+    var storage = container.data("storage") || sln_getClientState().storage;
+    var idFromDom = container.data("clientId");
+    var idFromStorage = null;
+    var idFromCookie = null;
+
+    // MODERN BEST PRACTICE: Try multiple storage mechanisms in order of reliability
+    // Layer 1: DOM data attribute (server-provided, most authoritative)
+    // Already captured as idFromDom
+    
+    // Layer 2: Try localStorage (fast, modern browsers)
+    try {
+        idFromStorage = window.localStorage.getItem("sln_client_id");
+    } catch (err) {
+        // Safari ITP or private mode - continue to cookie fallback
+        idFromStorage = null;
+    }
+
+    // Layer 3: Try cookie fallback (Safari-compatible)
+    // This is critical for Safari with ITP enabled, which blocks/restricts localStorage
+    try {
+        var cookieMatch = document.cookie.match(/(?:^|;\s*)sln_client_id=([^;]+)/);
+        if (cookieMatch && cookieMatch[1]) {
+            idFromCookie = decodeURIComponent(cookieMatch[1]);
+        }
+    } catch (err) {
+        // Cookie parsing error - rare, but handle gracefully
+        idFromCookie = null;
+    }
+
+    // Layer 4: Current state in memory
+    var currentState = sln_getClientState();
+    
+    // Resolve client_id with fallback chain (priority order)
+    // 1. DOM (server-provided) - highest priority
+    // 2. Current state (already in memory)
+    // 3. localStorage (fast, but may be blocked)
+    // 4. Cookie (Safari fallback)
+    var resolvedId = idFromDom || currentState.id || idFromStorage || idFromCookie;
+
+    sln_setClientState(resolvedId, storage);
+    sln_syncClientIdFields($);
+}
+
+/**
+ * Sync client_id to all form hidden fields
+ * Ensures client_id is included in all form submissions
+ */
+function sln_syncClientIdFields($) {
+    var clientId = sln_getClientState().id;
+    if (!clientId) {
+        return;
+    }
+
+    $("#sln-salon-booking form").each(function () {
+        var $form = $(this);
+        var $field = $form.find('input[name="sln_client_id"]');
+
+        if ($field.length) {
+            $field.val(clientId);
+        } else {
+            $("<input>", {
+                type: "hidden",
+                name: "sln_client_id",
+                value: clientId,
+            }).appendTo($form);
+        }
+    });
+}
+
+/**
+ * Get client_id as URL parameter string
+ * Returns empty string if no client_id is available
+ */
+function sln_getClientIdParam() {
+    var clientId = sln_getClientState().id;
+    if (!clientId) {
+        return "";
+    }
+    return "sln_client_id=" + encodeURIComponent(clientId);
+}
+
+/**
+ * Ensure client_id is included in AJAX request data
+ * Handles both FormData objects and query strings
+ */
+function sln_ensureClientIdInData(data) {
+    var clientParam = sln_getClientIdParam();
+    if (!clientParam) {
+        return data;
+    }
+
+    if (typeof FormData !== "undefined" && data instanceof FormData) {
+        if (!data.has("sln_client_id")) {
+            data.append("sln_client_id", sln_getClientState().id);
+        }
+        return data;
+    }
+
+    if (typeof data === "string") {
+        if (data.indexOf("sln_client_id=") === -1) {
+            data += (data.length ? "&" : "") + clientParam;
+        }
+        return data;
+    }
+
+    return data;
+}
+
+// ============================================================================
+// DEBUG PANEL - Visible debug logs for troubleshooting
+// ============================================================================
+
+/**
+ * Check if debug mode is enabled
+ * Activated with ?sln_debug=1 in URL
+ */
+function sln_isDebugMode() {
+    var urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('sln_debug') === '1';
+}
+
+/**
+ * Initialize debug panel if debug mode is enabled
+ */
+function sln_initDebugPanel($) {
+    if (!sln_isDebugMode()) {
+        return;
+    }
+    
+    // Ensure jQuery is available
+    $ = $ || jQuery;
+    
+    // Create debug panel if it doesn't exist
+    if ($("#sln-debug-panel").length === 0) {
+        var panelHtml = '<div id="sln-debug-panel" style="' +
+            'position: fixed; ' +
+            'bottom: 0; ' +
+            'right: 0; ' +
+            'width: 400px; ' +
+            'max-height: 500px; ' +
+            'background: #1a1a1a; ' +
+            'color: #00ff00; ' +
+            'font-family: monospace; ' +
+            'font-size: 11px; ' +
+            'overflow-y: auto; ' +
+            'z-index: 999999; ' +
+            'border: 2px solid #00ff00; ' +
+            'box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);' +
+            '">' +
+            '<div style="' +
+                'position: sticky; ' +
+                'top: 0; ' +
+                'background: #000; ' +
+                'padding: 8px; ' +
+                'border-bottom: 1px solid #00ff00; ' +
+                'display: flex; ' +
+                'justify-content: space-between; ' +
+                'align-items: center;' +
+            '">' +
+                '<strong style="color: #fff;">🔍 SLN DEBUG PANEL</strong>' +
+                '<button id="sln-debug-clear" style="' +
+                    'background: #ff0000; ' +
+                    'color: #fff; ' +
+                    'border: none; ' +
+                    'padding: 4px 8px; ' +
+                    'cursor: pointer; ' +
+                    'font-size: 10px;' +
+                '">CLEAR</button>' +
+            '</div>' +
+            '<div id="sln-debug-content" style="padding: 10px;"></div>' +
+        '</div>';
+        
+        $("body").append(panelHtml);
+        
+        // Clear button handler
+        $("#sln-debug-clear").on("click", function() {
+            $("#sln-debug-content").empty();
+        });
+        
+        // Log initialization
+        sln_debugLog("🚀 Debug mode initialized", {
+            timestamp: new Date().toISOString(),
+            url: window.location.href,
+            client_id: sln_getClientState().id,
+            storage: sln_getClientState().storage,
+            localStorage_available: typeof(Storage) !== "undefined",
+            cookies_enabled: navigator.cookieEnabled
+        });
+    }
+}
+
+/**
+ * Log debug information to visible panel
+ */
+function sln_debugLog(message, data) {
+    if (!sln_isDebugMode()) {
+        return;
+    }
+    
+    var timestamp = new Date().toLocaleTimeString('en-US', { 
+        hour12: false, 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit',
+        fractionalSecondDigits: 3
+    });
+    
+    // Use jQuery instead of $ shorthand
+    var $content = jQuery("#sln-debug-content");
+    if ($content.length === 0) {
+        return; // Panel not initialized
+    }
+    
+    var logHtml = '<div style="margin-bottom: 10px; padding: 8px; background: #0a0a0a; border-left: 3px solid #00ff00;">';
+    logHtml += '<div style="color: #888; font-size: 10px; margin-bottom: 4px;">' + timestamp + '</div>';
+    logHtml += '<div style="color: #fff; margin-bottom: 4px;"><strong>' + message + '</strong></div>';
+    
+    if (data) {
+        logHtml += '<pre style="margin: 0; color: #00ff00; font-size: 10px; white-space: pre-wrap; word-wrap: break-word;">';
+        logHtml += JSON.stringify(data, null, 2);
+        logHtml += '</pre>';
+    }
+    
+    logHtml += '</div>';
+    
+    $content.append(logHtml);
+    
+    // Auto-scroll to bottom
+    var panel = document.getElementById("sln-debug-panel");
+    if (panel) {
+        panel.scrollTop = panel.scrollHeight;
+    }
+    
+    // Also log to console for reference
+    console.log("[SLN DEBUG]", message, data);
+}

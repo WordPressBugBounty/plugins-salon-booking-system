@@ -172,7 +172,7 @@ class SLN_Helper_CacheWarmer
                     // DEBUG: Log booking builder state
                     $attendants_state = $bb->getAttendantsIds();
                     $attendants_debug = empty($attendants_state) ? '(empty array)' : implode(',', $attendants_state);
-                    error_log(sprintf(
+                    SLN_Plugin::addLog(sprintf(
                         "[CacheWarmer] Service: %s (ID: %s) | Attendants: %s | Cache key will match 'Choose assistant for me'",
                         $service->getName(),
                         $service->getId(),
@@ -191,7 +191,7 @@ class SLN_Helper_CacheWarmer
                     $cache_key = $method->invoke($obj, $bb, '');
                     
                     // DEBUG: Log cache key to WordPress debug log
-                    error_log(sprintf(
+                    SLN_Plugin::addLog(sprintf(
                         "[CacheWarmer] Cache key created: %s",
                         $cache_key
                     ));
@@ -207,7 +207,7 @@ class SLN_Helper_CacheWarmer
                         $cached_check = get_transient($cache_key);
                         $cache_status = ($cached_check !== false) ? 'SAVED' : 'FAILED TO SAVE';
                         
-                        error_log(sprintf(
+                        SLN_Plugin::addLog(sprintf(
                             '[CacheWarmer] ✓ Service: %s | Cache status: %s | Intervals count: %d | Progress: %d/%d',
                             $service->getName(),
                             $cache_status,

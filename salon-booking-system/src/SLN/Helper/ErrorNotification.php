@@ -29,6 +29,9 @@ class SLN_Helper_ErrorNotification
     const DEDUP_WINDOW = 3600; // 1 hour - don't send same error within this window
     const ERROR_COUNT_TTL = 86400; // 24 hours - track error counts for 1 day
     const RECENT_ERRORS_TTL = 3600; // 1 hour - keep recent errors list
+    
+    // Version checking
+    const VERSION_TOLERANCE = 1; // Allow notifications from 1 minor version behind latest
 
     /**
      * Send error notification to support email with enhanced intelligence
@@ -143,6 +146,44 @@ class SLN_Helper_ErrorNotification
      */
     private static function shouldSendNotification($signature)
     {
+        // Get error info to check severity and known issues
+        $error_counts = get_transient(self::TRANSIENT_ERROR_COUNTS);
+        $is_critical = false;
+        $error_type = '';
+        $error_message = '';
+        
+        if ($error_counts && isset($error_counts[$signature])) {
+            $error_type = $error_counts[$signature]['type'];
+            $error_message = $error_counts[$signature]['message'];
+            $severity = self::getSeverity($error_type, $error_message);
+            $is_critical = ($severity === 'CRITICAL');
+        }
+        
+        // Check if this is a known issue already fixed in a newer version
+        if (!$is_critical && $error_type && $error_message) {
+            $known_issue = self::getKnownIssue($error_type, $error_message);
+            if ($known_issue) {
+                $current_version = defined('SLN_VERSION') ? SLN_VERSION : '0.0.0';
+                
+                // If current version is older than fix version, don't send
+                if (version_compare($current_version, $known_issue['fix_version'], '<')) {
+                    SLN_Plugin::addLog(sprintf(
+                        "[ErrorNotification] Skipping known issue '%s' fixed in %s (current: %s)",
+                        $known_issue['issue_id'],
+                        $known_issue['fix_version'],
+                        $current_version
+                    ));
+                    return false;
+                }
+            }
+        }
+        
+        // Check version for non-critical errors only
+        // CRITICAL errors always sent (too important to miss)
+        if (!$is_critical && !self::isRunningLatestVersion(self::VERSION_TOLERANCE)) {
+            return false; // Skip non-critical errors from outdated versions
+        }
+        
         // Check if this exact error was sent recently
         $sent_errors = get_transient(self::TRANSIENT_SENT_SIGNATURES);
         if (!$sent_errors) {
@@ -717,6 +758,84 @@ class SLN_Helper_ErrorNotification
         }
         
         return $ip;
+    }
+
+    /**
+     * Check if site is running the latest version (or close to it)
+     * 
+     * @param int $tolerance Number of minor versions behind latest that's acceptable
+     * @return bool True if current version is latest or within tolerance
+     */
+    private static function isRunningLatestVersion($tolerance = 1)
+    {
+        $current_version = defined('SLN_VERSION') ? SLN_VERSION : '0.0.0';
+        
+        // Get latest version from WordPress update transient
+        $update_cache = get_site_transient('update_plugins');
+        
+        if (!is_object($update_cache)) {
+            // No update data available - allow notification (benefit of doubt)
+            SLN_Plugin::addLog("[ErrorNotification] No update data available, allowing notification");
+            return true;
+        }
+        
+        $plugin_basename = defined('SLN_PLUGIN_BASENAME') ? SLN_PLUGIN_BASENAME : 'salon-booking-system/salon.php';
+        $latest_version = null;
+        
+        // Check if update is available
+        if (isset($update_cache->response[$plugin_basename]->new_version)) {
+            $latest_version = $update_cache->response[$plugin_basename]->new_version;
+        } 
+        // Check if plugin is up to date
+        elseif (isset($update_cache->no_update[$plugin_basename]->new_version)) {
+            $latest_version = $update_cache->no_update[$plugin_basename]->new_version;
+        }
+        // Fallback: Check last_checked version
+        elseif (isset($update_cache->checked[$plugin_basename])) {
+            $latest_version = $update_cache->checked[$plugin_basename];
+        }
+        
+        if (!$latest_version) {
+            // Can't determine latest version - allow notification (benefit of doubt)
+            SLN_Plugin::addLog("[ErrorNotification] Cannot determine latest version, allowing notification");
+            return true;
+        }
+        
+        // Compare versions
+        $version_diff = version_compare($current_version, $latest_version);
+        
+        if ($version_diff >= 0) {
+            // Running latest or newer (dev version)
+            return true;
+        }
+        
+        // Check if within tolerance
+        // Example: tolerance=1 means allow notifications from 10.30.14 if latest is 10.30.15
+        if ($tolerance > 0) {
+            $current_parts = explode('.', $current_version);
+            $latest_parts = explode('.', $latest_version);
+            
+            // Only check minor version difference (10.30.X)
+            if (count($current_parts) >= 3 && count($latest_parts) >= 3) {
+                if ($current_parts[0] == $latest_parts[0] && 
+                    $current_parts[1] == $latest_parts[1]) {
+                    $minor_diff = intval($latest_parts[2]) - intval($current_parts[2]);
+                    if ($minor_diff <= $tolerance) {
+                        return true;
+                    }
+                }
+            }
+        }
+        
+        // Running outdated version
+        SLN_Plugin::addLog(sprintf(
+            "[ErrorNotification] Skipping - outdated version (current: %s, latest: %s, tolerance: %d)",
+            $current_version,
+            $latest_version,
+            $tolerance
+        ));
+        
+        return false;
     }
 
     /**

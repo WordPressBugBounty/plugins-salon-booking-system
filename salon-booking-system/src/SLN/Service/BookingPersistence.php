@@ -52,21 +52,44 @@ class SLN_Service_BookingPersistence
             if ($payload !== false) {
                 $this->useTransient = true;
                 $this->clientId     = $clientId;
+                SLN_Plugin::addLog(sprintf('[Storage] Using transient storage (existing data found), client_id=%s', $clientId));
                 return;
             }
         }
 
-        $sessionWorking = $this->checkSessionWorking();
+        // CRITICAL: Detect Safari browser and force transient mode
+        // Safari ITP blocks third-party cookies and aggressively limits session cookies
+        // Better to use transients from the start than fight with Safari's restrictions
+        if ($this->isSafariBrowser()) {
+            $this->useTransient = true;
+            $this->clientId     = $clientId;
+            SLN_Plugin::addLog(sprintf('[Storage] Safari browser detected, using transient storage, client_id=%s', $clientId));
+            return;
+        }
+
+        // CRITICAL: Detect Safari ITP blocking session cookies
+        // If we receive a client_id from request but session is empty/new,
+        // it means the session cookie was blocked and we should use transients
+        if (!empty($clientId) && $this->isSessionCookieBlocked()) {
+            $this->useTransient = true;
+            $this->clientId     = $clientId;
+            SLN_Plugin::addLog(sprintf('[Storage] Session cookie blocked detected, using transient storage, client_id=%s', $clientId));
+            return;
+        }
+
+        $sessionWorking = $this->checkSessionWorking($clientId);
 
         if ($sessionWorking) {
             $this->useTransient = false;
             $this->clientId     = $clientId; // Now guaranteed to have a value
+            SLN_Plugin::addLog(sprintf('[Storage] Using session storage, client_id=%s, session_id=%s', $clientId, session_id()));
             return;
         }
 
         // Fallback to transients if sessions don't work
         $this->useTransient = true;
         $this->clientId     = $clientId; // Already generated above
+        SLN_Plugin::addLog(sprintf('[Storage] Fallback to transient storage (session test failed), client_id=%s', $clientId));
     }
 
     /**
@@ -81,9 +104,19 @@ class SLN_Service_BookingPersistence
             $transientKey = $this->buildTransientKey($this->clientId);
             $payload = get_transient($transientKey);
             
+            // CRITICAL DEBUG: Log exact transient key and what WordPress returns
+            SLN_Plugin::addLog(sprintf('[BookingPersistence] LOAD TRANSIENT - key=%s, payload_type=%s, has_data=%s', 
+                $transientKey,
+                gettype($payload),
+                (is_array($payload) && isset($payload['data'])) ? 'YES' : 'NO'
+            ));
+            
             if (is_array($payload) && isset($payload['data'])) {
                 $loadedData = is_array($payload['data']) ? $payload['data'] : $defaultData;
                 $loadedLastId = isset($payload['last_id']) ? $payload['last_id'] : null;
+                
+                // DEBUG: Log loaded transient data
+                SLN_Plugin::addLog('[BookingPersistence] LOAD FROM TRANSIENT - client_id=' . $this->clientId . ', last_id=' . ($loadedLastId ? $loadedLastId : 'NULL') . ', has_services=' . (isset($loadedData['services']) && !empty($loadedData['services']) ? 'YES' : 'NO') . ', keys=' . implode(',', array_keys($loadedData)));
                 
                 return array(
                     'data'    => $loadedData,
@@ -91,11 +124,18 @@ class SLN_Service_BookingPersistence
                 );
             }
 
+            SLN_Plugin::addLog('[BookingPersistence] LOAD FROM TRANSIENT - NO DATA FOUND (transient key=' . $transientKey . '), returning defaults');
             return array('data' => $defaultData, 'last_id' => null);
         }
 
         $data   = isset($_SESSION[$this->sessionKeyData]) ? $_SESSION[$this->sessionKeyData] : $defaultData;
         $lastId = isset($_SESSION[$this->sessionKeyLastId]) ? $_SESSION[$this->sessionKeyLastId] : null;
+
+        // DEBUG: Log loaded session data
+        $found = isset($_SESSION[$this->sessionKeyData]) ? 'FOUND' : 'NOT_FOUND';
+        $hasServices = (isset($data['services']) && !empty($data['services'])) ? 'YES' : 'NO';
+        $keys = is_array($data) && !empty($data) ? implode(',', array_keys($data)) : 'EMPTY';
+        SLN_Plugin::addLog(sprintf('[BookingPersistence] LOAD FROM SESSION - session_id=%s, key=%s, found=%s, has_services=%s, keys=%s', session_id(), $this->sessionKeyData, $found, $hasServices, $keys));
 
         return array('data' => $data, 'last_id' => $lastId);
     }
@@ -109,13 +149,30 @@ class SLN_Service_BookingPersistence
      */
     public function save(array $data, $lastId)
     {
+        // DEBUG: Log what's being saved
+        $hasServices = (isset($data['services']) && !empty($data['services'])) ? 'YES' : 'NO';
+        $keys = !empty($data) ? implode(',', array_keys($data)) : 'EMPTY';
+        $storage = $this->useTransient ? 'transient' : 'session';
+        $transientKey = $this->useTransient ? $this->buildTransientKey($this->clientId) : 'N/A';
+        
+        SLN_Plugin::addLog(sprintf('[BookingPersistence] SAVE - storage=%s, key=%s, client_id=%s, session_id=%s, last_id=%s, has_services=%s, keys=%s', 
+            $storage,
+            $transientKey,
+            $this->clientId, 
+            session_id(), 
+            ($lastId ? $lastId : 'NULL'),
+            $hasServices, 
+            $keys
+        ));
         if ($this->useTransient) {
             if (!$this->clientId) {
                 $this->clientId = $this->generateClientId();
             }
 
+            $transientKey = $this->buildTransientKey($this->clientId);
+            
             set_transient(
-                $this->buildTransientKey($this->clientId),
+                $transientKey,
                 array(
                     'data'    => $data,
                     'last_id' => $lastId,
@@ -240,16 +297,59 @@ class SLN_Service_BookingPersistence
     }
 
     /**
-     * Basic session write/read test.
+     * Detect if Safari ITP is blocking session cookies across requests.
+     * 
+     * This happens when:
+     * 1. Session exists but is empty (no booking data marker)
+     * 2. We have a client_id from the request (from previous booking steps)
+     * 3. Session was recently created (new session)
+     * 
+     * This indicates the browser didn't send the session cookie from the previous request.
      *
+     * @return bool True if session cookie appears to be blocked
+     */
+    private function isSessionCookieBlocked()
+    {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            return true; // No active session = blocked
+        }
+
+        // Check if session has our initialization marker
+        // If we don't have this marker but session exists, it's a new session (cookie blocked)
+        $markerKey = '_sln_session_initialized';
+        
+        if (!isset($_SESSION[$markerKey])) {
+            // First time we see this session - mark it
+            $_SESSION[$markerKey] = time();
+            
+            // If this session is new but we have existing booking data elsewhere,
+            // check if the session is genuinely new or if it's a new session due to cookie blocking
+            // We check if there's any booking data in this session
+            $hasBookingData = isset($_SESSION[$this->sessionKeyData]) || isset($_SESSION[$this->sessionKeyLastId]);
+            
+            if (!$hasBookingData) {
+                // New session with no data - might be cookie blocked
+                // We'll rely on the calling code's client_id check
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if sessions work within a single request.
+     * 
+     * @param string|null $clientId
      * @return bool
      */
-    private function checkSessionWorking()
+    private function checkSessionWorking($clientId)
     {
         if (session_status() !== PHP_SESSION_ACTIVE) {
             return false;
         }
 
+        // Basic write/read test within this request
         $testKey   = '_sln_session_test_' . uniqid('', true);
         $testValue = 'test_' . wp_rand(1000, 9999);
         $_SESSION[$testKey] = $testValue;
@@ -288,5 +388,32 @@ class SLN_Service_BookingPersistence
     private function buildTransientKey($clientId)
     {
         return self::TRANSIENT_PREFIX . $clientId;
+    }
+
+    /**
+     * Detect if the browser is Safari.
+     * 
+     * Safari has Intelligent Tracking Prevention (ITP) that aggressively blocks cookies,
+     * making sessions unreliable for booking flows. We detect Safari and use transients instead.
+     * 
+     * @return bool True if Safari browser is detected
+     */
+    private function isSafariBrowser()
+    {
+        if (!isset($_SERVER['HTTP_USER_AGENT'])) {
+            return false;
+        }
+
+        $userAgent = $_SERVER['HTTP_USER_AGENT'];
+
+        // Safari detection: Contains "Safari" but NOT "Chrome" and NOT "Chromium"
+        // Chrome and Chromium include "Safari" in their UA but should not be treated as Safari
+        $isSafari = (
+            stripos($userAgent, 'Safari') !== false &&
+            stripos($userAgent, 'Chrome') === false &&
+            stripos($userAgent, 'Chromium') === false
+        );
+
+        return $isSafari;
     }
 }

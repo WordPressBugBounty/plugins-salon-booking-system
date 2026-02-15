@@ -32,7 +32,7 @@ class SLN_Helper_AutoAttendant_Logger
 
         // Use WordPress debug log if available
         if (defined('WP_DEBUG_LOG') && WP_DEBUG_LOG) {
-            error_log('[SLN Auto-Attendant] ' . json_encode($logEntry));
+            SLN_Plugin::addLog('[SLN Auto-Attendant] ' . json_encode($logEntry));
         }
 
         // Also use plugin's own logging

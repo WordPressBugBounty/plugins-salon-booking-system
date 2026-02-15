@@ -100,7 +100,7 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
                     $time_param = new SLN_DateTime($today . ' ' . $raw_time, SLN_TimeFunc::getWpTimezone());
                 } catch (Exception $e2) {
                     // If parsing still fails, log error and continue without time
-                    error_log('SLN Booking: Failed to parse time parameter "' . $raw_time . '": ' . $e2->getMessage());
+                    SLN_Plugin::addLog('SLN Booking: Failed to parse time parameter "' . $raw_time . '": ' . $e2->getMessage());
                     $time_param = null;
                 }
             }

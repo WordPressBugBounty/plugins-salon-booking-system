@@ -27,7 +27,22 @@ class SLB_Discount_Helper_DiscountItems
         $bookingServices = $bb->getBookingServices();
         $bookingAttende = $bb->getAttendantsIds();
 
+        // DEFENSIVE CHECK: Ensure booking has services before accessing first item
+        // Prevents: FATAL_ERROR: Call to a member function getStartsAt() on null
+        // This can happen if booking creation timing issues occur or services are empty
+        if (!$bookingServices || $bookingServices->getCount() === 0) {
+            SLN_Plugin::addLog('SLB_Discount: No booking services found, cannot calculate discount');
+            return false;
+        }
+
         $first = $bookingServices->getFirstItem();
+        
+        // DEFENSIVE CHECK: Ensure first item exists before calling methods on it
+        if (!$first) {
+            SLN_Plugin::addLog('SLB_Discount: First booking service is null, cannot calculate discount');
+            return false;
+        }
+        
         $date  = $first->getStartsAt()->getTimestamp();
         $isShopEnabled = false;
         $isShopEnabled = apply_filters('sln_is_shops_enabled',$isShopEnabled);

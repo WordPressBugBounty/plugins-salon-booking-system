@@ -25,7 +25,7 @@ class SLN_Action_Ajax_AddHolydayRule extends SLN_Action_Ajax_Abstract
 			$data['is_manual']	= true;
 			
 			// DEBUG: Log what we're storing
-			error_log('AddHolydayRule: Storing rule - ' . print_r($data, true));
+			SLN_Plugin::addLog('AddHolydayRule: Storing rule - ' . print_r($data, true));
 
 			// FIX: Don't truncate overnight locks for manual time slot blocking
 			// The original logic would destroy locks that span midnight (e.g., 23:00-01:00)

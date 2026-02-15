@@ -30,7 +30,8 @@
         // Configuration
         config: {
             enabled: true,
-            refreshInterval: 60000, // 1 minute
+            refreshInterval: 60000, // 1 minute (for time slot filtering)
+            datesRefreshInterval: 300000, // 5 minutes (for dates availability refresh)
             showDebug: typeof salon !== 'undefined' && salon.debug === '1',
             timeInputSelector: '#_sln_booking_time, select[name="sln[time]"]',
             dateInputSelector: '#_sln_booking_date, input[name="sln[date]"]',
@@ -38,7 +39,9 @@
         
         // State
         filterTimer: null,
+        datesRefreshTimer: null,
         lastFilterRun: null,
+        lastDatesRefresh: null,
         filteredCount: 0,
         
         /**
@@ -79,8 +82,17 @@
             // Start periodic refresh for long sessions
             this.startPeriodicFilter();
             
+            // FIX RISCHIO #2: Start periodic dates refresh (less frequent)
+            this.startPeriodicDatesRefresh();
+            
             // Filter when user returns to tab (visibility API)
             this.setupVisibilityFilter();
+            
+            // Listen for external intervals refresh (from salon.js refreshAvailableDatesOnLoad)
+            $(document).on('sln:intervals:refreshed', function(event, data) {
+                self.log('External intervals refresh detected, re-filtering times');
+                self.filterPastTimeSlots();
+            });
             
             this.log('Time filter initialized successfully');
         },
@@ -239,6 +251,95 @@
         },
         
         /**
+         * FIX RISCHIO #2: Refresh available dates from server
+         * 
+         * Problema: L'array delle date disponibili (intervals.dates) non viene mai aggiornato
+         * dopo il page load. Se durante una long session tutte le date diventano fully booked,
+         * l'utente continua a vederle come disponibili.
+         * 
+         * Soluzione: Chiamata AJAX periodica per ottenere dates array aggiornato dal server
+         */
+        refreshAvailableDates: function() {
+            var self = this;
+            
+            // Only refresh on date step
+            if (!$('#salon-step-date').length) {
+                return;
+            }
+            
+            var form = $('#salon-step-date').closest('form');
+            if (!form.length) {
+                self.log('Cannot refresh dates: form not found');
+                return;
+            }
+            
+            self.log('Refreshing available dates from server...');
+            
+            var data = form.serialize();
+            
+            // Garantire timezone incluso (come fix Rischio #1)
+            if (data.indexOf('customer_timezone') === -1) {
+                try {
+                    var userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                    if (userTimezone) {
+                        data += "&sln[customer_timezone]=" + encodeURIComponent(userTimezone);
+                    }
+                } catch (e) {
+                    // Ignore
+                }
+            }
+            
+            data += "&action=salon&method=checkDate&security=" + salon.ajax_nonce;
+            
+            $.ajax({
+                url: salon.ajax_url,
+                data: data,
+                method: 'POST',
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success && response.intervals) {
+                        // Aggiorna intervals data attribute
+                        var currentIntervals = $('#salon-step-date').data('intervals');
+                        
+                        // Preserve current time selection but update dates
+                        var updatedIntervals = $.extend({}, currentIntervals, response.intervals);
+                        
+                        $('#salon-step-date').data('intervals', updatedIntervals);
+                        
+                        // Update global reference if exists
+                        if (typeof window.sln_stepDate_items !== 'undefined') {
+                            window.sln_stepDate_items.intervals = updatedIntervals;
+                        }
+                        
+                        // Trigger calendar update
+                        if (typeof sln_updateDatepickerTimepickerSlots === 'function') {
+                            sln_updateDatepickerTimepickerSlots(
+                                $, 
+                                updatedIntervals, 
+                                $('#salon-step-date').data('booking_id')
+                            );
+                        }
+                        
+                        self.lastDatesRefresh = new Date();
+                        
+                        self.log('Available dates refreshed successfully');
+                        
+                        // Trigger event for other scripts
+                        $(document).trigger('sln:dates:refreshed', {
+                            intervals: updatedIntervals,
+                            timestamp: self.lastDatesRefresh
+                        });
+                    } else {
+                        self.log('Dates refresh: empty response from server');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    self.log('Dates refresh failed: ' + status);
+                }
+            });
+        },
+        
+        /**
          * Start periodic filtering for long sessions
          */
         startPeriodicFilter: function() {
@@ -249,7 +350,7 @@
                 clearInterval(this.filterTimer);
             }
             
-            // Set up new timer
+            // Set up new timer for time slot filtering
             this.filterTimer = setInterval(function() {
                 self.log('Periodic filter triggered');
                 self.filterPastTimeSlots();
@@ -259,7 +360,28 @@
         },
         
         /**
+         * FIX RISCHIO #2: Start periodic dates refresh for long sessions
+         */
+        startPeriodicDatesRefresh: function() {
+            var self = this;
+            
+            // Clear existing timer
+            if (this.datesRefreshTimer) {
+                clearInterval(this.datesRefreshTimer);
+            }
+            
+            // Set up new timer for dates refresh (less frequent than time filtering)
+            this.datesRefreshTimer = setInterval(function() {
+                self.log('Periodic dates refresh triggered');
+                self.refreshAvailableDates();
+            }, this.config.datesRefreshInterval);
+            
+            this.log('Periodic dates refresh started (every ' + (this.config.datesRefreshInterval / 1000) + 's)');
+        },
+        
+        /**
          * Filter when user returns to tab
+         * FIX RISCHIO #2: Also refresh dates if been away for long time
          */
         setupVisibilityFilter: function() {
             var self = this;
@@ -267,12 +389,21 @@
             if (typeof document.hidden !== 'undefined') {
                 document.addEventListener('visibilitychange', function() {
                     if (!document.hidden) {
-                        var timeSinceFilter = Date.now() - (self.lastFilterRun ? self.lastFilterRun.getTime() : 0);
+                        var now = Date.now();
+                        var timeSinceFilter = now - (self.lastFilterRun ? self.lastFilterRun.getTime() : 0);
+                        var timeSinceDatesRefresh = now - (self.lastDatesRefresh ? self.lastDatesRefresh.getTime() : 0);
                         
-                        // Filter if more than 30 seconds since last filter
+                        // Filter times if more than 30 seconds since last filter
                         if (timeSinceFilter > 30000) {
                             self.log('Tab became visible, filtering times');
                             self.filterPastTimeSlots();
+                        }
+                        
+                        // FIX RISCHIO #2: Refresh dates if more than 2 minutes since last refresh
+                        // (Tab was in background for significant time)
+                        if (timeSinceDatesRefresh > 120000) {
+                            self.log('Tab became visible after long absence, refreshing dates');
+                            self.refreshAvailableDates();
                         }
                     }
                 });
@@ -329,7 +460,9 @@
                 enabled: this.config.enabled,
                 filteredCount: this.filteredCount,
                 lastFilterRun: this.lastFilterRun,
-                refreshInterval: this.config.refreshInterval
+                lastDatesRefresh: this.lastDatesRefresh,
+                refreshInterval: this.config.refreshInterval,
+                datesRefreshInterval: this.config.datesRefreshInterval
             };
         }
     };

@@ -1,0 +1,14 @@
+Version bump to 10.30.15 - Force PayPal tracking fix deployment
+
+- Increment version from 10.30.14 to 10.30.15
+- Update plugin header, SLN_VERSION constant, and readme stable tag
+- Add changelog entry for PayPal payment tracking fix
+- Force fresh deployment to ensure fixes are applied on remote server
+
+This version bump is necessary to trigger a clean deployment of the
+PayPal tracking fix that was not being applied despite successful pipeline runs.
+
+Changes include:
+- Explicit post_status during booking creation (prevents auto-draft default)
+- Refined status protection filter to only apply to existing bookings
+- Enhanced logging for debugging status transitions

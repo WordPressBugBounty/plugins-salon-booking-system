@@ -47,7 +47,7 @@ class SLN_Admin_SettingTabs_PaymentsTab extends SLN_Admin_SettingTabs_AbstractTa
                     $this->submitted['pay_deposit_advanced_rules'][$i]['valid_from'] = $valid_from;
                     $this->submitted['pay_deposit_advanced_rules'][$i]['valid_to'] = $valid_to;
                 } catch (Exception $e) {
-                    error_log("Error parsing dates in pay_deposit_advanced_rule #$i: " . $e->getMessage());
+                    SLN_Plugin::addLog("Error parsing dates in pay_deposit_advanced_rule #$i: " . $e->getMessage());
                     $this->submitted['pay_deposit_advanced_rules'][$i]['valid_from'] = '';
                     $this->submitted['pay_deposit_advanced_rules'][$i]['valid_to'] = '';
                 }

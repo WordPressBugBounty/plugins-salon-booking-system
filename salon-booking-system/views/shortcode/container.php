@@ -18,8 +18,16 @@ $currentTab = $_SESSION['currentTab'] ?? 'services';
             <?php if (class_exists('SalonPackages\Addon') && slnpackages_is_pro_version_salon() && slnpackages_is_license_active()): ?>
                 <?php
                 $tabs = [
-                    ['name' => 'services', 'shortcode' => $salon->getShortcodeStringWithAttrs('salon_booking')],
-                    ['name' => 'packages', 'shortcode' => $salon->getShortcodeStringWithAttrs('salon_packages')],
+                    [
+                        'name' => 'services',
+                        'label' => __('Services', 'salon-booking-system'),
+                        'shortcode' => $salon->getShortcodeStringWithAttrs('salon_booking')
+                    ],
+                    [
+                        'name' => 'packages',
+                        'label' => __('Packages', 'sln-package'),
+                        'shortcode' => $salon->getShortcodeStringWithAttrs('salon_packages')
+                    ],
                 ];
                 ?>
                 <ul class="nav nav-tabs sln-content__tabs__nav">
@@ -32,7 +40,7 @@ $currentTab = $_SESSION['currentTab'] ?? 'services';
                                data-toggle="tab"
                                class="<?php echo $tab['name'] === $currentTab ? ' active' : '' ?>"
                             >
-                                <?php esc_html_e(ucfirst(sprintf('%s', $tab['name'])), 'salon-booking-system'); ?>
+                                <?php echo esc_html($tab['label']); ?>
                             </a>
                         </li>
                     <?php endforeach; ?>

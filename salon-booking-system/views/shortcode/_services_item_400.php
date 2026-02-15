@@ -30,11 +30,12 @@
         </p>
         <div class="sln-service__info sln-list__item__info">
                <?php if($showPrices): ?>
-                <h3 class="sln-steps-price sln-service-price sln-list__item__price">
+                <?php $basePriceFormatted = $plugin->format()->moneyFormatted($service->getPrice()); ?>
+                <h3 class="sln-steps-price sln-service-price sln-list__item__price" data-service-id="<?php echo $service->getId(); ?>" data-base-price="<?php echo esc_attr($basePriceFormatted); ?>">
                     <?php if ($service->getVariablePriceEnabled()): ?>
                         <?php esc_html_e('from', 'salon-booking-system') ?>
                     <?php endif; ?>
-                    <span class="sln-service-price-value sln-list__item__proce__value"><?php echo $plugin->format()->moneyFormatted($service->getPrice())?></span>
+                    <span class="sln-service-price-value sln-list__item__proce__value"><?php echo $basePriceFormatted; ?></span>
                     <!-- .sln-service-price // END -->
                 </h3>
             <?php endif ?>
@@ -61,4 +62,15 @@
 <span class="sln-service__errors sln-list__item__errors errors-area" data-class="sln-alert sln-alert-medium sln-alert--problem"><?php if ($serviceErrors) foreach ($serviceErrors as $error): ?><div class="sln-alert sln-alert-medium sln-alert--problem"><?php echo $error ?></div><?php endforeach ?></span>
     <div class="sln-alert sln-alert-medium sln-alert--problem" style="display: none" id="availabilityerror"><?php esc_html_e('Not enough time for this service','salon-booking-system') ?></div>
     <div class="sln-list__item__fkbkg"></div>
+    <?php
+    /**
+     * Hook to add content at the end of service item.
+     * 
+     * @param SLN_Wrapper_Service $service Service instance
+     * @param SLN_Plugin $plugin Plugin instance
+     * 
+     * @since 10.30.17
+     */
+    do_action( 'sln.shortcode.service_item.after_content', $service, $plugin );
+    ?>
 </label>

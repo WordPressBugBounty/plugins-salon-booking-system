@@ -501,6 +501,9 @@ export default {
   mounted() {
     this.loadAllData();
 
+    this._calendarResetHandler = () => this.loadAllData();
+    window.addEventListener('sln-calendar-cache-cleared', this._calendarResetHandler);
+
     setTimeout(() => {
       const cals = window.document.querySelectorAll(".dp__calendar");
       if (cals[0]) {
@@ -533,6 +536,8 @@ export default {
     }
   },
   beforeUnmount() {
+    window.removeEventListener('sln-calendar-cache-cleared', this._calendarResetHandler);
+
     // Clear both intervals to prevent memory leaks
     if (this.updateIntervalId) clearInterval(this.updateIntervalId);
     if (this.timelineIntervalId) clearInterval(this.timelineIntervalId);

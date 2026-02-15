@@ -84,6 +84,21 @@ abstract class SLN_Shortcode_Salon_AbstractUserStep extends SLN_Shortcode_Salon_
         $bb = $this->getPlugin()->getBookingBuilder();
         $clientId = $bb->getClientId();
         
+        // Debug: Log state BEFORE login
+        $isDebugMode = (isset($_GET['sln_debug']) && $_GET['sln_debug'] === '1') || 
+                       (isset($_POST['sln_debug']) && $_POST['sln_debug'] === '1');
+        if ($isDebugMode) {
+            $oldSessionId = session_id();
+            if (empty($oldSessionId)) {
+                @session_start();
+                $oldSessionId = session_id();
+            }
+            $oldBuilderId = spl_object_id($bb);
+            
+            SLN_Plugin::addLog(sprintf('[SLN DEBUG] BEFORE LOGIN: session_id=%s, client_id=%s, bb_object_id=%s, storage=%s', 
+                $oldSessionId, $clientId, $oldBuilderId, $bb->isUsingTransient() ? 'transient' : 'session'));
+        }
+        
         if ($clientId) {
             // Save current booking data to transient using client_id
             // This preserves data even when session ID changes
@@ -114,7 +129,36 @@ abstract class SLN_Shortcode_Salon_AbstractUserStep extends SLN_Shortcode_Salon_
             $_GET['sln_client_id'] = $clientId;
             $_POST['sln_client_id'] = $clientId;
             
-            SLN_Plugin::addLog(sprintf('[Login] Login successful, client_id preserved: %s', $clientId));
+            // Debug: Log state AFTER login, BEFORE reset
+            if ($isDebugMode) {
+                $newSessionId = session_id();
+                if (empty($newSessionId)) {
+                    @session_start();
+                    $newSessionId = session_id();
+                }
+                SLN_Plugin::addLog(sprintf('[SLN DEBUG] AFTER LOGIN (before reset): new_session_id=%s, client_id_in_GET=%s, client_id_in_POST=%s', 
+                    $newSessionId, 
+                    isset($_GET['sln_client_id']) ? $_GET['sln_client_id'] : 'null',
+                    isset($_POST['sln_client_id']) ? $_POST['sln_client_id'] : 'null'));
+            }
+            
+            // CRITICAL FIX: Force BookingBuilder to be recreated with new client_id
+            // The BookingBuilder is a singleton - after login we must reset it
+            // so the next call to getBookingBuilder() creates a NEW instance that reads client_id from $_REQUEST
+            // This fixes "blank page with 0" when BookingBuilder has no client_id to load transient data
+            $this->getPlugin()->resetBookingBuilder();
+            
+            // Debug: Verify reset worked
+            if ($isDebugMode) {
+                $newBb = $this->getPlugin()->getBookingBuilder();
+                $newBuilderId = spl_object_id($newBb);
+                $newClientId = $newBb->getClientId();
+                
+                SLN_Plugin::addLog(sprintf('[SLN DEBUG] AFTER RESET: new_bb_object_id=%s, new_client_id=%s, storage=%s, data_count=%d', 
+                    $newBuilderId, $newClientId, $newBb->isUsingTransient() ? 'transient' : 'session', count($newBb->getData())));
+            }
+            
+            SLN_Plugin::addLog(sprintf('[Login] Login successful, client_id preserved and BookingBuilder reset: %s', $clientId));
         }
 
         return true;

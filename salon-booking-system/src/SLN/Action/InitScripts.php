@@ -3,7 +3,7 @@
 
 class SLN_Action_InitScripts
 {
-    const ASSETS_VERSION = SLN_VERSION . '-20260203-time-filter';
+    const ASSETS_VERSION = SLN_VERSION . '-20260212-safari-mobile-fix';
 	private static $isInclude = false;
 	private $isAdmin;
 	private $plugin;

@@ -19,10 +19,8 @@ class SLN_Wrapper_Booking_Builder
         }
         $this->plugin = $plugin;
         $clientId      = $this->extractClientIdFromRequest();
-
         $this->persistence = new SLN_Service_BookingPersistence(__CLASS__, __CLASS__ . 'last_id', $clientId);
         $initialState      = $this->persistence->load($this->getEmptyValue());
-
         $this->data   = $initialState['data'];
         $this->lastId = $initialState['last_id'];
         $this->clientId = $this->persistence->ensureClientId();
@@ -277,6 +275,8 @@ class SLN_Wrapper_Booking_Builder
     }
 
     public function setServicesAndAttendants($data) {
+        // DEBUG: Log when services are set
+        SLN_Plugin::addLog('[BookingBuilder] setServicesAndAttendants called with: ' . print_r($data, true));
         $this->data['services'] = $data;
     }
 
@@ -386,15 +386,35 @@ class SLN_Wrapper_Booking_Builder
     {
         $settings             = $this->plugin->getSettings();
         $datetime             = $this->plugin->format()->datetime($this->getDateTime());
+        
+        // CRITICAL DEFENSIVE CHECK: Validate required customer data exists before creating booking
+        // This prevents bookings without customer information (regression bug from Feb 5, 2026)
+        $this->validateAndEnsureCustomerData();
+        
         $name                 = $this->get('firstname') . ' ' . $this->get('lastname');
         $status               = $bookingStatus ? $bookingStatus : $this->getCreateStatus();
+
+	// DEBUG: Log what status we're trying to set
+	SLN_Plugin::addLog(sprintf(
+	    'Builder::create() - Creating booking with status: %s (bookingStatus param: %s, getCreateStatus: %s)',
+	    $status,
+	    $bookingStatus ? $bookingStatus : 'null',
+	    $this->getCreateStatus()
+	));
 
 	$args = array(
 	    'post_type' => SLN_Plugin::POST_TYPE_BOOKING,
 	    'post_title' => $name.' - '.$datetime,
+	    'post_status' => $status, // CRITICAL FIX: Explicitly set status to prevent auto-draft default
 	);
 
 	$args = apply_filters('sln.booking_builder.create.getPostArgs', $args);
+
+	// DEBUG: Log args after filter to see if post_status was removed
+	SLN_Plugin::addLog(sprintf(
+	    'Builder::create() - After getPostArgs filter: post_status=%s',
+	    isset($args['post_status']) ? $args['post_status'] : 'NOT_SET'
+	));
 
 	$id = wp_insert_post($args);
 
@@ -430,7 +450,19 @@ class SLN_Wrapper_Booking_Builder
 	    throw new Exception(__('Unable to create booking. Please try again or contact the website administrator.', 'salon-booking-system'));
 	}
 
-	SLN_Plugin::addLog("Booking post created successfully with ID: " . $id);
+	SLN_Plugin::addLog(sprintf(
+	    "Booking post created successfully with ID: %d, initial status: %s",
+	    $id,
+	    $status
+	));
+
+	// CRITICAL FIX: Set lastId BEFORE 'sln.booking_builder.create' hook fires
+	// This ensures extensions calling getLastBooking() in their hook handlers receive valid booking
+	// Previously lastId was set AFTER hook (line 469), causing extensions to receive NULL
+	// Root cause of: FATAL_ERROR: Call to a member function getStartsAt() on null
+	// Extensions affected: SLB_Discount, SalonMultishop, and any hooking into this action
+	// Related docs: FIX_NULL_BOOKING_REFERENCE.md, CRITICAL_FIX_MULTISHOP_GETLASTBOOKING_ERROR.md
+	$this->lastId = $id;
 
         do_action('sln.booking_builder.create', $this);
 
@@ -438,11 +470,19 @@ class SLN_Wrapper_Booking_Builder
             update_post_meta($id, '_'.SLN_Plugin::POST_TYPE_BOOKING.'_disable_status_change_email', 1);
 	}
 
+        // DEBUG: Log booking data being saved
+        SLN_Plugin::addLog('[BookingBuilder] Saving booking data to post meta. Data keys: ' . implode(', ', array_keys($this->data)));
+        SLN_Plugin::addLog('[BookingBuilder] Services in data: ' . print_r($this->get('services'), true));
+        
         foreach ($this->data as $k => $v) {
             update_post_meta($id, '_'.SLN_Plugin::POST_TYPE_BOOKING.'_'.$k, $v);
         }
         $discounts = $this->get('discounts');
         $this->clear($id, $clear);
+        
+        // Ensure cache is cleared so evalBookingServices and email templates read fresh meta.
+        // Critical for PWA/API-created bookings where object cache can serve stale data.
+        clean_post_cache($id);
         
         // Use getLastBookingOrFail() to ensure we have a valid booking object
         // This prevents null reference errors in extensions that hook into these actions
@@ -452,7 +492,21 @@ class SLN_Wrapper_Booking_Builder
         $lastBooking->evalBookingServices();
         $lastBooking->evalTotal();
         $lastBooking->evalDuration();
+        
+        // IMPORTANT: Even though we set post_status during wp_insert_post(),
+        // we still call setStatus() here to ensure:
+        // 1. The 'transition_post_status' hook fires properly
+        // 2. Any status-dependent logic in setStatus() runs
+        // 3. Logging and audit trail is complete
+        // Since status is already set, this should be a no-op for the actual status change
         $lastBooking->setStatus($status);
+
+        // CRITICAL FIX: For new posts, transition_post_status fires during wp_insert_post
+        // BEFORE meta is saved (services, date, time, amount). Sending email there produces
+        // notifications with blank data. Send here after meta is saved and evaluated.
+        $this->plugin->messages()->sendByStatus($lastBooking, $status);
+        do_action('sln.booking_builder.create.booking_created', $lastBooking);
+        do_action('sln.booking_builder.new_booking_ready', $lastBooking);
 
         $userid = $lastBooking->getUserId();
         if ($userid) {
@@ -651,6 +705,139 @@ class SLN_Wrapper_Booking_Builder
     public function getResources()
     {
         return $this->get('services_resources') ? $this->get('services_resources') : array();
+    }
+
+    /**
+     * Validate and ensure required customer data exists before booking creation
+     * 
+     * CRITICAL DEFENSIVE METHOD added Feb 10, 2026 to prevent regression bug where
+     * logged-in users could create bookings without customer data when selecting "Pay Later"
+     * 
+     * This method:
+     * 1. Checks if required customer fields are populated
+     * 2. Attempts to load from logged-in user if missing
+     * 3. Throws exception if data still unavailable
+     * 4. Logs all actions for debugging
+     * 
+     * @throws Exception if required customer data is missing and cannot be loaded
+     */
+    private function validateAndEnsureCustomerData()
+    {
+        SLN_Plugin::addLog('[Booking Validation] Checking customer data before creation...');
+        
+        // Check which required fields are missing
+        $missingFields = array();
+        
+        if (SLN_Enum_CheckoutFields::getField('firstname')->isRequired() && empty($this->get('firstname'))) {
+            $missingFields[] = 'firstname';
+        }
+        if (SLN_Enum_CheckoutFields::getField('lastname')->isRequired() && empty($this->get('lastname'))) {
+            $missingFields[] = 'lastname';
+        }
+        if (SLN_Enum_CheckoutFields::getField('email')->isRequired() && empty($this->get('email'))) {
+            $missingFields[] = 'email';
+        }
+        if (SLN_Enum_CheckoutFields::getField('phone')->isRequired() && empty($this->get('phone'))) {
+            $missingFields[] = 'phone';
+        }
+        
+        // If all required fields present, we're good
+        if (empty($missingFields)) {
+            SLN_Plugin::addLog('[Booking Validation] ✓ All required customer fields present');
+            return;
+        }
+        
+        // Missing required fields - this is a critical issue
+        $missingFieldsList = implode(', ', $missingFields);
+        SLN_Plugin::addLog(sprintf(
+            '[Booking Validation] ✗ ERROR: Missing required customer fields: %s',
+            $missingFieldsList
+        ));
+        
+        // Log context for debugging
+        SLN_Plugin::addLog(sprintf(
+            '[Booking Validation] Context - User ID: %d, Session ID: %s, Data keys: %s',
+            get_current_user_id(),
+            session_id(),
+            implode(', ', array_keys($this->data))
+        ));
+        
+        // DEFENSIVE FALLBACK: Try to load from logged-in user profile
+        if (is_user_logged_in()) {
+            SLN_Plugin::addLog('[Booking Validation] Attempting to load customer data from logged-in user profile...');
+            
+            $loadedFields = array();
+            $customer_fields = SLN_Enum_CheckoutFields::forRegistration()->appendSmsPrefix();
+            
+            foreach ($customer_fields as $key => $field) {
+                if (empty($this->get($key))) {
+                    $value = $field->getValue(get_current_user_id());
+                    if (!empty($value)) {
+                        $this->set($key, $value);
+                        $loadedFields[] = $key;
+                    }
+                }
+            }
+            
+            if (!empty($loadedFields)) {
+                SLN_Plugin::addLog(sprintf(
+                    '[Booking Validation] ✓ Loaded fields from user profile: %s',
+                    implode(', ', $loadedFields)
+                ));
+                
+                // Save the loaded data
+                $this->save();
+                
+                // Re-check if we now have all required fields
+                $stillMissing = array();
+                foreach ($missingFields as $field) {
+                    if (empty($this->get($field))) {
+                        $stillMissing[] = $field;
+                    }
+                }
+                
+                if (empty($stillMissing)) {
+                    SLN_Plugin::addLog('[Booking Validation] ✓ All required fields now present after loading from user profile');
+                    return;
+                }
+                
+                $missingFieldsList = implode(', ', $stillMissing);
+                SLN_Plugin::addLog(sprintf(
+                    '[Booking Validation] ✗ Still missing after user profile load: %s',
+                    $missingFieldsList
+                ));
+            } else {
+                SLN_Plugin::addLog('[Booking Validation] ✗ No fields could be loaded from user profile');
+            }
+        } else {
+            SLN_Plugin::addLog('[Booking Validation] User not logged in - cannot load from profile');
+        }
+        
+        // CRITICAL ERROR: Cannot create booking without required customer data
+        // This prevents silent bugs where bookings appear in backend without customer info
+        $errorMessage = sprintf(
+            __('Unable to create booking: Required customer information is missing (%s). Please ensure all required fields are filled.', 'salon-booking-system'),
+            $missingFieldsList
+        );
+        
+        SLN_Plugin::addLog(sprintf('[Booking Validation] BLOCKING BOOKING CREATION: %s', $errorMessage));
+        
+        // Send error notification for monitoring
+        if (class_exists('SLN_Helper_ErrorNotification')) {
+            SLN_Helper_ErrorNotification::send(
+                'BOOKING_MISSING_CUSTOMER_DATA',
+                $errorMessage,
+                sprintf(
+                    "User ID: %d\nSession ID: %s\nMissing Fields: %s\nData Keys: %s",
+                    get_current_user_id(),
+                    session_id(),
+                    $missingFieldsList,
+                    implode(', ', array_keys($this->data))
+                )
+            );
+        }
+        
+        throw new Exception($errorMessage);
     }
 
 }

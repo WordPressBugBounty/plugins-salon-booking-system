@@ -23,9 +23,18 @@
           <i class="fas fa-sync-alt" :class="{ 'fa-spin': isResetting }"></i>
           {{ isResetting ? 'Resetting...' : 'Reset Calendar Cache' }}
         </button>
+        <button 
+          class="btn-force-update"
+          @click="forcePwaUpdate"
+          :disabled="isUpdating"
+          title="Force PWA update - clears all caches including service worker, ensures latest code is loaded"
+        >
+          <i class="fas fa-download" :class="{ 'fa-spin': isUpdating }"></i>
+          {{ isUpdating ? 'Updating...' : 'Force PWA Update' }}
+        </button>
         <p class="admin-tools-description">
-          Use this to clear calendar cache and reload all data from the server. 
-          Only use if you experience data synchronization issues.
+          <strong>Reset Calendar Cache:</strong> Clears calendar data cache. Use if you experience data sync issues.<br>
+          <strong>Force PWA Update:</strong> Clears service worker cache and reloads. Use if booking emails show wrong data, or after plugin updates.
         </p>
       </div>
       
@@ -45,6 +54,7 @@ export default {
       isLoading: true,
       user: null,
       isResetting: false,
+      isUpdating: false,
     };
   },
   computed: {
@@ -85,35 +95,34 @@ export default {
     },
     async resetCalendar() {
       if (this.isResetting) return;
-      
+
       try {
         this.isResetting = true;
-        
-        console.log('=== ADMIN: CALENDAR RESET INITIATED ===');
-        
-        // 1. Clear localStorage cache
-        console.log('1. Clearing localStorage cache...');
-        const localStorageKeys = Object.keys(localStorage);
+
         let clearedCount = 0;
-        localStorageKeys.forEach(key => {
-          if (key.startsWith('sln_') || key.startsWith('salon_')) {
+
+        // 1. Clear localStorage: sln_*, salon_*, and calendar-specific keys
+        const calendarKeys = ['isAttendantView'];
+        const prefixKeys = ['sln_', 'salon_'];
+        Object.keys(localStorage).forEach(key => {
+          const matchPrefix = prefixKeys.some(p => key.startsWith(p));
+          const matchCalendar = calendarKeys.includes(key);
+          if (matchPrefix || matchCalendar) {
             localStorage.removeItem(key);
             clearedCount++;
           }
         });
-        console.log(`   Cleared ${clearedCount} localStorage items`);
-        
-        // 2. Clear sessionStorage cache
-        console.log('2. Clearing sessionStorage...');
+
+        // 2. Clear sessionStorage
         sessionStorage.clear();
-        
-        // 3. Notify user to refresh calendar tab
-        console.log('3. Calendar cache cleared successfully');
-        console.log('=== ADMIN: CALENDAR RESET COMPLETE ===');
-        
-        // Show success message
+
+        // 3. Dispatch event so Calendar tab reloads data (works even if Calendar is mounted but hidden)
+        window.dispatchEvent(new CustomEvent('sln-calendar-cache-cleared'));
+
         this.$bvToast.toast(
-          'Calendar cache has been cleared. Please switch to the Calendar tab to reload data.',
+          clearedCount > 0
+            ? `Cache cleared (${clearedCount} items). Calendar data reloaded.`
+            : 'Cache cleared. Switch to Calendar tab to reload data.',
           {
             title: 'Cache Cleared',
             variant: 'success',
@@ -123,8 +132,6 @@ export default {
         );
         
       } catch (error) {
-        console.error('Error during calendar reset:', error);
-        
         this.$bvToast.toast(
           'Failed to clear calendar cache. Please try again or contact support.',
           {
@@ -136,6 +143,65 @@ export default {
         );
       } finally {
         this.isResetting = false;
+      }
+    },
+    async forcePwaUpdate() {
+      if (this.isUpdating) return;
+
+      try {
+        this.isUpdating = true;
+        console.log('=== ADMIN: FORCE PWA UPDATE ===');
+
+        // 1. Unregister all service workers
+        if ('serviceWorker' in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          for (const registration of registrations) {
+            await registration.unregister();
+            console.log('   Unregistered service worker');
+          }
+        }
+
+        // 2. Clear all Cache API caches
+        if ('caches' in window) {
+          const cacheNames = await caches.keys();
+          for (const name of cacheNames) {
+            await caches.delete(name);
+            console.log('   Deleted cache:', name);
+          }
+        }
+
+        // 3. Clear localStorage and sessionStorage
+        localStorage.clear();
+        sessionStorage.clear();
+        console.log('   Cleared storage');
+
+        console.log('=== RELOADING TO LOAD FRESH CODE ===');
+        this.$bvToast.toast(
+          'PWA cache cleared. Page will reload with latest code.',
+          {
+            title: 'Update Complete',
+            variant: 'success',
+            solid: true,
+            autoHideDelay: 2000,
+          }
+        );
+
+        // Hard reload to load fresh code (SW already unregistered, caches cleared)
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+      } catch (error) {
+        console.error('Force update error:', error);
+        this.$bvToast.toast(
+          'Failed to clear cache. Try a hard refresh (Ctrl+Shift+R) or close and reopen the PWA.',
+          {
+            title: 'Update Failed',
+            variant: 'danger',
+            solid: true,
+            autoHideDelay: 5000,
+          }
+        );
+        this.isUpdating = false;
       }
     },
   },
@@ -214,6 +280,10 @@ export default {
 }
 
 /* Admin Tools Section */
+.admin-tools-section .btn-force-update {
+  margin-top: 10px;
+}
+
 .admin-tools-section {
   width: 100%;
   padding: 20px;
@@ -245,46 +315,68 @@ export default {
   line-height: 1.4;
 }
 
-.btn-reset-calendar {
+.btn-reset-calendar,
+.btn-force-update {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   width: 100%;
   padding: 12px 16px;
-  background-color: #FFF;
-  border: 2px solid #FF9800;
   border-radius: 6px;
-  color: #FF9800;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.btn-reset-calendar:hover:not(:disabled) {
-  background-color: #FF9800;
+.btn-reset-calendar {
+  background-color: #FFF;
+  border: 2px solid #FF9800;
+  color: #FF9800;
+}
+
+.btn-force-update {
+  background-color: #FFF;
+  border: 2px solid #2196F3;
+  color: #2196F3;
+}
+
+.btn-reset-calendar:hover:not(:disabled),
+.btn-force-update:hover:not(:disabled) {
   color: #FFF;
   transform: translateY(-1px);
+}
+
+.btn-reset-calendar:hover:not(:disabled) {
+  background-color: #FF9800;
   box-shadow: 0 4px 8px rgba(255, 152, 0, 0.3);
 }
 
-.btn-reset-calendar:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: 0 2px 4px rgba(255, 152, 0, 0.2);
+.btn-force-update:hover:not(:disabled) {
+  background-color: #2196F3;
+  box-shadow: 0 4px 8px rgba(33, 150, 243, 0.3);
 }
 
-.btn-reset-calendar:disabled {
+.btn-reset-calendar:active:not(:disabled),
+.btn-force-update:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-reset-calendar:disabled,
+.btn-force-update:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
 }
 
-.btn-reset-calendar i {
+.btn-reset-calendar i,
+.btn-force-update i {
   font-size: 16px;
 }
 
-.btn-reset-calendar i.fa-spin {
+.btn-reset-calendar i.fa-spin,
+.btn-force-update i.fa-spin {
   animation: fa-spin 1s infinite linear;
 }
 

@@ -115,8 +115,11 @@ class SLN_Metabox_Service extends SLN_Metabox_Abstract
     public function save_post($post_id, $post)
     {
         $k = '_sln_service_availabilities';
-        if(isset($_POST[$k]))
+        if(isset($_POST[$k])) {
             $_POST[$k] = SLN_Helper_AvailabilityItems::processSubmission($_POST[$k]);
+            // Allow add-ons to sanitize/modify service availability data before saving
+            $_POST[$k] = apply_filters('sln.service.availability_data.before_save', $_POST[$k], $post_id);
+        }
         parent::save_post($post_id, $post);
         
         // Force clear ALL caches - WordPress object cache + options

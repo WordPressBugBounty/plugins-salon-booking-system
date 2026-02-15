@@ -5,6 +5,29 @@ class SLN_Shortcode_Salon_DetailsStep extends SLN_Shortcode_Salon_AbstractUserSt
     protected function dispatchForm()
     {
         global $current_user;
+        
+        // DEFENSIVE CHECK (Feb 10, 2026): Ensure logged-in users have their data bound
+        // This catches the case where a logged-in user submits the details form
+        // but their data wasn't properly loaded in isValid()
+        if (is_user_logged_in() && empty($_POST['sln'])) {
+            // User is logged in but didn't fill form (auto-submit or skip scenario)
+            // Ensure their data is in BookingBuilder
+            $bb = $this->getPlugin()->getBookingBuilder();
+            $hasData = !empty($bb->get('firstname')) || !empty($bb->get('email'));
+            
+            if (!$hasData) {
+                SLN_Plugin::addLog('[Details Step] Logged-in user missing data in dispatchForm, loading now...');
+                $customer_fields = SLN_Enum_CheckoutFields::forRegistration()->appendSmsPrefix();
+                $values = array();
+                
+                foreach ($customer_fields as $key => $field) {
+                    $values[$key] = $field->getValue(get_current_user_id());
+                }
+                
+                $this->bindValues($values);
+                SLN_Plugin::addLog('[Details Step] Customer data loaded and bound in dispatchForm');
+            }
+        }
 
 	if (isset($_GET['sln_action']) && $_GET['sln_action'] === 'fb_login' && $this->getPlugin()->getSettings()->get('enabled_fb_login')) {
 

@@ -248,7 +248,21 @@ $bookingServices = $booking->getBookingServices()->getItems();
                     </div>
                 <?php endif; ?>
                 <div class="sln-booking-service--itemselection sln-select">
-                    <h5 class="sln-booking-service-line__label"><?php esc_html_e('Service', 'salon-booking-system') ?></h5>
+                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 0.5rem;">
+                        <h5 class="sln-booking-service-line__label" style="margin: 0;"><?php esc_html_e('Service', 'salon-booking-system') ?></h5>
+                        <?php 
+                        // Display quantity for variable duration services at the top-right
+                        $serviceQuantity = $bookingService->getCountServices();
+                        if ($serviceQuantity > 1): 
+                            $serviceDuration = SLN_Func::getMinutesFromDuration($bookingService->getTotalDuration());
+                            $totalServiceDuration = $serviceDuration * $serviceQuantity;
+                        ?>
+                            <div style="font-size: 14px; color: #555; white-space: nowrap; text-align: right;">
+                                <strong><?php esc_html_e('Quantity booked:', 'salon-booking-system'); ?></strong> 
+                                <span style="font-weight: 600; color: #333; margin-left: 0.25rem;"><?php echo esc_html($serviceQuantity) . '/' . esc_html($totalServiceDuration) . '\''; ?></span>
+                            </div>
+                        <?php endif; ?>
+                    </div>
                     <?php SLN_Form::fieldSelect(
                         '_sln_booking[services][]',
                         $allServicesSelectionArray,
@@ -288,6 +302,13 @@ $bookingServices = $booking->getBookingServices()->getItems();
                         array('type' => 'hidden')
                     )
                     ?>
+                    <?php 
+                    // Persist quantity for variable duration services (hidden field for data persistence only)
+                    $serviceQuantity = $bookingService->getCountServices();
+                    if ($serviceQuantity > 1): 
+                    ?>
+                        <input type="hidden" name="_sln_booking[service_count][<?php echo $serviceId; ?>]" value="<?php echo esc_attr($serviceQuantity); ?>" />
+                    <?php endif; ?>
                 </div>
                 <?php if ($isResourcesEnabled): ?>
                     <div class="sln-booking-service--resources sln-select">

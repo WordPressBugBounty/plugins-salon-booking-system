@@ -544,7 +544,34 @@ class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
                 }
             }
         }
-        $this->setStatus(SLN_Enum_BookingStatus::PAID);
+        
+        // CRITICAL FIX (Feb 10, 2026): Don't override status for zero-amount bookings
+        // When using prepaid service credits, only set to PAID if booking has an amount
+        // OR if status is still DRAFT/PENDING_PAYMENT (needs status assignment)
+        // This prevents overriding CONFIRMED status for free bookings
+        $currentStatus = $this->getStatus();
+        $shouldSetPaid = (
+            $this->getAmount() > 0.0 || 
+            in_array($currentStatus, [SLN_Enum_BookingStatus::DRAFT, SLN_Enum_BookingStatus::PENDING_PAYMENT])
+        );
+        
+        if ($shouldSetPaid) {
+            $this->setStatus(SLN_Enum_BookingStatus::PAID);
+            SLN_Plugin::addLog(sprintf(
+                '[setPrepaidServices] Status set to PAID for booking #%d (Amount: %s, Previous Status: %s)',
+                $this->getId(),
+                $this->getAmount(),
+                $currentStatus
+            ));
+        } else {
+            SLN_Plugin::addLog(sprintf(
+                '[setPrepaidServices] Status NOT changed for booking #%d (Amount: %s, Current Status: %s) - keeping existing status',
+                $this->getId(),
+                $this->getAmount(),
+                $currentStatus
+            ));
+        }
+        
         update_user_meta($user_id, '_sln_prepaid_services', $prepaid_services);
     }
 

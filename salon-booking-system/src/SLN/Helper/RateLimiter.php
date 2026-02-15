@@ -63,7 +63,6 @@ class SLN_Helper_RateLimiter
         // Check if limit exceeded
         if ($attempts >= $max_attempts) {
             SLN_Plugin::addLog('[Rate Limit] Blocked: ' . $identifier . ' (attempts: ' . $attempts . '/' . $max_attempts . ')');
-            error_log('[Salon Rate Limit] Blocked IP: ' . $identifier . ' - Too many booking attempts');
             
             // Extend the block time on repeated violations
             if ($attempts >= $max_attempts * 2) {

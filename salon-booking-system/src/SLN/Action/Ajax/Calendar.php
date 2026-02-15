@@ -306,7 +306,7 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
       $now = new DateTime('now', $timezone);
       $today = new DateTime('today', $timezone);
     } catch (Exception $e) {
-      error_log('Error creating DateTime with timezone: ' . $e->getMessage());
+      SLN_Plugin::addLog('Error creating DateTime with timezone: ' . $e->getMessage());
       // Fallback to default timezone
       $now = new DateTime('now');
       $today = new DateTime('today');
@@ -1227,7 +1227,7 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
         }
       } catch (\Exception $e) {
         // Silent fail - log if needed
-        error_log('Calendar: Failed to get current shop ID: ' . $e->getMessage());
+        SLN_Plugin::addLog('Calendar: Failed to get current shop ID: ' . $e->getMessage());
       }
     }
     

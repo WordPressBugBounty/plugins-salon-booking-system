@@ -245,7 +245,7 @@ class SLN_Action_Ajax_ImportBookings extends SLN_Action_Ajax_AbstractImport{
             return new SLN_DateTime($normalized);
         } catch (Exception $e) {
             // Log the error for debugging
-            error_log('ImportBookings: Failed to parse datetime: ' . $datetime_string . ' (normalized: ' . $normalized . ')');
+            SLN_Plugin::addLog('ImportBookings: Failed to parse datetime: ' . $datetime_string . ' (normalized: ' . $normalized . ')');
             return false;
         }
     }
