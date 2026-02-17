@@ -24,6 +24,9 @@ sum(
         <div class="col-xs-12 col-sm-3  sln-box__megabtn_wrapper">
             <a href="https://salonbookingsystem.helpscoutdocs.com/article/94-how-to-debug-issues" class="sln-btn sln-btn--main--tonal sln-btn--bigger sln-btn--icon sln-icon--lightbulb" target="blank"><?php esc_html_e('Tips and suggestions', 'salon-booking-system')?></a>
         </div>
+        <div class="col-xs-12 col-sm-3  sln-box__megabtn_wrapper">
+            <a href="<?php echo esc_url(admin_url('admin.php?page=salon-onboarding')); ?>" class="sln-btn sln-btn--main--tonal sln-btn--bigger sln-btn--icon sln-icon--settings"><?php esc_html_e('Restart Setup Wizard', 'salon-booking-system'); ?></a>
+        </div>
     </div>
 </div>
 

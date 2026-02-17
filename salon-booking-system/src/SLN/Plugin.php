@@ -498,6 +498,30 @@ class SLN_Plugin
         }
     }
 
+    /**
+     * Whether to log verbose per-slot availability checks (validate attendant, count by hour, etc.).
+     * Disabled by default to avoid 100k+ lines and slowdown; enable via filter for deep debugging.
+     *
+     * @return bool
+     */
+    public static function isAvailabilityVerboseEnabled()
+    {
+        return (bool) apply_filters('sln_availability_verbose_log', false);
+    }
+
+    /**
+     * Log only when both debug and availability-verbose are enabled (for hot-path per-slot logs).
+     */
+    public static function addLogVerbose($txt)
+    {
+        if (self::isDebugEnabled() && self::isAvailabilityVerboseEnabled()) {
+            $logPath = self::getLogFilePath('log.txt');
+            if ($logPath) {
+                file_put_contents($logPath, '['.date('Y-m-d H:i:s').'] '.$txt."\r\n", FILE_APPEND | LOCK_EX);
+            }
+        }
+    }
+
     public static function addLog($txt)
     {
         if (self::isDebugEnabled()) {

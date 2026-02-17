@@ -124,6 +124,7 @@ class SLN_Action_Init
         new SLN_Metabox_Resource($p, SLN_Plugin::POST_TYPE_RESOURCE);
 
         new SLN_Admin_Calendar($p);
+        new SLN_Admin_Onboarding($p);
         new SLN_Admin_Tools($p);
         new SLN_Admin_Customers($p);
         new SLN_Admin_Reports($p);
@@ -562,14 +563,50 @@ class SLN_Action_Init
     public function hook_admin_init()
     {
         new SLN_Action_Update($this->plugin);
-        if(!get_option('_sln_welcome_show_page')){
-            if (isset($_GET['page']) && $_GET['page'] == 'salon') {
+        $this->migrateOnboardingOption();
+        if (apply_filters('sln_onboarding_skip', false)) {
+            return;
+        }
+        if (get_option('_sln_onboarding_completed')) {
+            return;
+        }
+        $page = isset($_GET['page']) ? sanitize_text_field(wp_unslash($_GET['page'])) : '';
+        // Already on onboarding - no redirect
+        if ($page === 'salon-onboarding') {
+            return;
+        }
+        // Allow access to Settings page even when wizard is active
+        if ($page === 'salon-settings') {
+            return;
+        }
+        // On first activation: redirect to onboarding from anywhere in admin (plugins page, dashboard, etc.)
+        if (get_transient('sln_redirect_to_onboarding')) {
+            delete_transient('sln_redirect_to_onboarding');
+            wp_safe_redirect(add_query_arg(array('page' => 'salon-onboarding'), admin_url('admin.php')));
+            exit();
+        }
+        // Only redirect when user is trying to access a Salon plugin page (not general WP admin)
+        if (strpos($page, 'salon') !== 0) {
+            return;
+        }
+        // Do not redirect AJAX requests for the onboarding wizard
+        if (defined('DOING_AJAX') && DOING_AJAX) {
+            $action = isset($_REQUEST['action']) ? sanitize_text_field(wp_unslash($_REQUEST['action'])) : '';
+            if (in_array($action, array('sln_onboarding_save_step', 'sln_onboarding_complete', 'sln_onboarding_upload_logo'), true)) {
                 return;
             }
-    
-            wp_safe_redirect(add_query_arg(array('page' => 'salon'), admin_url('admin.php')));
-    
-            exit();
+        }
+        wp_safe_redirect(add_query_arg(array('page' => 'salon-onboarding'), admin_url('admin.php')));
+        exit();
+    }
+
+    private function migrateOnboardingOption()
+    {
+        if (get_option('_sln_onboarding_completed')) {
+            return;
+        }
+        if ((string) get_option('_sln_welcome_show_page') === '1') {
+            update_option('_sln_onboarding_completed', 1);
         }
     }
 

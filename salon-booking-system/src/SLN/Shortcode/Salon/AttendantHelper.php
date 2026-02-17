@@ -35,6 +35,12 @@ class SLN_Shortcode_Salon_AttendantHelper
             $hb = $ah->getHoursBeforeHelper();
             $fromDate = Date::create($hb->getFromDate());
             $count = $hb->getCountDays();
+            
+            // PERFORMANCE: Limit date scan to prevent timeout
+            // Most bookings happen within 2-3 weeks, scanning 60+ days is excessive
+            $maxDaysToScan = 21; // Scan up to 3 weeks
+            $count = min($count, $maxDaysToScan);
+            
             while ($count > 0) { //check days in HoursBefore interval until we find available timeslot
                 $times = $ah->getCachedTimes($fromDate);
                 $fromDateTime = $fromDate->getDateTime();

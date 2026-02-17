@@ -285,7 +285,7 @@ class SLN_Helper_Availability
         $noBreak = $ignoreExistingBreaks || $breakStartsAt == $breakEndsAt || !$breakStartsAt || !$breakEndsAt;
         $nestedBookingsEnabled = SLN_Plugin::getInstance()->getSettings()->isNestedBookingsEnabled();
 
-        SLN_Plugin::addLog(
+        SLN_Plugin::addLogVerbose(
             __CLASS__.sprintf(
                 ' - validate attendant %s by date(%s) and duration(%s) | nestedBookings=%s',
                 $attendant,
@@ -299,7 +299,7 @@ class SLN_Helper_Availability
         $endAt = clone $date;
         $endAt->modify('+'. $durationMinutes .'minutes');
 
-        SLN_Plugin::addLog(
+        SLN_Plugin::addLogVerbose(
             sprintf(
                 '%s - Multi-attendant validation window %s -> %s | break %s -> %s | ignoreExisting=%s',
                 __CLASS__,
@@ -311,7 +311,7 @@ class SLN_Helper_Availability
             )
         );
 
-        SLN_Plugin::addLog(
+        SLN_Plugin::addLogVerbose(
             sprintf(
                 '%s - Attendant #%s validation window %s -> %s | break %s -> %s | ignoreExisting=%s',
                 __CLASS__,
@@ -343,7 +343,7 @@ class SLN_Helper_Availability
             // Check if this slot is a break slot in an EXISTING booking (where nested bookings are allowed)
             $isExistingBreakSlot = $b->isBreakSlot($bTime);
             
-            SLN_Plugin::addLog(
+            SLN_Plugin::addLogVerbose(
                 sprintf(
                     '%s - Checking slot %s | outsideBreak=%s | existingBreakSlot=%s',
                     __CLASS__,
@@ -361,7 +361,7 @@ class SLN_Helper_Availability
                     return $ret;
                 }
             } elseif ($isExistingBreakSlot) {
-                SLN_Plugin::addLog(
+                SLN_Plugin::addLogVerbose(
                     sprintf(
                         '%s - ✅ Skipping validation for %s (existing break slot with nested bookings)',
                         __CLASS__,
@@ -386,7 +386,7 @@ class SLN_Helper_Availability
 
         $noBreak = $this->getDayBookings()->isIgnoreServiceBreaks() || $breakStartsAt == $breakEndsAt || !$breakStartsAt || !$breakEndsAt;
 
-        SLN_Plugin::addLog(
+        SLN_Plugin::addLogVerbose(
             __CLASS__.sprintf(
                 ' - validate attendant %s by date(%s) and duration(%s)',
                 print_r($attendants, true),
@@ -432,7 +432,7 @@ class SLN_Helper_Availability
 
     private function validateAttendantOnTime(SLN_Wrapper_AttendantInterface $attendant, SLN_DateTime $time, SLN_Wrapper_ServiceInterface $service=null)
     {
-        SLN_Plugin::addLog(__CLASS__.sprintf(' checking time %s', $time->format('Ymd H:i')));
+        SLN_Plugin::addLogVerbose(__CLASS__.sprintf(' checking time %s', $time->format('Ymd H:i')));
         $time = $this->getDayBookings()->getTime($time->format('H'), $time->format('i'));
 
         if ($attendant->isNotAvailableOnDate($time, $service)) {
@@ -443,7 +443,7 @@ class SLN_Helper_Availability
         $isAttendant_booked = isset($ids[$attendant->getId()]);
         $can_multiple = $attendant->canMultipleCustomers();
         
-        SLN_Plugin::addLog(__CLASS__.' - Attendant #'.$attendant->getId().' validation at '.$time->format('H:i').': Booked='.$isAttendant_booked.', Count='.($ids[$attendant->getId()] ?? 0).', Can multiple='.$can_multiple);
+        SLN_Plugin::addLogVerbose(__CLASS__.' - Attendant #'.$attendant->getId().' validation at '.$time->format('H:i').': Booked='.$isAttendant_booked.', Count='.($ids[$attendant->getId()] ?? 0).', Can multiple='.$can_multiple);
         
         if($isAttendant_booked && $can_multiple){
             $plugin = SLN_Plugin::getInstance();
@@ -463,10 +463,10 @@ class SLN_Helper_Availability
         }
 
         if ( $busy ) {
-            SLN_Plugin::addLog(__CLASS__.' - ❌ Attendant BUSY: count='.($ids[$attendant->getId()] ?? 0));
+            SLN_Plugin::addLogVerbose(__CLASS__.' - ❌ Attendant BUSY: count='.($ids[$attendant->getId()] ?? 0));
             return SLN_Helper_Availability_ErrorHelper::doAttendantBusy($attendant, $time);
         } else {
-            SLN_Plugin::addLog(__CLASS__.' - ✅ Attendant available');
+            SLN_Plugin::addLogVerbose(__CLASS__.' - ✅ Attendant available');
         }
     }
 
@@ -586,7 +586,7 @@ class SLN_Helper_Availability
 
     private function validateServiceOnTime(SLN_Wrapper_ServiceInterface $service, SLN_DateTime $time, $checkDuration = true, $checkBookingAndHolidayRules = true)
     {
-        SLN_Plugin::addLog(__CLASS__.sprintf(' checking time %s', $time->format('Ymd H:i')));
+        SLN_Plugin::addLogVerbose(__CLASS__.sprintf(' checking time %s', $time->format('Ymd H:i')));
         $time = $this->getDayBookings()->getTime($time->format('H'), $time->format('i'));
 
         $avItems = $this->getItemsWithoutServiceOffset();
@@ -607,10 +607,10 @@ class SLN_Helper_Availability
         // Skip parallel booking check if this is a break slot (nested bookings allowed)
         $isBreakSlot = $this->getDayBookings()->isBreakSlot($time);
         if (!$isBreakSlot && !$this->isValidOnlyTime($time)) {
-            SLN_Plugin::addLog(sprintf('[validateServiceOnTime] %s failed parallel check (not a break slot)', $time->format('H:i')));
+            SLN_Plugin::addLogVerbose(sprintf('[validateServiceOnTime] %s failed parallel check (not a break slot)', $time->format('H:i')));
             return SLN_Helper_Availability_ErrorHelper::doLimitParallelBookings($time);
         } elseif ($isBreakSlot) {
-            SLN_Plugin::addLog(sprintf('[validateServiceOnTime] %s is break slot - skipping parallel check', $time->format('H:i')));
+            SLN_Plugin::addLogVerbose(sprintf('[validateServiceOnTime] %s is break slot - skipping parallel check', $time->format('H:i')));
         }
         if ($checkDuration && $service->isNotAvailableOnDate($time)) {
             return SLN_Helper_Availability_ErrorHelper::doServiceNotAvailableOnDate($service, $time);
@@ -621,17 +621,17 @@ class SLN_Helper_Availability
         $ids = $this->getDayBookings()->countServicesByHour($time->format('H'), $time->format('i'));
         $unit = $service->getUnitPerHour();
         
-        SLN_Plugin::addLog(__CLASS__.' - Service #'.$service->getId().' validation at '.$time->format('H:i').': Unit='.$unit.', Current count='.($ids[$service->getId()] ?? 0));
+        SLN_Plugin::addLogVerbose(__CLASS__.' - Service #'.$service->getId().' validation at '.$time->format('H:i').': Unit='.$unit.', Current count='.($ids[$service->getId()] ?? 0));
         
         if (
             $unit > 0
             && isset($ids[$service->getId()])
             && $ids[$service->getId()] >= $unit
         ) {
-            SLN_Plugin::addLog(__CLASS__.' - ❌ Service FULL: '.$ids[$service->getId()].' >= '.$unit);
+            SLN_Plugin::addLogVerbose(__CLASS__.' - ❌ Service FULL: '.$ids[$service->getId()].' >= '.$unit);
             return SLN_Helper_Availability_ErrorHelper::doServiceFull($service, $time);
         } else {
-            SLN_Plugin::addLog(__CLASS__.' - ✅ Service available: '.($ids[$service->getId()] ?? 0).' < '.$unit);
+            SLN_Plugin::addLogVerbose(__CLASS__.' - ✅ Service available: '.($ids[$service->getId()] ?? 0).' < '.$unit);
         }
 
         if ($ret = $this->validateServiceResourcesOnTime($service, $time, $duration)) {
@@ -986,13 +986,13 @@ class SLN_Helper_Availability
             $availAttsForEachService[$service->getId()]
                 = $availAttsForCurrentService = $this->getAvailableAttsIdsForBookingService($bookingService);
             if (empty($availAttsForCurrentService)) {
-                throw new SLN_Exception(
-                    esc_html(sprintf(
-                        // translators: %s will be replaced by the service name
-                        __('No one of the attendants isn\'t available for %s service', 'salon-booking-system'),
-                        $service->getName()
-                    ))
+                $msg = sprintf(
+                    // translators: %s will be replaced by the service name
+                    __('No attendants available for %s. Please try a different date or contact us.', 'salon-booking-system'),
+                    $service->getName()
                 );
+                SLN_Plugin::addLog('[addAttendantForServices] No available attendants for service ' . $service->getId() . ' (' . $service->getName() . ') at ' . ($this->date ? $this->date->format('Y-m-d H:i') : 'no-date'));
+                throw new SLN_Exception(esc_html($msg));
             }
 
             if (is_object($bookingService->getAttendant())) {
@@ -1008,10 +1008,51 @@ class SLN_Helper_Availability
                     );
                 }
             } else {
-                SLN_Plugin::getInstance();
-                $selectedAttId = $availAttsForCurrentService[array_rand($availAttsForCurrentService)];
-                $attendant     = SLN_Plugin::getInstance()->createAttendant($selectedAttId);
-                $bookingService->setAttendant($attendant);
+                // Check if service requires multiple attendants (e.g., Couple massage)
+                if ($service->isMultipleAttendantsForServiceEnabled()) {
+                    $countRequired = intval($service->getCountMultipleAttendants());
+                    $attendants = array();
+                    
+                    // Ensure we have enough available attendants
+                    if (count($availAttsForCurrentService) < $countRequired) {
+                        throw new SLN_Exception(
+                            sprintf(
+                                // translators: %1$s will be replaced by service name, %2$d will be replaced by required count
+                                esc_html__('Not enough attendants available for %1$s service. Required: %2$d', 'salon-booking-system'),
+                                esc_html($service->getName()),
+                                $countRequired
+                            )
+                        );
+                    }
+                    
+                    // Randomly select required number of attendants
+                    $selectedAttIds = array_rand(array_flip($availAttsForCurrentService), $countRequired);
+                    // array_rand returns single value if count=1, array if count>1
+                    if (!is_array($selectedAttIds)) {
+                        $selectedAttIds = array($selectedAttIds);
+                    }
+                    
+                    foreach ($selectedAttIds as $attId) {
+                        $attendants[] = SLN_Plugin::getInstance()->createAttendant($attId);
+                    }
+                    
+                    $bookingService->setAttendant($attendants);
+                    
+                    // CRITICAL: Also update the Builder's data array with attendant IDs
+                    // The Builder stores attendant data separately from BookingService objects
+                    $bb = SLN_Plugin::getInstance()->getBookingBuilder();
+                    if ($bb && $bb->hasService($service)) {
+                        $bb->setAttendants($selectedAttIds, $service);
+                    }
+                    
+                    SLN_Plugin::addLog('[Availability] Assigned ' . count($attendants) . ' attendants (' . implode(', ', $selectedAttIds) . ') for service ' . $service->getName());
+                } else {
+                    // Single attendant service
+                    SLN_Plugin::getInstance();
+                    $selectedAttId = $availAttsForCurrentService[array_rand($availAttsForCurrentService)];
+                    $attendant     = SLN_Plugin::getInstance()->createAttendant($selectedAttId);
+                    $bookingService->setAttendant($attendant);
+                }
             }
         }
     }
@@ -1037,18 +1078,76 @@ class SLN_Helper_Availability
             }
 
             if (empty($availAttsForAllServices)) {
+                SLN_Plugin::addLog('[addAttendantForServices] No available attendants for selected services at ' . ($this->date ? $this->date->format('Y-m-d H:i') : 'no-date'));
                 throw new SLN_Exception(
-                    esc_html__('No one of the attendants isn\'t available for selected services', 'salon-booking-system')
+                    esc_html__('No attendants available for the selected services. Please try a different date or contact us.', 'salon-booking-system')
                 );
             }
         }
 
         if (!empty($availAttsForAllServices)) {
-            $selectedAttId = $availAttsForAllServices[array_rand($availAttsForAllServices)];
-            $attendant     = SLN_Plugin::getInstance()->createAttendant($selectedAttId);
             foreach ($bookingServices->getItems() as $bookingService) {
                 $service = $bookingService->getService();
-                if ($service->isAttendantsEnabled()) {
+                if (!$service->isAttendantsEnabled()) {
+                    continue;
+                }
+                
+                // CRITICAL FIX: Check if THIS service requires multiple attendants
+                if ($service->isMultipleAttendantsForServiceEnabled()) {
+                    $countRequired = intval($service->getCountMultipleAttendants());
+                    
+                    SLN_Plugin::addLog('[Availability-Single] Service ' . $service->getName() . ' requires ' . $countRequired . ' attendants');
+                    SLN_Plugin::addLog('[Availability-Single] Available attendants: ' . print_r($availAttsForAllServices, true));
+                    
+                    // Ensure we have enough available attendants
+                    if (count($availAttsForAllServices) < $countRequired) {
+                        throw new SLN_Exception(
+                            sprintf(
+                                // translators: %1$s will be replaced by service name, %2$d will be replaced by required count
+                                esc_html__('Not enough attendants available for %1$s service. Required: %2$d', 'salon-booking-system'),
+                                esc_html($service->getName()),
+                                $countRequired
+                            )
+                        );
+                    }
+                    
+                    // Randomly select required number of DIFFERENT attendants
+                    // array_rand with count > 1 returns array of keys (not values!)
+                    $flipped = array_flip($availAttsForAllServices);
+                    SLN_Plugin::addLog('[Availability-Single] Flipped array: ' . print_r($flipped, true));
+                    
+                    $selectedKeys = array_rand($flipped, $countRequired);
+                    // array_rand returns single value if count=1, array if count>1
+                    if (!is_array($selectedKeys)) {
+                        $selectedKeys = array($selectedKeys);
+                    }
+                    
+                    SLN_Plugin::addLog('[Availability-Single] Selected keys from array_rand: ' . print_r($selectedKeys, true));
+                    
+                    // The keys ARE the attendant IDs (because we flipped the array)
+                    $selectedAttIds = $selectedKeys;
+                    
+                    SLN_Plugin::addLog('[Availability-Single] Final selected attendant IDs: ' . print_r($selectedAttIds, true));
+                    
+                    $attendants = array();
+                    foreach ($selectedAttIds as $attId) {
+                        $attendants[] = SLN_Plugin::getInstance()->createAttendant($attId);
+                    }
+                    
+                    $bookingService->setAttendant($attendants);
+                    
+                    // CRITICAL: Also update the Builder's data array with attendant IDs
+                    $bb = SLN_Plugin::getInstance()->getBookingBuilder();
+                    if ($bb && $bb->hasService($service)) {
+                        $bb->setAttendants($selectedAttIds, $service);
+                        SLN_Plugin::addLog('[Availability-Single] Updated Builder with IDs: ' . print_r($selectedAttIds, true));
+                    }
+                    
+                    SLN_Plugin::addLog('[Availability-Single] Assigned ' . count($attendants) . ' attendants (' . implode(', ', $selectedAttIds) . ') for service ' . $service->getName());
+                } else {
+                    // Single attendant for this service
+                    $selectedAttId = $availAttsForAllServices[array_rand($availAttsForAllServices)];
+                    $attendant     = SLN_Plugin::getInstance()->createAttendant($selectedAttId);
                     $bookingService->setAttendant($attendant);
                 }
             }
@@ -1341,7 +1440,7 @@ class SLN_Helper_Availability
 
     private function validateResourceOnTime(SLN_Wrapper_ResourceInterface $resource, SLN_DateTime $time)
     {
-        SLN_Plugin::addLog(__CLASS__.sprintf(' checking time %s', $time->format('Ymd H:i')));
+        SLN_Plugin::addLogVerbose(__CLASS__.sprintf(' checking time %s', $time->format('Ymd H:i')));
         $time = $this->getDayBookings()->getTime($time->format('H'), $time->format('i'));
 
         $booked_resources = $this->getDayBookings()->countResourcesByHour($time->format('H'), $time->format('i'));

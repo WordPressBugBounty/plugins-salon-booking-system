@@ -178,6 +178,18 @@ class SLN_Wrapper_Booking_Builder
         }
     }
 
+    /**
+     * Set multiple attendants for a service (for services requiring multiple attendants)
+     * @param array $attendantIds Array of attendant IDs
+     * @param SLN_Wrapper_ServiceInterface $service
+     */
+    public function setAttendants(array $attendantIds, SLN_Wrapper_ServiceInterface $service)
+    {
+        if ($this->hasService($service)) {
+            $this->data['services'][$service->getId()] = $attendantIds;
+        }
+    }
+
     public function hasAttendant(SLN_Wrapper_AttendantInterface $attendant, SLN_Wrapper_ServiceInterface $service = null)
     {
         if (!isset($this->data['services'])) {
@@ -390,7 +402,7 @@ class SLN_Wrapper_Booking_Builder
         // CRITICAL DEFENSIVE CHECK: Validate required customer data exists before creating booking
         // This prevents bookings without customer information (regression bug from Feb 5, 2026)
         $this->validateAndEnsureCustomerData();
-        
+
         $name                 = $this->get('firstname') . ' ' . $this->get('lastname');
         $status               = $bookingStatus ? $bookingStatus : $this->getCreateStatus();
 

@@ -56,6 +56,8 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
         if ($this->isAdmin()) {
             return parent::getIntervalsArray();
         }
+        $startTime = microtime(true);
+        SLN_Plugin::addLog('[CheckDateAlt] getIntervalsArray START | ' . date('H:i:s'));
         $fullDays = array();
         $plugin = $this->plugin;
         $ah   = $plugin->getAvailabilityHelper();
@@ -77,7 +79,14 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
         if (!is_array($dates)) {
             $dates = array();
         }
-        
+        // When Smart Availability + choose-for-me: limit days to prevent timeout (~3–5 sec per day).
+        $maxDaysSmartAvail = (int) apply_filters('sln_checkdatealt_smart_avail_max_days', 14);
+        if ($isSmartAvailability && $maxDaysSmartAvail > 0 && count($dates) > $maxDaysSmartAvail) {
+            $dates = array_slice($dates, 0, $maxDaysSmartAvail, true);
+        }
+        $dateCount = count($dates);
+        SLN_Plugin::addLog('[CheckDateAlt] Scanning ' . $dateCount . ' dates | smartAvail=' . ($isSmartAvailability ? 'yes' : 'no'));
+
         foreach($dates as $k => $v) {
             $available = false;
             $tmpDate   = new SLN_DateTime($v->getDateTime());
@@ -127,9 +136,12 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
 
         // PHP 8+ compatibility: Check if dates is an array and not empty
         if (!isset($intervalsArray['dates']) || !is_array($intervalsArray['dates']) || empty($intervalsArray['dates'])) {
+            $elapsed = round((microtime(true) - $startTime) * 1000);
+            SLN_Plugin::addLog('[CheckDateAlt] NO AVAILABLE DATES | scanned=' . $dateCount . ' | ' . $elapsed . 'ms | ' . date('H:i:s'));
             $intervalsArray = $intervals->toArray($timezone);
             $intervalsArray['dates'] = array();
             $intervalsArray['times'] = array();
+            $intervalsArray['noAvailabilityMessage'] = __('No available appointments found for the selected service. No assistant pair is available in the current date range. Please try a different service or contact us.', 'salon-booking-system');
             return $intervalsArray;
         }
 
@@ -317,6 +329,9 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
             }
         }
 
+        $elapsed = round((microtime(true) - $startTime) * 1000);
+        $availDateCount = is_array($intervalsArray['dates']) ? count($intervalsArray['dates']) : 0;
+        SLN_Plugin::addLog('[CheckDateAlt] getIntervalsArray END | availDates=' . $availDateCount . ' | ' . $elapsed . 'ms | ' . date('H:i:s'));
         return $intervalsArray;
     }
 
@@ -564,6 +579,7 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
      * OPTIMIZED: Uses getAvailableAttsIdsForBookingService which is much faster
      */
     private function getAllAttendantsAvailableTimes($date, $bservices, $duration = null) {
+        $startTime = microtime(true);
         $plugin = $this->plugin;
         $ah = $plugin->getAvailabilityHelper();
         $availableTimes = array();
@@ -575,14 +591,21 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
             $allPossibleTimes = Time::filterTimesArrayByDuration($allPossibleTimes, $duration);
         }
         
-        // For each time slot, check if ANY attendant is available
+        $totalSlots = count($allPossibleTimes);
+        // For each time slot, check if ANY attendant is available.
+        // Use slot step to reduce checks (every 2nd slot) - still finds availability, halves the work.
+        $slotStep = (int) apply_filters('sln_getallattendants_slot_step', 2);
+        $slotStep = max(1, min($slotStep, 5));
+        $maxChecks = (int) apply_filters('sln_getallattendants_max_checks', 80);
         $count = 0;
-        $maxChecks = 100; // Limit checks to prevent timeout
-        
+
         foreach ($allPossibleTimes as $timeStr => $timeObj) {
-            // Prevent timeout by limiting iterations
             if (++$count > $maxChecks) {
+                SLN_Plugin::addLog('[getAllAttendantsAvailableTimes] HIT maxChecks=' . $maxChecks . ' for ' . $date->toString() . ' (total slots=' . $totalSlots . ')');
                 break;
+            }
+            if ($slotStep > 1 && ($count - 1) % $slotStep !== 0) {
+                continue; // Skip this slot (sample every Nth)
             }
                 
                 $tmpDateTime = new SLN_DateTime($date->toString() . ' ' . $timeStr);
@@ -621,9 +644,12 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
                 if ($hasAvailableAttendant) {
                     $availableTimes[$timeStr] = $timeObj;
                 }
-            }
-            
-            // Return associative array (time string => DateTime object) - same format as getTimes()
-            return $availableTimes;
+        }
+        
+        $elapsed = round((microtime(true) - $startTime) * 1000);
+        if ($elapsed > 2000) {
+            SLN_Plugin::addLog('[getAllAttendantsAvailableTimes] SLOW | date=' . $date->toString() . ' | found=' . count($availableTimes) . ' | ' . $elapsed . 'ms');
+        }
+        return $availableTimes;
     }
 }

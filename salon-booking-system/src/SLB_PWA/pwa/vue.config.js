@@ -1,6 +1,10 @@
 const { defineConfig } = require('@vue/cli-service')
 module.exports = defineConfig({
   transpileDependencies: true,
+  lintOnSave: false, // Disable ESLint during build to prevent config lookup errors
+  chainWebpack: config => {
+    config.module.rules.delete('eslint')
+  },
   pwa: {
     name: "Salon Booking Plugin",
     themeColor: "#ffd100",

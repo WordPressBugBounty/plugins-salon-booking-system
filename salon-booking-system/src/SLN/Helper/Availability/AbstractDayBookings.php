@@ -110,15 +110,15 @@ abstract class SLN_Helper_Availability_AbstractDayBookings
         }
 
         if (!empty($ret)) {
-            SLN_Plugin::addLog(__CLASS__.' - checking hour('.$hour.')');
-            SLN_Plugin::addLog(__CLASS__.' - found('.count($ret).')');
+            SLN_Plugin::addLogVerbose(__CLASS__.' - checking hour('.$hour.')');
+            SLN_Plugin::addLogVerbose(__CLASS__.' - found('.count($ret).')');
             foreach ($ret as $b) {
-                SLN_Plugin::addLog(
+                SLN_Plugin::addLogVerbose(
                     ' - '.$b->getId().' => '.$b->getStartsAt()->format('H:i').' - '.$b->getEndsAt()->format('H:i')
                 );
             }
         } else {
-            SLN_Plugin::addLog(__CLASS__.' - checking hour('.$hour.') EMPTY');
+            SLN_Plugin::addLogVerbose(__CLASS__.' - checking hour('.$hour.') EMPTY');
         }
 
         return $ret;
@@ -135,7 +135,7 @@ abstract class SLN_Helper_Availability_AbstractDayBookings
         
         // Don't count bookings in break slots (where nested bookings are allowed)
         if (isset($this->timeslots[$time]['break']) && !empty($this->timeslots[$time]['break'])) {
-            SLN_Plugin::addLog(sprintf('[countBookingsByHour] %s is a break slot - returning 0 (allows nested)', $time));
+            SLN_Plugin::addLogVerbose(sprintf('[countBookingsByHour] %s is a break slot - returning 0 (allows nested)', $time));
             return 0;
         }
         
@@ -145,11 +145,11 @@ abstract class SLN_Helper_Availability_AbstractDayBookings
 
     public function countAttendantsByHour($hour = null, $minutes = null)
     {
-        SLN_Plugin::addLog(get_class($this).' - count attendants by hour('.$hour.') minutes('.$minutes.')');
+        SLN_Plugin::addLogVerbose(get_class($this).' - count attendants by hour('.$hour.') minutes('.$minutes.')');
         $now = $this->getTime($hour, $minutes);
         $time = $now->format('H:i');
         $ret = $this->timeslots[$time]['attendant'];
-        SLN_Plugin::addLog(print_r($ret, true));
+        SLN_Plugin::addLogVerbose(print_r($ret, true));
 
         return $ret;
     }
@@ -163,22 +163,22 @@ abstract class SLN_Helper_Availability_AbstractDayBookings
 
     public function countServicesByHour($hour = null, $minutes = null)
     {
-        SLN_Plugin::addLog(get_class($this).' - count services by hour('.$hour.') minutes('.$minutes.')');
+        SLN_Plugin::addLogVerbose(get_class($this).' - count services by hour('.$hour.') minutes('.$minutes.')');
         $now = $this->getTime($hour, $minutes);
         $time = $now->format('H:i');
         $ret = $this->timeslots[$time]['service'];
-        SLN_Plugin::addLog(print_r($ret, true));
+        SLN_Plugin::addLogVerbose(print_r($ret, true));
 
         return $ret;
     }
 
     public function countResourcesByHour($hour = null, $minutes = null)
     {
-        SLN_Plugin::addLog(get_class($this).' - count resources by hour('.$hour.') minutes('.$minutes.')');
+        SLN_Plugin::addLogVerbose(get_class($this).' - count resources by hour('.$hour.') minutes('.$minutes.')');
         $now = $this->getTime($hour, $minutes);
         $time = $now->format('H:i');
         $ret = isset($this->timeslots[$time]['resource']) ? $this->timeslots[$time]['resource'] : array();
-        SLN_Plugin::addLog(print_r($ret, true));
+        SLN_Plugin::addLogVerbose(print_r($ret, true));
 
         return $ret;
     }

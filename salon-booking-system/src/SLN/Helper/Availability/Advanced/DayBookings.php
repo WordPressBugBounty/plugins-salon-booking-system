@@ -221,10 +221,10 @@ class SLN_Helper_Availability_Advanced_DayBookings extends SLN_Helper_Availabili
         SLN_Plugin::addLog(__CLASS__.' - === FINAL TIMESLOT STATE ===');
         foreach ($ret as $time => $data) {
             if (!empty($data['service']) || !empty($data['attendant'])) {
-                SLN_Plugin::addLog(__CLASS__.' - Time '.$time.': Services='.json_encode($data['service']).', Attendants='.json_encode($data['attendant']));
+                SLN_Plugin::addLogVerbose(__CLASS__.' - Time '.$time.': Services='.json_encode($data['service']).', Attendants='.json_encode($data['attendant']));
             }
         }
-        SLN_Plugin::addLog(__CLASS__.' - === END TIMESLOT STATE ===');
+        SLN_Plugin::addLogVerbose(__CLASS__.' - === END TIMESLOT STATE ===');
         SLN_Plugin::addLog('=== END BUILDING TIMESLOTS (ADVANCED MODE) ===');
         
         return $ret;

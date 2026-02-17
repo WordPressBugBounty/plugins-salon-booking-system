@@ -10,9 +10,14 @@ class SLN_Action_Install
         if (!$has_settings || $force) {
 
             $data = require SLN_PLUGIN_DIR . '/_install_data.php';
-	        $ids = SLN_Func::savePosts($data['posts']);
-            $bookings = self::createDemoBookings($data['bookings'], $ids);
-            SLN_Func::savePosts($bookings, true);
+
+            // Only create essential pages (booking, thankyou, bookingmyaccount) - no dummy services, assistants, or bookings
+            $pagesOnly = array(
+                'booking'        => $data['posts']['booking'],
+                'thankyou'       => $data['posts']['thankyou'],
+                'bookingmyaccount' => $data['posts']['bookingmyaccount'],
+            );
+            $ids = SLN_Func::savePosts($pagesOnly);
 
             if (isset($ids['thankyou'])) {
                 $data['settings']['thankyou'] = $ids['thankyou'];
@@ -22,7 +27,6 @@ class SLN_Action_Install
             }
             if (isset($ids['booking'])) {
                 $data['settings']['pay'] = $ids['booking'];
-
             }
 
             update_option(SLN_Settings::KEY, array_merge(get_option(SLN_Settings::KEY) ? get_option(SLN_Settings::KEY) : array(), $data['settings']));

@@ -40,7 +40,6 @@ if (jQuery("#toplevel_page_salon").hasClass("wp-menu-open")) {
 		});
 	}
 })("24521e10-d113-4085-71a3-b7808fddc272");
-
 jQuery(function ($) {
 	if (window.frameElement) {
 		$("html").addClass("in-iframe");

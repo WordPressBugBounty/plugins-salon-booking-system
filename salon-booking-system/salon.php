@@ -3,7 +3,7 @@
 /*
 Plugin Name: Salon Booking System - Free Version
 Description: Let your customers book you services through your website. Perfect for hairdressing salons, barber shops and beauty centers.
-Version: 10.30.17
+Version: 10.30.18
 Plugin URI: http://salonbookingsystem.com/
 Author: Salon Booking System
 Author URI: http://salonbookingsystem.com/
@@ -45,7 +45,7 @@ if (defined('SLN_PLUGIN_BASENAME')) {
 define('SLN_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('SLN_PLUGIN_DIR', untrailingslashit(dirname(__FILE__)));
 define('SLN_PLUGIN_URL', untrailingslashit(plugins_url('', __FILE__)));
-define('SLN_VERSION', '10.30.17');
+define('SLN_VERSION', '10.30.18');
 define('SLN_STORE_URL', 'https://salonbookingsystem.com');
 define('SLN_AUTHOR', 'Salon Booking');
 define('SLN_UPLOADS_DIR', wp_upload_dir()['basedir'] . '/sln_uploads/');
@@ -253,6 +253,9 @@ register_activation_hook(__FILE__, function () {
 	if (!get_option('sln_activation_time')) {
 		update_option('sln_activation_time', current_time('timestamp'));
 	}
+
+	// Flag to redirect to onboarding wizard on next admin load (first activation)
+	set_transient('sln_redirect_to_onboarding', true, 30);
 	
 	// Track activation to salonbookingsystem.com
 	wp_remote_post('https://www.salonbookingsystem.com/wp-json/sbs-tracker/v1/activation', array(

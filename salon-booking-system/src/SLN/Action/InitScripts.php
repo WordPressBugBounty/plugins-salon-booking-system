@@ -3,7 +3,7 @@
 
 class SLN_Action_InitScripts
 {
-    const ASSETS_VERSION = SLN_VERSION . '-20260212-safari-mobile-fix';
+    const ASSETS_VERSION = SLN_VERSION . '-20260216-remove-text-base';
 	private static $isInclude = false;
 	private $isAdmin;
 	private $plugin;
@@ -543,23 +543,6 @@ class SLN_Action_InitScripts
 			'mon_decimal_point' => SLN_Plugin::getInstance()->getSettings()->get('pay_decimal_separator'),
 
 		));
-		if (empty(get_option('_sln_welcome_show_page'))) {
-			wp_add_inline_script(
-				'salon-admin-js',
-				sprintf(
-					'
-					const sln_pendo_user_id = \'%s\';
-					const sln_pendo_paid_or_trail_user = \'%s\';
-					const sln_pendo_account_id = \'%s\';
-				',
-					self::getUniqueUserId(),
-					(defined('SLN_VERSION_PAY') && SLN_VERSION_PAY ? 'PRO' : 'FREE'),
-					123456
-				),
-				'before'
-			);
-			update_option('_sln_welcome_show_page', 1);
-		}
 	}
 	public function hook_admin_print_scripts()
 	{

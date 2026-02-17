@@ -28,7 +28,19 @@
                                 <?php foreach ($bb->getBookingServices()->getItems() as $bookingService): ?>
                                     <?php $service = $bookingService->getService(); ?>
                                     <li class="sln-summary__list__item ">
-                                                <?php $attendant = isset($bb->getAttendantsIds()[$service->getId()]) ? $plugin->createAttendant($bb->getAttendantsIds()[$service->getId()]) : null; ?>
+                                                <?php 
+                                    $attendantIdOrIds = isset($bb->getAttendantsIds()[$service->getId()]) ? $bb->getAttendantsIds()[$service->getId()] : null;
+                                    // Handle both single attendant (ID) and multiple attendants (array of IDs)
+                                    if (is_array($attendantIdOrIds)) {
+                                        $attendant = array_map(function($id) use ($plugin) {
+                                            return $plugin->createAttendant($id);
+                                        }, $attendantIdOrIds);
+                                    } elseif ($attendantIdOrIds) {
+                                        $attendant = $plugin->createAttendant($attendantIdOrIds);
+                                    } else {
+                                        $attendant = null;
+                                    }
+                                ?>
                                         <?php if($showPrices){?>
                                             <div class="sln-summary__list__price">
                                                 <?php $servicePrice = $bookingService->getPrice() ?>

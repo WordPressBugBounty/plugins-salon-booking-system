@@ -26,7 +26,6 @@ class SLN_Admin_Settings {
 		add_filter('sln.settings.general.fields', array($this, 'initSmsServices'));
 		
 		// Add security warning for unconfigured reCAPTCHA
-		add_action('admin_notices', array($this, 'showRecaptchaSecurityWarning'));
 	}
 
 	public function admin_menu() {
@@ -186,30 +185,4 @@ class SLN_Admin_Settings {
             return $fields;
 	}
 	
-	/**
-	 * Show security warning if reCAPTCHA is not configured
-	 * This helps prevent bot spam attacks
-	 */
-	public function showRecaptchaSecurityWarning() {
-		// Only show on Salon Booking admin pages
-		$screen = get_current_screen();
-		if (!$screen || strpos($screen->id, 'salon') === false) {
-			return;
-		}
-		
-		// Check if reCAPTCHA is enabled
-		if (class_exists('SLN_Helper_RecaptchaVerifier') && !SLN_Helper_RecaptchaVerifier::isEnabled()) {
-			$settings_url = admin_url('admin.php?page=salon-settings&tab=general#bot-protection');
-			?>
-			<div class="notice notice-warning is-dismissible">
-				<p>
-					<strong><?php esc_html_e('⚠️ Security Warning:', 'salon-booking-system'); ?></strong>
-					<?php esc_html_e('Bot protection (reCAPTCHA) is not configured. Your booking system is vulnerable to automated spam bookings.', 'salon-booking-system'); ?>
-					<a href="<?php echo esc_url($settings_url); ?>"><?php esc_html_e('Configure reCAPTCHA now', 'salon-booking-system'); ?></a>
-				</p>
-			</div>
-			<?php
-		}
-	}
-
 }

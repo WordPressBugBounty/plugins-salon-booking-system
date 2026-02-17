@@ -23,6 +23,10 @@
 			display: {
 				text: "Do you need help?",
 				iconImage: '<?php echo esc_url(SLN_PLUGIN_URL . "/img/logo_help_button.png") ?>',
+				position: "right",
+			},
+			labels: {
+				beaconButtonClose: "Close",
 			},
 		});
 	</script>
@@ -61,6 +65,10 @@
 			display: {
 				text: "Do you need help?",
 				iconImage: '<?php echo esc_url(SLN_PLUGIN_URL . "/img/logo_help_button.png") ?>',
+				position: "right",
+			},
+			labels: {
+				beaconButtonClose: "Close",
 			},
 		});
 	</script>

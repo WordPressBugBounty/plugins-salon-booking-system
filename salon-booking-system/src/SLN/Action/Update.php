@@ -69,9 +69,10 @@ class SLN_Action_Update
         $max = max(array_keys(self::getDbUpdates()));
         $version = $s->getDbVersion();
         if (version_compare($version, $max, '<')) {
-            if($version == '0.0.0')
-                $version = '2.3.2';
+            // Fresh install (0.0.0): Install will set sln_db_version; do not show update notice.
+            if ($version !== '0.0.0') {
                 add_action('admin_notices', array($this, 'hook_admin_notices'));
+            }
         } else {
             $s->setDbVersion()->save();
         }
