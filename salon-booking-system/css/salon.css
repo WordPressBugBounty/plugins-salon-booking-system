@@ -1829,7 +1829,10 @@ a.sln-btn.sln-btn--borderonly,
 
 #sln-salon,
 #sln-salon #sln-salon-my-account {
-  /* Flickering prevention: During AJAX validation, make all dates look unavailable */
+  /* Flickering prevention: During AJAX validation, make all dates look unavailable.
+     pointer-events intentionally left enabled so a user click during loading is
+     not silently swallowed — the click will queue a fresh validate() once the
+     in-flight AJAX completes and sln-calendar-loading is removed. */
 }
 #sln-salon .datetimepicker table tr td.old,
 #sln-salon .datetimepicker table tr td.new,
@@ -1854,7 +1857,6 @@ a.sln-btn.sln-btn--borderonly,
   background: 0 !important;
   color: #999 !important;
   cursor: default !important;
-  pointer-events: none !important;
 }
 #sln-salon .datetimepicker table tr td.-today,
 #sln-salon .datetimepicker table tr td.-today:hover,
@@ -4497,6 +4499,24 @@ a.sln-btn.sln-btn--borderonly,
 }
 .sln-salon-page.sln-salon-page-customcolors .select2-container.select2-container--sln .select2-search.select2-search--dropdown input[type=search] {
   border-color: currentColor;
+}
+
+#sln-salon .iti {
+  display: block;
+  width: 100%;
+}
+
+#sln-salon .field-phone > label {
+  display: block;
+}
+
+#sln-salon .iti--separate-dial-code input[type=tel],
+#sln-salon .iti--separate-dial-code input[type=text] {
+  padding-right: 6px !important;
+}
+#sln-salon .iti--separate-dial-code .iti__flag-container {
+  right: auto;
+  left: 0;
 }
 
 .sln-btn, #sln-salon.sln-loginform:not(.sln-customcolors) #loginform #wp-submit,

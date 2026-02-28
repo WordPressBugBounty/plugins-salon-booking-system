@@ -176,7 +176,7 @@
                         <span><?php esc_html_e('Leave a message', 'salon-booking-system'); ?></span>
                     </a>
                 </li>
-                <?php if ($enableDiscountSystem): ?>
+                <?php if ($enableDiscountSystem && $showPrices): ?>
                 <li class="sln-summary__tabs__nav__item" role="presentation">
                     <a href="#nogo" class="sln-summary__tabs__toggle" id="coupon-tab" data-toggle="tab" data-target="#coupon" type="button" role="tab" aria-controls="coupon" aria-selected="true">
                         <span><?php esc_html_e('Enter discount code', 'salon-booking-system'); ?></span>
@@ -212,7 +212,7 @@
                     ); ?>
                 </div>
               </div>
-              <?php if ($enableDiscountSystem): ?>
+              <?php if ($enableDiscountSystem && $showPrices): ?>
                 <div class="tab-pane sln-summary__tabs__pane" id="coupon" role="tabpanel" aria-labelledby="coupon-tab">
                     <?php do_action('sln.template.summary.after_total_amount', $bb, $size); ?>
                 </div>

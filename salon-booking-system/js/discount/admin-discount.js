@@ -10,6 +10,9 @@ jQuery(function ($) {
     sln_bindDiscountRuleModeChange($);
     sln_bindDiscountRuleRemove($);
     sln_bindDiscountRuleAdd($);
+
+    // Exclusion rules: mode selector (weekdays / specific_dates)
+    sln_bindExclusionRuleModeChange($);
 });
 
 function sln_bindDiscountTypeChange($) {
@@ -50,4 +53,42 @@ function sln_bindDiscountRuleRemove($) {
     $('[data-action=remove-discount-rule]').off('click').on('click', function() {
         $(this).closest('.sln_discount_rule').remove();
     });
+}
+
+/**
+ * Handles the "Exclude bookings on" mode selector inside each exclusion-rule row.
+ * Uses event delegation so it works for both existing rows and rows added via the
+ * customRulesCollections.js prototype mechanism.
+ */
+function sln_bindExclusionRuleModeChange($) {
+    // Use document-level delegation so dynamically added rows are covered automatically.
+    $(document).off('change.sln-exclusion', '[data-type="discount-exclusion-rule-mode"]')
+        .on('change.sln-exclusion', '[data-type="discount-exclusion-rule-mode"]', function () {
+            var $row  = $(this).closest('.sln-booking-rule');
+            var mode  = $(this).val();
+
+            // Show / hide the correct mode panel
+            $row.find('.sln-discount-exclusion-mode').addClass('hide');
+            $row.find('.sln-discount-exclusion-mode--' + mode).removeClass('hide');
+
+            // The date-range scope ("always / apply from") is only relevant for weekdays mode.
+            // Specific-dates mode already carries its own date information.
+            if (mode === 'specific_dates') {
+                $row.find('.sln-always-valid-section').addClass('hide');
+                // Trigger datepicker initialisation / active-date highlighting
+                setTimeout(function () {
+                    $('body').trigger('sln_date');
+                    setTimeout(function () {
+                        if (typeof sln_updateSelectedDatesList === 'function') {
+                            sln_updateSelectedDatesList($row);
+                        }
+                    }, 100);
+                }, 50);
+            } else {
+                $row.find('.sln-always-valid-section').removeClass('hide');
+            }
+        });
+
+    // Set correct initial state for every existing exclusion-rule row on page load.
+    $('[data-type="discount-exclusion-rule-mode"]').trigger('change');
 }

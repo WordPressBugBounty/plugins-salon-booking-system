@@ -221,6 +221,11 @@ class SLN_Wrapper_Booking_AbstractCache
         }
     }
 
+    public function hasDay(Date $day)
+    {
+        return isset($this->settings[$day->toString()]);
+    }
+
     public function getDay(Date $day)
     {
     	$k = $day->toString();

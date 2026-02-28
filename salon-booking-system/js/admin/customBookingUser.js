@@ -9,6 +9,61 @@ jQuery(function ($) {
 		sln_adminDate($);
 	}
 	$("#calculate-total").on("click", sln_calculateTotal);
+
+	// Refresh Payment Status button (Stripe / PayPal)
+	$(document).on("click", "#sln-refresh-payment-status", function (e) {
+		e.preventDefault();
+
+		var $btn    = $(this);
+		var $result = $("#sln-refresh-payment-result");
+		var bookingId = $btn.data("booking-id");
+		var nonce     = $btn.data("nonce");
+		var gateway   = $btn.data("gateway");
+
+		$btn.prop("disabled", true).text(
+			gateway === "stripe"
+				? "Refreshing Stripe status\u2026"
+				: "Refreshing PayPal status\u2026"
+		);
+		$result.hide().removeClass("sln-alert--success sln-alert--problem").text("");
+
+		$.post(
+			ajaxurl,
+			{
+				action:     "salon",
+				method:     "refreshPaymentStatus",
+				booking_id: bookingId,
+				nonce:      nonce,
+			},
+			function (resp) {
+				var label    = gateway === "stripe" ? "Refresh Stripe Payment Status" : "Refresh PayPal Payment Status";
+				var isSuccess = resp && resp.success;
+				var msg       = (resp && resp.message) ? resp.message : "An unexpected error occurred.";
+
+				$result
+					.addClass(isSuccess ? "sln-alert sln-alert--success" : "sln-alert sln-alert--problem")
+					.html(msg)
+					.show();
+
+				if (resp && resp.status_updated) {
+					// Reload the page so the booking status badge reflects the change
+					setTimeout(function () {
+						window.location.reload();
+					}, 1500);
+				} else {
+					$btn.prop("disabled", false).text(label);
+				}
+			}
+		).fail(function () {
+			$result
+				.addClass("sln-alert sln-alert--problem")
+				.text("Request failed. Please try again.")
+				.show();
+			$btn.prop("disabled", false).text(
+				gateway === "stripe" ? "Refresh Stripe Payment Status" : "Refresh PayPal Payment Status"
+			);
+		});
+	});
 	
 	// Auto-calculate when discount selection changes
 	$(document).on("change", 'select[name="_sln_booking[discounts][]"]', function () {

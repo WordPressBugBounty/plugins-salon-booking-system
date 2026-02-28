@@ -33,7 +33,7 @@ class SLN_Shortcode_Salon_ThankyouStep extends SLN_Shortcode_Salon_Step
         if(empty($booking) && isset($_GET['op'])){
             $booking = $this->getPlugin()->createBooking(explode('-', sanitize_text_field($_GET['op']))[1]);
         }
-	    add_post_meta($booking->getId(), '_'.SLN_Plugin::POST_TYPE_BOOKING.'_origin_source', SLN_Enum_BookingOrigin::ORIGIN_DIRECT);
+	    add_post_meta($booking->getId(), '_'.SLN_Plugin::POST_TYPE_BOOKING.'_origin_source', SLN_Enum_BookingOrigin::ORIGIN_DIRECT, true);
         $ret['booking'] = $booking;
         $ret['goToThankyou'] = $this->getThankyou();
         return $ret;

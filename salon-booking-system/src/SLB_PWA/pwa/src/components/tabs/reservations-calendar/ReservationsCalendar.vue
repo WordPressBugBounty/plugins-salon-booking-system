@@ -338,11 +338,14 @@ export default {
           }];
         }
         const servicesByAssistant = booking.services.reduce((acc, service) => {
-          const assistantId = service.assistant_id || 0;
-          if (!acc[assistantId]) {
-            acc[assistantId] = [];
-          }
-          acc[assistantId].push(service);
+          const rawId = service.assistant_id;
+          const assistantIds = Array.isArray(rawId) ? rawId : [rawId || 0];
+          assistantIds.forEach(assistantId => {
+            if (!acc[assistantId]) {
+              acc[assistantId] = [];
+            }
+            acc[assistantId].push(service);
+          });
           return acc;
         }, {});
         return Object.entries(servicesByAssistant).map(([assistantId, services]) => {

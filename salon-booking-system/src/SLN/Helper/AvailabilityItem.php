@@ -20,12 +20,18 @@ class SLN_Helper_AvailabilityItem
 		if ( $data ) {
 			for ( $i = 0; $i <= 1; $i ++ ) {
                 if(!isset($data['from'][ $i ],$data['to'][ $i ])) continue;
-				if ( $data['from'][ $i ] != '00:00' ) {
-					$this->times[] = new TimeInterval(
-						new Time( $data['from'][ $i ] ),
-						new Time( $data['to'][ $i ] )
-					);
+				// Skip only genuinely disabled/empty ranges where both from and to are '00:00'.
+				// A disabled second shift is stored as ['00:00','00:00'].
+				// Previously this check was `from != '00:00'`, which silently discarded any
+				// range that legitimately starts at midnight (e.g. 00:00→18:00), causing
+				// the 24-hour fallback below to kick in and making the rule appear always open.
+				if ( $data['from'][ $i ] === '00:00' && $data['to'][ $i ] === '00:00' ) {
+					continue;
 				}
+				$this->times[] = new TimeInterval(
+					new Time( $data['from'][ $i ] ),
+					new Time( $data['to'][ $i ] )
+				);
 			}
 			$from         = isset( $data['from_date'] ) ? new Date( $data['from_date'] ) : null;
 			$to           = isset( $data['to_date'] ) ? new Date( $data['to_date'] ) : null;

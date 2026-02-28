@@ -14,7 +14,7 @@ foreach($fields as $key => $field){
     }
     $style_class = 'col-xs-12';
     if($size != '400'){
-        $style_class = ($size == '900'? 'col-sm-': 'col-sm-6 col-md-'). ($key == 'address' ? '12' : $width);
+        $style_class = 'col-xs-12 ' . ($size == '900'? 'col-sm-': 'col-sm-6 col-md-'). ($key == 'address' ? '12' : $width);
     }
     ?>
 

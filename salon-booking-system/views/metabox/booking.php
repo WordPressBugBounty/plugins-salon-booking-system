@@ -532,10 +532,15 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                         <div class="sln-checkbox--nu- sln-switch" id="sln-save-new-customer-wrapper">
                             <input type="checkbox" id="_sln_booking_createuser" name="_sln_booking_createuser" />
                             <label for="_sln_booking_createuser"><?php esc_html_e('Save as new customer', 'salon-booking-system') ?></label>
-                            <?php 
-                            // Only set origin on NEW bookings (preserve original booking channel)
-                            // Check if this booking already has an origin set
-                            if (!metadata_exists('post', $booking->getId(), '_sln_booking_origin_source')) : 
+                            <?php
+                            // Only set origin when CREATING a new booking from back-end.
+                            // On edit pages (?action=edit) NEVER submit this field — the
+                            // booking already exists and its origin must not be changed,
+                            // even if the meta row was never stored (front-end bookings
+                            // created before origin tracking, or via payment flows that
+                            // bypass ThankyouStep).
+                            $is_admin_edit = isset($_GET['action']) && $_GET['action'] === 'edit';
+                            if (!$is_admin_edit) :
                             ?>
                             <input type="hidden" id="_sln_booking_origin_source" name="_sln_booking_origin_source" value="<?php echo SLN_Enum_BookingOrigin::ORIGIN_ADMIN ?>" />
                             <?php endif; ?>
@@ -746,6 +751,32 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                     <button class="sln-btn sln-btn--borderonly sln-btn--bigger sln-btn--fullwidth" id="calculate-total"><?php esc_html_e('Update totals', 'salon-booking-system') ?></button>
                     <span class="sln-calc-total-loading"></span>
                 </div>
+
+                <?php
+                $sln_stripe_session_id  = $booking->getMeta('stripe_session_id');
+                $sln_paypal_return_data = get_post_meta($booking->getId(), '_sln_paypal_return_data', true);
+                if ($sln_stripe_session_id || $sln_paypal_return_data) :
+                    $sln_gateway_label = $sln_stripe_session_id ? __('Stripe', 'salon-booking-system') : __('PayPal', 'salon-booking-system');
+                ?>
+                <div class="sln-box__fl__item sln-box__fl__item--2col" id="sln-refresh-payment-wrap">
+                    <button
+                        class="sln-btn sln-btn--borderonly sln-btn--bigger sln-btn--fullwidth"
+                        id="sln-refresh-payment-status"
+                        data-booking-id="<?php echo intval($booking->getId()); ?>"
+                        data-nonce="<?php echo esc_attr(wp_create_nonce('sln_refresh_payment_status')); ?>"
+                        data-gateway="<?php echo esc_attr($sln_stripe_session_id ? 'stripe' : 'paypal'); ?>"
+                    >
+                        <?php
+                        printf(
+                            /* translators: %s: Payment gateway name (Stripe or PayPal) */
+                            esc_html__('Refresh %s Payment Status', 'salon-booking-system'),
+                            esc_html($sln_gateway_label)
+                        );
+                        ?>
+                    </button>
+                    <div id="sln-refresh-payment-result" style="display:none; margin-top:8px; padding:8px 12px; border-radius:4px; font-size:13px;"></div>
+                </div>
+                <?php endif; ?>
 
             </div>
         </div><!-- sln-booking__totals // END -->

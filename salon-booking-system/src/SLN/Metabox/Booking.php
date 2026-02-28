@@ -21,7 +21,6 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
             'tips' => '',
             'services_resources' => 'nofilter',
             'soap_notes' => '',
-            'origin_source' => ''
         );
 
     public function add_meta_boxes()
@@ -289,13 +288,15 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
             $this->disabledSavePost = false;
         }
 
-	    // Only set origin on NEW bookings (preserve original booking channel)
-	    // Origin tracks WHERE the booking was ORIGINALLY created, not who edited it
-	    if (isset($_POST['_sln_booking_origin_source'])) {
-		    // Use metadata_exists() for definitive check - more reliable than checking value
-		    if (!metadata_exists('post', $post_id, '_sln_booking_origin_source')) {
-			    $booking->setMeta('origin_source', sanitize_text_field($_POST['_sln_booking_origin_source']));
-		    }
+	    // Only set origin when creating a new booking from the back-end.
+	    // On edit pages the hidden field is never submitted (view guard above),
+	    // but as a belt-and-braces defence we also reject the value here if the
+	    // request is an edit (action=edit in POST/REQUEST) so nothing can slip
+	    // through even if the view guard is bypassed.
+	    $is_admin_edit = (isset($_REQUEST['action']) && $_REQUEST['action'] === 'edit')
+	                   || (isset($_POST['original_post_status']) && $_POST['original_post_status'] !== 'auto-draft');
+	    if (!$is_admin_edit && isset($_POST['_sln_booking_origin_source'])) {
+		    $booking->setMeta('origin_source', sanitize_text_field($_POST['_sln_booking_origin_source']));
 	    }
 	    
 	    // Track the WordPress user who created the booking (set once)

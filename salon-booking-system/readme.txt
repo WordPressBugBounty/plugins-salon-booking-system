@@ -4,7 +4,7 @@ Tags: booking, reservations, scheduling, booking calendar, appointment calendar
 Requires at least: 4.1
 Tested up to: 6.9
 Requires PHP: 7.4.8
-Stable tag: 10.30.18
+Stable tag: 10.30.19
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -407,6 +407,12 @@ FREE version doesn't have the online payments options, no mobile app access, no 
 
 
 == Changelog ==
+
+28.02.2026 - 10.30.19
+
+* Fixed issue with plugin settings 
+* Hide "manage" button inside email notification when "force guest checkout" is enabled
+* Hide "Discount tab" when "Hide price" is active
 
 17.02.2026 - 10.30.18
 

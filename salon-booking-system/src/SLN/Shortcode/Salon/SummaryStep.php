@@ -238,6 +238,34 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
             $this->cleanupBookingLock($bb);
             return !$this->hasErrors();
         }elseif(isset($_GET['op']) || $mode){
+            // Re-check availability after returning from the payment gateway.
+            // The slot could have become unavailable (another booking, settings change) during
+            // the time the customer was on the external payment page. Because the payment has
+            // already been captured at this point we cannot simply reject the booking — doing
+            // so would leave the customer charged with no appointment. Instead we confirm the
+            // booking but mark it PENDING so the salon owner is alerted and can decide whether
+            // to honour it or issue a refund.
+            // Wrapped in try/catch: a validation exception must never crash the payment flow
+            // after the customer has already been charged.
+            try {
+                $gatewayAvailErrors = $handler->checkDateTimeServicesAndAttendants($bb->getAttendantsIds(), $bb->getStartsAt());
+                if ( ! empty($gatewayAvailErrors) && ! class_exists('\\SalonMultishop\\Addon') ) {
+                    SLN_Plugin::addLog(sprintf(
+                        '[SummaryStep] WARNING: Slot unavailable after payment gateway return for booking #%d. Errors: %s',
+                        $bb->getId(),
+                        implode(' | ', array_map(function($e){ return is_array($e) ? reset($e) : $e; }, $gatewayAvailErrors))
+                    ));
+                    // Override status to PENDING so admin is alerted rather than auto-confirming
+                    // an out-of-hours or double-booked slot.
+                    if ( $bb->getStatus() !== SLN_Enum_BookingStatus::PENDING ) {
+                        $bb->setStatus(SLN_Enum_BookingStatus::PENDING);
+                        SLN_Plugin::addLog('[SummaryStep] Booking #' . $bb->getId() . ' forced to PENDING due to post-payment availability conflict.');
+                    }
+                }
+            } catch (\Exception $e) {
+                SLN_Plugin::addLog('[SummaryStep] Post-payment availability check threw exception (booking proceeds normally): ' . $e->getMessage());
+            }
+
             if ($bookingBuilder && method_exists($bookingBuilder, 'forceTransientStorage')) {
                 $bookingBuilder->forceTransientStorage();
             }

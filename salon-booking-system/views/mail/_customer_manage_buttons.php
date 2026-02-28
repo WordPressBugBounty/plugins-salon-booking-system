@@ -31,7 +31,7 @@ if (($booking->hasStatus(SLN_Enum_BookingStatus::PENDING_PAYMENT) || isset($payR
 		</tr>
 	</table>
 <?php endif ?>
-<?php if ($customer && $plugin->getSettings()->getBookingmyaccountPageId()): ?>
+<?php if ($customer && $plugin->getSettings()->getBookingmyaccountPageId() && !$plugin->getSettings()->get('enabled_force_guest_checkout')): ?>
 <table class="es-left" cellspacing="0" cellpadding="0" align="left" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;float:left">
 	<tr>
 	<td class="es-m-p20b" align="center" style="padding:0;Margin:0;width:<?php echo esc_attr($size) ?>px">

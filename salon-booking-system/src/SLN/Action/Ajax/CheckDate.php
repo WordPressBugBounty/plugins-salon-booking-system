@@ -57,6 +57,16 @@ class SLN_Action_Ajax_CheckDate extends SLN_Action_Ajax_Abstract
             }
         }
 
+        // Early validation: if no date was provided, return a user-facing error immediately.
+        // This prevents a generic Exception from bubbling up to Plugin::ajax() which would
+        // trigger an error notification email for what is simply a missing-input scenario.
+        if (empty($this->date)) {
+            return array(
+                'errors'                 => array(__('Please select a date before proceeding.', 'salon-booking-system')),
+                'can_override_validation' => false,
+            );
+        }
+
         $this->checkDateTime();
         if ($errors = $this->getErrors()) {
             $ret = compact('errors');

@@ -185,7 +185,7 @@ function sln_init($) {
         }, 200);
     }
     box_fixed_height();
-    $('a[data-toggle="tab"]').on("shown.bs.tab", function (e) {
+    $(document).on("shown.bs.tab", 'a[data-toggle="tab"]', function (e) {
         // e.target // newly activated tab
         // e.relatedTarget // previous active tab
         box_fixed_height();
@@ -979,6 +979,39 @@ function sln_init($) {
             nationalMode: false,
         });
 
+        // The library measures the flag button width synchronously at init time to
+        // set padding-left.  When intlTelInput is initialised right after an AJAX
+        // replaceWith() call the dial-code text (+44 etc.) may not yet have a
+        // rendered width, so the library ends up with ~52 px — too narrow — and the
+        // typed number visually overlaps the dial-code section.  Waiting one frame
+        // guarantees that the browser has performed a full layout pass and that
+        // selectedFlag.offsetWidth includes the dial-code text width.
+        requestAnimationFrame(function () {
+            var selectedFlag = input.parentNode &&
+                input.parentNode.querySelector(".iti__selected-flag");
+            if (selectedFlag && selectedFlag.offsetWidth > 0) {
+                input.style.paddingLeft = (selectedFlag.offsetWidth + 6) + "px";
+            }
+        });
+
+        // If the stored phone number is in E.164 format (e.g. +447478730730),
+        // detect the dial code, update the flag, and strip the prefix from the
+        // input so only the local number is shown. We do this manually instead
+        // of relying on iti.setNumber() because setNumber() requires utilsScript
+        // to be loaded in order to correctly parse and reformat the number.
+        var currentVal = $(input).val();
+        if (currentVal && currentVal.charAt(0) === "+") {
+            iti.setNumber(currentVal);
+            var dialCode = iti.getSelectedCountryData().dialCode;
+            if (dialCode) {
+                var prefix = "+" + dialCode;
+                var inputVal = $(input).val();
+                if (inputVal.indexOf(prefix) === 0) {
+                    $(input).val(inputVal.slice(prefix.length).trim());
+                }
+            }
+        }
+
         input.addEventListener("keydown", function (event) {
             if (
                 /[^0-9]/.test(event.key) &&
@@ -1393,6 +1426,8 @@ function sln_loadStep($, data) {
 
             if (xhr.status === 0) {
                 errorMsg += "No response from server. Please check your internet connection.";
+            } else if (xhr.status === 429) {
+                errorMsg = "Too many requests in a short time. Please wait 1\u20132 minutes and try again.";
             } else if (xhr.status === 500) {
                 errorMsg += "Server error occurred. Please try again or contact support.";
             } else if (xhr.status === 404) {
@@ -1406,6 +1441,8 @@ function sln_loadStep($, data) {
                     var response = JSON.parse(xhr.responseText);
                     if (response.message) {
                         errorMsg = response.message;
+                    } else {
+                        errorMsg += "Please try again. (Error code: " + xhr.status + ")";
                     }
                 } catch (e) {
                     errorMsg += "Please try again. (Error code: " + xhr.status + ")";
@@ -1622,8 +1659,14 @@ function sln_stepDate($) {
         });
     }
     
-    // Call refresh on page load
-    refreshAvailableDatesOnLoad();
+    // Defer refreshAvailableDatesOnLoad so that sln_initDatepickers has
+    // already populated sln[date] before form.serialize() is called inside
+    // it.  Without the defer, the request goes out without a date, and the
+    // server may return an intervals object with empty `times`; if that
+    // response arrives after the validate() AJAX has already rendered time
+    // slots, sln_updateDatepickerTimepickerSlots would re-add .disabled to
+    // all time-slot spans (since they are not in response.intervals.times).
+    setTimeout(refreshAvailableDatesOnLoad, 0);
     var debounce = function (fn, delay) {
         var inDebounce;
         return function () {
@@ -1749,7 +1792,34 @@ function sln_stepDate($) {
         });
     });
 
+    // Holds the in-flight validate() XHR so it can be aborted when a newer
+    // request starts (e.g. user changes date while a check is in progress).
+    var validateXhr = null;
+
+    // Debounce timer for validate() — prevents a burst of checkDate AJAX
+    // requests when the user rapidly taps through calendar dates, which can
+    // exhaust server/CDN rate limits and trigger HTTP 429 responses.
+    var validateDebounceTimer = null;
+
     function validate(obj, autosubmit) {
+        // Debounce: cancel any pending call and wait 400 ms of inactivity
+        // before actually firing the request. This collapses rapid date
+        // changes (e.g. browsing Mon → Tue → Wed) into a single AJAX call.
+        clearTimeout(validateDebounceTimer);
+        validateDebounceTimer = setTimeout(function () {
+            validateImmediate(obj, autosubmit);
+        }, 400);
+    }
+
+    function validateImmediate(obj, autosubmit) {
+        // Abort any in-flight checkDate request before starting a new one.
+        // Without this, rapidly changing dates fires concurrent AJAX calls
+        // that can trigger HTTP 429 (Too Many Requests) on rate-limited
+        // servers and causes the last response to unpredictably win.
+        if (validateXhr && validateXhr.readyState !== 4) {
+            validateXhr.abort();
+        }
+
         var form = $(obj).closest("form");
         var validatingMessage =
             '<div class="sln-alert sln-alert--wait">' +
@@ -1788,9 +1858,8 @@ function sln_stepDate($) {
             .addClass("sln-notifications--active")
             .html(validatingMessage);
         $("#sln-debug-div").css("overflow-y", "hidden").scrollTop(0);
-        // Don't add sln-salon--loading class on date step (prevents spinner in button)
-        // $("#sln-salon").addClass("sln-salon--loading");
-        $.ajax({
+
+        validateXhr = $.ajax({
             url: salon.ajax_url,
             data: data,
             method: "POST",
@@ -1819,7 +1888,6 @@ function sln_stepDate($) {
                         .html("")
                         .removeClass("sln-notifications--active");
                     $("#sln-debug-div").css("overflow-y", "scroll");
-                    // $("#sln-salon").removeClass("sln-salon--loading");
                     isValid = true;
                     if (autosubmit) submit();
                 }
@@ -1842,9 +1910,36 @@ function sln_stepDate($) {
                 sln_renderAvailableTimeslots($, data);
                 $("body").trigger("sln_date");
                 $("input[name='sln[time]']").val(timeValue);
-                
-                // Remove loading class after data is updated (prevents flickering)
-                $(".datetimepicker.sln-datetimepicker").removeClass("sln-calendar-loading");
+            },
+            error: function (xhr, status) {
+                // Aborted requests are intentional (a newer validate() is
+                // already in flight) — skip any UI update for them.
+                if (status === "abort") {
+                    return;
+                }
+                $(".sln-alert").remove();
+                var msg = xhr.status === 429
+                    ? "Too many requests. Please wait a moment, then select your date again."
+                    : "Could not check availability. Please try again.";
+                var alertBox = $('<div class="sln-alert sln-alert--problem"></div>').text(msg);
+                $("#sln-notifications")
+                    .html("")
+                    .addClass("sln-notifications--active")
+                    .append(alertBox);
+                isValid = false;
+            },
+            complete: function (xhr, status) {
+                // Always remove the calendar loading overlay once the request
+                // settles (success, error, or timeout).  Previously this only
+                // happened inside success(), so any network failure or 429
+                // left sln-calendar-loading applied indefinitely, freezing
+                // the calendar and preventing further date selections.
+                // Exception: aborted requests — aborting means a newer
+                // validate() call has already re-applied sln-calendar-loading
+                // and must not have it removed prematurely.
+                if (status !== "abort") {
+                    $(".datetimepicker.sln-datetimepicker").removeClass("sln-calendar-loading");
+                }
             },
         });
     }
@@ -2014,6 +2109,7 @@ function sln_stepDate($) {
     sln_initDatepickers($, items);
     sln_initTimepickers($, items);
 
+    // Ensure timezone is always populated before the validate AJAX fires.
     if (
         !$('input[name="sln[customer_timezone]"]').val() &&
         $('input[name="sln[customer_timezone]"]').length
@@ -2021,8 +2117,24 @@ function sln_stepDate($) {
         $('input[name="sln[customer_timezone]"]').val(
             new window.Intl.DateTimeFormat().resolvedOptions().timeZone
         );
-        validate($(".sln_datepicker div"), false);
     }
+
+    // Always validate on date-step init, regardless of whether timezone was
+    // already set from a previous booking session.
+    //
+    // Without this call, two issues compound:
+    //   1. Stale HTML data-intervals can mark the auto-selected date as
+    //      .disabled, so both the direct .day click handler and the
+    //      datepicker library bail out on the first user click (both check
+    //      hasClass("disabled") / target.is(".disabled") and return early).
+    //   2. refreshAvailableDatesOnLoad() only updates the calendar date grid;
+    //      it never calls sln_renderAvailableTimeslots, so time slots remain
+    //      blank until the user manages to trigger a changeDay event.
+    //
+    // This call fetches fresh intervals (dates + times) for the auto-selected
+    // date, renders the time-slot panel immediately, and re-enables the correct
+    // calendar days — all before the user needs to click anything.
+    validate($(".sln_datepicker div"), false);
 }
 
 function sln_serviceTotal($) {
@@ -2246,6 +2358,13 @@ function sln_initDatepickers($, data) {
                 datetimepicker.formatType
             );
 
+            // Set sln[date] before setUTCDate.  setUTCDate() calls fill()
+            // which re-renders the calendar HTML; having the correct date
+            // value in the input at this point ensures that the validate()
+            // call made immediately after sln_initDatepickers returns sends
+            // the correct date to the server.
+            $("input[name='sln[date]']").val(data.intervals.suggestedDate);
+
             datetimepicker.setUTCDate(suggestedDate);
 
             var dateString = suggestedDate.toLocaleDateString(
@@ -2261,8 +2380,6 @@ function sln_initDatepickers($, data) {
             $("#sln_timepicker_viewdate").text(
                 dateString + " | " + data.intervals.suggestedTime
             );
-
-            $("input[name='sln[date]']").val(data.intervals.suggestedDate);
         }
     });
     var elementExists = document.getElementById("sln-salon");
@@ -3057,6 +3174,10 @@ function sln_applyTipsAmount() {
         "&action=salon&method=applyTipsAmount&security=" +
         salon.ajax_nonce;
 
+    if (salon.client_id) {
+        data += "&sln_client_id=" + encodeURIComponent(salon.client_id);
+    }
+
     $.ajax({
         url: salon.ajax_url,
         data: data,
@@ -3069,7 +3190,7 @@ function sln_applyTipsAmount() {
                 $("#sln_tips_value").html(data.tips);
                 $(".sln-summary-row.sln-summary-row--tips").toggleClass(
                     "hide",
-                    data.tips.startsWith("0")
+                    parseFloat(data.tips.replace(/[^0-9.,]/g, "")) === 0
                 );
                 $(".sln-total-price").html(data.total);
 
@@ -3082,7 +3203,7 @@ function sln_applyTipsAmount() {
                 );
             }
             $(data.errors).each(function () {
-                alertBox.append("<p>").html(this);
+                alertBox.append($("<p>").html(this));
             });
             $("#sln_tips_status").html("").append(alertBox);
         },

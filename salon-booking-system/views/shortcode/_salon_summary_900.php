@@ -174,11 +174,13 @@
                         <span><?php esc_html_e('Leave a message', 'salon-booking-system'); ?></span>
                     </a>
                 </li>
+                <?php if ($showPrices): ?>
                 <li class="sln-summary__tabs__nav__item" role="presentation">
                     <a href="#nogo" class="sln-summary__tabs__toggle" id="coupon-tab" data-toggle="tab" data-target="#coupon" type="button" role="tab" aria-controls="coupon" aria-selected="true">
                         <span><?php esc_html_e('Enter discount code', 'salon-booking-system'); ?></span>
                     </a>
                 </li>
+                <?php endif; ?>
                 <?php if ($isTipRequestEnabled): ?>
                 <li class="sln-summary__tabs__nav__item" role="presentation">
                     <a href="#nogo" class="sln-summary__tabs__toggle" id="tip-tab" data-toggle="tab" data-target="#tip" type="button" role="tab" aria-controls="tip" aria-selected="true">
@@ -208,9 +210,11 @@
                     ); ?>
                 </div>
               </div>
+              <?php if ($showPrices): ?>
               <div class="tab-pane sln-summary__tabs__pane" id="coupon" role="tabpanel" aria-labelledby="profile-tab">
                 <?php do_action('sln.template.summary.after_total_amount', $bb, $size); ?>
               </div>
+              <?php endif; ?>
               <?php if ($isTipRequestEnabled): ?>
                 <div class="tab-pane sln-summary__tabs__pane" id="tip" role="tabpanel" aria-labelledby="messages-tab">
                     <?php include '_salon_summary_add_tips.php'; ?>

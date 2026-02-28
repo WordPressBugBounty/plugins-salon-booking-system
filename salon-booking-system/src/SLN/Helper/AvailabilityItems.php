@@ -59,8 +59,19 @@ class SLN_Helper_AvailabilityItems {
 			}
 		}
 		if ( ! $ret ) {
-			// case 3 fake item always on
-			$ret[] = new SLN_Helper_AvailabilityItemNull( array() );
+			// case 3: no rules matched this date.
+			// Only inject the "always open" null rule when NO real rules are configured at all
+			// (i.e. $this->items contains only the constructor-injected AvailabilityItemNull).
+			// If real rules exist but none cover this date, the correct behaviour is to return
+			// an empty subset so callers treat the date as unavailable (fail-closed).
+			// Falling back to always-open here was the bug that let bookings slip through when
+			// a date-range rule expired or a weekday was left unchecked.
+			$hasRealRules = ! empty( $this->items )
+				&& ! ( $this->items[0] instanceof SLN_Helper_AvailabilityItemNull );
+
+			if ( ! $hasRealRules ) {
+				$ret[] = new SLN_Helper_AvailabilityItemNull( array() );
+			}
 		}
 
 		return $ret;

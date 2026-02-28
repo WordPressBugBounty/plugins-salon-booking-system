@@ -185,6 +185,27 @@ class SLN_Service_BookingPersistence
 
         $_SESSION[$this->sessionKeyData]   = $data;
         $_SESSION[$this->sessionKeyLastId] = $lastId;
+
+        // Belt-and-suspenders: mirror session data to a transient so that AJAX
+        // calls which use a different storage-mode detection path (e.g. the
+        // discount / tips endpoints that use salon.client_id) can still locate
+        // the booking builder state even if their initialiseStorage() call
+        // resolves to transient mode rather than session mode.
+        // On subsequent requests the transient will be found first (step 1 of
+        // initialiseStorage) and the system will converge to transient mode,
+        // keeping both copies in sync.
+        if (!empty($this->clientId)) {
+            $transientKey = $this->buildTransientKey($this->clientId);
+            set_transient(
+                $transientKey,
+                array(
+                    'data'    => $data,
+                    'last_id' => $lastId,
+                ),
+                self::TRANSIENT_TTL
+            );
+            SLN_Plugin::addLog(sprintf('[BookingPersistence] SAVE TRANSIENT MIRROR (session mode) - key=%s, client_id=%s', $transientKey, $this->clientId));
+        }
     }
 
     /**

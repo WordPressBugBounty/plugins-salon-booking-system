@@ -63,7 +63,7 @@ class SLN_Helper_Availability
         
         while ($temp_count > 0) {
             $temp_count--;
-            if(empty($bc->getDay($temp_from))) {
+            if(!$bc->hasDay($temp_from)) {
                 $dates_to_process[] = clone $temp_from;
             }
             $temp_from = $temp_from->getNextDate();
@@ -181,12 +181,15 @@ class SLN_Helper_Availability
             $timeCheck = $this->isValidTime($d);
             $rangeCheck = $d >= $from && $d <= $to;
             
-            // Check if this is a break slot (should bypass range check for "hours before")
+            // Check if this is a break slot (gap inside an existing booking allowing nested bookings).
             $time_obj = $this->getDayBookings()->getTime($d->format('H'), $d->format('i'));
             $isBreakSlot = $this->getDayBookings()->isBreakSlot($time_obj);
             
-            // Break slots should only check: availability, holidays, and time (not range)
-            // Regular slots check all four
+            // Break slots intentionally bypass the lower bound of the booking window ($d >= $from).
+            // This allows salon staff to fill a break gap in an existing booking even when that
+            // break falls inside the "hours before" minimum advance window. Only the upper bound
+            // ($d <= $to) is enforced so slots beyond the max-advance limit are still blocked.
+            // Regular slots check the full range (both bounds).
             if ($isBreakSlot && $avCheck && $hCheck && $timeCheck && $d <= $to) {
                 $ret[$time] = $d;
             } elseif (!$isBreakSlot && $avCheck && $hCheck && $timeCheck && $rangeCheck) {

@@ -27,6 +27,7 @@ $last_update = get_user_meta(get_current_user_id(), '_sln_last_update', true);
                     <label for="<?php echo SLN_Form::makeID("sln[{$key}]")?>"><?php esc_html_e(sprintf('%s', $field['label']), 'salon-booking-system'); ?></label>
                     <?php switch($key){
                         case 'password':
+                        case 'password_confirm':
                             SLN_Form::fieldText("sln[{$key}]", '', array('type' => 'password'));
                             break;
                         case 'email':

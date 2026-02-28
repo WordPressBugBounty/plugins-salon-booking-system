@@ -51,10 +51,16 @@ function sln_applyDiscountCode() {
         "&action=salon_discount&method=applyDiscountCode&security=" +
         salon.ajax_nonce;
     
-    // PERSISTENCE FIX: Include client_id if using transient storage
-    // This ensures booking data can be retrieved after session expiration
-    if (salon.client_id) {
-        data += "&sln_client_id=" + encodeURIComponent(salon.client_id);
+    // Use the dynamic client state (updated after each step response) as the primary
+    // source for client_id. This keeps the discount AJAX in sync with the booking
+    // step navigation which also uses sln_getClientState().id.
+    // Falls back to salon.client_id (static page-load value) for backward compatibility.
+    var clientId = (typeof sln_getClientState === "function" && sln_getClientState().id)
+        ? sln_getClientState().id
+        : salon.client_id;
+
+    if (clientId) {
+        data += "&sln_client_id=" + encodeURIComponent(clientId);
     }
 
     $.ajax({
@@ -93,7 +99,7 @@ function sln_applyDiscountCode() {
                 );
             }
             $(data.errors).each(function() {
-                alertBox.append("<p>").html(this);
+                alertBox.append($("<p>").html(this));
             });
             $("#sln_discount_status")
                 .html("")

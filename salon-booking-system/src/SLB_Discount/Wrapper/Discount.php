@@ -253,6 +253,33 @@ class SLB_Discount_Wrapper_Discount extends SLN_Wrapper_Abstract
         return $ret;
     }
 
+    /**
+     * Returns stored exclusion rules regardless of edition (used by the admin UI).
+     *
+     * @return array
+     */
+    public function getExclusionRulesRaw()
+    {
+        $ret = (array) $this->getMeta('exclusion_rules');
+        $ret = array_filter($ret);
+
+        return $ret;
+    }
+
+    /**
+     * Returns exclusion rules for validation; empty array on free edition.
+     *
+     * @return array
+     */
+    public function getExclusionRules()
+    {
+        if (!defined('SLN_VERSION_PAY')) {
+            return array();
+        }
+
+        return $this->getExclusionRulesRaw();
+    }
+
     public function getName()
     {
         if ($this->object) {
@@ -497,7 +524,88 @@ class SLB_Discount_Wrapper_Discount extends SLN_Wrapper_Abstract
             return $errors;
         }
 
+        $errors = $this->validateDiscountExclusionRules($date);
+        if (!empty($errors)) {
+            return $errors;
+        }
+
         return $errors;
+    }
+
+    /**
+     * Returns errors when any exclusion rule matches the booking date.
+     * Always returns empty on the free edition (rules are stored but not enforced).
+     *
+     * @param int $date Unix timestamp of the booking date
+     * @return array
+     */
+    public function validateDiscountExclusionRules($date)
+    {
+        $ret   = array();
+        $rules = $this->getExclusionRules(); // empty on free edition
+
+        if (empty($rules)) {
+            return $ret;
+        }
+
+        foreach ($rules as $rule) {
+            if (!$this->isExclusionRuleInScope($rule, $date)) {
+                continue;
+            }
+
+            $mode = isset($rule['mode']) ? $rule['mode'] : 'weekdays';
+
+            if ($mode === 'weekdays') {
+                // Day key: (date('w') + 1) maps 0–6 → 1–7 matching SLN_Func::getDays() keys
+                $dayKey = (int) SLN_TimeFunc::date('w', $date) + 1;
+                if (!empty($rule['days']) && isset($rule['days'][$dayKey])) {
+                    $ret[] = __('This discount is not available on this day.', 'salon-booking-system');
+                    break;
+                }
+            } elseif ($mode === 'specific_dates') {
+                $specificDates = !empty($rule['specific_dates'])
+                    ? array_filter(array_map('trim', explode(',', $rule['specific_dates'])))
+                    : array();
+                $bookingDate = SLN_TimeFunc::date('Y-m-d', $date);
+                if (in_array($bookingDate, $specificDates, true)) {
+                    $ret[] = __('This discount is not available on this date.', 'salon-booking-system');
+                    break;
+                }
+            }
+        }
+
+        return $ret;
+    }
+
+    /**
+     * Checks whether an exclusion rule is currently active based on its date-range scope.
+     *
+     * @param array $rule
+     * @param int   $date Unix timestamp
+     * @return bool
+     */
+    private function isExclusionRuleInScope($rule, $date)
+    {
+        $always = isset($rule['always']) ? (bool) $rule['always'] : true;
+        if ($always) {
+            return true;
+        }
+
+        $fromDate = !empty($rule['from_date'])
+            ? (new SLN_DateTime($rule['from_date']))->setTime(0, 0)->getTimestamp()
+            : null;
+        $toDate = !empty($rule['to_date'])
+            ? (new SLN_DateTime($rule['to_date']))->setTime(23, 59, 59)->getTimestamp()
+            : null;
+
+        if ($fromDate !== null && $date < $fromDate) {
+            return false;
+        }
+        if ($toDate !== null && $date > $toDate) {
+            return false;
+        }
+
+        return true;
     }
 
     private function validateDiscountForBookingAttendants($bookingAttendants) {

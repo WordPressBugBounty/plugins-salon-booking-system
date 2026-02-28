@@ -385,6 +385,28 @@ class SLB_Discount_Plugin {
 
 	public function hook_admin_enqueue_scripts() {
 		wp_enqueue_script('admin-discount', SLN_PLUGIN_URL.'/js/discount/admin-discount.js', array('jquery'), false, true);
+
+		// Enqueue the rules-collection script only on discount create/edit screens
+		global $pagenow;
+		$is_discount_edit = false;
+		if ($pagenow === 'post-new.php' && isset($_GET['post_type']) && sanitize_text_field(wp_unslash($_GET['post_type'])) === self::POST_TYPE_DISCOUNT) {
+			$is_discount_edit = true;
+		} elseif ($pagenow === 'post.php' && isset($_GET['post'])) {
+			$post_id = intval($_GET['post']);
+			if ($post_id && get_post_type($post_id) === self::POST_TYPE_DISCOUNT) {
+				$is_discount_edit = true;
+			}
+		}
+
+		if ($is_discount_edit) {
+			wp_enqueue_script(
+				'salon-customRulesCollections',
+				SLN_PLUGIN_URL . '/js/admin/customRulesCollections.js',
+				array('jquery'),
+				false,
+				true
+			);
+		}
 	}
 
 	public function hook_wp_enqueue_scripts() {

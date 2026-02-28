@@ -319,10 +319,10 @@ $helper->showNonce($postType);
                                            step="<?php echo esc_attr($settings->getInterval()) ?>" min="0" readonly="">
                                     <div class="sln-slider--break-length--plus"></div>
                                 </div>
-                                <p class="sln-input-help"><?php esc_html_x('The time minimum breke is', 'part of:The time minimum breke is 30\' with increase of 30\' each', 'salon-booking-system');
+                                <p class="sln-input-help"><?php echo esc_html_x('The time minimum breke is', 'part of:The time minimum breke is 30\' with increase of 30\' each', 'salon-booking-system');
                                     echo ' ', $settings->getInterval(), '\' ';
-                                    esc_html_x('with increase of', 'part of: The time minimum breke is 30\' with increase of 30\' each', 'salon-booking-system');
-                                    echo ' ' . $settings->getInterval() . '\' ' . _x('each', 'part of: The time minimum breke is 30\' with increase of 30\' each', 'salon-booking-system');
+                                    echo esc_html_x('with increase of', 'part of: The time minimum breke is 30\' with increase of 30\' each', 'salon-booking-system');
+                                    echo ' ' . $settings->getInterval() . '\' ' . esc_html_x('each', 'part of: The time minimum breke is 30\' with increase of 30\' each', 'salon-booking-system');
                                     ?></p>
                             </div>
                         </div>
