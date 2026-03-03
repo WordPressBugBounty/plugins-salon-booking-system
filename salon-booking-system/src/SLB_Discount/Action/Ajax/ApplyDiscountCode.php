@@ -24,6 +24,8 @@ class SLB_Discount_Action_Ajax_ApplyDiscountCode extends SLN_Action_Ajax_Abstrac
 						'value' => SLB_Discount_Enum_DiscountType::DISCOUNT_CODE,
 					),
 				),
+				'orderby'  => 'modified',
+				'order'    => 'DESC',
 			),
             'post_status' => 'publish',
 		);

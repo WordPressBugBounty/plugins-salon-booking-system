@@ -27,16 +27,20 @@ jQuery(function ($) {
 		);
 		$result.hide().removeClass("sln-alert--success sln-alert--problem").text("");
 
-		$.post(
-			ajaxurl,
-			{
+		var label = gateway === "stripe" ? "Refresh Stripe Payment Status" : "Refresh PayPal Payment Status";
+
+		$.ajax({
+			url:      ajaxurl,
+			method:   "POST",
+			dataType: "json",
+			timeout:  30000,
+			data: {
 				action:     "salon",
 				method:     "refreshPaymentStatus",
 				booking_id: bookingId,
 				nonce:      nonce,
 			},
-			function (resp) {
-				var label    = gateway === "stripe" ? "Refresh Stripe Payment Status" : "Refresh PayPal Payment Status";
+			success: function (resp) {
 				var isSuccess = resp && resp.success;
 				var msg       = (resp && resp.message) ? resp.message : "An unexpected error occurred.";
 
@@ -53,15 +57,17 @@ jQuery(function ($) {
 				} else {
 					$btn.prop("disabled", false).text(label);
 				}
-			}
-		).fail(function () {
-			$result
-				.addClass("sln-alert sln-alert--problem")
-				.text("Request failed. Please try again.")
-				.show();
-			$btn.prop("disabled", false).text(
-				gateway === "stripe" ? "Refresh Stripe Payment Status" : "Refresh PayPal Payment Status"
-			);
+			},
+			error: function (xhr, status) {
+				var msg = status === "timeout"
+					? "Request timed out. Stripe may be slow — please try again."
+					: "Request failed. Please try again.";
+				$result
+					.addClass("sln-alert sln-alert--problem")
+					.text(msg)
+					.show();
+				$btn.prop("disabled", false).text(label);
+			},
 		});
 	});
 	

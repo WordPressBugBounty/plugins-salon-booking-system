@@ -17,6 +17,9 @@ class SLB_Discount_PostType_Discount extends SLN_PostType_Abstract
             add_action('admin_enqueue_scripts', array($this, 'load_scripts'));
             add_action('wp_ajax_sln_discount', array($this, 'ajax'));
             add_filter('post_row_actions', array($this, 'post_row_actions'), 10, 2);
+            add_filter('posts_join', array($this, 'search_join'), 10, 2);
+            add_filter('posts_search', array($this, 'search_where'), 10, 2);
+            add_filter('posts_groupby', array($this, 'search_groupby'), 10, 2);
         }
     }
 
@@ -85,13 +88,12 @@ class SLB_Discount_PostType_Discount extends SLN_PostType_Abstract
                 echo esc_html($amount);
                 break;
             case 'active':
-                $now = new SLN_DateTime(current_time('mysql'));
-                if ($now >= $obj->getStartsAt() && $now <= $obj->getEndsAt()) {
-                    $status = __('Yes', 'salon-booking-system');
-                }
-                else {
-                    $status = __('No', 'salon-booking-system');
-                }
+                $now   = new SLN_DateTime(current_time('mysql'));
+                $nowTs = $now->getTimestamp();
+                $startTs = $obj->getStartsAt() ? $obj->getStartsAt()->getTimestamp() : null;
+                $endTs   = $obj->getEndsAt()   ? $obj->getEndsAt()->getTimestamp()   : null;
+                $isActive = ($startTs === null || $nowTs >= $startTs) && ($endTs === null || $nowTs <= $endTs);
+                $status = $isActive ? __('Yes', 'salon-booking-system') : __('No', 'salon-booking-system');
                 echo esc_html($status);
                 break;
             case 'discount_usages':
@@ -183,5 +185,40 @@ class SLB_Discount_PostType_Discount extends SLN_PostType_Abstract
         if ($post_type == $this->getPostType()) {
             $this->getPlugin()->loadView('metabox/_discount_head');
         }
+    }
+
+    public function search_join($join, $query)
+    {
+        global $wpdb;
+
+        if ($query->is_main_query() && $query->get('post_type') === $this->getPostType() && $query->get('s')) {
+            $join .= ' LEFT JOIN ' . $wpdb->postmeta . ' AS slb_dc_meta ON ' . $wpdb->posts . '.ID = slb_dc_meta.post_id'
+                . ' AND slb_dc_meta.meta_key = \'_' . $this->getPostType() . '_code\'';
+        }
+
+        return $join;
+    }
+
+    public function search_where($search, $query)
+    {
+        global $wpdb;
+
+        if ($query->is_main_query() && $query->get('post_type') === $this->getPostType() && $query->get('s') && ! empty($search)) {
+            $term     = '%' . $wpdb->esc_like($query->get('s')) . '%';
+            $search  .= $wpdb->prepare(' OR slb_dc_meta.meta_value LIKE %s', $term);
+        }
+
+        return $search;
+    }
+
+    public function search_groupby($groupby, $query)
+    {
+        global $wpdb;
+
+        if ($query->is_main_query() && $query->get('post_type') === $this->getPostType() && $query->get('s')) {
+            $groupby = $wpdb->posts . '.ID';
+        }
+
+        return $groupby;
     }
 }

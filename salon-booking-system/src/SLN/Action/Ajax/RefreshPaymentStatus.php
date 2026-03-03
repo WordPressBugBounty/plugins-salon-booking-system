@@ -1,5 +1,4 @@
 <?php
-// phpcs:ignoreFile WordPress.Security.NonceVerification.Missing
 
 class SLN_Action_Ajax_RefreshPaymentStatus extends SLN_Action_Ajax_Abstract
 {
@@ -50,19 +49,36 @@ class SLN_Action_Ajax_RefreshPaymentStatus extends SLN_Action_Ajax_Abstract
             require_once $autoload;
         }
 
-        \Stripe\Stripe::setApiKey( $this->plugin->getSettings()->get( 'pay_stripe_apiKey' ) );
+        $apiKey = $this->plugin->getSettings()->get( 'pay_stripe_apiKey' );
+        if ( empty( $apiKey ) ) {
+            return array( 'success' => false, 'gateway' => 'stripe', 'message' => __( 'Stripe API key is not configured. Please check the plugin payment settings.', 'salon-booking-system' ) );
+        }
+        \Stripe\Stripe::setApiKey( $apiKey );
 
         try {
             $session = \Stripe\Checkout\Session::retrieve( $sessionId );
 
             if ( $session->payment_status === 'paid' ) {
-                $paymentIntent = \Stripe\PaymentIntent::retrieve( $session->payment_intent );
+                if ( empty( $session->payment_intent ) ) {
+                    return array(
+                        'success' => false,
+                        'gateway' => 'stripe',
+                        'message' => __( 'This Stripe session has no associated PaymentIntent (free or setup-mode session). No changes made.', 'salon-booking-system' ),
+                    );
+                }
+
+                $paymentIntent = \Stripe\PaymentIntent::retrieve( array(
+                    'id'     => $session->payment_intent,
+                    'expand' => array( 'latest_charge' ),
+                ) );
 
                 if ( $paymentIntent->status === 'succeeded' ) {
-                    $transactionId  = $paymentIntent->charges->data[0]->balance_transaction;
-                    $alreadyPaid    = in_array( $booking->getStatus(), array( SLN_Enum_BookingStatus::PAID, SLN_Enum_BookingStatus::CONFIRMED ), true );
+                    // Prefer latest_charge (current Stripe API); fall back to the
+                    // deprecated charges list for older API versions.
+                    $charge        = $paymentIntent->latest_charge ?? ( $paymentIntent->charges->data[0] ?? null );
+                    $transactionId = $charge ? $charge->balance_transaction : $paymentIntent->id;
 
-                    $booking->markPaid( $transactionId, 0 );
+                    $alreadyPaid = in_array( $booking->getStatus(), array( SLN_Enum_BookingStatus::PAID, SLN_Enum_BookingStatus::CONFIRMED ), true );
 
                     SLN_Plugin::addLog( sprintf(
                         'RefreshPaymentStatus: Stripe payment confirmed for booking #%d. Transaction: %s. Was already paid: %s',
@@ -77,9 +93,11 @@ class SLN_Action_Ajax_RefreshPaymentStatus extends SLN_Action_Ajax_Abstract
                             'status_updated' => false,
                             'gateway'        => 'stripe',
                             'transaction_id' => $transactionId,
-                            'message'        => __( 'Payment verified via Stripe. This booking was already marked as paid — no changes made.', 'salon-booking-system' ),
+                            'message'        => __( 'Payment verified via Stripe. This booking was already marked as paid.', 'salon-booking-system' ),
                         );
                     }
+
+                    $booking->markPaid( $transactionId, 0 );
 
                     return array(
                         'success'        => true,

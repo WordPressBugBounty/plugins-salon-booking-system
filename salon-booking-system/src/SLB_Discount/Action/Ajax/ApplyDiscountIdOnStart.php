@@ -12,7 +12,7 @@ class SLB_Discount_Action_Ajax_ApplyDiscountIdOnStart extends SLN_Action_Ajax_Ab
         $discount = $this->plugin->getRepository(SLB_Discount_Plugin::POST_TYPE_DISCOUNT)->create($discount);
         $bb = $this->plugin->getBookingBuilder();
         if(!empty($discount->getId())){
-            $errors = $discount->validateDiscount((new DateTime())->getTimestamp());
+            $errors = $discount->validateDiscount((new SLN_DateTime())->getTimestamp());
             if(empty($errors)){
                 $bb->set('discount', array('id' => $discount->getId(), 'amount' => 0));
                 $bb->save();

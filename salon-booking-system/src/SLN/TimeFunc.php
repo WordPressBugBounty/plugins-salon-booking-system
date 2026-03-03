@@ -199,7 +199,23 @@ class SLN_TimeFunc
                 return sprintf('%04d-%02d-%02d', $date[2], $date[1], $date[0]);
             else
                 throw new Exception('bad number of commas, date ' . $initial . ' format: ' . $f);
-        }else {
+        } else {
+            // Last-resort: if the date looks like "d M Y" (localized month name slipped
+            // through because the configured format doesn't match _DEFAULT), try to
+            // resolve the month via guessMonthNum before handing off to SLN_DateTime.
+            // This handles cases where the datepicker sends a localized month name
+            // (e.g. Dutch "Mrt" for March) but the server format setting differs.
+            $parts = explode(' ', $date);
+            if (count($parts) === 3) {
+                try {
+                    $k   = self::guessMonthNum($parts[1]);
+                    $day = sprintf('%02d', intval($parts[0]));
+                    $mon = $k < 10 ? '0' . $k : $k;
+                    return $parts[2] . '-' . $mon . '-' . $day;
+                } catch (\Exception $e) {
+                    // fall through to SLN_DateTime as final fallback
+                }
+            }
             return (new SLN_DateTime($date))->format('Y-m-d');
         }
         throw new Exception('wrong date ' . $initial . ' format: ' . $f);
@@ -219,17 +235,27 @@ class SLN_TimeFunc
             }
         }
         foreach ($months as $k => $v) {
+            if (strtolower($monthName) == strtolower($v)) {
+                return $k;
+            }
+        }
+        foreach ($months as $k => $v) {
             if(SLN_Func::removeAccents($monthName) == SLN_Func::removeAccents($v)) {
                 return $k;
             }
         }
         foreach ($months as $k => $v) {
-            if (substr($monthName,0,3) == substr($v,0,3)) {
+            if (strtolower(SLN_Func::removeAccents($monthName)) == strtolower(SLN_Func::removeAccents($v))) {
                 return $k;
             }
         }
         foreach ($months as $k => $v) {
-            if (substr(SLN_Func::removeAccents($monthName),0,3) == substr(SLN_Func::removeAccents($v),0,3)) {
+            if (strtolower(substr($monthName,0,3)) == strtolower(substr($v,0,3))) {
+                return $k;
+            }
+        }
+        foreach ($months as $k => $v) {
+            if (strtolower(substr(SLN_Func::removeAccents($monthName),0,3)) == strtolower(substr(SLN_Func::removeAccents($v),0,3))) {
                 return $k;
             }
         }

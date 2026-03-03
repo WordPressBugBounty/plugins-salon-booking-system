@@ -10,6 +10,7 @@ $rules = $settings->getPaymentDepositAdvancedRules();
 >
     <h2 class="sln-box-title sln-box__paneltitle">
         <?php esc_html_e('Advanced rules', 'salon-booking-system'); ?>
+        <?php if (!defined('SLN_VERSION_PAY')): ?><span class="sln-pro-badge"><span class="sln-pro-badge__text"><?php esc_html_e('available on PRO edition', 'salon-booking-system') ?></span><span class="sln-pro-badge__crown" aria-hidden="true"></span></span><?php endif; ?>
         <span class="block" style="font-size: 16px;">
             <?php esc_html_e('Set one or more conditions to define the amount of the upfront payment', 'salon-booking-system'); ?>
         </span>

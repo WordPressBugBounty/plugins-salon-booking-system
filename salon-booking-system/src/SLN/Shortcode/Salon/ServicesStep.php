@@ -64,7 +64,7 @@ class SLN_Shortcode_Salon_ServicesStep extends SLN_Shortcode_Salon_Step
 		return !$service->isHideOnFrontend();
 	    });
 
-            $this->services = $repo->sortByExecAndTitleDESC($services);
+            $this->services = $repo->sortByPosOrder($services);
             $this->services = apply_filters('sln.shortcode.salon.ServicesStep.getServices', $this->services);
         }
 

@@ -66,7 +66,7 @@ class SLN_Admin_SettingTabs_PaymentsTab extends SLN_Admin_SettingTabs_AbstractTa
 	public function show() {
 		include $this->plugin->getViewFile('admin/utilities/settings-sidebar');
 		echo '<div class="sln-tab" id="sln-tab-' . $this->slug . '">';
-		include $this->plugin->getViewFile('settings/tab_' . $this->slug . (defined("SLN_VERSION_PAY") && SLN_VERSION_PAY ? '_pro' : ''));
+		include $this->plugin->getViewFile('settings/tab_' . $this->slug . '_pro');
 		do_action('sln.view.settings.' . $this->slug . '.additional_fields', $this);
 		echo '<div class="sln-tab__curtain"></div></div>
         <div class="clearfix"></div>';

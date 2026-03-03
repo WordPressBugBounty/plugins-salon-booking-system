@@ -1454,9 +1454,10 @@ function initSingleCalbarTooltip(calbar, bookingDate, dataScript, isFreeVersion)
     var bookingsList = document.createElement('ul');
     bookingsList.className = 'sln-today-tooltip__list';
     
-    // Show all bookings (including cancelled) - limited to 10
-    var displayBookings = bookings.slice(0, 10);
-    var hasMoreBookings = bookings.length > 10;
+    // FREE edition: preview the 4 most recent bookings only (PRO shows up to 10)
+    var previewLimit    = isFreeVersion ? 4 : 10;
+    var displayBookings = bookings.slice(0, previewLimit);
+    var hasMoreBookings = !isFreeVersion && bookings.length > 10;
     
     displayBookings.forEach(function(booking) {
       var listItem = document.createElement('li');

@@ -105,6 +105,40 @@ class SLN_Repository_ServiceRepository extends SLN_Repository_AbstractWrapperRep
     }
 
     /**
+     * Sort services by drag-and-drop position only (_sln_service_order), ignoring exec_order.
+     * Uses service ID as tiebreaker for stability.
+     *
+     * @param SLN_Wrapper_Service[] $services
+     *
+     * @return SLN_Wrapper_Service[]
+     */
+    public function sortByPosOrder($services)
+    {
+        usort($services, array($this, 'servicePosOrderCmp'));
+
+        return $services;
+    }
+
+    public static function servicePosOrderCmp($a, $b)
+    {
+        if ( ! $a instanceof SLN_Wrapper_Service) {
+            $a = SLN_Plugin::getInstance()->createService($a);
+        }
+        if ( ! $b instanceof SLN_Wrapper_Service) {
+            $b = SLN_Plugin::getInstance()->createService($b);
+        }
+
+        $aPosOrder = (int) $a->getPosOrder();
+        $bPosOrder = (int) $b->getPosOrder();
+
+        if ($aPosOrder !== $bPosOrder) {
+            return $aPosOrder > $bPosOrder ? 1 : -1;
+        }
+
+        return $a->getId() > $b->getId() ? 1 : -1;
+    }
+
+    /**
      * @param SLN_Wrapper_Service[] $services
      *
      * @return SLN_Wrapper_Service[]

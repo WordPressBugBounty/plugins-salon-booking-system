@@ -51,9 +51,9 @@ class SLB_Discount_Wrapper_Discount extends SLN_Wrapper_Abstract
     }
 
 	function isUnlimitedUsages() {
-		$limit = $this->getUsagesLimit();
+		$limit = intval($this->getUsagesLimit());
 
-		return empty($limit);
+		return $limit <= 0;
 	}
 
     function getTotalUsagesLimit()
@@ -64,9 +64,9 @@ class SLB_Discount_Wrapper_Discount extends SLN_Wrapper_Abstract
     }
 
 	function isUnlimitedTotalUsages() {
-		$limit = $this->getTotalUsagesLimit();
+		$limit = intval($this->getTotalUsagesLimit());
 
-		return empty($limit);
+		return $limit <= 0;
 	}
 
     function getTotalUsagesNumber()
@@ -646,10 +646,10 @@ class SLB_Discount_Wrapper_Discount extends SLN_Wrapper_Abstract
         $start = $this->getStartsAt() ? $this->getStartsAt()->setTime(0,0)->getTimestamp() : null;
         $end =   $this->getEndsAt() ? $this->getEndsAt()->setTime(23,59,59)->getTimestamp() : null;
 
-        if (!($dateT >= $start && $dateT <= $end)) {
+        if (($start !== null && $dateT < $start) || ($end !== null && $dateT > $end)) {
             $ret[] = __('Coupon expired', 'salon-booking-system');
         }
-        elseif(!$this->isUnlimitedTotalUsages() && $this->getTotalUsagesNumber() >= $this->getTotalUsagesLimit()) {
+        elseif(!$this->isUnlimitedTotalUsages() && $this->getTotalUsagesNumber() >= intval($this->getTotalUsagesLimit())) {
             $ret[] = __('This coupon was applied maximum number of times', 'salon-booking-system');
         }
 
@@ -663,7 +663,7 @@ class SLB_Discount_Wrapper_Discount extends SLN_Wrapper_Abstract
      */
     public function validateDiscountForCustomer($customer) {
         $ret = array();
-        if (!$this->isUnlimitedUsages() && $this->getUsagesNumber($customer->getId()) >= $this->getUsagesLimit()) {
+        if (!$this->isUnlimitedUsages() && $this->getUsagesNumber($customer->getId()) >= intval($this->getUsagesLimit())) {
             $ret[] = __('You applied this coupon maximum number of times', 'salon-booking-system');
         }
         return $ret;

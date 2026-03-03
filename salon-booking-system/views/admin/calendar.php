@@ -278,6 +278,23 @@ if (defined('WP_DEBUG') && WP_DEBUG && defined('SLN_VERSION_PAY') && SLN_VERSION
     }
 }
 ?>
+<?php if (!defined('SLN_VERSION_PAY')): ?>
+<div class="sln-mobile-pro-screen" role="dialog" aria-label="<?php esc_attr_e('Switch to PRO for mobile access', 'salon-booking-system') ?>">
+    <img class="sln-mobile-pro-screen__bg" src="<?php echo esc_url(SLN_PLUGIN_URL . '/img/mobile-pro-screen-bg.png') ?>" alt="" aria-hidden="true">
+    <div class="sln-mobile-pro-screen__cta">
+        <div class="sln-mobile-pro-screen__cta-text">
+            <img class="sln-mobile-pro-screen__cta-icon" src="<?php echo esc_url(SLN_PLUGIN_URL . '/img/mobile-pro-screen-flash.png') ?>" alt="" aria-hidden="true">
+            <div class="sln-mobile-pro-screen__cta-lines">
+                <strong><?php esc_html_e('Work faster', 'salon-booking-system') ?></strong>
+                <span><?php esc_html_e('Try our mobile web app', 'salon-booking-system') ?></span>
+            </div>
+        </div>
+        <a href="https://www.salonbookingsystem.com/homepage/plugin-pricing/?utm_source=mobile_screen&utm_medium=free-edition-back-end&utm_campaign=mobile_cta&utm_id=GOPRO" target="_blank" class="sln-mobile-pro-screen__cta-btn">
+            <?php esc_html_e('Switch to PRO', 'salon-booking-system') ?>
+        </a>
+    </div>
+</div>
+<?php endif; ?>
 <?php if (apply_filters('sln.show_branding', true)) : ?>
     <div class="sln-bootstrap sln-calendar-plugin-update-notice--wrapper">
         <?php if (!defined("SLN_VERSION_PAY")): ?>

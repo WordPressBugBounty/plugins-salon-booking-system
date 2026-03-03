@@ -144,9 +144,7 @@ class SLN_Action_Init
             wp_schedule_event(time(), 'daily', 'sln_check_ip1sms_migration_notice_expiry');
         }
         add_action('sln_check_ip1sms_migration_notice_expiry', array($migration, 'checkDismissedNoticeExpiry'));
-        if (defined('SLN_VERSION_PAY') && SLN_VERSION_PAY) {
-            new SLN_Admin_Extensions($p);
-        }
+        new SLN_Admin_Extensions($p);
 
         add_action('admin_init', array($this, 'hook_admin_init'));
         // Note: initAjax() is now called from __construct() to support wp_ajax_nopriv_ actions

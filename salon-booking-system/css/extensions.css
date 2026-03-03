@@ -1,268 +1,568 @@
-@font-face {
-    font-family: 'Avenir';
-    src: url('../fonts/avenir/Avenir-Medium.woff2') format('woff2'), url('../fonts/avenir/Avenir-Medium.woff') format('woff'), url('../fonts/avenir/Avenir-Medium.ttf') format('truetype');
-    font-weight: 500;
-    font-style: normal;
-    font-display: swap;
+/* ============================================================
+   Extensions Page — new design
+   Colors: bg #E7EDF2 | surface #F1F4F7 | text #000 |
+           secondary #696969 | cta #2171B1 | icon #234C66 |
+           green #10B981 | orange #E07A2D
+   ============================================================ */
+
+/* ---------- Page wrapper ---------- */
+.ext-page-wrap {
+    background-color: #e7edf2;
+    min-height: calc(100vh - 46px);
+    margin: -10px -20px 0 -20px !important;
+    padding: 32px 5% 48px 5% !important;
+    box-sizing: border-box;
 }
 
-@font-face {
-    font-family: 'Avenir Book';
-    src: url('../fonts/avenir/Avenir-Book.woff2') format('woff2'), url('../fonts/avenir/Avenir-Book.woff') format('woff'), url('../fonts/avenir/Avenir-Book.ttf') format('truetype');
-    font-weight: normal;
-    font-style: normal;
-    font-display: swap;
+@media (max-width: 782px) {
+    .ext-page-wrap { padding-left: 20px !important; padding-right: 20px !important; }
 }
 
-@font-face {
-    font-family: 'Avenir Heavy';
-    src: url('../fonts/avenir/Avenir-Heavy.woff2') format('woff2'), url('../fonts/avenir/Avenir-Heavy.woff') format('woff'), url('../fonts/avenir/Avenir-Heavy.ttf') format('truetype');
-    font-weight: 900;
-    font-style: normal;
-    font-display: swap;
+/* Reset WP default h1 inside wrap */
+.ext-page-wrap h1.ext-page-header__title {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    line-height: 1.2;
 }
 
-.extensions-button .loader {
-    display: inline-block;
-    animation: spin 1s linear infinite;
+/* ============================================================
+   Upgrade banner
+   ============================================================ */
+.ext-banner {
+    background: linear-gradient(167deg, #2171b1 0%, #1a5a8f 100%);
+    border-radius: 14px;
+    box-shadow: 0 4px 15px rgba(33, 113, 177, 0.2);
+    padding: 24px;
+    margin-bottom: 24px;
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-.extensions-section .extensions-inner .extensions-wrap .extensions-error {
-    /*min-height: 40px;*/
+.ext-banner__top {
     display: flex;
-    align-items: flex-end;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 8px;
 }
 
-.extensions-section .extensions-inner .extensions-wrap {
-    color: red;
-    padding: 3px 0 10px 5px;
-}
-
-.extensions-section .extensions-inner .extensions-action {
+.ext-banner__heading {
     display: flex;
     align-items: center;
+    gap: 8px;
 }
 
-.extensions-section {
-    width: 100%;
-    max-width: 1210px;
-    margin: 30px auto 75px;
-    padding: 0 78px;
-}
-
-@media (max-width: 767px) {
-    .extensions-section {
-        padding: 0 50px;
-    }
-}
-
-.extensions-section h2 {
-    font-family: 'Avenir', sans-serif;
-    font-style: normal;
-    font-weight: 800;
-    font-size: 30px;
-    line-height: 100%;
-    color: #000000;
-    margin: 0 0 9px;
-}
-
-.extensions-section h5 {
-    font-family: 'Avenir', sans-serif;
-    font-style: normal;
-    font-weight: 400;
-    font-size: 16px;
-    line-height: 112%;
-    color: #707070;
+.ext-banner__heading h2 {
     margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    line-height: 1.5;
+    border: 0;
+    padding: 0;
 }
 
-.extensions-wrapper {
+.ext-banner__crown {
     display: flex;
-    margin: 29px -78px 0;
-    padding: 0 60px;
-    position: relative;
+    align-items: center;
+    flex-shrink: 0;
 }
 
-@media (max-width: 767px) {
-    .extensions-wrapper {
-        margin: 29px -50px 0;
-        padding: 0 32px;
+.ext-banner__close {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+
+.ext-banner__close:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.ext-banner__desc {
+    margin: 0 0 20px 0;
+    font-size: 14px;
+    color: #e7edf2;
+    line-height: 1.5;
+    max-width: 600px;
+}
+
+.ext-banner__plans {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+@media (max-width: 640px) {
+    .ext-banner__plans {
+        grid-template-columns: 1fr;
     }
 }
 
-.extensions-wrapper .slick-track {
-    display: flex;
-}
-
-.extensions-wrapper .slick-prev,
-.extensions-wrapper .slick-next {
-    position: absolute;
-    top: 50%;
-    width: 23px;
-    height: 35px;
-    border: 0;
-    background: url("../img/icon.svg") no-repeat 50% 50%;
-    background-size: contain;
-    font-size: 0;
-    cursor: pointer;
-}
-
-.extensions-wrapper .slick-prev {
-    left: 0;
-    transform: translateY(-50%);
-}
-
-.extensions-wrapper .slick-next {
-    right: 0;
-    transform: translateY(-50%) scale(-1);
-}
-
-.extensions-item {
-    width: 25%;
-    padding: 10px 18px 18px;
-    display: flex;
-}
-
-.extensions-wrapper .extensions-item.slick-slide {
-    display: flex;
-    height: auto;
-}
-
-.extensions-item .extensions-inner {
-    background: #E5E5E5;
-    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
-    border-radius: 15px;
-    height: 100%;
+.ext-banner__plan {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    padding: 20px 20px 16px 20px;
     display: flex;
     flex-direction: column;
+    gap: 16px;
 }
 
-@media (max-width: 550px) {
-    .extensions-item .extensions-inner {
-        max-width: 236px;
-        margin: 0 auto;
-    }
+.ext-banner__plan-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    line-height: 1.5;
+    margin-bottom: 2px;
 }
 
-.extensions-item.disabled .extensions-inner {
-    box-shadow: none;
+.ext-banner__plan-desc {
+    font-size: 12px;
+    color: #e7edf2;
+    line-height: 1.4;
 }
 
-.extensions-item .extensions-thumb {
-    width: 100%;
-    height: 175px;
-    border-radius: 15px;
-    overflow: hidden;
+.ext-banner__plan-price {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #30548e;
-    margin-bottom: 19px;
+    align-items: baseline;
+    gap: 2px;
+    margin-top: 4px;
 }
 
-.extensions-item .extensions-thumb img {
-    display: block;
-    max-height: 100%;
-    max-width: 100%;
-    object-fit: cover;
-}
-
-.extensions-item .extensions-name {
-    font-family: 'Avenir', sans-serif;
-    font-size: 25px;
+.ext-banner__plan-amount {
+    font-size: 24px;
+    font-weight: 700;
+    color: #fff;
     line-height: 1;
-    font-weight: 500;
-    margin-bottom: 9px;
-    padding: 0 14px;
 }
 
-.extensions-item .extensions-descr {
-    padding: 0 14px;
-    font-family: 'Avenir', sans-serif;
-    font-style: normal;
-    font-weight: 400;
-    font-size: 14px;
-    line-height: 112%;
-    color: #707070;
+.ext-banner__plan-period {
+    font-size: 12px;
+    color: #e7edf2;
 }
 
-.extensions-item .extensions-bottom {
-    padding: 0 8px 8px 10px;
-    margin-top: auto;
+.ext-banner__plan-info {
+    flex: 1;
 }
 
-.extensions-item .extensions-button {
+.ext-banner__plan-top {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 108px;
-    height: 33px;
-    background: #D9D9D9;
-    border-radius: 40px;
-    font-family: 'Avenir', sans-serif;
-    font-style: normal;
-    font-weight: 500;
-    font-size: 15px;
-    line-height: 100%;
-    color: #FFFFFF;
-    margin-right: 10px;
-    padding: 5px 10px;
-    text-align: center;
-    text-decoration: none;
-    transition: all 0.3s ease;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
 }
 
-.extensions-item .extensions-button.loading {
+.ext-banner__plan-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: #fff;
+    color: #2171b1;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    border-radius: 10px;
+    height: 40px;
+    transition: background 0.2s, color 0.2s;
+}
+
+.ext-banner__plan-btn:hover {
+    background: #f1f4f7;
+    color: #1a5a8f;
+}
+
+/* ============================================================
+   Page header
+   ============================================================ */
+.ext-page-header {
+    margin-bottom: 16px;
+}
+
+.ext-page-header__title {
+    font-size: 22px !important;
+    font-weight: 700 !important;
+    color: #000 !important;
+    margin: 0 0 6px 0 !important;
+    padding: 0 !important;
+    line-height: 1.5 !important;
+}
+
+.ext-page-header__meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.ext-page-header__subtitle {
+    margin: 0;
+    font-size: 14px;
+    color: #696969;
+    line-height: 1.5;
+}
+
+.ext-page-header__count {
+    display: inline-block;
+    background: #f1f4f7;
+    color: #696969;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 999px;
+    line-height: 1.5;
+    white-space: nowrap;
+}
+
+/* ============================================================
+   Filter bar
+   ============================================================ */
+.ext-filter-bar {
+    background: #f1f4f7;
+    border-radius: 14px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+/* Search */
+.ext-search {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.ext-search__icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #696969;
+    display: flex;
+    align-items: center;
     pointer-events: none;
 }
 
-.extensions-item .extensions-button.blue {
-    background: #3574CB;
+.ext-search__input {
+    width: 320px;
+    height: 45px;
+    background: #fff;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    padding: 0 36px 0 44px !important;
+    font-size: 14px;
+    color: #000;
+    box-shadow: none;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
 }
 
-.extensions-item .extensions-button.blue:hover {
-    background: #26589B;
+.ext-search__input::placeholder {
+    color: rgba(0, 0, 0, 0.4);
 }
 
-.extensions-item .extensions-button.green {
-    background: #24C239;
+.ext-search__input:focus {
+    border-color: #2171b1;
+    box-shadow: 0 0 0 3px rgba(33, 113, 177, 0.1);
 }
 
-.extensions-item .extensions-button.green:hover {
-    background: #1f8f2b;
+@media (max-width: 900px) {
+    .ext-search__input {
+        width: 220px;
+    }
 }
-.extensions-item.disabled .extensions-button,
-.extensions-item.disabled .extensions-button:hover {
-    background: #D9D9D9;
+
+/* Filter tabs */
+.ext-filter-tabs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.ext-filter-tab {
+    height: 37px;
+    padding: 0 16px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    background: #f1f4f7;
+    color: #696969;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.ext-filter-tab:hover {
+    background: #e0e7ef;
+    color: #333;
+}
+
+.ext-filter-tab--active {
+    background: #2171b1 !important;
+    color: #fff !important;
+    border-color: transparent !important;
+}
+
+/* ============================================================
+   Extensions grid
+   ============================================================ */
+.ext-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+@media (max-width: 1100px) {
+    .ext-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 680px) {
+    .ext-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Hidden cards (filtered out) */
+.ext-card--hidden {
+    display: none !important;
+}
+
+/* ============================================================
+   Extension card
+   ============================================================ */
+.ext-card {
+    background: #f1f4f7;
+    border-radius: 14px;
+    border: 1px solid transparent;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    box-sizing: border-box;
+}
+
+.ext-card:hover {
+    border-color: rgba(33, 113, 177, 0.25);
+    box-shadow: 0 4px 12px rgba(33, 113, 177, 0.08);
+}
+
+/* Card top row: icon + badge */
+.ext-card__top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.ext-card__icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #234c66;
+}
+
+.ext-card__icon svg {
+    width: 24px;
+    height: 24px;
+    display: block;
+}
+
+/* Category badge */
+.ext-card__badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: #e7edf2;
+    color: #234c66;
+    line-height: 1.5;
+    flex-shrink: 0;
+}
+
+/* Card body */
+.ext-card__body {
+    flex: 1;
+    margin-bottom: 16px;
+}
+
+.ext-card__name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #000;
+    margin: 0 0 4px 0;
+    line-height: 1.5;
+    padding: 0;
+    border: 0;
+}
+
+.ext-card__version {
+    font-size: 12px;
+    color: #696969;
+    margin: 0 0 8px 0;
+    line-height: 1.5;
+}
+
+.ext-card__desc {
+    font-size: 13px;
+    color: #696969;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Card footer */
+.ext-card__footer {
+    margin-top: auto;
+}
+
+.ext-error {
+    font-size: 12px;
+    color: #c0392b;
+    min-height: 0;
+    margin-bottom: 4px;
+}
+
+.ext-error:empty {
+    display: none;
+}
+
+/* Availability label */
+.ext-card__availability {
+    font-size: 12px;
+    font-weight: 500;
+    margin: 0 0 12px 0;
+    line-height: 1.5;
+}
+
+.ext-card__availability--included {
+    color: #10b981;
+}
+
+.ext-card__availability--not-included {
+    color: #e07a2d;
+}
+
+/* ============================================================
+   Buttons
+   ============================================================ */
+
+/* Shared */
+.ext-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    height: 45px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border-color 0.2s, opacity 0.2s;
+    box-sizing: border-box;
+    line-height: 1;
+}
+
+/* Filled navy — Purchase */
+.ext-btn--filled {
+    background: #2171b1;
+    color: #fff;
+    border: 1.5px solid #2171b1;
+}
+
+.ext-btn--filled:hover {
+    background: #1a5a8f;
+    border-color: #1a5a8f;
+    color: #fff;
+}
+
+/* Outlined — Install / Activate / Update */
+.ext-btn--outline {
+    background: transparent;
+    color: #2171b1;
+    border: 1.5px solid #2171b1;
+}
+
+.ext-btn--outline:hover {
+    background: rgba(33, 113, 177, 0.06);
+    color: #1a5a8f;
+    border-color: #1a5a8f;
+}
+
+/* Active status (not a button) */
+.ext-btn--active {
+    color: #10b981;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 45px;
+    width: 100%;
     cursor: default;
 }
 
-.extensions-item .extensions-version {
-    font-family: 'Avenir', sans-serif;
-    font-style: normal;
-    font-weight: 400;
-    font-size: 12px;
-    line-height: 100%;
-    color: #000000;
-    margin-right: 10px;
+.ext-btn--active svg {
+    flex-shrink: 0;
 }
 
-.extensions-item .extensions-price {
-    font-family: 'Avenir', sans-serif;
-    font-style: normal;
-    font-weight: 800;
-    font-size: 15px;
-    line-height: 100%;
-    color: #000000;
-    margin-left: auto;
+/* Loading state */
+.ext-btn.loading {
+    opacity: 0.7;
+    pointer-events: none;
 }
 
-.extensions-item .extensions-price img {
-    width: 33px;
-    height: auto;
+/* Loader icon spin */
+.ext-loader-icon {
+    width: 16px;
+    height: 16px;
+    animation: ext-spin 0.8s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes ext-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+/* ============================================================
+   Empty state
+   ============================================================ */
+.ext-empty {
+    color: #696969;
+    font-size: 14px;
+    padding: 24px 0;
+}
+
+/* ============================================================
+   Keep legacy .extensions-button.blue selector working for
+   the AJAX handler in the old js (now rewritten, but just in case)
+   ============================================================ */
+.extensions-button.blue {
+    /* handled via .ext-btn--outline */
 }
