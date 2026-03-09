@@ -5,7 +5,11 @@
  * @var SLN_Wrapper_Booking       $booking
  */
 if(!isset($data['to'])){    // algolplus fix
-	$data['to'] = !empty($forAdmin) ? ($sendToAdmin ? $plugin->getSettings()->getSalonEmail() : '') : $booking->getEmail();
+    if (!empty($forAdmin)) {
+        $data['to'] = $sendToAdmin ? implode(',', $plugin->getSettings()->getAdminNotificationEmails()) : '';
+    } else {
+        $data['to'] = $booking->getEmail();
+    }
 }
 if ($plugin->getSettings()->get('attendant_email')
 	&& ($attendants = $booking->getAttendants(true))

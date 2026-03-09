@@ -1,1169 +1,481 @@
-/*====================================== reset.css is here ========================================*/
-#sln-salon-booking-calendar-shortcode * {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-#sln-salon-booking-calendar-shortcode table {
-  border-collapse: collapse;
-  border-spacing: 0;
-}
-#sln-salon-booking-calendar-shortcode fieldset,
-#sln-salon-booking-calendar-shortcode img {
-  border: 0;
-  display: block;
-  max-width: 100%;
-  height: auto;
-}
-#sln-salon-booking-calendar-shortcode address,
-#sln-salon-booking-calendar-shortcode caption,
-#sln-salon-booking-calendar-shortcode cite,
-#sln-salon-booking-calendar-shortcode code,
-#sln-salon-booking-calendar-shortcode dfn,
-#sln-salon-booking-calendar-shortcode em,
-#sln-salon-booking-calendar-shortcode strong,
-#sln-salon-booking-calendar-shortcode th,
-#sln-salon-booking-calendar-shortcode var {
-  font-style: normal;
-  font-weight: normal;
-}
-#sln-salon-booking-calendar-shortcodeol,
-#sln-salon-booking-calendar-shortcode ul {
-  list-style: none;
-}
-#sln-salon-booking-calendar-shortcode caption,
-#sln-salon-booking-calendar-shortcode th {
-  text-align: left;
-}
-#sln-salon-booking-calendar-shortcode h1,
-#sln-salon-booking-calendar-shortcode h2,
-#sln-salon-booking-calendar-shortcode h3,
-#sln-salon-booking-calendar-shortcode h4,
-#sln-salon-booking-calendar-shortcode h5,
-#sln-salon-booking-calendar-shortcode h6 {
-  font-size: 100%;
-  font-weight: bold;
-}
-#sln-salon-booking-calendar-shortcode q:before,
-#sln-salon-booking-calendar-shortcode q:after {
-  content: "";
-}
-#sln-salon-booking-calendar-shortcode abbr,
-#sln-salon-booking-calendar-shortcode acronym {
-  border: 0;
-}
-#sln-salon-booking-calendar-shortcode .clear {
-  clear: both;
-  font-size: 1px;
-  line-height: 1px;
-  display: block;
-  height: 0;
-}
-#sln-salon-booking-calendar-shortcode .clearfix:after {
-  display: block;
-  content: "";
-  clear: both;
-}
-#sln-salon-booking-calendar-shortcode .last {
-  margin: 0 !important;
-}
-#sln-salon-booking-calendar-shortcode .pad_last {
-  padding: 0 !important;
-}
-#sln-salon-booking-calendar-shortcode .no_bg {
-  background: none !important;
-}
-#sln-salon-booking-calendar-shortcode .no_bor {
-  border: 0 none !important;
-}
-#sln-salon-booking-calendar-shortcode header,
-#sln-salon-booking-calendar-shortcode nav,
-#sln-salon-booking-calendar-shortcode section,
-#sln-salon-booking-calendar-shortcode article,
-#sln-salon-booking-calendar-shortcode aside,
-#sln-salon-booking-calendar-shortcode footer,
-#sln-salon-booking-calendar-shortcode hgroup,
-#sln-salon-booking-calendar-shortcode figure {
-  display: block;
-  padding: 0;
-  margin: 0;
-}
-#sln-salon-booking-calendar-shortcode p {
-  font-size: 20px;
-  line-height: 22px;
-}
-/**************************************************************************************/
-#sln-salon-booking-calendar-shortcode a {
-  color: #000;
-  text-decoration: none;
-  outline: 0 none !important;
-}
-#sln-salon-booking-calendar-shortcode a:hover,
-#sln-salon-booking-calendar-shortcode a:focus {
-  text-decoration: none;
-  outline: 0 none !important;
-  transition: all 0.3s ease-in-out;
-  -moz-transition: all 0.3s ease-in-out;
-  -web-transition: all 0.3s ease-in-out;
-  -ms-transition: all 0.3s ease-in-out;
-  color: inherit;
-}
-#sln-salon-booking-calendar-shortcode h1 {
-  font-size: 48px;
-  line-height: 50px;
-}
-#sln-salon-booking-calendar-shortcode h2 {
-  font-size: 45px;
-  line-height: 65px;
-}
-#sln-salon-booking-calendar-shortcode h3 {
-  font-size: 42px;
-  line-height: 50px;
-}
-#sln-salon-booking-calendar-shortcode h4 {
-  font-size: 38px;
-  line-height: 60px;
+/* ============================================================
+   Booking Calendar by Assistant
+   Figma: bg=#E7EDF2  surface=#F1F4F7  accent=#2171B1  text=#000  muted=#696969
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+/* ── Design tokens ─────────────────────────────────────────── */
+#sln-salon-booking-calendar-shortcode {
+    --sbc-bg:        #E7EDF2;
+    --sbc-surface:   #F1F4F7;
+    --sbc-btn:       #E2E8ED; /* slightly darker than surface for nav buttons */
+    --sbc-card:      #FFFFFF;
+    --sbc-accent:    #2171B1;
+    --sbc-border:    #E7EDF2;
+    --sbc-text:      #000000;
+    --sbc-muted:     #696969;
+    --sbc-icon:      #234C66;
+    --sbc-white:     #FFFFFF;
+
+    --sbc-radius-col:   16px;
+    --sbc-radius-card:  14px;
+    --sbc-radius-btn:   10px;
+    --sbc-radius-badge: 4px;
+    --sbc-radius-pill:  9999px;
+
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    box-sizing: border-box;
+
+    /* Figma: bg-[#e7edf2] pt-[32px] px-[53.5px] — adapted for responsive */
+    background: var(--sbc-bg);
+    padding: 32px;
 }
 
-#sln-salon-booking-calendar-shortcode h5 {
-  font-size: 19px;
-  line-height: 22px;
-  color: #6b6b6b;
-  font-family: "AvenirLT-Roman", Verdana;
-  font-weight: 400;
-}
-#sln-salon-booking-calendar-shortcode h6 {
-  margin-bottom: 6px;
-  font-size: 14px;
-  line-height: 20px;
-  color: #444;
-  font-family: "Avenir-Black", Verdana;
-  font-style: normal;
-}
-/*---------------------------------------------------*/
-
-/* html{height:100%;}
-.flt_lt {float:left; display:inline;}
-.flt_rt {float:right; display:inline;}
-.btn{background:#fff;width: 349px;height: 46px;margin:0 auto;display: block;border-radius: 40px;text-align: center;}
-*/
-
-/*--fonts here--*/
-
-@font-face {
-  font-family: "Avenir-Black";
-  src: url("../fonts/Avenir-Black/Avenir-Black.eot?#iefix")
-      format("embedded-opentype"),
-    url("../fonts/Avenir-Black/Avenir-Black.woff") format("woff"),
-    url("../fonts/Avenir-Black/Avenir-Black.ttf") format("truetype"),
-    url("../fonts/Avenir-Black/Avenir-Black.svg#Avenir-Black") format("svg");
-  font-weight: normal;
-  font-style: normal;
+/* box-sizing: always border-box inside the component */
+#sln-salon-booking-calendar-shortcode *,
+#sln-salon-booking-calendar-shortcode *::before,
+#sln-salon-booking-calendar-shortcode *::after {
+    box-sizing: border-box;
 }
 
-@font-face {
-  font-family: "AvenirLT-Medium";
-  src: url("../fonts/AvenirLT-Medium/AvenirLT-Medium.eot?#iefix")
-      format("embedded-opentype"),
-    url("../fonts/AvenirLT-Medium/AvenirLT-Medium.woff") format("woff"),
-    url("../fonts/AvenirLT-Medium/AvenirLT-Medium.ttf") format("truetype"),
-    url("../fonts/AvenirLT-Medium/AvenirLT-Medium.svg#AvenirLT-Medium")
-      format("svg");
-  font-weight: normal;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: "AvenirLT-Roman";
-  src: url("../fonts/AvenirLT-Roman/AvenirLT-Roman.eot?#iefix")
-      format("embedded-opentype"),
-    url("../fonts/AvenirLT-Roman/AvenirLT-Roman.woff") format("woff"),
-    url("../fonts/AvenirLT-Roman/AvenirLT-Roman.ttf") format("truetype"),
-    url("../fonts/AvenirLT-Roman/AvenirLT-Roman.svg#AvenirLT-Roman")
-      format("svg");
-  font-weight: normal;
-  font-style: normal;
-}
-
-/*-----------LayOut Start here-----------------------*/
-#sln-salon-booking-calendar-shortcode .wrapper {
-  margin: 0 auto;
-  width: 100%;
-  display: block;
-  position: relative;
-  top: 0;
-  left: 0;
-  -webkit-transition: 0.25s ease-in-out;
-  -moz-transition: 0.25s ease-in-out;
-  -o-transition: 0.25s ease-in-out;
-  transition: 0.25s ease-in-out; /* max-width:1203px; */
-}
-/*.container{width:100%;margin:0 auto;padding: 0;}*/
-
-/*-----------------home page start---------------------*/
-/*--booking-main start--*/
-/*.booking-main{padding:54px 25px 0;}*/
-.booking-in {
-}
-#sln-salon-booking-calendar-shortcode .booking-calender {
-  background: #f7f7f7;
-  padding: 10px 15px 40px 18px;
-  border: 1px solid #cdcdcd;
-  border-radius: 5px;
-}
-.booking-calendermain {
-}
-#sln-salon-booking-calendar-shortcode .calender-head {
-  padding: 0;
-}
-.calender-head-in {
-}
-#sln-salon-booking-calendar-shortcode .calender-head-in > ul {
-  display: flex;
-  width: 100%;
-}
-#sln-salon-booking-calendar-shortcode .calender-head-in > ul > li {
-  /*
-  width: 16.7%;
-  display: table-cell;
-  vertical-align: middle;
-  */
-  width: unset;
-  flex-grow: 1;
-  flex-basis: 0;
-}
-#sln-salon-booking-calendar-shortcode .calender-head-in > ul > li.first-column {
-  min-width: 18%;
-}
-#sln-salon-booking-calendar-shortcode .katrine {
-  padding: 15px 20px 12px 20px;
-}
-.katrine figure {
-}
-#sln-salon-booking-calendar-shortcode .katrine figure img {
-  margin: 0 auto 10px;
-  border-radius: 100%;
-}
-.katrine figure img.img1 {
-  border: 2px solid #88cb9c;
-}
-.katrine figure img.img2 {
-  border: 2px solid #ef971d;
-}
-.katrine figure img.img3 {
-  border: 2px solid #5689cb;
-}
-.katrine figure img.img4 {
-  border: 2px solid #8f1b90;
-}
-.katrine figure img.img5 {
-  border: 2px solid #9d6309;
-}
-#sln-salon-booking-calendar-shortcode .katrine h5 {
-  text-align: center;
-  letter-spacing: 0;
-}
-
-.calender-content {
-}
-.calender-head-in-content {
-}
-#sln-salon-booking-calendar-shortcode .calender-head-in-content > ul {
-  display: block;
-  width: 100%;
-}
-#sln-salon-booking-calendar-shortcode .calender-head-in-content > ul > li {
-  width: 16.7%;
-  position: relative; /*border-bottom: 1px dashed #fff;*/
-}
-@media only screen and (min-width: 1024px) {
-  #sln-salon-booking-calendar-shortcode .calender-head-in-content > ul {
-    display: flex;
-  }
-  #sln-salon-booking-calendar-shortcode .calender-head-in-content > ul > li {
-    width: unset;
-    flex-grow: 1;
-    flex-basis: 0;
-    padding: 12px 0;
-    border-right: 2px solid #fff;
-  }
-  #sln-salon-booking-calendar-shortcode .calender-head-in-content > ul > li,
-  #sln-salon-booking-calendar-shortcode .calender-head-in > ul > li {
-    max-width: 15em;
-  }
-}
-#sln-salon-booking-calendar-shortcode
-  .calender-head-in-content
-  > ul
-  > li.first-column {
-  min-width: 18%;
-  padding: 18px 0;
-}
-#sln-salon-booking-calendar-shortcode
-  .calender-head-in-content
-  > ul
-  > li:after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  width: 290px;
-  height: 1px;
-  border-bottom: 1px dashed #fff;
-  left: 0;
-  margin: 0 auto;
-  opacity: 0.75;
-}
-#sln-salon-booking-calendar-shortcode
-  .calender-head-in-content
-  > ul
-  > li.no-border:after {
-  display: none;
-}
-#sln-salon-booking-calendar-shortcode
-  .calender-head-in-content
-  > ul
-  > li.black-line:after {
-  border-bottom: 1px dashed #ccc;
-}
-#sln-salon-booking-calendar-shortcode
-  .calender-head-in-content
-  > ul
-  > li.black-line.no-border:after {
-  display: none;
-}
-
-/*.calender-head-in-content > ul > li.black-line{border-bottom:1px dashed #8E8E8E;}*/
-#sln-salon-booking-calendar-shortcode .katrine1 {
-  align-items: center;
-  padding: 10px 10px 0px 10px;
-}
-
-#sln-salon-booking-calendar-shortcode .katrine-desktop {
-  padding: 0 0 0 7%;
-}
-#sln-salon-booking-calendar-shortcode .katrine-desktop1 {
-  padding: 0 0 0 20px;
-}
-.katrine-desktop h6 {
-  letter-spacing: 0.2px;
-}
-#sln-salon-booking-calendar-shortcode .katrine-desktop em {
-  display: block;
-  color: #6b6b6b;
-  font-size: 15px;
-  line-height: 17px;
-  font-family: "AvenirLT-Medium", Verdana;
-  letter-spacing: 0.2px;
-}
-
-#sln-salon-booking-calendar-shortcode .katrine-mobile h6 {
-  letter-spacing: 0.2px;
-}
-#sln-salon-booking-calendar-shortcode .katrine-mobile em {
-  display: block;
-  color: #6b6b6b;
-  font-size: 15px;
-  line-height: 17px;
-  font-family: "AvenirLT-Medium", Verdana;
-  letter-spacing: 0.2px;
-}
-.katrine-mobile1 {
-}
-.katrine1 > ul {
-}
-#sln-salon-booking-calendar-shortcode .katrine1 > ul > li {
-  display: block;
-  padding: 0 0 8px 0;
-}
-@media only screen and (min-width: 1024px) {
-}
-#sln-salon-booking-calendar-shortcode .katrine1 > ul > li {
-  display: block;
-  padding: 3px 10px 7px;
-}
-@media (hover: hover), (-ms-high-contrast: none) {
-}
-#sln-salon-booking-calendar-shortcode .katrine1 > ul > li:hover {
-  background: rgba(255, 255, 255, 0.5);
-}
-.katrine1 > ul > li p {
-}
-#sln-salon-booking-calendar-shortcode .katrine1 > ul > li p small {
-  display: inline-block;
-  font-size: 14px;
-  line-height: 16px;
-  color: var(--palette_cl_text);
-  font-family: "AvenirLT-Medium", Verdana;
-}
-#sln-salon-booking-calendar-shortcode .katrine1 > ul > li p em {
-  display: inline-block;
-  font-size: 14px;
-  line-height: 16px;
-  color: var(--palette_cl_text);
-  font-family: "AvenirLT-Medium", Verdana;
-  letter-spacing: 0px;
-  font-weight: 600;
-}
-.bg-color1 {
-  background: #88cb9c;
-}
-.bg-color2 {
-  background: #ef971d;
-}
-.bg-color3 {
-  background: #5689cb;
-}
-.bg-color4 {
-  background: #8f1b90;
-}
-.bg-color5 {
-  background: #9d6309;
-}
-#sln-salon-booking-calendar-shortcode .katrine2 > ul > li {
-  position: relative;
-}
-#sln-salon-booking-calendar-shortcode .katrine2 > ul > li:hover .tool-tip {
-  display: block;
-}
-#sln-salon-booking-calendar-shortcode .tool-tip {
-  position: absolute;
-  top: 50%;
-  left: calc(100% - 2px);
-  width: 206px;
-  background-color: #fff;
-  border-left: 4px solid #fff;
-  border-radius: 2px 0 0 2px;
-  padding: 6px 12px;
-  display: none;
-  z-index: 99;
-  transform: translateY(-50%);
-  -webkit-transform: translateY(-50%);
-  -o-transform: translateY(-50%);
-  -moz-transform: translateY(-50%);
-  -ms-transform: translateY(-50%);
-}
-#sln-salon-booking-calendar-shortcode .tool-tip::after {
-  display: inline-block;
-  content: "";
-  position: absolute;
-  background: #fff;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 1;
-  opacity: 0.5;
-}
-.tool-tip5 {
-  right: 0;
-  left: inherit;
-}
-.tooltip-in {
-}
-#sln-salon-booking-calendar-shortcode .tooltip-in p {
-  color: #000000;
-  font-size: 14px;
-  line-height: 1.4;
-  font-family: "AvenirLT-Roman", Verdana;
-  font-weight: 600;
-  padding: 10px 0 0 0;
-  letter-spacing: 0.1px;
-  border-bottom: 1px solid #fff;
-  margin-bottom: 4px;
-}
-#sln-salon-booking-calendar-shortcode .tooltip-in a {
-  display: inline-block;
-  color: var(--palette_cl_text);
-  font-size: 12px;
-  line-height: 1.4;
-  font-family: "AvenirLT-Roman", Verdana;
-}
-#sln-salon-booking-calendar-shortcode .tool-tip-arrow {
-  position: relative;
-  z-index: 2;
-}
-
-#sln-salon-booking-calendar-shortcode .tool-tip-arrow .arrow {
-  position: absolute;
-  top: 30%;
-  left: -27px;
-}
-
-#sln-salon-booking-calendar-shortcode .tool-tip-arrow .arrow .outer {
-  width: 0;
-  height: 0;
-  border-right: 20px solid #bdbdbd;
-  border-top: 12px solid transparent;
-  border-bottom: 10px solid transparent;
-  position: absolute;
-  top: 0;
-  left: 0;
-  display: none;
-}
-
-#sln-salon-booking-calendar-shortcode .tool-tip-arrow .arrow .inner {
-  width: 0;
-  height: 0;
-  border-right: 12px solid #ffffff;
-  border-top: 10px solid transparent;
-  border-bottom: 10px solid transparent;
-  position: absolute;
-  top: 0;
-  left: 2px;
-}
-
-#sln-salon-booking-calendar-shortcode .tool-tip-arrow .message-body {
-  float: left;
-  width: 300px;
-  height: auto;
-  border: 1px solid #ccc;
-  background-color: #ffffff;
-  border: 1px solid #bdbdbd;
-  padding: 6px 8px;
-  -webkit-border-radius: 5px;
-  -moz-border-radius: 5px;
-  -o-border-radius: 5px;
-  border-radius: 5px;
-}
-
-#sln-salon-booking-calendar-shortcode .katrine.active .tool-tip {
-  display: block !important;
-}
-
-/*--for padding purpose--*/
-#sln-salon-booking-calendar-shortcode .katrine3 {
-  padding: 12px 3px 19px 10px;
-}
-#sln-salon-booking-calendar-shortcode .katrine4 {
-  padding: 5px 3px 5px 10px;
-}
-#sln-salon-booking-calendar-shortcode .katrine5 {
-  padding: 10px 3px 9px 10px;
-}
-#sln-salon-booking-calendar-shortcode .katrine6 {
-  padding: 6px 3px 3px 10px;
-}
-@media only screen and (min-width: 1024px) {
-}
-#sln-salon-booking-calendar-shortcode .katrine6 {
-  padding: 0;
-}
-/*--for padding purpose end--*/
-
-/*---new changes start---*/
-#sln-salon-booking-calendar-shortcode .calender-head-in li.desktop-none {
-  display: none;
-  margin: 0 auto;
-  width: 100%;
-}
-
-/*----11-11-2019 changes----*/
-#sln-salon-booking-calendar-shortcode .booking-calendermain-mobile {
-  display: none;
-}
-#sln-salon-booking-calendar-shortcode .katrine-mobile {
-  display: none;
-}
-#sln-salon-booking-calendar-shortcode .figure-left {
-  display: none;
-  width: 50%;
-}
-
-/*----11-11-2019 changes----*/
-
-/* inputs feilds */
-#sln-salon-booking-calendar-shortcode input,
-#sln-salon-booking-calendar-shortcode textarea,
-#sln-salon-booking-calendar-shortcode button,
-#sln-salon-booking-calendar-shortcode select {
-  -webkit-appearance: none; /*Safari/Chrome*/
-  -moz-appearance: none; /*Firefox*/
-  -ms-appearance: none; /*IE*/
-  -o-appearance: none; /*Opera*/
-  appearance: none;
-  -webkit-border-radius: 0;
-}
-
-#sln-salon-booking-calendar-shortcode .img {
-  border: solid 2px transparent;
-}
-@media only screen and (max-width: 1700px) {
-  /*---index page start---*/
-  #sln-salon-booking-calendar-shortcode
-    .calender-head-in-content
-    > ul
-    > li:after {
-    width: 100%;
-  }
-}
-
-@media only screen and (max-width: 1500px) {
-}
-@media only screen and (max-width: 1300px) {
-  /*---index page start---*/
-  #sln-salon-booking-calendar-shortcode .katrine1 > ul > li p em {
-    font-size: 14px;
-  }
-  #sln-salon-booking-calendar-shortcode .katrine1 > ul > li p small {
-    font-size: 12px;
-  }
-}
-@media only screen and (max-width: 1200px) {
-  /*---index page start---*/
-  #sln-salon-booking-calendar-shortcode .katrine-desktop {
+/* margin/padding reset — :where() has zero specificity so any class rule wins */
+:where(#sln-salon-booking-calendar-shortcode) *,
+:where(#sln-salon-booking-calendar-shortcode) *::before,
+:where(#sln-salon-booking-calendar-shortcode) *::after {
+    margin: 0;
     padding: 0;
-  }
-  #sln-salon-booking-calendar-shortcode .katrine1 > ul > li p em {
-    font-size: 14px;
-  }
-  #sln-salon-booking-calendar-shortcode .katrine1 > ul > li p small {
-    font-size: 12px;
-  }
-  #sln-salon-booking-calendar-shortcode .katrine h5 {
-    font-size: 15px;
-  }
-  #sln-salon-booking-calendar-shortcode .tool-tip {
-    width: 173px;
-  }
-  #sln-salon-booking-calendar-shortcode .tooltip-in p {
-  }
-  #sln-salon-booking-calendar-shortcode .tool-tip-arrow .arrow {
-    top: 30%;
-  }
 }
-@media only screen and (max-width: 1024px) {
-  /*---index page start---*/
-  #sln-salon-booking-calendar-shortcode .katrine h5 {
-    font-size: 14px;
-  }
-  #sln-salon-booking-calendar-shortcode .katrine-desktop h6 {
-    font-size: 14px;
-  }
-  #sln-salon-booking-calendar-shortcode .katrine-desktop em {
-    font-size: 14px;
-  }
-}
-@media only screen and (max-width: 991px) {
-  /*---index page start---*/
-  #sln-salon-booking-calendar-shortcode
-    .calender-head-in-content
-    > ul
-    > li.black-line {
-    display: none;
-  }
-  #sln-salon-booking-calendar-shortcode .katrine-mobile {
-    display: block;
-    background: #f7f7f7;
-    padding: 10px 25px;
-  }
-  #sln-salon-booking-calendar-shortcode .katrine1 > ul {
-    width: 60%;
-    float: left;
-    padding: 10px 25px;
-  }
-  #sln-salon-booking-calendar-shortcode .calender-head-in-content > ul > li {
-    width: 100%;
-    display: block;
-  }
-  #sln-salon-booking-calendar-shortcode
-    .calender-head-in-content
-    > ul
-    > li:after {
-    width: 64%;
-    right: 0;
-    left: auto;
-  }
-  #sln-salon-booking-calendar-shortcode
-    .calender-head-in-content
-    > ul
-    > li.no-border:after {
-    width: 50%;
-    display: block;
-  }
 
-  #sln-salon-booking-calendar-shortcode .katrine1 {
+/* ── Header row: heading + live sync badge ──────────────────── */
+.sbc-header-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+/* ── Page heading ────────────────────────────────────────────
+   ID-prefixed selector gives (1,1,0) specificity — beats any
+   theme h2 rule such as .entry-content h2 (0,1,1) without !important
+   ──────────────────────────────────────────────────────────── */
+#sln-salon-booking-calendar-shortcode .sbc-heading {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 30px;
+    font-weight: 500;
+    line-height: 36px;
+    letter-spacing: 0.4px;
+    color: var(--sbc-text);
+    border: none;
+    background: none;
     padding: 0;
-  }
-  #sln-salon-booking-calendar-shortcode .tool-tip {
-    /*
-    left: inherit;
-    right: 0;
-    top: 100%;
-    transform: translateY(0);
-    */
+    margin: 0;
+    text-transform: none;
+}
+
+/* ── Sync badge ─────────────────────────────────────────────── */
+.sbc-sync-badge {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    line-height: 1;
+    color: var(--sbc-muted);
+    font-family: inherit;
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding-bottom: 5px;
+    opacity: 0;
+    transition: opacity 0.4s;
+}
+.sbc-sync-badge.is-visible {
+    opacity: 0.6;
+}
+.sbc-sync-badge.is-updated {
+    animation: sbc-sync-flash 2.5s ease-out forwards;
+}
+@keyframes sbc-sync-flash {
+    0%   { color: var(--sbc-accent); opacity: 1; }
+    40%  { color: var(--sbc-accent); opacity: 1; }
+    100% { color: var(--sbc-muted);  opacity: 0.6; }
+}
+
+/* ── Outer calendar wrapper ─────────────────────────────────── */
+.sbc-calendar {
     width: 100%;
-    left: 50%;
-    right: 0;
-    top: 100%;
-    transform: translateY(0) translateX(-50%);
-    padding: 10px;
-    border-top: 4px solid #fff;
-    border-radius: 0;
-    border-left: none;
-  }
-  #sln-salon-booking-calendar-shortcode .tool-tip-arrow .arrow {
-    top: -20px;
-    left: 0;
-    right: 0;
-    margin: 0 auto;
-  }
-  #sln-salon-booking-calendar-shortcode .tool-tip-arrow .arrow .inner {
-    left: 0;
-    right: 0;
-    margin: 0 auto;
-    border-top: 0;
-    border-left: 10px solid transparent;
-    border-right: 10px solid transparent;
-    border-bottom: 8px solid #fff;
-  }
-  #sln-salon-booking-calendar-shortcode .calender-head {
-    display: none;
-  }
-  #sln-salon-booking-calendar-shortcode .booking-calender {
-    padding: 40px 15px 0px 15px;
-  }
-  #sln-salon-booking-calendar-shortcode .booking-main {
-    padding: 40px 25px;
-  }
-  #sln-salon-booking-calendar-shortcode .katrine {
+}
+
+/* ── Tab bar (mobile only) ──────────────────────────────────── */
+.sbc-tabs {
     display: flex;
-    display: -webkit-flex;
-  }
-
-  /*--new mobile view start--*/
-  #sln-salon-booking-calendar-shortcode .mobile-hide {
-    display: none !important;
-  }
-  #sln-salon-booking-calendar-shortcode .katrine {
-    display: table;
-    width: 100%;
-  }
-  #sln-salon-booking-calendar-shortcode .katrine-mobile {
-    width: 50%;
-    display: table-cell;
-    vertical-align: middle;
-  }
-  #sln-salon-booking-calendar-shortcode .katrine1 > ul {
-    display: table-cell;
-    width: 100%;
-    vertical-align: middle;
-  }
-  #sln-salon-booking-calendar-shortcode .calender-head-in-content {
-    background: #f7f7f7;
-  }
-  #sln-salon-booking-calendar-shortcode .booking-main {
-    display: none;
-  }
-  #sln-salon-booking-calendar-shortcode .booking-calendermain {
-    padding: 40px 25px;
-  }
-  #sln-salon-booking-calendar-shortcode .calender-head-in-content {
-    margin: 0 0 40px 0;
-  }
-  #sln-salon-booking-calendar-shortcode .figure-left {
-    width: 36%;
-    display: table-cell;
-  }
-  #sln-salon-booking-calendar-shortcode .katrine figure {
-    width: 64%;
-    margin: 0 auto;
-  }
-  #sln-salon-booking-calendar-shortcode .booking-calendermain-mobile {
-    display: block;
-  }
-  #sln-salon-booking-calendar-shortcode
-    .calender-head-in-content
-    > ul
-    > li:nth-child(1):after {
-    display: none;
-  }
-  /*--new mobile view end--*/
-
-  /*--new---*/
-  #sln-salon-booking-calendar-shortcode .calender-head-in li.desktop-none {
-    display: block;
-  }
-  #sln-salon-booking-calendar-shortcode .katrine.katrine-mobile {
-    display: block;
-    float: none;
-    width: 100%;
-  }
-  #sln-salon-booking-calendar-shortcode .katrine1 {
-    align-items: inherit;
-  }
-  /*    .katrine-mobile{position: relative;display: flex;display: -webkit-flex;align-items: center;-webkit-align-items: center;-o-align-items: center;-moz-align-items: center;-ms-align-items: center;}*/
-  .katrine-mobile-cnt {
-  }
-  #sln-salon-booking-calendar-shortcode .katrine-mobile:after {
-    content: "";
-    position: absolute;
-    bottom: 0;
-    width: 36%;
-    border-bottom: 1px dashed #8e8e8e;
-    left: 0;
-  }
-  #sln-salon-booking-calendar-shortcode .katrine-mobile.katrine-mobile1:after {
-    display: none;
-  }
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 12px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 8px;
 }
-@media only screen and (max-width: 767px) {
-  /*---index page start---*/
-}
-@media only screen and (max-width: 576px) {
-  /*---index page start---*/
-  #sln-salon-booking-calendar-shortcode .katrine-mobile h6 {
+.sbc-tabs::-webkit-scrollbar { display: none; }
+
+.sbc-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: var(--sbc-radius-pill);
+    background: var(--sbc-card);
+    color: var(--sbc-muted);
+    font-family: inherit;
     font-size: 14px;
-  }
-  #sln-salon-booking-calendar-shortcode .katrine-mobile em {
-    font-size: 14px;
-  }
-  #sln-salon-booking-calendar-shortcode .tool-tip {
-    width: 100%;
-  }
-  #sln-salon-booking-calendar-shortcode .tooltip-in p {
-    /*
-    font-family: Verdana;
-    padding: 0 0 10px 0;
-    */
-  }
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    flex-shrink: 0;
 }
-@media only screen and (max-width: 479px) {
-  /*---index page start---*/
-  #sln-salon-booking-calendar-shortcode .booking-main {
-    padding: 25px 8px 0;
-  }
-  #sln-salon-booking-calendar-shortcode .booking-calender {
-    padding: 10px 15px 40px 15px;
-  }
-
-  #sln-salon-booking-calendar-shortcode .tool-tip {
-  }
-  #sln-salon-booking-calendar-shortcode .tool-tip-arrow .arrow {
-    bottom: -12px;
-    left: 0;
-    right: 0;
-    margin: 0 auto;
-    top: auto;
-    position: absolute;
-  }
-  #sln-salon-booking-calendar-shortcode .tool-tip-arrow .arrow .outer {
-    left: 0;
-    right: 0;
-    margin: 0 auto;
-    border-left: 10px solid transparent;
-    border-bottom: none;
-    border-left: 8px solid transparent;
-    border-right: 8px solid transparent;
-    border-top: 8px solid #bdbdbd;
-  }
-  #sln-salon-booking-calendar-shortcode .tool-tip-arrow .arrow .inner {
-    left: 0;
-    right: 0;
-    margin: 0 auto;
-    border-left: 10px solid transparent;
-    border-bottom: none;
-    border-left: 8px solid transparent;
-    border-right: 8px solid transparent;
-    border-top: 8px solid #bdbdbd;
-  }
-  /*    .katrine1 > ul{width:60%;}*/
-  #sln-salon-booking-calendar-shortcode .katrine-mobile {
-    width: 40%;
-    padding: 10px 10px;
-  }
-  #sln-salon-booking-calendar-shortcode .tool-tip-mobile {
-  }
-  #sln-salon-booking-calendar-shortcode .katrine-mobile h6 {
-    font-size: 13px;
-  }
-  #sln-salon-booking-calendar-shortcode
-    .tool-tip-mobile
-    .tool-tip-arrow
-    .arrow {
-    top: -20px;
-  }
-  #sln-salon-booking-calendar-shortcode
-    .tool-tip-mobile
-    .tool-tip-arrow
-    .arrow
-    .outer {
-    left: 0;
-    right: 0;
-    margin: 0 auto;
-    border-top: 0;
-    border-left: 10px solid transparent;
-    border-right: 10px solid transparent;
-    border-bottom: 8px solid #fff;
-  }
-  #sln-salon-booking-calendar-shortcode
-    .tool-tip-mobile
-    .tool-tip-arrow
-    .arrow
-    .inner {
-    left: 0;
-    right: 0;
-    margin: 0 auto;
-    border-top: 0;
-    border-left: 10px solid transparent;
-    border-right: 10px solid transparent;
-    border-bottom: 8px solid #fff;
-  }
-  #sln-salon-booking-calendar-shortcode .booking-calendermain {
-    padding: 20px 15px;
-  }
-  #sln-salon-booking-calendar-shortcode .katrine-mobile:after {
-    width: 36%;
-  }
-  #sln-salon-booking-calendar-shortcode
-    .calender-head-in-content
-    > ul
-    > li:after {
-    width: 64%;
-  }
-  #sln-salon-booking-calendar-shortcode
-    .calender-head-in-content
-    > ul
-    > li.no-border:after {
-    width: 64%;
+#sln-salon-booking-calendar-shortcode .sbc-tab img,
+#sln-salon-booking-calendar-shortcode .sbc-tab-avatar {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+    overflow: hidden;
     display: block;
-  }
-  #sln-salon-booking-calendar-shortcode .katrine1 > ul {
-    padding: 10px 15px;
-  }
+    flex-shrink: 0;
+}
+.sbc-tab.is-active {
+    background: var(--sbc-accent);
+    color: var(--sbc-white);
 }
 
-:root {
-  --palette_cl_1: #fdb4b5ff;
-  --palette_cl_2: #fac6aaff;
-  --palette_cl_3: #fcd5a6ff;
-  --palette_cl_4: #fce8b8ff;
-  --palette_cl_5: #d3e5c5ff;
-  --palette_cl_6: #b0e0d1ff;
-  --palette_cl_7: #b9c8d5ff;
-  --palette_cl_8: #89aad8ff;
-  --palette_cl_text: #222222;
+/* ── Grid ───────────────────────────────────────────────────── */
+.sbc-grid {
+    display: block;
 }
-@media only screen and (min-width: 1024px) {
-  #sln-salon-booking-calendar-shortcode
-    li[class^="column-"]:not(.header-column):nth-child(8n),
-  #sln-salon-booking-calendar-shortcode li[class^="column-"]:nth-child(8n) img,
-  #sln-salon-booking-calendar-shortcode
-    li[class^="column-"]:nth-child(8n)
-    .tool-tip {
-    background-color: var(--palette_cl_7);
-  }
-  #sln-salon-booking-calendar-shortcode
-    li[class^="column-"]:not(.header-column):nth-child(8n + 1),
-  #sln-salon-booking-calendar-shortcode
-    li[class^="column-"]:nth-child(8n + 1)
-    img,
-  #sln-salon-booking-calendar-shortcode
-    li[class^="column-"]:nth-child(8n + 1)
-    .tool-tip {
-    background-color: var(--palette_cl_8);
-  }
-  #sln-salon-booking-calendar-shortcode
-    li[class^="column-"]:not(.header-column):nth-child(8n + 2),
-  #sln-salon-booking-calendar-shortcode
-    li[class^="column-"]:nth-child(8n + 2)
-    img,
-  #sln-salon-booking-calendar-shortcode
-    li[class^="column-"]:nth-child(8n + 2)
-    .tool-tip {
-    background-color: var(--palette_cl_1);
-  }
-  #sln-salon-booking-calendar-shortcode
-    li[class^="column-"]:not(.header-column):nth-child(8n + 3),
-  #sln-salon-booking-calendar-shortcode
-    li[class^="column-"]:nth-child(8n + 3)
-    img,
-  #sln-salon-booking-calendar-shortcode
-    li[class^="column-"]:nth-child(8n + 3)
-    .tool-tip {
-    background-color: var(--palette_cl_2);
-  }
-  #sln-salon-booking-calendar-shortcode
-    li[class^="column-"]:not(.header-column):nth-child(8n + 4),
-  #sln-salon-booking-calendar-shortcode
-    li[class^="column-"]:nth-child(8n + 4)
-    img,
-  #sln-salon-booking-calendar-shortcode
-    li[class^="column-"]:nth-child(8n + 4)
-    .tool-tip {
-    background-color: var(--palette_cl_3);
-  }
-  #sln-salon-booking-calendar-shortcode
-    li[class^="column-"]:not(.header-column):nth-child(8n + 5),
-  #sln-salon-booking-calendar-shortcode
-    li[class^="column-"]:nth-child(8n + 5)
-    img,
-  #sln-salon-booking-calendar-shortcode
-    li[class^="column-"]:nth-child(8n + 5)
-    .tool-tip {
-    background-color: var(--palette_cl_4);
-  }
-  #sln-salon-booking-calendar-shortcode
-    li[class^="column-"]:not(.header-column):nth-child(8n + 6),
-  #sln-salon-booking-calendar-shortcode
-    li[class^="column-"]:nth-child(8n + 6)
-    img,
-  #sln-salon-booking-calendar-shortcode
-    li[class^="column-"]:nth-child(8n + 6)
-    .tool-tip {
-    background-color: var(--palette_cl_5);
-  }
-  #sln-salon-booking-calendar-shortcode
-    li[class^="column-"]:not(.header-column):nth-child(8n + 7),
-  #sln-salon-booking-calendar-shortcode
-    li[class^="column-"]:nth-child(8n + 7)
-    img,
-  #sln-salon-booking-calendar-shortcode
-    li[class^="column-"]:nth-child(8n + 7)
-    .tool-tip {
-    background-color: var(--palette_cl_6);
-  }
+
+/* ── Assistant column card ──────────────────────────────────── */
+.sbc-col {
+    display: none;
+    flex-direction: column;
+    background: var(--sbc-surface);
+    border-radius: var(--sbc-radius-col);
+    /* Figma: pt-[24px] px-[24px] — add pb for balance */
+    padding: 24px;
+    width: 100%;
+    /* Fix 4: subtle shadow so column reads as a card on non-blue-gray page backgrounds */
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
 }
-@media only screen and (max-width: 1023px) {
-  #sln-salon-booking-calendar-shortcode .katrine1 {
+.sbc-col.is-active {
     display: flex;
-  }
-  #sln-salon-booking-calendar-shortcode .katrine-mobile {
-    width: 36%;
-    padding: 15px 10px 15px 0;
-    min-width: 36%;
-  }
-  #sln-salon-booking-calendar-shortcode
-    .calender-head-in-content:nth-child(8n)
-    > .mobile-page2
-    > li:not(:first-child)
-    .katrine
-    ul,
-  #sln-salon-booking-calendar-shortcode
-    .calender-head-in-content:nth-child(8n)
-    > .mobile-page2
-    > li:not(:first-child)
-    .katrine
-    ul
-    .tool-tip {
-    background-color: var(--palette_cl_7);
-  }
-  #sln-salon-booking-calendar-shortcode
-    .calender-head-in-content:nth-child(8n + 1)
-    > .mobile-page2
-    > li:not(:first-child)
-    .katrine
-    ul,
-  #sln-salon-booking-calendar-shortcode
-    .calender-head-in-content:nth-child(8n + 1)
-    > .mobile-page2
-    > li:not(:first-child)
-    .katrine
-    ul
-    .tool-tip {
-    background-color: var(--palette_cl_8);
-  }
-  #sln-salon-booking-calendar-shortcode
-    .calender-head-in-content:nth-child(8n + 2)
-    > .mobile-page2
-    > li:not(:first-child)
-    .katrine
-    ul,
-  #sln-salon-booking-calendar-shortcode
-    .calender-head-in-content:nth-child(8n + 2)
-    > .mobile-page2
-    > li:not(:first-child)
-    .katrine
-    ul
-    .tool-tip {
-    background-color: var(--palette_cl_1);
-  }
-  #sln-salon-booking-calendar-shortcode
-    .calender-head-in-content:nth-child(8n + 3)
-    > .mobile-page2
-    > li:not(:first-child)
-    .katrine
-    ul,
-  #sln-salon-booking-calendar-shortcode
-    .calender-head-in-content:nth-child(8n + 3)
-    > .mobile-page2
-    > li:not(:first-child)
-    .katrine
-    ul
-    .tool-tip {
-    background-color: var(--palette_cl_2);
-  }
-  #sln-salon-booking-calendar-shortcode
-    .calender-head-in-content:nth-child(8n + 4)
-    > .mobile-page2
-    > li:not(:first-child)
-    .katrine
-    ul,
-  #sln-salon-booking-calendar-shortcode
-    .calender-head-in-content:nth-child(8n + 4)
-    > .mobile-page2
-    > li:not(:first-child)
-    .katrine
-    ul
-    .tool-tip {
-    background-color: var(--palette_cl_3);
-  }
-  #sln-salon-booking-calendar-shortcode
-    .calender-head-in-content:nth-child(8n + 5)
-    > .mobile-page2
-    > li:not(:first-child)
-    .katrine
-    ul,
-  #sln-salon-booking-calendar-shortcode
-    .calender-head-in-content:nth-child(8n + 5)
-    > .mobile-page2
-    > li:not(:first-child)
-    .katrine
-    ul
-    .tool-tip {
-    background-color: var(--palette_cl_4);
-  }
-  #sln-salon-booking-calendar-shortcode
-    .calender-head-in-content:nth-child(8n + 6)
-    > .mobile-page2
-    > li:not(:first-child)
-    .katrine
-    ul,
-  #sln-salon-booking-calendar-shortcode
-    .calender-head-in-content:nth-child(8n + 6)
-    > .mobile-page2
-    > li:not(:first-child)
-    .katrine
-    ul
-    .tool-tip {
-    background-color: var(--palette_cl_5);
-  }
-  #sln-salon-booking-calendar-shortcode
-    .calender-head-in-content:nth-child(8n + 7)
-    > .mobile-page2
-    > li:not(:first-child)
-    .katrine
-    ul,
-  #sln-salon-booking-calendar-shortcode
-    .calender-head-in-content:nth-child(8n + 7)
-    > .mobile-page2
-    > li:not(:first-child)
-    .katrine
-    ul
-    .tool-tip {
-    background-color: var(--palette_cl_6);
-  }
 }
-.date--long {
-  display: none;
+
+/* ── Assistant header ───────────────────────────────────────── */
+.sbc-att-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    /* Figma: h-[48px] */
+    height: 48px;
+    /* Figma: gap-[24px] from parent, reproduced as margin here */
+    margin-bottom: 24px;
+    flex-shrink: 0;
 }
-.date--short {
-  display: inline;
+
+.sbc-att-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
 }
-@media only screen and (min-width: 768px) {
-  .date--long {
-    display: inline;
-  }
-  .date--short {
+
+/* Figma: rounded-[16777200px] size-[48px] → circular 48px
+   ID-prefixed selector (1,1,0) beats any theme rule like .entry-content img (0,1,1) */
+#sln-salon-booking-calendar-shortcode .sbc-att-avatar {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    overflow: hidden;
+    flex-shrink: 0;
+    display: block;
+}
+.sbc-att-avatar--placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--sbc-accent);
+    color: var(--sbc-white);
+    font-size: 20px;
+    font-weight: 600;
+    border-radius: 50%;
+}
+
+/* Figma: Inter Medium 20px / tracking-[-0.4492px] / lh-[28px] */
+.sbc-att-name {
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--sbc-text);
+    letter-spacing: -0.45px;
+    line-height: 28px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── Nav buttons ─────────────────────────────────────────────── */
+.sbc-att-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    margin-left: 16px;
+}
+
+/* Figma: size-[36px] rounded-[10px] bg-[#f1f4f7]
+   Fix 3: use --sbc-btn (#E2E8ED) instead of surface so buttons
+   are visible against the #F1F4F7 column background            */
+.sbc-nav-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 8px;
+    background: var(--sbc-btn);
+    border: none;
+    border-radius: var(--sbc-radius-btn);
+    cursor: pointer;
+    transition: background 0.15s;
+    flex-shrink: 0;
+}
+.sbc-nav-btn:hover {
+    background: #d4dbe2;
+}
+.sbc-nav-btn svg {
+    display: block;
+    flex-shrink: 0;
+}
+
+/* ── Days container ─────────────────────────────────────────── */
+/* Fix 2: use gap on parent (was 0), remove double-spacing from .sbc-day */
+.sbc-days {
+    display: flex;
+    flex-direction: column;
+    /* Figma: gap-[24px] on the days container — was incorrectly 0 */
+    gap: 24px;
+}
+
+/* ── Hidden day (pagination) ────────────────────────────────── */
+#sln-salon-booking-calendar-shortcode .sbc-day--hidden {
     display: none;
-  }
 }
+
+/* ── Single day section ─────────────────────────────────────── */
+.sbc-day {
+    display: flex;
+    flex-direction: column;
+    /* Figma: gap-[12px] between day-header and day-content */
+    gap: 12px;
+    /* 16px space between last content and the separator line */
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--sbc-border);
+}
+.sbc-day:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+/* ── Day header ─────────────────────────────────────────────── */
+.sbc-day-header {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Figma: h-[24px] row with day name + count badge */
+.sbc-day-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 24px;
+}
+
+/* Figma: Inter Medium 16px / tracking-[-0.3125px] / lh-[24px] */
+.sbc-day-name {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--sbc-text);
+    letter-spacing: -0.31px;
+    line-height: 24px;
+}
+
+/* Count badge — always shown
+   Fix 5: zero badge needs a visible border since bg = column surface */
+.sbc-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: var(--sbc-radius-pill);
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 16px;
+    background: var(--sbc-accent);
+    color: var(--sbc-white);
+}
+/* Figma: bg-[#f1f4f7] text-[#696969] for zero — add border for contrast */
+.sbc-count--zero {
+    background: var(--sbc-surface);
+    color: var(--sbc-muted);
+    border: 1px solid #D0D8DF;
+}
+
+/* Figma: Inter Regular 14px / tracking-[-0.1504px] / lh-[20px] / #696969 */
+.sbc-day-date {
+    /* Figma: h-[20px] directly below h-[24px] name row — NO gap, 24+20=44px total */
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--sbc-muted);
+    letter-spacing: -0.15px;
+    line-height: 20px;
+    margin-top: 0;
+}
+
+/* ── No bookings placeholder ────────────────────────────────── */
+.sbc-no-bookings {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 52px;
+    border-radius: var(--sbc-radius-card);
+    background: transparent;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--sbc-muted);
+    letter-spacing: -0.15px;
+}
+
+/* ── Bookings list ───────────────────────────────────────────── */
+/* Figma: gap-[12px] between booking cards */
+.sbc-bookings {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* ── Booking card ────────────────────────────────────────────── */
+/* Figma: bg-white rounded-[14px] shadow-[0px_4px_6px_rgba(0,0,0,0.1),0px_2px_4px_rgba(0,0,0,0.1)] */
+.sbc-booking-card {
+    background: var(--sbc-card);
+    border-radius: var(--sbc-radius-card);
+    padding: 16px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.10), 0 2px 4px rgba(0, 0, 0, 0.10);
+    display: flex;
+    flex-direction: column;
+    /* Fix 6: use 0 gap + explicit margins for Figma's absolute-position spacing:
+       time-row → client: 12px,  client → services: 8px               */
+    gap: 0;
+}
+
+/* Figma: top-[16px] row with time (left) + badge (right) */
+.sbc-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+/* Figma: Inter Regular 14px / tracking-[-0.1504px] / lh-[20px] / #696969 */
+.sbc-time {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--sbc-muted);
+    letter-spacing: -0.15px;
+    line-height: 20px;
+}
+
+/* Status badges — Figma: rounded-[4px] (NOT pill) */
+.sbc-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: var(--sbc-radius-badge);
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 16px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+/* Figma: bg-[#2171b1] text-white */
+.sbc-status--paid {
+    background: var(--sbc-accent);
+    color: var(--sbc-white);
+    border: none;
+}
+/* Figma: bg-white border-[#e7edf2] text-[#696969] */
+.sbc-status--pending {
+    background: var(--sbc-card);
+    color: var(--sbc-muted);
+    border: 1px solid var(--sbc-border);
+}
+
+/* Figma: top-[54px] = 16px padding + 26px top-row + 12px gap
+   Fix 6: margin-top 12px to match                             */
+.sbc-client {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--sbc-text);
+    letter-spacing: -0.44px;
+    line-height: 28px;
+    margin-top: 12px;
+}
+
+/* Figma: top-[90px] = 54px + 28px client height + 8px gap
+   Fix 6: margin-top 8px to match                             */
+.sbc-services {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-left: 0;
+    margin: 8px 0 0;
+}
+.sbc-services li {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--sbc-muted);
+    letter-spacing: -0.15px;
+    line-height: 20px;
+}
+
+/* ============================================================
+   Desktop: hide tabs, switch to multi-column grid
+   Figma: 3 columns, gap-[32px]
+   ============================================================ */
+@media (min-width: 768px) {
+
+    .sbc-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 32px;
+    }
+
+    /* All columns visible by default on desktop */
+    .sbc-col {
+        display: flex;
+    }
+
+    /* When a filter tab is active, hide non-selected columns */
+    .sbc-grid.is-filtered .sbc-col {
+        display: none;
+    }
+    .sbc-grid.is-filtered .sbc-col.is-active {
+        display: flex;
+    }
+}
+

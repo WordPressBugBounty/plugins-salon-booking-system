@@ -163,14 +163,12 @@ class SLN_Shortcode_Salon
 
     public function getPrevStep()
     {
-	//fix sms step after login
-	if (isset($this->steps)) {
-	    $this->steps = $this->initSteps();
-	}
+	// fix sms step after login: use fresh steps each time without overwriting the cached $this->steps
+	$steps = $this->initSteps();
 
         $curr = $this->getCurrentStep();
         $prev = null;
-        foreach ($this->getSteps() as $step) {
+        foreach ($steps as $step) {
             if ($curr == $step) {
                 return $prev;
             } else {

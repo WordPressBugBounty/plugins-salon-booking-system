@@ -4,7 +4,7 @@ Tags: booking, reservations, scheduling, booking calendar, appointment calendar
 Requires at least: 4.1
 Tested up to: 6.9
 Requires PHP: 7.4.8
-Stable tag: 10.30.20
+Stable tag: 10.30.21
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -408,10 +408,21 @@ FREE version doesn't have the online payments options, no mobile app access, no 
 
 == Changelog ==
 
-02.03.2026 - 10.30.20
+
+
+06.03.2026 - 10.30.21
+
+* Fixed issue with double request to set a date when create a booking from back-end
+* Booking calendar by assistant shortcode restyled 
+* Fixed minor issues on front-end booking form
+* Fixed email notifications text message for various bookign statuses
+* Implementd the possibility to add more recipient for booking notifcations to salon administrator
+
+02.03.2026 - 10.30.19
 
 * Improved PRO conversion strategy: contextual upgrade CTAs for payment settings on free edition
 * Payments settings tab now shows full PRO feature set with locked sections on free edition
+
 
 28.02.2026 - 10.30.19
 

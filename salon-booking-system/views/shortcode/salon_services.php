@@ -22,7 +22,8 @@ if ($plugin->getSettings()->isDisabled()) {
 	$additional_errors = !empty($additional_errors)? $additional_errors : $step->getAddtitionalErrors();
 	$errors = !empty($errors) ? $errors : $step->getErrors();
 	?>
-	<form id="salon-step-services" method="post" action="<?php echo esc_html($formAction) ?>" role="form">
+	<form id="salon-step-services" method="post" action="<?php echo esc_html($formAction) ?>" role="form"
+		<?php if (isset($_GET['sln_step_page']) && $_GET['sln_step_page'] === 'services'): ?>data-sln-direct-nav="1"<?php endif; ?>>
 	<?php
 	include '_errors.php';
 	include '_additional_errors.php';

@@ -6,7 +6,7 @@
  * @var array $stats
  */
 
-$data['to']      = $plugin->getSettings()->getSalonEmail();
+$data['to']      = implode(',', $plugin->getSettings()->getAdminNotificationEmails());
 $data['subject'] = __('Salon Booking weekly report', 'salon-booking-system');
 
 echo $plugin->loadView('mail/weekly_report/template', compact('plugin', 'data', 'stats'));

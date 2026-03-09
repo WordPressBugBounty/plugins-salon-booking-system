@@ -54,7 +54,7 @@ function sln_init($) {
             ) &&
             !request_args.find((val) => val.startsWith("save_selected")) &&
             $("#salon-step-services").length &&
-            !$(".sln-icon--back").length
+            !$('#salon-step-services[data-sln-direct-nav]').length
         ) {
             $('#salon-step-services input[type="checkbox"]').removeAttr(
                 "checked"
@@ -2134,7 +2134,9 @@ function sln_stepDate($) {
     // This call fetches fresh intervals (dates + times) for the auto-selected
     // date, renders the time-slot panel immediately, and re-enables the correct
     // calendar days — all before the user needs to click anything.
-    validate($(".sln_datepicker div"), false);
+    if ($(".sln_datepicker div").length) {
+        validate($(".sln_datepicker div"), false);
+    }
 }
 
 function sln_serviceTotal($) {
@@ -2899,9 +2901,30 @@ function sln_salonBookingCalendarInit() {
             },
             success: function (data) {
                 if (data.success) {
-                    jQuery(
-                        "#sln-salon-booking-calendar-shortcode > .wrapper"
-                    ).html(data.content);
+                    var $wrapper = jQuery("#sln-salon-booking-calendar-shortcode > .wrapper");
+                    var $parsed  = jQuery('<div>').html(data.content);
+
+                    // Collect column IDs from both current DOM and new response
+                    var curIds = $wrapper.find('.sbc-col').map(function () { return this.id; }).get().sort().join(',');
+                    var newIds = $parsed.find('.sbc-col').map(function () { return this.id; }).get().sort().join(',');
+
+                    if (curIds === newIds && curIds !== '') {
+                        // Smart update: only replace day content per column.
+                        // Avatar <img> elements are never touched → zero flicker.
+                        $parsed.find('.sbc-col').each(function () {
+                            var $newCol  = jQuery(this);
+                            var $curDays = jQuery('#' + this.id).find('.sbc-days');
+                            var newHtml  = $newCol.find('.sbc-days').html();
+                            if ($curDays.html() !== newHtml) {
+                                $curDays.html(newHtml);
+                            }
+                        });
+                    } else {
+                        // Assistant structure changed: fall back to full replacement
+                        $wrapper.html(data.content);
+                    }
+
+                    sln_salonBookingCalendarShowUpdated();
                     sln_salonBookingCalendarInitTooltip();
                 } else if (data.redirect) {
                     window.location.href = data.redirect;
@@ -2909,12 +2932,26 @@ function sln_salonBookingCalendarInit() {
                     // TODO: display errors
                 }
             },
-            error: function (data) {
-                alert("error");
-                //console.log(data);
+            error: function () {
+                // silently ignore transient network errors
             },
         });
     }, 10 * 1000);
+}
+
+function sln_salonBookingCalendarShowUpdated() {
+    var $badge = jQuery('#sln-salon-booking-calendar-shortcode .sbc-sync-badge');
+    if (!$badge.length) { return; }
+
+    var now = new Date();
+    var hh  = String(now.getHours()).padStart(2, '0');
+    var mm  = String(now.getMinutes()).padStart(2, '0');
+    $badge.text('\u21BB ' + hh + ':' + mm);
+
+    // Restart the flash animation even if already running
+    $badge.removeClass('is-updated is-visible');
+    $badge[0].offsetWidth; // force reflow
+    $badge.addClass('is-visible is-updated');
 }
 
 function sln_salonBookingCalendarInitTooltip() {
@@ -3312,7 +3349,7 @@ function sln_extractCriticalBookingFields(form) {
     
     // 3. SERVICES (checkboxes - may be disabled if unavailable)
     form.find('input[name^="sln[services]"]').each(function() {
-        var $field = $(this);
+        var $field = jQuery(this);
         // Use .val() instead of serialize() to bypass disabled state
         if ($field.is(':checked') && $field.val()) {
             criticalFields.push(encodeURIComponent($field.attr('name')) + '=' + encodeURIComponent($field.val()));
@@ -3327,7 +3364,7 @@ function sln_extractCriticalBookingFields(form) {
     
     // 5. MULTI-ASSISTANTS (for multi-assistant bookings - may be disabled)
     form.find('input[name^="sln[attendants]"]').each(function() {
-        var $field = $(this);
+        var $field = jQuery(this);
         if ($field.is(':checked') && $field.val()) {
             criticalFields.push(encodeURIComponent($field.attr('name')) + '=' + encodeURIComponent($field.val()));
         }
@@ -3335,7 +3372,7 @@ function sln_extractCriticalBookingFields(form) {
     
     // 6. SERVICE COUNT (for variable quantity services - may be hidden/disabled)
     form.find('input[name^="sln[service_count]"]').each(function() {
-        var $field = $(this);
+        var $field = jQuery(this);
         if ($field.val()) {
             criticalFields.push(encodeURIComponent($field.attr('name')) + '=' + encodeURIComponent($field.val()));
         }

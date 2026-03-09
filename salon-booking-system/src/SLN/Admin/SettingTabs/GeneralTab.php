@@ -88,10 +88,19 @@ class SLN_Admin_SettingTabs_GeneralTab extends SLN_Admin_SettingTabs_AbstractTab
 	);
 
     protected function validate() {
-        if (!empty($this->submitted['gen_email']) && !filter_var($this->submitted['gen_email'], FILTER_VALIDATE_EMAIL)) {
-			$this->showAlert('error', __('Invalid Email in Salon contact e-mail field', 'salon-booking-system'));
-			return;
-		}
+        if (!empty($this->submitted['gen_email'])) {
+            $emails = array_map('trim', explode(',', $this->submitted['gen_email']));
+            foreach ($emails as $email) {
+                if ($email && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    $this->showAlert('error', sprintf(
+                        // translators: %s: invalid email address
+                        __('Invalid email address "%s" in Salon contact e-mail field', 'salon-booking-system'),
+                        esc_html($email)
+                    ));
+                    return;
+                }
+            }
+        }
 
 
 		if (empty($this->submitted['gen_logo']) && $this->getOpt('gen_logo')) {

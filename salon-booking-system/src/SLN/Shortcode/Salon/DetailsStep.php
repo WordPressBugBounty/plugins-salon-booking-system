@@ -284,9 +284,9 @@ class SLN_Shortcode_Salon_DetailsStep extends SLN_Shortcode_Salon_AbstractUserSt
     public function getTitleKey(){
         if(!is_user_logged_in() && !isset($this->getPlugin()->getSEttings()->get('custom_texts')['Checkout'])){
             if($this->getPlugin()->getSettings()->get('enabled_force_guest_checkout')){
-                return 'Returning customer?';
+                return 'Fill out the form to complete the booking';
             }
-            return 'Please fill out the form to checkout';
+            return 'Returning customer?';
         }
         return 'Checkout';
     }
@@ -294,9 +294,9 @@ class SLN_Shortcode_Salon_DetailsStep extends SLN_Shortcode_Salon_AbstractUserSt
     public function getTitleLabel(){
         if(!is_user_logged_in()){
             if($this->getPlugin()->getSettings()->get('enabled_force_guest_checkout')){
-                return __('Returning customer?', 'salon-booking-system');
+                return __('Fill out the form to complete the booking', 'salon-booking-system');
             }
-            return __('Please fill out the form to checkout', 'salon-booking-system');
+            return __('Returning customer?', 'salon-booking-system');
         }
         return __('Checkout', 'salon-booking-system');
     }

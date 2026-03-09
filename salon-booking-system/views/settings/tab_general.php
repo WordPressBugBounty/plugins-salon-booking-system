@@ -39,13 +39,13 @@ sum(
             </div>
             <div class="col-xs-12 col-sm-4 form-group sln-input sln-input--simple">
                 <?php
-                $this->row_input_email(
+                $this->row_input_text(
                     'gen_email',
-                    __('Salon contact e-mail', 'salon-booking-system'),
+                    __('Admin notification e-mail(s)', 'salon-booking-system'),
                     array(
                         'help' => sprintf(
                             // translators: %s: the default email address of the site
-                            __('Leaving this field empty will cause the default site email  <strong>(%s)</strong> to be used', 'salon-booking-system'),
+                            __('Enter one or more email addresses separated by commas. Leaving this field empty will use the default site email <strong>(%s)</strong>.', 'salon-booking-system'),
                             esc_html(get_bloginfo('admin_email'))
                         ),
                     )

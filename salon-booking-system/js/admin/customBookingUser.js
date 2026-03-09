@@ -745,10 +745,13 @@ function sln_adminDate($) {
 			method: "POST",
 			dataType: "json",
 			success: function (data) {
-				if (firstValidate) {
-					$("#sln-notifications").html("").fadeIn(500);
-					firstValidate = false;
-				} else if (!data.success) {
+			if (firstValidate) {
+				firstValidate = false;
+				if (data.success) {
+					window.parent.show_btn_save();
+				}
+				$("#sln-notifications").html("").fadeIn(500);
+			} else if (!data.success) {
 					// Show validation errors
 					var alertBox = $('<div class="alert alert-danger"></div>');
 					$(data.errors).each(function () {

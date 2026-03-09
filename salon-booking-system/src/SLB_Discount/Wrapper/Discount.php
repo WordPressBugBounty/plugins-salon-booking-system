@@ -295,9 +295,58 @@ class SLB_Discount_Wrapper_Discount extends SLN_Wrapper_Abstract
     }
 
     public static function generateCouponCode() {
-        $code = random_int(1000, 9999);
+        $maxAttempts = 10;
 
-        return $code;
+        for ( $i = 0; $i < $maxAttempts; $i++ ) {
+            $code = self::generateRandomCode( 8 );
+
+            if ( ! self::couponCodeExists( $code ) ) {
+                return $code;
+            }
+        }
+
+        // Extremely unlikely fallback: append a timestamp suffix to guarantee uniqueness.
+        return self::generateRandomCode( 8 ) . substr( (string) time(), -4 );
+    }
+
+    /**
+     * Generates a random uppercase alphanumeric code of the given length.
+     *
+     * @param int $length
+     * @return string
+     */
+    private static function generateRandomCode( $length ) {
+        $chars  = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        $max    = strlen( $chars ) - 1;
+        $result = '';
+
+        for ( $i = 0; $i < $length; $i++ ) {
+            $result .= $chars[ random_int( 0, $max ) ];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Checks whether a coupon code already exists in the database.
+     *
+     * @param string $code
+     * @return bool
+     */
+    private static function couponCodeExists( $code ) {
+        global $wpdb;
+
+        $meta_key = '_' . SLB_Discount_Plugin::POST_TYPE_DISCOUNT . '_code';
+
+        $count = $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value = %s",
+                $meta_key,
+                $code
+            )
+        );
+
+        return intval( $count ) > 0;
     }
 
 	/**

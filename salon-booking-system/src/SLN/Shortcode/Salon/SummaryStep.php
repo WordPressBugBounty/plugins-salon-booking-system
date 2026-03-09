@@ -238,7 +238,14 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
             $this->cleanupBookingLock($bb);
             return !$this->hasErrors();
         }elseif(isset($_GET['op']) || $mode){
-            // Re-check availability after returning from the payment gateway.
+            if ($bookingBuilder && method_exists($bookingBuilder, 'forceTransientStorage')) {
+                $bookingBuilder->forceTransientStorage();
+            }
+            if($error = $paymentMethod->dispatchThankyou($this, $bb)){
+                $this->addError($error);
+            }
+
+            // Re-check availability AFTER payment has been processed.
             // The slot could have become unavailable (another booking, settings change) during
             // the time the customer was on the external payment page. Because the payment has
             // already been captured at this point we cannot simply reject the booking — doing
@@ -248,6 +255,7 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
             // Wrapped in try/catch: a validation exception must never crash the payment flow
             // after the customer has already been charged.
             try {
+                $handler->setBooking($bb); // Exclude current booking from slot count to prevent false conflicts
                 $gatewayAvailErrors = $handler->checkDateTimeServicesAndAttendants($bb->getAttendantsIds(), $bb->getStartsAt());
                 if ( ! empty($gatewayAvailErrors) && ! class_exists('\\SalonMultishop\\Addon') ) {
                     SLN_Plugin::addLog(sprintf(
@@ -264,13 +272,6 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
                 }
             } catch (\Exception $e) {
                 SLN_Plugin::addLog('[SummaryStep] Post-payment availability check threw exception (booking proceeds normally): ' . $e->getMessage());
-            }
-
-            if ($bookingBuilder && method_exists($bookingBuilder, 'forceTransientStorage')) {
-                $bookingBuilder->forceTransientStorage();
-            }
-            if($error = $paymentMethod->dispatchThankyou($this, $bb)){
-                $this->addError($error);
             }
         }
         if(!$this->hasErrors()){

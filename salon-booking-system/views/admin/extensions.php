@@ -521,21 +521,27 @@ $loader_svg = '<svg class="ext-loader-icon" xmlns="http://www.w3.org/2000/svg" v
                     <?php echo esc_html( $card['availability_text'] ); ?>
                 </p>
                 <div class="ext-card__action">
-                    <?php if ( $card['btn_state'] === 'active' ) : ?>
-                        <span class="ext-btn ext-btn--active">
-                            <?php echo $check_svg; ?>
-                            <?php echo esc_html( $card['btn_label'] ); ?>
-                        </span>
-                    <?php elseif ( $card['btn_state'] === 'purchase' ) : ?>
-                        <a href="<?php echo esc_url( $card['btn_href'] ); ?>" target="_blank" rel="noopener" class="ext-btn ext-btn--filled">
-                            <?php echo esc_html( $card['btn_label'] ); ?>
+                    <div class="ext-card__action-row">
+                        <?php if ( $card['btn_state'] === 'active' ) : ?>
+                            <span class="ext-btn ext-btn--active">
+                                <?php echo $check_svg; ?>
+                                <?php echo esc_html( $card['btn_label'] ); ?>
+                            </span>
+                        <?php elseif ( $card['btn_state'] === 'purchase' ) : ?>
+                            <a href="<?php echo esc_url( $card['btn_href'] ); ?>" target="_blank" rel="noopener" class="ext-btn ext-btn--filled">
+                                <?php echo esc_html( $card['btn_label'] ); ?>
+                            </a>
+                        <?php else : ?>
+                            <a href="#" class="ext-btn ext-btn--outline extensions-button blue">
+                                <span class="label"><?php echo esc_html( $card['btn_label'] ); ?></span>
+                                <span class="loader" style="display:none;"><?php echo $loader_svg; ?></span>
+                            </a>
+                        <?php endif; ?>
+                        <a href="<?php echo esc_url( $card['permalink'] ); ?>" target="_blank" rel="noopener" class="ext-card__more-details">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                            <?php esc_html_e( 'More details', 'salon-booking-system' ); ?>
                         </a>
-                    <?php else : ?>
-                        <a href="#" class="ext-btn ext-btn--outline extensions-button blue">
-                            <span class="label"><?php echo esc_html( $card['btn_label'] ); ?></span>
-                            <span class="loader" style="display:none;"><?php echo $loader_svg; ?></span>
-                        </a>
-                    <?php endif; ?>
+                    </div>
                 </div>
             </div>
 

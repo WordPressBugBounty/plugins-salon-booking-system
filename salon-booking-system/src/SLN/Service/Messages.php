@@ -83,8 +83,13 @@ class SLN_Service_Messages
     private function sendBookingConfirmed(SLN_Wrapper_Booking $booking, $sendToAdmin = true, $sendToCustomer = true)
     {
         if ($this->plugin->getSettings()->get('confirmation')) {
-            // Send confirmation email to both admin and customer
-            $this->plugin->sendMail('mail/status_confirmed', compact('booking', 'sendToAdmin', 'sendToCustomer'));
+            if ($booking->getNotifyCustomer() && $sendToCustomer) {
+                $this->plugin->sendMail('mail/status_confirmed', compact('booking', 'sendToCustomer'));
+            }
+            if ($sendToAdmin) {
+                $forAdmin = true;
+                $this->plugin->sendMail('mail/status_confirmed', compact('booking', 'forAdmin', 'sendToAdmin'));
+            }
         } else {
             $this->sendSummaryMail($booking, $sendToAdmin, $sendToCustomer);
         }

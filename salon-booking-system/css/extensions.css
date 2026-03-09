@@ -437,6 +437,37 @@
     margin-top: auto;
 }
 
+/* Action column: primary button on top, "More details" link centered below */
+.ext-card__action-row {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+}
+
+.ext-card__more-details {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #2171b1;
+    text-decoration: none;
+    line-height: 1.5;
+    transition: color 0.15s, text-decoration 0.15s;
+}
+
+.ext-card__more-details:hover {
+    color: #1a5a8f;
+    text-decoration: underline;
+}
+
+.ext-card__more-details svg {
+    flex-shrink: 0;
+    opacity: 0.85;
+}
+
 .ext-error {
     font-size: 12px;
     color: #c0392b;

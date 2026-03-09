@@ -3,7 +3,7 @@
 
 class SLN_Action_InitScripts
 {
-    const ASSETS_VERSION = SLN_VERSION . '-20260216-remove-text-base';
+    const ASSETS_VERSION = SLN_VERSION . '-20260305-calendar-grid';
 	private static $isInclude = false;
 	private $isAdmin;
 	private $plugin;

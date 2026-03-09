@@ -140,13 +140,32 @@ class SLN_Settings {
 	}
 
 	public function getSalonEmail() {
-		$ret = $this->get('gen_email');
-		if (!$ret) {
-			$ret = get_bloginfo('admin_email');
+		$emails = $this->getAdminNotificationEmails();
+
+		return $emails[0];
+	}
+
+	/**
+	 * Returns all admin notification email addresses as an array.
+	 * The gen_email setting may contain multiple addresses separated by commas.
+	 * Falls back to the WordPress site admin email when the setting is empty.
+	 *
+	 * @return string[]
+	 */
+	public function getAdminNotificationEmails() {
+		$raw = $this->get('gen_email');
+		if (!$raw) {
+			return array(get_bloginfo('admin_email'));
 		}
 
-		return $ret;
+		$emails = array_values(array_filter(
+			array_map('trim', explode(',', $raw)),
+			function ($email) {
+				return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
+			}
+		));
 
+		return !empty($emails) ? $emails : array(get_bloginfo('admin_email'));
 	}
 
 	public function getHoursBeforeFrom() {

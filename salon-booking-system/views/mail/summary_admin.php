@@ -6,7 +6,7 @@
  */
 $recipients = array();
 
-$adminEmail           = $plugin->getSettings()->getSalonEmail();
+$adminEmails          = $plugin->getSettings()->getAdminNotificationEmails();
 $attendantEmailOption = $plugin->getSettings()->get('attendant_email');
 if(isset($updated) && $updated) {
     if ($attendantEmailOption) {
@@ -24,19 +24,15 @@ if(isset($updated) && $updated) {
     $recipients = array_unique(array_filter($recipients));
 
     if ($sendToAdmin) {
-        $recipients[] = $adminEmail;
+        $recipients = array_merge($recipients, $adminEmails);
     }
-    $data['to'] = implode(',', $recipients);
+    $data['to'] = implode(',', array_unique(array_filter($recipients)));
     $data['subject'] = __('Reservation has been modified ','salon-booking-system')
                        . $plugin->format()->date($booking->getDate())
                        . ' - ' . $plugin->format()->time($booking->getTime());
 } elseif(isset($rescheduled) && $rescheduled) {
-    // Always start with admin email for rescheduled bookings
-    $recipients = array();
-    if (!empty($adminEmail)) {
-        $recipients[] = $adminEmail;
-    }
-    
+    $recipients = array_merge($recipients, $adminEmails);
+
     // Add attendant emails if enabled
     if ($attendantEmailOption && ($attendants = $booking->getAttendants(true))) {
         foreach ($attendants as $attendant) {
@@ -53,10 +49,9 @@ if(isset($updated) && $updated) {
             }
         }
     }
-    
-    // Set final recipient list
+
     $recipients = array_unique(array_filter($recipients));
-    $data['to'] = !empty($recipients) ? implode(',', $recipients) : $adminEmail;
+    $data['to'] = !empty($recipients) ? implode(',', $recipients) : implode(',', $adminEmails);
     $current_user = wp_get_current_user();
     $data['subject'] = sprintf(
         // translators: %1$s will be replaced by the booking ID, %2$s will be replaced by the username
@@ -65,12 +60,11 @@ if(isset($updated) && $updated) {
         implode(' ', array_filter(array($current_user->user_firstname, $current_user->user_lastname)))
     );
 } else {
-    // Always start with admin email if configured
     $recipients = array();
-    if ($sendToAdmin && !empty($adminEmail)) {
-        $recipients[] = $adminEmail;
+    if ($sendToAdmin) {
+        $recipients = array_merge($recipients, $adminEmails);
     }
-    
+
     // Add attendant emails if enabled
     if ($attendantEmailOption && ($attendants = $booking->getAttendants(true))) {
         foreach ($attendants as $attendant) {
@@ -87,10 +81,9 @@ if(isset($updated) && $updated) {
             }
         }
     }
-    
-    // Set final recipient list (remove duplicates and empty values)
+
     $recipients = array_unique(array_filter($recipients));
-    $data['to'] = !empty($recipients) ? implode(',', $recipients) : $adminEmail;
+    $data['to'] = !empty($recipients) ? implode(',', $recipients) : implode(',', $adminEmails);
     
     $data['subject'] = __('New booking for ','salon-booking-system')
                        . $plugin->format()->date($booking->getDate())

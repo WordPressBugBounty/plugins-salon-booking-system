@@ -2,10 +2,11 @@
 // phpcs:ignoreFile WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 class SLN_Shortcode_SalonCalendar {
 
-        const NAME = 'salon_booking_calendar';
+	const NAME = 'salon_booking_calendar';
 
         const VISIBILITY_PUBLIC  = 'public';
         const DEFAULT_SHOW_DAYS  = 7;
+        const NAV_PAGES          = 4; // how many pages of dates to pre-render
 
 	private $plugin;
 	private $attrs;
@@ -70,12 +71,16 @@ class SLN_Shortcode_SalonCalendar {
             $showDays = (int)$this->attrs['days'];
         }
 
+        $totalDays = $showDays * self::NAV_PAGES;
+
         $datetime = SLN_TimeFunc::currentDateTime();
-        for ($i = 1; $i <= $showDays; $i++) {
+        for ($i = 1; $i <= $totalDays; $i++) {
             $ret['dates'][] = clone $datetime;
             $datetime= $datetime->modify('+1 day');
         }
         unset($datetime);
+
+        $ret['page_size'] = $showDays;
 
 	$assistantsIDs = array();
 
@@ -98,7 +103,7 @@ class SLN_Shortcode_SalonCalendar {
             );
         }
 
-        $bookings = $this->buildBookings($showDays);
+        $bookings = $this->buildBookings($totalDays);
         /** @var SLN_Wrapper_Booking $b */
         foreach($bookings as $b) {
             if ($plugin->getSettings()->isMultipleAttendantsEnabled() && $plugin->getSettings()->getAvailabilityMode() === 'highend') {
@@ -106,10 +111,12 @@ class SLN_Shortcode_SalonCalendar {
                     if ($bookingService->getAttendant() && ( !$assistantsIDs || in_array($bookingService->getAttendant()->getId(), $assistantsIDs) )) {
                         $date = $bookingService->getStartsAt()->format('Y-m-d');
                         $attData[$bookingService->getAttendant()->getId()]['events'][$date][] = array(
-                            'time'     => $plugin->format()->time($bookingService->getStartsAt()),
-                            'title'    => $b->getDisplayName(),
-                            'services' => array($bookingService->getService()->getName()),
-                            'status'   => SLN_Enum_BookingStatus::getLabel($b->getStatus()),
+                            'time'        => $plugin->format()->time($bookingService->getStartsAt()),
+                            'time_end'    => $plugin->format()->time($b->getEndsAt()),
+                            'title'       => $b->getDisplayName(),
+                            'services'    => array($bookingService->getService()->getName()),
+                            'status'      => SLN_Enum_BookingStatus::getLabel($b->getStatus()),
+                            'status_type' => SLN_Enum_BookingStatus::getColor($b->getStatus()),
                         );
                     }
                 }
@@ -135,10 +142,12 @@ class SLN_Shortcode_SalonCalendar {
                 foreach($rows as $attId => $services) {
                     $date = $b->getStartsAt()->format('Y-m-d');
                     $attData[$attId]['events'][$date][] = array(
-			'time'     => $plugin->format()->time($b->getStartsAt()),
-			'title'    => $b->getDisplayName(),
-			'services' => $services,
-			'status'   => SLN_Enum_BookingStatus::getLabel($b->getStatus()),
+                        'time'        => $plugin->format()->time($b->getStartsAt()),
+                        'time_end'    => $plugin->format()->time($b->getEndsAt()),
+                        'title'       => $b->getDisplayName(),
+                        'services'    => $services,
+                        'status'      => SLN_Enum_BookingStatus::getLabel($b->getStatus()),
+                        'status_type' => SLN_Enum_BookingStatus::getColor($b->getStatus()),
                     );
                 }
             }
