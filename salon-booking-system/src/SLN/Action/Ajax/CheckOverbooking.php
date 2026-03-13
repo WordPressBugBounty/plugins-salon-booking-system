@@ -29,6 +29,12 @@ class SLN_Action_Ajax_CheckOverbooking extends SLN_Action_Ajax_Abstract
             $attendant_enabled = $settings->get('attendant_enabled');
             $parallel = $settings->get('parallels_hour');
 
+            // When retrying payment for an existing booking (e.g. Mollie pending payment),
+            // the booking ID is present in the form. Exclude it from conflict checks so
+            // the booking does not conflict with itself.
+            $current_booking_id = intval(sanitize_text_field(wp_unslash($_POST['sln_booking_id'] ?? 0)));
+            $exclude_ids = $current_booking_id > 0 ? [$current_booking_id] : [];
+
             // if assistants are enabled and a specific assistant is selected
 
             if ($attendant_enabled && $assistant_id > 0 && $parallel <= 1) {
@@ -54,6 +60,9 @@ class SLN_Action_Ajax_CheckOverbooking extends SLN_Action_Ajax_Abstract
                         ]
                     ]
                 ];
+                if (!empty($exclude_ids)) {
+                    $args['post__not_in'] = $exclude_ids;
+                }
                 $bookings = get_posts($args);
                 // check each booking for conflict with selected assistant
                 foreach ($bookings as $booking) {
@@ -93,7 +102,7 @@ class SLN_Action_Ajax_CheckOverbooking extends SLN_Action_Ajax_Abstract
                     'success' => true
                 ];
             } else {
-                $posts = get_posts([
+                $query_args = [
                     'post_type' => 'sln_booking',
                     'post_status' => [
                         SLN_Enum_BookingStatus::PENDING_PAYMENT,
@@ -107,7 +116,11 @@ class SLN_Action_Ajax_CheckOverbooking extends SLN_Action_Ajax_Abstract
                         ['key' => '_sln_booking_date', 'value' => $date_clean],
                         ['key' => '_sln_booking_time', 'value' => $time_clean]
                     ]
-                ]);
+                ];
+                if (!empty($exclude_ids)) {
+                    $query_args['post__not_in'] = $exclude_ids;
+                }
+                $posts = get_posts($query_args);
                 return ['success' => $parallel <= 1 ? empty($posts) : true];
             }
         } catch (Exception $e) {

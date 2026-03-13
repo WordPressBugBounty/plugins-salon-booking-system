@@ -9,10 +9,13 @@ if ( isset( $sln_license ) ) {
     $transient_key = SLN_ITEM_SLUG . '_products_cache';
     $products      = get_transient( $transient_key );
     if ( false === $products ) {
-        $url      = add_query_arg(
-            [ 'key' => SLN_API_KEY, 'token' => SLN_API_TOKEN, 'number' => -1 ],
-            SLN_STORE_URL . '/edd-api/products'
-        );
+        $api_params = [ 'key' => SLN_API_KEY, 'token' => SLN_API_TOKEN, 'number' => -1 ];
+        // Include the stored license key so EDD can tailor plan-specific access flags
+        $stored_license = defined('SLN_ITEM_SLUG') ? get_option( SLN_ITEM_SLUG . '_license_key' ) : '';
+        if ( $stored_license ) {
+            $api_params['license'] = $stored_license;
+        }
+        $url      = add_query_arg( $api_params, SLN_STORE_URL . '/edd-api/products' );
         $response = wp_remote_get( $url, [ 'timeout' => 15, 'sslverify' => false ] );
         if ( ! is_wp_error( $response ) ) {
             $data     = json_decode( wp_remote_retrieve_body( $response ) );
@@ -254,6 +257,59 @@ $ext_parent_slugs = [ 'add-ons', 'featured', 'focus-on', 'subscription', 'bundle
 // Populated while building cards: slug → display label (for filter tabs)
 $ext_filter_terms = [];
 
+// -----------------------------------------------------------------------
+// Per-license all-access check: for products flagged is_excluded_from_all_access=true
+// the store-level API flag is STATIC and does NOT reflect plan tier.
+// For PAY/SE users with a valid license we call the EDD check_all_access
+// endpoint to see if their specific plan actually covers the product.
+// Results are cached 12 hours per license so the overhead is minimal.
+// -----------------------------------------------------------------------
+$user_accessible_extra = []; // product IDs where the user has access despite the flag
+
+if ( $edition_is_pay && $license_valid && isset( $sln_license ) ) {
+    $lic_key = $sln_license->get('license_key');
+    if ( $lic_key ) {
+        $cache_key    = 'sln_aac_' . substr( md5( $lic_key ), 0, 16 );
+        $access_cache = get_transient( $cache_key );
+
+        if ( false === $access_cache ) {
+            // Collect all excluded product IDs from the full product list
+            $excluded_ids = [];
+            foreach ( $products as $_p ) {
+                if ( ! empty( $_p->is_excluded_from_all_access )
+                    && ! empty( $_p->is_all_access_product ) === false
+                    && isset( $_p->info->id )
+                ) {
+                    $excluded_ids[] = (int) $_p->info->id;
+                }
+            }
+
+            $access_cache = [];
+            foreach ( $excluded_ids as $pid ) {
+                $resp = wp_remote_get(
+                    add_query_arg( [
+                        'edd_action'  => 'check_all_access',
+                        'license'     => $lic_key,
+                        'url'         => home_url(),
+                        'download_id' => $pid,
+                    ], SLN_STORE_URL ),
+                    [ 'timeout' => 6, 'sslverify' => false ]
+                );
+                if ( ! is_wp_error( $resp ) ) {
+                    $body = json_decode( wp_remote_retrieve_body( $resp ) );
+                    $access_cache[ $pid ] = isset( $body->access ) && $body->access === 'valid';
+                } else {
+                    $access_cache[ $pid ] = false;
+                }
+            }
+
+            set_transient( $cache_key, $access_cache, 12 * HOUR_IN_SECONDS );
+        }
+
+        $user_accessible_extra = array_keys( array_filter( $access_cache ) );
+    }
+}
+
 // Build cards array
 $ext_cards = [];
 foreach ( $products as $product ) {
@@ -262,6 +318,11 @@ foreach ( $products as $product ) {
     if ( $product->is_all_access_product ) continue;
 
     $is_excluded = (bool) $product->is_excluded_from_all_access;
+
+    // Override: if user's specific plan covers this product, treat it as not excluded
+    if ( $is_excluded && in_array( (int) $info->id, $user_accessible_extra, true ) ) {
+        $is_excluded = false;
+    }
     $files       = isset( $product->files ) ? (array) $product->files : [];
 
     if ( ! $is_excluded && empty( $files ) ) continue;
@@ -279,18 +340,39 @@ foreach ( $products as $product ) {
     }
     if ( ! $has_child_term ) continue;
 
-    // Determine install/activation state
+    // Determine install/activation state.
+    // Strategy: try EDD product-ID lookup first (reliable for system-installed add-ons),
+    // then fall back to slug-based scan (covers manually installed add-ons).
     $is_installed = false;
     $is_activated = false;
     $has_update   = false;
+
+    // Get the API version from the first available file name for version comparison
+    $api_version = '';
     foreach ( $files as $file ) {
-        $res = SLN_Action_Ajax_InstallPlugin::get_plugin( $file->name );
-        if ( $res['success'] ) {
-            $is_installed = true;
-            if ( $res['check_version'] ) {
-                $is_activated = $res['is_activate'];
-            } else {
-                $has_update = true;
+        $v = SLN_Action_Ajax_InstallPlugin::get_plugin_version( $file->name );
+        if ( $v ) { $api_version = $v; break; }
+    }
+
+    $res = SLN_Action_Ajax_InstallPlugin::get_plugin_by_product_id( (int) $info->id, $api_version );
+    if ( $res['success'] ) {
+        $is_installed = true;
+        if ( $res['check_version'] ) {
+            $is_activated = $res['is_activate'];
+        } else {
+            $has_update = true;
+        }
+    } else {
+        // Slug-based fallback (handles manually installed plugins and pre-existing installs)
+        foreach ( $files as $file ) {
+            $res = SLN_Action_Ajax_InstallPlugin::get_plugin( $file->name );
+            if ( $res['success'] ) {
+                $is_installed = true;
+                if ( $res['check_version'] ) {
+                    $is_activated = $res['is_activate'];
+                } else {
+                    $has_update = true;
+                }
             }
         }
     }
@@ -467,11 +549,17 @@ $loader_svg = '<svg class="ext-loader-icon" xmlns="http://www.w3.org/2000/svg" v
     <?php endif; ?>
 
     <div class="ext-page-header">
-        <h1 class="ext-page-header__title"><?php esc_html_e( 'Extensions', 'salon-booking-system' ); ?></h1>
-        <div class="ext-page-header__meta">
-            <p class="ext-page-header__subtitle"><?php esc_html_e( 'Enhance your booking system with powerful add-ons', 'salon-booking-system' ); ?></p>
-            <span class="ext-page-header__count"><?php echo $ext_total . ' ' . esc_html__( 'extensions', 'salon-booking-system' ); ?></span>
+        <div class="ext-page-header__left">
+            <h1 class="ext-page-header__title"><?php esc_html_e( 'Extensions', 'salon-booking-system' ); ?></h1>
+            <div class="ext-page-header__meta">
+                <p class="ext-page-header__subtitle"><?php esc_html_e( 'Enhance your booking system with powerful add-ons', 'salon-booking-system' ); ?></p>
+                <span class="ext-page-header__count"><?php echo $ext_total . ' ' . esc_html__( 'extensions', 'salon-booking-system' ); ?></span>
+            </div>
         </div>
+        <a id="ext-refresh-cache" href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=salon-extensions&sln_clear_ext_cache=1' ), 'sln_clear_ext_cache' ) ); ?>" class="ext-refresh-btn" title="<?php esc_attr_e( 'Refresh catalog from store', 'salon-booking-system' ); ?>">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            <?php esc_html_e( 'Refresh catalog', 'salon-booking-system' ); ?>
+        </a>
     </div>
 
     <div class="ext-filter-bar">
@@ -517,9 +605,11 @@ $loader_svg = '<svg class="ext-loader-icon" xmlns="http://www.w3.org/2000/svg" v
 
             <div class="ext-card__footer">
                 <div class="ext-error"></div>
+                <?php if ( $card['btn_state'] !== 'active' ) : ?>
                 <p class="ext-card__availability ext-card__availability--<?php echo esc_attr( $card['availability'] ); ?>">
                     <?php echo esc_html( $card['availability_text'] ); ?>
                 </p>
+                <?php endif; ?>
                 <div class="ext-card__action">
                     <div class="ext-card__action-row">
                         <?php if ( $card['btn_state'] === 'active' ) : ?>

@@ -65,6 +65,23 @@ jQuery(function ($) {
     });
 
     // ----------------------------------------------------------------
+    // Refresh catalog button — show spinner while navigating
+    // ----------------------------------------------------------------
+    $('#ext-refresh-cache').on('click', function () {
+        $(this).addClass('ext-refresh-btn--loading');
+    });
+
+    // Show a toast if we just cleared the cache (PHP sets cache_cleared flag)
+    if (salon.cache_cleared === '1') {
+        var toast = $('<div class="ext-cache-toast">Catalog refreshed successfully</div>').appendTo('body');
+        setTimeout(function () { toast.addClass('ext-cache-toast--visible'); }, 50);
+        setTimeout(function () {
+            toast.removeClass('ext-cache-toast--visible');
+            setTimeout(function () { toast.remove(); }, 300);
+        }, 3500);
+    }
+
+    // ----------------------------------------------------------------
     // State: active filter tab + search query
     // ----------------------------------------------------------------
     var activeFilter = 'all';

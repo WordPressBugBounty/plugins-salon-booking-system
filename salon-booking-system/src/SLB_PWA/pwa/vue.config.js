@@ -4,6 +4,12 @@ module.exports = defineConfig({
   lintOnSave: false, // Disable ESLint during build to prevent config lookup errors
   chainWebpack: config => {
     config.module.rules.delete('eslint')
+    
+    // Configure script injection to ensure FontAwesome loads before app
+    config.plugin('html').tap(args => {
+      args[0].scriptLoading = 'blocking'
+      return args
+    })
   },
   pwa: {
     name: "Salon Booking Plugin",

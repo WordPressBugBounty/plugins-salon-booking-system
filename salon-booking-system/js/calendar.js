@@ -2606,4 +2606,145 @@ if (!String.prototype.formatNum) {
       });
     }
   }
+
+  // ----------------------------------------------------------------
+  // Calendar Carousel functionality (Free Version Banner)
+  // ----------------------------------------------------------------
+  var calendarCarousel = {
+    currentSlide: 0,
+    totalSlides: 0,
+    autoPlayInterval: null,
+    isPaused: false,
+    
+    init: function() {
+      this.totalSlides = $('.sln-calendar-carousel__slide').length;
+      if (this.totalSlides === 0) return;
+      
+      // Start auto-play
+      this.startAutoPlay();
+      
+      // Pause on hover
+      $('#sln-calendar-carousel').on('mouseenter', function() {
+        calendarCarousel.pauseAutoPlay();
+      }).on('mouseleave', function() {
+        calendarCarousel.resumeAutoPlay();
+      });
+      
+      // Dot navigation - use direct binding within carousel container
+      $('#sln-calendar-carousel').on('click', '.sln-calendar-carousel__dot', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var slideIndex = parseInt($(this).data('slide'), 10);
+        console.log('Dot clicked, going to slide:', slideIndex);
+        calendarCarousel.goToSlide(slideIndex);
+        calendarCarousel.resetAutoPlay();
+      });
+      
+      // Close button
+      $('#sln-calendar-carousel-close').on('click', function () {
+        calendarCarousel.trackEvent('carousel_dismissed', {
+          current_slide: calendarCarousel.currentSlide
+        });
+        $('#sln-calendar-carousel').slideUp(300);
+      });
+    },
+    
+    goToSlide: function(index) {
+      console.log('goToSlide called with index:', index, 'totalSlides:', this.totalSlides);
+      
+      if (index < 0 || index >= this.totalSlides) {
+        console.log('Invalid index, returning');
+        return;
+      }
+      
+      var $slides = $('.sln-calendar-carousel__slide');
+      var $targetSlide = $slides.eq(index);
+      
+      console.log('Found slides:', $slides.length, 'Target slide:', $targetSlide.length);
+      
+      // Don't do anything if already on this slide
+      if ($targetSlide.hasClass('sln-calendar-carousel__slide--active')) {
+        console.log('Already on this slide');
+        return;
+      }
+      
+      // Hide current slide
+      $slides.removeClass('sln-calendar-carousel__slide--active');
+      
+      // Show new slide
+      $targetSlide.addClass('sln-calendar-carousel__slide--active');
+      
+      console.log('Slide changed, active class added');
+      
+      // Update dots (only one set now, outside track)
+      $('.sln-calendar-carousel__dot').removeClass('sln-calendar-carousel__dot--active')
+        .attr('aria-selected', 'false');
+      $('.sln-calendar-carousel__dot[data-slide="' + index + '"]')
+        .addClass('sln-calendar-carousel__dot--active')
+        .attr('aria-selected', 'true');
+      
+      this.currentSlide = index;
+      
+      // Track slide change
+      this.trackEvent('carousel_slide_change', {
+        slide_index: index,
+        slide_id: $targetSlide.data('slide-id')
+      });
+    },
+    
+    nextSlide: function() {
+      var next = (this.currentSlide + 1) % this.totalSlides;
+      this.goToSlide(next);
+    },
+    
+    startAutoPlay: function() {
+      this.autoPlayInterval = setInterval(function() {
+        if (!calendarCarousel.isPaused) {
+          calendarCarousel.nextSlide();
+        }
+      }, 7000); // 7 seconds per slide
+    },
+    
+    pauseAutoPlay: function() {
+      this.isPaused = true;
+    },
+    
+    resumeAutoPlay: function() {
+      this.isPaused = false;
+    },
+    
+    resetAutoPlay: function() {
+      clearInterval(this.autoPlayInterval);
+      this.startAutoPlay();
+    },
+    
+    trackEvent: function(eventName, data) {
+      // Track analytics event
+      if (typeof salon !== 'undefined' && salon.ajax_url) {
+        $.post(salon.ajax_url, {
+          action: 'salon',
+          method: 'trackCarouselEvent',
+          event_name: eventName,
+          event_data: data
+        });
+      }
+      
+      // Console log for debugging
+      if (window.console && console.log) {
+        console.log('Calendar Carousel Event:', eventName, data);
+      }
+    }
+  };
+  
+  // Initialize carousel
+  if ($('#sln-calendar-carousel').length) {
+    calendarCarousel.init();
+    
+    // Track initial impression
+    calendarCarousel.trackEvent('carousel_impression', {
+      slide_id: $('.sln-calendar-carousel__slide--active').data('slide-id'),
+      location: 'calendar_page'
+    });
+  }
+
 })(jQuery);

@@ -169,31 +169,31 @@ ORDER BY ".$wpdb->_real_escape($orderby)." ".$wpdb->_real_escape($order)." LIMIT
 			$items[$user->ID] = get_user_by('ID', $user->ID);
 		}
 
-		$shops_user = get_user_meta(get_current_user_id(), 'sln_manager_shop_id');
-		if(!empty($shops_user)) {
-			$filtered_items = array();
-			foreach($items as $user_id => $item) {
-				$customer_obj = new SLN_Wrapper_Customer($item);
-				$shops_customer = array();
-				foreach ($customer_obj->getBookings() as $obj) {
-					try {
-						$shop_id = $obj->getMeta('shop');
-						if ($shop_id) {
-							$shop = SLN_Plugin::getInstance()->createFromPost($shop_id);
-							if (! array_key_exists($shop->getId(), $shops_customer)) {
-								$shops_customer[] = $shop->getId();
-							}
+	$shops_user = get_user_meta(get_current_user_id(), 'sln_manager_shop_id');
+	if(!empty($shops_user) && !current_user_can('administrator')) {
+		$filtered_items = array();
+		foreach($items as $user_id => $item) {
+			$customer_obj = new SLN_Wrapper_Customer($item);
+			$shops_customer = array();
+			foreach ($customer_obj->getBookings() as $obj) {
+				try {
+					$shop_id = $obj->getMeta('shop');
+					if ($shop_id) {
+						$shop = SLN_Plugin::getInstance()->createFromPost($shop_id);
+						if (! array_key_exists($shop->getId(), $shops_customer)) {
+							$shops_customer[] = $shop->getId();
 						}
-					} catch (\Exception $ex) {
-
 					}
-				}
-				if(!empty(array_intersect($shops_user, $shops_customer))) {
-					$filtered_items[$user_id] = $item;
+				} catch (\Exception $ex) {
+
 				}
 			}
-			$items = $filtered_items;
+			if(!empty(array_intersect($shops_user, $shops_customer))) {
+				$filtered_items[$user_id] = $item;
+			}
 		}
+		$items = $filtered_items;
+	}
 
 		$this->items = $items;
 

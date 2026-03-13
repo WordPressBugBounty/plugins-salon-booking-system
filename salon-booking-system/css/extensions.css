@@ -184,7 +184,80 @@
    Page header
    ============================================================ */
 .ext-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
     margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.ext-page-header__left {
+    min-width: 0;
+}
+
+.ext-refresh-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1.5px solid #2171b1;
+    background: transparent;
+    color: #2171b1;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+    flex-shrink: 0;
+}
+
+.ext-refresh-btn:hover,
+.ext-refresh-btn:focus {
+    background: #2171b1;
+    color: #fff;
+    text-decoration: none;
+}
+
+.ext-refresh-btn svg {
+    flex-shrink: 0;
+    transition: transform 0.4s ease;
+}
+
+.ext-refresh-btn.ext-refresh-btn--loading svg {
+    animation: ext-spin 0.7s linear infinite;
+}
+
+@keyframes ext-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Toast notification shown after cache is cleared */
+.ext-cache-toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #1a1a1a;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 10px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    z-index: 99999;
+    opacity: 0;
+    transition: opacity 0.25s, transform 0.25s;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.ext-cache-toast--visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
 }
 
 .ext-page-header__title {
@@ -485,6 +558,7 @@
     font-weight: 500;
     margin: 0 0 12px 0;
     line-height: 1.5;
+    text-align: center;
 }
 
 .ext-card__availability--included {
