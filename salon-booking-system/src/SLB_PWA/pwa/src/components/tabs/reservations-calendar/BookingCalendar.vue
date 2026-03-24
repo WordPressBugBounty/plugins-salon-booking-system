@@ -164,8 +164,8 @@ export default {
 }
 
 :deep(.dp__today:not(.dp__active_date)) .day {
-  border-color: green;
-  color: green;
+  border-color: #2563EB;
+  color: #2563EB;
 }
 
 :deep(.dp__calendar_header_separator) {
@@ -177,8 +177,8 @@ export default {
 }
 
 :deep(.dp__active_date) .day {
-  background: #04409f;
-  border-color: #fff;
+  background: #2563EB;
+  border-color: #2563EB;
   color: #fff;
 }
 
@@ -203,14 +203,15 @@ export default {
   width: 44px;
   height: 44px;
   padding: 0;
-  border: 2px solid #C7CED9;
+  border: 2px solid #E2E8F0;
   box-sizing: border-box;
   position: relative;
+  color: #0F172A;
 }
 
 .day-available-book, .day-with-bookings {
-  color: #04409f;
-  border-color: #04409f;
+  color: #2563EB;
+  border-color: #2563EB;
 }
 
 .day-with-bookings::before {
@@ -222,17 +223,17 @@ export default {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background-color: #04409f;
+  background-color: #2563EB;
 }
 
 .day-disable-book, .day-full-booked {
-  border-color: #C7CED9;
-  color: #c7ced9;
+  border-color: #E2E8F0;
+  color: #94A3B8;
 }
 
 .day-holiday {
-  color: #9F04048E;
-  border-color: #9F04048F;
+  color: #DC2626;
+  border-color: #FCA5A5;
 }
 
 .spinner-wrapper {

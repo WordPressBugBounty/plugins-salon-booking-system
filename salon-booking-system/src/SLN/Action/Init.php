@@ -107,6 +107,11 @@ class SLN_Action_Init
         }
 
 	add_action( 'profile_update', array($this, 'updateProfileLastUpdateTime') );
+	
+	// Clear user search cache when user data is updated
+	add_action( 'profile_update', array('SLN_Action_Ajax_SearchUser', 'clearSearchCache') );
+	add_action( 'user_register', array('SLN_Action_Ajax_SearchUser', 'clearSearchCache') );
+	add_action( 'updated_user_meta', array('SLN_Action_Ajax_SearchUser', 'clearSearchCache') );
 
         new SLN_Action_UpdatePhoneCountryDialCode($p);
     }

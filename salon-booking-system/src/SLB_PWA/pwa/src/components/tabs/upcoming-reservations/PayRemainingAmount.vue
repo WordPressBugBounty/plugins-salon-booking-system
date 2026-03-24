@@ -1,10 +1,13 @@
 <template>
-    <span class="remaining-amount-payment-link" v-show="show">
-        <img src="./../../../assets/requestpayment.png" @click="payAmount"/>
-        <b-spinner variant="primary" v-if="isLoading"></b-spinner>
-        <b-alert :show="isSuccess" fade variant="success">{{ this.getLabel('successMessagePayRemainingAmount') }}</b-alert>
-        <b-alert :show="isError" fade variant="danger">{{ this.getLabel('errorMessagePayRemainingAmount') }}</b-alert>
-    </span>
+  <span class="pay-remaining-wrap" v-show="show">
+    <button class="pay-btn" @click="payAmount" :disabled="isLoading" type="button">
+      <b-spinner small v-if="isLoading" />
+      <font-awesome-icon icon="fa-solid fa-credit-card" v-else />
+      {{ getLabel('successMessagePayRemainingAmount') || 'Pay Remaining' }}
+    </button>
+    <b-alert :show="isSuccess" fade variant="success" class="pay-alert">{{ getLabel('successMessagePayRemainingAmount') }}</b-alert>
+    <b-alert :show="isError" fade variant="danger" class="pay-alert">{{ getLabel('errorMessagePayRemainingAmount') }}</b-alert>
+  </span>
 </template>
 
 <script>
@@ -62,17 +65,32 @@
 </script>
 
 <style scoped>
-    .remaining-amount-payment-link :deep(.spinner-border) {
-        margin-left: 20px;
-    }
-    .remaining-amount-payment-link :deep(.alert) {
-        padding: 3px 15px;
-        font-size: 14px;
-        margin-left: 20px;
-        margin-bottom: 0;
-    }
-    .remaining-amount-payment-link {
-        display: flex;
-        align-items: center;
-    }
+.pay-remaining-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding-top: 4px;
+}
+.pay-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: var(--radius-pill, 999px);
+  border: 1.5px solid var(--color-primary, #2563EB);
+  background: var(--color-primary-light, #EFF6FF);
+  color: var(--color-primary, #2563EB);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+}
+.pay-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.pay-alert {
+  padding: 6px 12px;
+  margin-bottom: 0;
+  font-size: 13px;
+}
 </style>

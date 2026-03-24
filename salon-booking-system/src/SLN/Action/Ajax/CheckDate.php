@@ -57,6 +57,14 @@ class SLN_Action_Ajax_CheckDate extends SLN_Action_Ajax_Abstract
             }
         }
 
+        SLN_Plugin::addLog(sprintf(
+            '[TRACE_DATEFLOW][CheckDate.execute][IN] date=%s time=%s timezone=%s has_sln=%s',
+            isset($this->date) ? $this->date : 'NULL',
+            isset($this->time) ? $this->time : 'NULL',
+            isset($timezone) ? $timezone : '',
+            isset($_POST['sln']) ? 'yes' : 'no'
+        ));
+
         // Early validation: if no date was provided, return a user-facing error immediately.
         // This prevents a generic Exception from bubbling up to Plugin::ajax() which would
         // trigger an error notification email for what is simply a missing-input scenario.
@@ -92,8 +100,17 @@ class SLN_Action_Ajax_CheckDate extends SLN_Action_Ajax_Abstract
         if (!$isFromAdmin) {
             $suggestedDate = isset($ret['intervals']['suggestedDate']) ? $ret['intervals']['suggestedDate'] : null;
             $suggestedTime = isset($ret['intervals']['suggestedTime']) ? $ret['intervals']['suggestedTime'] : null;
+            $hasDates      = !empty($ret['intervals']['dates']);
+            $hasTimes      = !empty($ret['intervals']['times']);
         
-            if ($suggestedDate !== $this->date || $suggestedTime !== $this->time) {
+            // Clear errors when:
+            // (a) the system is suggesting a different date/time than what was requested — the JS
+            //     will automatically advance to the suggested slot, so validation errors for the old
+            //     slot are irrelevant; OR
+            // (b) dates are available but times are empty for the current slot — this means the JS
+            //     autoRetryEmptyTimes logic needs to kick in and try the next date. Returning
+            //     success:false here blocks that retry entirely.
+            if ($suggestedDate !== $this->date || $suggestedTime !== $this->time || ($hasDates && !$hasTimes)) {
                 unset($ret['errors']);
                 $ret['success'] = 1;
             }
@@ -104,6 +121,18 @@ class SLN_Action_Ajax_CheckDate extends SLN_Action_Ajax_Abstract
             $ret['debug']['dates'] = SLN_Helper_Availability_AdminRuleLog::getInstance()->getDateLog();
             SLN_Helper_Availability_AdminRuleLog::getInstance()->clear();
         }
+
+        $datesCount = (isset($ret['intervals']['dates']) && is_array($ret['intervals']['dates'])) ? count($ret['intervals']['dates']) : 0;
+        $timesCount = (isset($ret['intervals']['times']) && is_array($ret['intervals']['times'])) ? count($ret['intervals']['times']) : 0;
+        SLN_Plugin::addLog(sprintf(
+            '[TRACE_DATEFLOW][CheckDate.execute][OUT] success=%s errors=%d dates=%d times=%d suggestedDate=%s suggestedTime=%s',
+            isset($ret['success']) ? (string) $ret['success'] : '0',
+            isset($ret['errors']) && is_array($ret['errors']) ? count($ret['errors']) : 0,
+            $datesCount,
+            $timesCount,
+            isset($ret['intervals']['suggestedDate']) ? $ret['intervals']['suggestedDate'] : '',
+            isset($ret['intervals']['suggestedTime']) ? $ret['intervals']['suggestedTime'] : ''
+        ));
 
         return $ret;
     }

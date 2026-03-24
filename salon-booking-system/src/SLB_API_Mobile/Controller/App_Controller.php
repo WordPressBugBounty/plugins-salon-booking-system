@@ -158,6 +158,7 @@ class App_Controller extends REST_Controller
                 'hide_customers_phone' => (bool)$userRoleHelper->is_hide_customer_phone(),
                 'current_shop_id' => $shop_id,
                 'multishop_enabled' => class_exists('\SalonMultishop\Addon'),
+                'fidelity_score_enabled' => (bool)$s->get('enable_customer_fidelity_score'),
             );
             return $this->success_response(array('settings' => $settings));
         } catch (\Exception $ex) {

@@ -1,6 +1,6 @@
 <template>
-    <span class="booking-add">
-      <font-awesome-icon icon="fa-solid fa-circle-plus" :class="{available: isAvailable}" @click="add"/>
+    <span class="booking-add" :class="{available: isAvailable}" @click="add">
+      <font-awesome-icon icon="fa-solid fa-circle-plus" />
     </span>
 </template>
 
@@ -34,19 +34,17 @@ export default {
 </script>
 
 <style scoped>
-/* Base styling - unavailable slots (RED) */
 .booking-add {
   display: flex;
   align-items: center;
-  color: #dc3545; /* Red for unavailable slots */
+  color: #94A3B8;
   font-size: 35px;
   cursor: pointer !important;
   line-height: 1;
 }
 
-/* Available slots (BLUE) - keep current brand color */
 .booking-add.available {
-  color: #04409F; /* Blue for available slots */
+  color: #04409F;
 }
 
 .booking-add svg,

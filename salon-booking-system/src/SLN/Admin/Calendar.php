@@ -27,12 +27,7 @@ class SLN_Admin_Calendar extends SLN_Admin_AbstractPage
 
     public function show()
     {
-        echo $this->plugin->loadView(
-            'admin/calendar',
-            array(
-                'x' => 'x',
-            )
-        );
+        echo $this->plugin->loadView('admin/calendar', array());
     }
 
     public function enqueueAssets()

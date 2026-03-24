@@ -3,7 +3,7 @@
 /*
 Plugin Name: Salon Booking System - Free Version
 Description: Let your customers book you services through your website. Perfect for hairdressing salons, barber shops and beauty centers.
-Version: 10.30.22
+Version: 10.30.23
 Plugin URI: http://salonbookingsystem.com/
 Author: Salon Booking System
 Author URI: http://salonbookingsystem.com/
@@ -45,7 +45,7 @@ if (defined('SLN_PLUGIN_BASENAME')) {
 define('SLN_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('SLN_PLUGIN_DIR', untrailingslashit(dirname(__FILE__)));
 define('SLN_PLUGIN_URL', untrailingslashit(plugins_url('', __FILE__)));
-define('SLN_VERSION', '10.30.22');
+define('SLN_VERSION', '10.30.23');
 define('SLN_STORE_URL', 'https://salonbookingsystem.com');
 define('SLN_AUTHOR', 'Salon Booking');
 define('SLN_UPLOADS_DIR', wp_upload_dir()['basedir'] . '/sln_uploads/');
@@ -314,6 +314,11 @@ register_deactivation_hook(__FILE__, function () {
 			'body' => $payload
 		));
 		
+		// Send follow-up email if user provided detailed feedback
+		if ($survey_data && !empty($survey_data['feedback']) && trim($survey_data['feedback']) !== '') {
+			sln_send_deactivation_followup_email($survey_data);
+		}
+		
 		// Clean up transient
 		delete_transient('sln_deactivation_survey_data');
 		
@@ -322,5 +327,162 @@ register_deactivation_hook(__FILE__, function () {
 		return;
 	}
 });
+
+/**
+ * Send follow-up email to user after deactivation with feedback
+ * 
+ * This function sends a personalized email from support to users who:
+ * - Deactivated the plugin
+ * - Provided detailed written feedback
+ * - Encountered issues they're willing to discuss
+ * 
+ * @param array $survey_data Survey data from deactivation form
+ * @return bool True if email sent successfully, false otherwise
+ */
+if (!function_exists('sln_send_deactivation_followup_email')) {
+	function sln_send_deactivation_followup_email($survey_data) {
+		try {
+			// Get current user (person who deactivated the plugin)
+			$current_user = wp_get_current_user();
+			$user_email = $current_user->user_email;
+			
+			// Fallback to admin email if current user has no email
+			if (empty($user_email)) {
+				$user_email = get_option('admin_email');
+			}
+			
+			// Don't send if we still don't have a valid email
+			if (empty($user_email) || !is_email($user_email)) {
+				SLN_Plugin::addLog('Deactivation follow-up email skipped - no valid email address');
+				return false;
+			}
+			
+			// Get user's first name for personalization (fallback to generic greeting)
+			$user_name = '';
+			if ($current_user->exists()) {
+				$user_name = !empty($current_user->first_name) ? $current_user->first_name : $current_user->display_name;
+			}
+			
+			// Build email subject
+			$subject = 'May I help you with Salon Booking System activation?';
+			
+			// Build email body (HTML format)
+			$body = sln_build_deactivation_email_body($user_name, $survey_data);
+			
+			// Set email headers
+			$headers = array(
+				'From: Salon Booking System Support <support@salonbookingsystem.com>',
+				'Reply-To: support@salonbookingsystem.com',
+				'Content-Type: text/html; charset=UTF-8'
+			);
+			
+			// Send email (non-blocking - don't delay deactivation)
+			$sent = wp_mail($user_email, $subject, $body, $headers);
+			
+			if ($sent) {
+				SLN_Plugin::addLog("Deactivation follow-up email sent to: {$user_email}");
+			} else {
+				SLN_Plugin::addLog("Deactivation follow-up email failed to send to: {$user_email}");
+			}
+			
+			return $sent;
+			
+		} catch (Exception $e) {
+			// Fail silently - we don't want email failures to break deactivation
+			SLN_Plugin::addLog("Deactivation follow-up email exception: " . $e->getMessage());
+			return false;
+		}
+	}
+}
+
+/**
+ * Build HTML email body for deactivation follow-up
+ * 
+ * @param string $user_name User's first name or display name
+ * @param array $survey_data Survey data including reason and feedback
+ * @return string HTML email body
+ */
+if (!function_exists('sln_build_deactivation_email_body')) {
+	function sln_build_deactivation_email_body($user_name, $survey_data) {
+		// Get site URL for context
+		$site_url = home_url();
+		$site_name = get_bloginfo('name');
+		
+		// Greeting personalization
+		$greeting = !empty($user_name) ? "Hi {$user_name}" : "Hi";
+		
+		// Get deactivation reason for reference
+		$reason_labels = array(
+			'setup_too_complex' => 'Setup too complex',
+			'not_what_expected' => "It's not what I expected",
+			'missing_feature' => 'Missing a key feature',
+			'just_trying' => 'Just trying it out',
+			'other' => 'Other'
+		);
+		$reason = isset($survey_data['reason']) ? $survey_data['reason'] : 'other';
+		$reason_text = isset($reason_labels[$reason]) ? $reason_labels[$reason] : 'Other';
+		
+		// Build HTML email
+		$html = '<!DOCTYPE html>';
+		$html .= '<html lang="en">';
+		$html .= '<head>';
+		$html .= '<meta charset="UTF-8">';
+		$html .= '<meta name="viewport" content="width=device-width, initial-scale=1.0">';
+		$html .= '<title>May I help you with Salon Booking System?</title>';
+		$html .= '</head>';
+		$html .= '<body style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Oxygen-Sans, Ubuntu, Cantarell, \'Helvetica Neue\', sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">';
+		
+		// Email content
+		$html .= '<div style="background: #f8f9fa; padding: 30px; border-radius: 8px; border-left: 4px solid #2271b1;">';
+		
+		$html .= '<p style="font-size: 16px; margin-bottom: 20px;">' . esc_html($greeting) . ',</p>';
+		
+		$html .= '<p style="font-size: 16px; margin-bottom: 20px;">';
+		$html .= 'I\'m Dimitri, founder of <strong>Salon Booking System</strong>. Thank you for giving our plugin a chance.';
+		$html .= '</p>';
+		
+		$html .= '<p style="font-size: 16px; margin-bottom: 20px;">';
+		$html .= 'We noticed that you had a problem during the plugin activation and on-boarding process. ';
+		$html .= 'If you don\'t mind, we would take a closer look at that problem and try to find a solution.';
+		$html .= '</p>';
+		
+		$html .= '<p style="font-size: 16px; margin-bottom: 20px;">';
+		$html .= 'If you agree, please <strong>reply to this email</strong> providing the link of your website and login credentials. ';
+		$html .= 'We\'ll take a look as soon as possible.';
+		$html .= '</p>';
+		
+		$html .= '<div style="background: white; padding: 20px; border-radius: 6px; margin: 25px 0; border: 1px solid #ddd;">';
+		$html .= '<p style="margin: 0 0 10px; font-size: 14px; color: #666;"><strong>Your feedback:</strong></p>';
+		$html .= '<p style="margin: 0 0 10px; font-size: 14px; color: #666;"><em>Reason: ' . esc_html($reason_text) . '</em></p>';
+		$html .= '<p style="margin: 0; font-size: 15px; font-style: italic; color: #444;">';
+		$html .= '"' . esc_html($survey_data['feedback']) . '"';
+		$html .= '</p>';
+		$html .= '</div>';
+		
+		$html .= '<p style="font-size: 16px; margin-bottom: 20px;">';
+		$html .= 'Thank you for your attention.';
+		$html .= '</p>';
+		
+		$html .= '<p style="font-size: 16px; margin-bottom: 0;">';
+		$html .= 'All the best,<br>';
+		$html .= '<strong>The Staff - Salon Booking System</strong>';
+		$html .= '</p>';
+		
+		$html .= '</div>';
+		
+		// Footer
+		$html .= '<div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e5e5; font-size: 13px; color: #666; text-align: center;">';
+		$html .= '<p style="margin: 0 0 10px;">This email was sent because you deactivated Salon Booking System on:</p>';
+		$html .= '<p style="margin: 0 0 10px;"><strong>' . esc_html($site_name) . '</strong><br>';
+		$html .= '<a href="' . esc_url($site_url) . '" style="color: #2271b1; text-decoration: none;">' . esc_html($site_url) . '</a></p>';
+		$html .= '<p style="margin: 20px 0 0; font-size: 12px; color: #999;">Salon Booking System | <a href="https://www.salonbookingsystem.com" style="color: #2271b1;">salonbookingsystem.com</a></p>';
+		$html .= '</div>';
+		
+		$html .= '</body>';
+		$html .= '</html>';
+		
+		return $html;
+	}
+}
 
 ob_start();

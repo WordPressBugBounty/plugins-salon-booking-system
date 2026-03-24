@@ -48,11 +48,13 @@ export default {
 }
 
 .time-axis-item {
-  color: #5f5f5f;
-  padding: 7px 14px 0 0;
-  font-size: 14px;
-  border-bottom: 1px solid #ddd;
+  color: #94A3B8;
+  padding: 7px 10px 0 0;
+  font-size: 12px;
+  font-weight: 400;
+  border-bottom: 1px solid #E2E8F0;
   box-sizing: border-box;
+  text-align: right;
 }
 
 .time-axis-item:last-child {

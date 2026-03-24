@@ -12,12 +12,13 @@
       <b-spinner variant="light" small></b-spinner>
     </div>
     
-    <div class="booking">
+    <div class="booking" :class="{ 'no-show': booking.no_show }" @click="showDetails">
       <div class="customer-info">
         <div class="customer-info-header">
-          <span class="customer-name" @click="showDetails">{{ customer }}</span>
-          <span class="booking-id">{{ id }}</span>
+          <span class="customer-name">{{ customer }}</span>
+          <span class="status-badge" :style="statusBadgeStyle">{{ statusLabel }}</span>
         </div>
+        <span class="booking-id">{{ id }}</span>
       </div>
       <div class="services-list">
         <div
@@ -30,26 +31,66 @@
         </div>
       </div>
 
+      <!-- Customer Note -->
+      <div class="customer-note" v-if="booking.note">
+        <span class="note-icon">💬</span>
+        <span class="note-text">{{ booking.note }}</span>
+      </div>
+
       <div class="booking-actions-bottom">
         <!-- Walk-In Badge -->
         <div v-if="booking.is_walkin" class="walkin-badge" title="Walk-In">
           🚶
         </div>
         
-        <button class="booking-actions-menu-dots" @click.stop="toggleActionsMenu">
-          &bull;&bull;&bull;
+        <!-- No-show (PRO + salon setting only) -->
+        <button 
+          v-if="canUsePwaNoShowControl"
+          class="no-show-icon"
+          :class="{ 'active': booking.no_show }"
+          @click.stop="toggleNoShow"
+          :disabled="isProcessingNoShow"
+          :title="booking.no_show ? 'Marked as No-Show (click to unmark)' : 'Mark as No-Show'"
+        >
+          <span class="no-show-icon-svg"></span>
         </button>
-      </div>
-
-      <div class="booking-status">
-        <span class="status-label">{{ statusLabel }}</span>
+        
+        <!-- Approve/Reject Actions for Pending Bookings -->
+        <div v-if="showApprovalActions" class="approval-actions" @click.stop>
+          <button 
+            class="approval-btn approve-btn" 
+            @click="approveBooking"
+            :disabled="isProcessingStatus"
+            title="Approve booking"
+          >
+            👍
+          </button>
+          <button 
+            class="approval-btn reject-btn" 
+            @click="rejectBooking"
+            :disabled="isProcessingStatus"
+            title="Reject booking"
+          >
+            👎
+          </button>
+        </div>
+        
+        <!-- Trash for no-show bookings (same gate as no-show control) -->
+        <button 
+          v-if="canUsePwaNoShowControl && booking.no_show"
+          class="trash-icon"
+          @click.stop="confirmDelete"
+          :disabled="isDelete"
+          title="Delete no-show booking"
+        >
+          <span class="trash-icon-svg"></span>
+        </button>
       </div>
     </div>
     
-    <!-- MOBILE-OPTIMIZED RESIZE HANDLE -->
-    <div class="resize-handle" ref="resizeHandle">
+    <!-- MOBILE-OPTIMIZED RESIZE HANDLE (invisible but functional); optional off via Profile -->
+    <div v-if="bookingDragResizeEnabled" class="resize-handle" ref="resizeHandle">
       <div class="resize-handle-visual">
-        <span class="handle-icon">⋮⋮⋮</span>
       </div>
     </div>
     
@@ -111,6 +152,8 @@ export default {
       currentDuration: null,
       isValidResize: true,
       resizeHandlers: null,
+      isProcessingStatus: false,
+      isProcessingNoShow: false,
     }
   },
   computed: {
@@ -135,9 +178,38 @@ export default {
       }
       return statusKey
     },
+    statusColor() {
+      const map = {
+        'sln-b-confirmed': '#16A34A',
+        'sln-b-paid': '#16A34A',
+        'sln-b-pending': '#D97706',
+        'sln-b-pendingpayment': '#D97706',
+        'sln-b-paylater': '#0891B2',
+        'sln-b-cancelled': '#DC2626',
+      };
+      return map[this.booking.status] || '#2563EB';
+    },
+    statusBadgeStyle() {
+      const color = this.statusColor;
+      return {
+        backgroundColor: color + '1F',
+        color: color,
+      };
+    },
     bookingStartTime() {
       // Use _serviceTime.start for attendant view, fallback to booking.time
       return this.booking._serviceTime?.start || this.booking.time || this.booking.start;
+    },
+    showApprovalActions() {
+      // Show approve/reject buttons if:
+      // 1. Manual confirmation is enabled in settings
+      // 2. Booking status is pending
+      const isPending = this.booking.status === 'sln-b-pending';
+      const manualConfirmationEnabled = this.$root.settings?.confirmation_mode === 'manual';
+      return isPending && manualConfirmationEnabled;
+    },
+    bookingDragResizeEnabled() {
+      return !this.$root.disableBookingDragResize;
     },
   },
   watch: {
@@ -146,11 +218,23 @@ export default {
       handler() {
         this.destroyNativeResize();
         this.$nextTick(() => {
-          this.initializeNativeResize();
+          if (this.bookingDragResizeEnabled) {
+            this.initializeNativeResize();
+          }
         });
       },
       deep: true
-    }
+    },
+    bookingDragResizeEnabled(enabled) {
+      this.destroyNativeResize();
+      if (enabled) {
+        this.$nextTick(() => {
+          if (this.$refs.bookingCard && this.$refs.resizeHandle) {
+            this.initializeNativeResize();
+          }
+        });
+      }
+    },
   },
   mounted() {
     console.log('🟢 BookingCard mounted(), booking ID:', this.booking.id);
@@ -160,9 +244,9 @@ export default {
         bookingCard: !!this.$refs.bookingCard,
         resizeHandle: !!this.$refs.resizeHandle
       });
-      if (this.$refs.bookingCard && this.$refs.resizeHandle) {
+      if (this.bookingDragResizeEnabled && this.$refs.bookingCard && this.$refs.resizeHandle) {
         this.initializeNativeResize();
-      } else {
+      } else if (this.bookingDragResizeEnabled) {
         console.warn('⚠️ BookingCard refs not available in mounted()');
       }
     });
@@ -181,10 +265,15 @@ export default {
     onDelete() {
       this.$emit('deleteItem', this.booking.id);
     },
+    confirmDelete() {
+      // Emit delete event directly for no-show bookings
+      this.$emit('deleteItem', this.booking.id);
+    },
     onViewProfile(customer) {
       this.$emit('viewCustomerProfile', customer);
     },
     showDetails() {
+      if (this.isResizing) return;
       this.$emit('showDetails', this.booking);
     },
     getLabel(labelKey) {
@@ -241,6 +330,9 @@ export default {
       return time;
     },
     initializeNativeResize() {
+      if (!this.bookingDragResizeEnabled) {
+        return;
+      }
       console.log('🔵 initializeNativeResize() called for booking ID:', this.booking.id);
       const bookingCard = this.$refs.bookingCard;
       const resizeHandle = this.$refs.resizeHandle;
@@ -498,8 +590,117 @@ export default {
         }
       }
     },
+    async approveBooking() {
+      if (this.isProcessingStatus) return;
+      
+      this.isProcessingStatus = true;
+      
+      try {
+        // Call the backend API to update booking status to confirmed
+        const response = await this.axios.patch(`bookings/${this.booking.id}`, {
+          status: 'sln-b-confirmed'
+        });
+        
+        if (response.data) {
+          // Emit event to parent to refresh the booking
+          this.$emit('booking-status-changed', {
+            bookingId: this.booking.id,
+            newStatus: 'sln-b-confirmed'
+          });
+          
+          // Show success message
+          this.$root.$emit('show-notification', {
+            type: 'success',
+            message: 'Booking approved successfully'
+          });
+        }
+      } catch (error) {
+        console.error('Error approving booking:', error);
+        this.$root.$emit('show-notification', {
+          type: 'error',
+          message: 'Failed to approve booking'
+        });
+      } finally {
+        this.isProcessingStatus = false;
+      }
+    },
+    async rejectBooking() {
+      if (this.isProcessingStatus) return;
+      
+      this.isProcessingStatus = true;
+      
+      try {
+        // Call the backend API to update booking status to cancelled
+        const response = await this.axios.patch(`bookings/${this.booking.id}`, {
+          status: 'sln-b-cancelled'
+        });
+        
+        if (response.data) {
+          // Emit event to parent to refresh the booking
+          this.$emit('booking-status-changed', {
+            bookingId: this.booking.id,
+            newStatus: 'sln-b-cancelled'
+          });
+          
+          // Show success message
+          this.$root.$emit('show-notification', {
+            type: 'success',
+            message: 'Booking rejected successfully'
+          });
+        }
+      } catch (error) {
+        console.error('Error rejecting booking:', error);
+        this.$root.$emit('show-notification', {
+          type: 'error',
+          message: 'Failed to reject booking'
+        });
+      } finally {
+        this.isProcessingStatus = false;
+      }
+    },
+    async toggleNoShow() {
+      if (!this.canUsePwaNoShowControl || this.isProcessingNoShow) return;
+      
+      this.isProcessingNoShow = true;
+      
+      try {
+        // Toggle the no-show status
+        const newNoShowStatus = !this.booking.no_show;
+        
+        // Call backend API to toggle no-show
+        const response = await this.axios.post('bookings/no-show', {
+          bookingId: this.booking.id,
+          noShow: newNoShowStatus ? 1 : 0
+        });
+        
+        if (response.data && response.data.success) {
+          // Update local booking data
+          this.booking.no_show = newNoShowStatus;
+          
+          // Emit event to parent to refresh
+          this.$emit('booking-no-show-changed', {
+            bookingId: this.booking.id,
+            noShow: newNoShowStatus
+          });
+          
+          // Show success message
+          this.$root.$emit('show-notification', {
+            type: 'success',
+            message: newNoShowStatus ? 'Marked as no-show' : 'Unmarked as no-show'
+          });
+        }
+      } catch (error) {
+        console.error('Error toggling no-show:', error);
+        this.$root.$emit('show-notification', {
+          type: 'error',
+          message: 'Failed to update no-show status'
+        });
+      } finally {
+        this.isProcessingNoShow = false;
+      }
+    },
   },
-  emits: ['deleteItem', 'showDetails', 'edit', 'viewCustomerProfile', 'resize-start', 'resize-update', 'resize-end'],
+  emits: ['deleteItem', 'showDetails', 'edit', 'viewCustomerProfile', 'resize-start', 'resize-update', 'resize-end', 'booking-status-changed', 'booking-no-show-changed'],
 }
 </script>
 
@@ -541,36 +742,50 @@ export default {
 }
 
 .booking {
-  margin: 10px; /* FIXED: Moved padding here as margin */
-  background-color: rgb(225 230 239 / 70%);
-  border-radius: 12px;
-  width: calc(100% - 20px);
-  height: calc(100% - 20px);
-  padding: 8px 12px;
+  margin: 6px;
+  background-color: #FFFFFF;
+  border-radius: 8px;
+  width: calc(100% - 12px);
+  height: calc(100% - 12px);
+  padding: 8px 10px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  border: 1px solid #e1e6ef;
-  backdrop-filter: blur(5px);
-  pointer-events: none;
-  box-shadow: 0 0 10px 1px rgb(0 0 0 / 10%);
+  gap: 4px;
+  border: 1px solid #E2E8F0;
+  pointer-events: auto;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   position: relative;
   transition: background-color 0.2s;
+  overflow: hidden;
 }
 
 .booking-wrapper.is-resizing .booking {
-  background-color: rgb(225 230 239 / 95%); /* More opaque during drag */
-  border-color: #04409F;
+  background-color: #F8FAFC;
+  border-color: #E2E8F0;
 }
 
-.booking-status {
-  position: absolute;
-  bottom: 12px;
-  right: 12px;
-  text-transform: uppercase;
+/* No-Show Diagonal Stripes Background */
+.booking.no-show {
+  background-image: repeating-linear-gradient(
+    45deg,
+    #FFFFFF,
+    #FFFFFF 10px,
+    #F1F5F9 10px,
+    #F1F5F9 20px
+  );
+  background-color: #FFFFFF;
+}
+
+.status-badge {
+  padding: 2px 8px;
+  border-radius: 12px;
   font-size: 10px;
-  letter-spacing: -0.1px;
-  color: #637491;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .booking-actions {
@@ -583,7 +798,7 @@ export default {
 .booking-actions-button {
   background: none;
   border: none;
-  color: #04409F;
+  color: #2563EB;
   font-size: 20px;
   padding: 5px 10px;
   cursor: pointer;
@@ -593,32 +808,30 @@ export default {
 .customer-name {
   white-space: nowrap;
   overflow: hidden;
-  color: #04409F;
-  font-size: 16px;
-  font-weight: 700;
+  color: #0F172A;
+  font-size: 14px;
+  font-weight: 600;
   text-overflow: ellipsis;
-  margin-right: 10px;
-  cursor: pointer;
-  pointer-events: auto;
+  margin-right: 8px;
 }
 
 .customer-info {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .customer-info-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: 100%;
+  gap: 8px;
 }
 
 .booking-id {
   font-size: 12px;
-  color: #637491;
-  font-weight: bold;
+  color: #94A3B8;
+  font-weight: 500;
 }
 
 .services-list {
@@ -640,21 +853,49 @@ export default {
 }
 
 .services-list .service-item .service-name {
-  color: #637491;
-  font-size: 13px;
+  color: #64748B;
+  font-size: 12px;
   text-align: left;
 }
 
 .services-list .service-item .assistant-name {
-  color: #637491;
+  color: #94A3B8;
   font-size: 11px;
+}
+
+.customer-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 6px 8px;
+  background: #F8FAFC;
+  border-radius: 8px;
+  border: 1px solid #E2E8F0;
+}
+
+.note-icon {
+  font-size: 12px;
+  line-height: 1.4;
+  flex-shrink: 0;
+}
+
+.note-text {
+  font-size: 11px;
+  color: #64748B;
+  line-height: 1.4;
+  word-break: break-word;
 }
 
 .booking-actions-bottom {
   position: absolute;
   left: 12px;
   bottom: 8px;
+  right: 12px;
   z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .booking-actions-menu-dots {
@@ -686,13 +927,13 @@ export default {
   background: linear-gradient(
     to bottom,
     transparent 0%,
-    rgba(4, 64, 159, 0.05) 100%
+    rgba(37, 99, 235, 0.05) 100%
   );
-  border-radius: 0 0 8px 8px; /* 30% smaller: 12px * 0.7 = 8px */
+  border-radius: 0 0 8px 8px;
 }
 
 .resize-handle-visual {
-  background: rgba(4, 64, 159, 0.15);
+  background: rgba(37, 99, 235, 0.15);
   border-radius: 8px; /* 30% smaller: 12px * 0.7 = 8px */
   padding: 4px 17px; /* 30% smaller: 6px 24px * 0.7 = 4px 17px */
   opacity: 1; /* Always visible on mobile */
@@ -701,23 +942,23 @@ export default {
 }
 
 .booking-wrapper.is-resizing .resize-handle {
-  cursor: grabbing !important; /* Active drag cursor */
+  cursor: grabbing !important;
   background: linear-gradient(
     to bottom,
     transparent 0%,
-    rgba(4, 64, 159, 0.15) 100%
+    rgba(37, 99, 235, 0.15) 100%
   );
 }
 
 .booking-wrapper.is-resizing .resize-handle-visual {
-  background: rgba(4, 64, 159, 0.35);
+  background: rgba(37, 99, 235, 0.35);
   padding: 6px 22px; /* 30% smaller: 8px 32px * 0.7 = 6px 22px */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .handle-icon {
-  font-size: 13px; /* 30% smaller: 18px * 0.7 = 13px */
-  color: #04409F;
+  font-size: 13px;
+  color: #2563EB;
   letter-spacing: 1.4px; /* 30% smaller: 2px * 0.7 = 1.4px */
   user-select: none;
   font-weight: bold;
@@ -729,7 +970,7 @@ export default {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: #04409F;
+  background: #2563EB;
   color: white;
   padding: 10px 20px;
   border-radius: 10px;
@@ -737,7 +978,7 @@ export default {
   font-size: 18px;
   pointer-events: none;
   z-index: 1000;
-  box-shadow: 0 4px 16px rgba(4, 64, 159, 0.5);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4);
   animation: fadeIn 0.2s ease-in;
 }
 
@@ -765,6 +1006,154 @@ export default {
   transform: scale(1.2);
 }
 
+/* No-Show Icon */
+.no-show-icon {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  margin-left: 8px;
+}
+
+.no-show-icon:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.no-show-icon-svg {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  background-color: #2171B1; /* Blue by default (inactive) */
+  -webkit-mask-size: 22px;
+  mask-size: 22px;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M23.7778 17.25C23.7778 16.388 24.1056 15.5614 24.689 14.9519C25.2724 14.3424 26.0638 14 26.8889 14C27.714 14 28.5053 14.3424 29.0888 14.9519C29.6722 15.5614 30 16.388 30 17.25V23.75M26.8889 27H5.11111C4.28599 27 3.49467 26.6576 2.91122 26.0481C2.32778 25.4386 2 24.612 2 23.75V17.25C2 16.388 2.32778 15.5614 2.91122 14.9519C3.49467 14.3424 4.28599 14 5.11111 14C5.93623 14 6.72755 14.3424 7.311 14.9519C7.89445 15.5614 8.22222 16.388 8.22222 17.25V20.5H20.7227' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M5 14V6.50001C4.99947 6.04743 5.07045 5.59737 5.21057 5.16501M8.333 2.19501C8.78074 2.06492 9.24627 1.9992 9.71429 2.00001H22.2857C23.536 2.00001 24.7351 2.47411 25.6192 3.31803C26.5033 4.16194 27 5.30653 27 6.50001V14' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M7 27V30' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M25 27V30' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M2 2L30 30' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M23.7778 17.25C23.7778 16.388 24.1056 15.5614 24.689 14.9519C25.2724 14.3424 26.0638 14 26.8889 14C27.714 14 28.5053 14.3424 29.0888 14.9519C29.6722 15.5614 30 16.388 30 17.25V23.75M26.8889 27H5.11111C4.28599 27 3.49467 26.6576 2.91122 26.0481C2.32778 25.4386 2 24.612 2 23.75V17.25C2 16.388 2.32778 15.5614 2.91122 14.9519C3.49467 14.3424 4.28599 14 5.11111 14C5.93623 14 6.72755 14.3424 7.311 14.9519C7.89445 15.5614 8.22222 16.388 8.22222 17.25V20.5H20.7227' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M5 14V6.50001C4.99947 6.04743 5.07045 5.59737 5.21057 5.16501M8.333 2.19501C8.78074 2.06492 9.24627 1.9992 9.71429 2.00001H22.2857C23.536 2.00001 24.7351 2.47411 25.6192 3.31803C26.5033 4.16194 27 5.30653 27 6.50001V14' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M7 27V30' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M25 27V30' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M2 2L30 30' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  transition: all 0.2s ease;
+}
+
+/* Active state - when booking is marked as no-show */
+.no-show-icon.active .no-show-icon-svg {
+  background-color: #EC1E1E; /* Red when active */
+}
+
+/* Hover states */
+.no-show-icon:hover:not(:disabled) .no-show-icon-svg {
+  transform: scale(1.1);
+}
+
+.no-show-icon:not(.active):hover:not(:disabled) .no-show-icon-svg {
+  background-color: #1a5a8e; /* Darker blue on hover (inactive) */
+}
+
+.no-show-icon.active:hover:not(:disabled) .no-show-icon-svg {
+  background-color: #d11a1a; /* Darker red on hover (active) */
+}
+
+.no-show-icon:active:not(:disabled) .no-show-icon-svg {
+  transform: scale(1);
+}
+
+/* Trash Icon for No-Show Bookings */
+.trash-icon {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.trash-icon:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.trash-icon-svg {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  background-color: #DC2626;
+  -webkit-mask-size: 22px;
+  mask-size: 22px;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 29 33' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.375 7.75033H4.29167M4.29167 7.75033H27.625M4.29167 7.75033V28.167C4.29167 28.9405 4.59896 29.6824 5.14594 30.2294C5.69292 30.7764 6.43479 31.0837 7.20833 31.0837H21.7917C22.5652 31.0837 23.3071 30.7764 23.8541 30.2294C24.401 29.6824 24.7083 28.9405 24.7083 28.167V7.75033M8.66667 7.75033V4.83366C8.66667 4.06011 8.97396 3.31824 9.52094 2.77126C10.0679 2.22428 10.8098 1.91699 11.5833 1.91699H17.4167C18.1902 1.91699 18.9321 2.22428 19.4791 2.77126C20.026 3.31824 20.3333 4.06011 20.3333 4.83366V7.75033M11.5833 15.042V23.792M17.4167 15.042V23.792' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 29 33' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.375 7.75033H4.29167M4.29167 7.75033H27.625M4.29167 7.75033V28.167C4.29167 28.9405 4.59896 29.6824 5.14594 30.2294C5.69292 30.7764 6.43479 31.0837 7.20833 31.0837H21.7917C22.5652 31.0837 23.3071 30.7764 23.8541 30.2294C24.401 29.6824 24.7083 28.9405 24.7083 28.167V7.75033M8.66667 7.75033V4.83366C8.66667 4.06011 8.97396 3.31824 9.52094 2.77126C10.0679 2.22428 10.8098 1.91699 11.5833 1.91699H17.4167C18.1902 1.91699 18.9321 2.22428 19.4791 2.77126C20.026 3.31824 20.3333 4.06011 20.3333 4.83366V7.75033M11.5833 15.042V23.792M17.4167 15.042V23.792' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  transition: all 0.2s ease;
+}
+
+.trash-icon:hover:not(:disabled) .trash-icon-svg {
+  background-color: #b91c1c;
+  transform: scale(1.1);
+}
+
+.trash-icon:active:not(:disabled) .trash-icon-svg {
+  transform: scale(1);
+}
+
+/* Approval Actions */
+.approval-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.approval-btn {
+  background: white;
+  border: 2px solid;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.approval-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.approve-btn {
+  border-color: #16A34A;
+  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+}
+
+.approve-btn:hover:not(:disabled) {
+  background: #16A34A;
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(22, 163, 74, 0.3);
+}
+
+.reject-btn {
+  border-color: #DC2626;
+  background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);
+}
+
+.reject-btn:hover:not(:disabled) {
+  background: #DC2626;
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3);
+}
+
 /* DESKTOP: Add hover states (using media query) */
 @media (hover: hover) {
   .resize-handle {
@@ -777,7 +1166,7 @@ export default {
   
   .resize-handle:hover .resize-handle-visual {
     opacity: 1;
-    background: rgba(4, 64, 159, 0.2);
+    background: rgba(37, 99, 235, 0.2);
   }
   
   .booking-wrapper.is-resizing * {

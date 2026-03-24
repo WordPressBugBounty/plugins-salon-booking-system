@@ -179,7 +179,7 @@ class SLN_Service_BookingPersistence
                 ),
                 self::TRANSIENT_TTL
             );
-
+            
             return;
         }
 

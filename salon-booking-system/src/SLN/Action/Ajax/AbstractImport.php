@@ -58,11 +58,15 @@ abstract class SLN_Action_Ajax_AbstractImport extends SLN_Action_Ajax_Abstract
         }
         set_transient($this->getTransientKey(), $filename, 60 * 60 * 24);
 
-        $fh = fopen($filename, 'r');
-        $headers = fgetcsv($fh); // headers
+        $fh        = fopen($filename, 'r');
+        $firstLine = fgets($fh);
+        rewind($fh);
+        $separator = substr_count($firstLine, ';') > substr_count($firstLine, ',') ? ';' : ',';
+
+        $headers = fgetcsv($fh, 0, $separator); // headers
 
         $items = array();
-        while($row = fgetcsv($fh)) {
+        while($row = fgetcsv($fh, 0, $separator)) {
             $item = array();
             foreach($row as $i => $v) {
                 $item[$headers[$i]] = $v;

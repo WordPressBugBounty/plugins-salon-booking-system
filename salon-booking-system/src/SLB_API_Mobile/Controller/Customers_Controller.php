@@ -439,6 +439,8 @@ class Customers_Controller extends REST_Controller
             return $a[$key] > $b[$key] ? -1 : 1;
         });
 
+        $fidelity_enabled = (bool) SLN_Plugin::getInstance()->getSettings()->get('enable_customer_fidelity_score');
+
         return array(
             'id'         => $customer->getId(),
             'first_name' => $customer->get('first_name'),
@@ -450,6 +452,7 @@ class Customers_Controller extends REST_Controller
             'note'       => $customer->getMeta('personal_note'),
             'bookings'   => $bookings,
             'total_amount_reservations' => $customer->getAmountOfReservations(),
+            'score'      => $fidelity_enabled ? $customer->getFidelityScore() : null,
             'photos'     => $customer_photos,
         );
     }

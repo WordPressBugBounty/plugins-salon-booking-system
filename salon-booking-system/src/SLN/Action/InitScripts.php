@@ -3,7 +3,7 @@
 
 class SLN_Action_InitScripts
 {
-    const ASSETS_VERSION = SLN_VERSION . '-20260305-calendar-grid';
+    const ASSETS_VERSION = SLN_VERSION . '-20260318-smart-avail-1';
 	private static $isInclude = false;
 	private $isAdmin;
 	private $plugin;

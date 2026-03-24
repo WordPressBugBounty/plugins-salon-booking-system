@@ -18,8 +18,9 @@
           />
           <font-awesome-icon v-else icon="fa-solid fa-user-alt" class="default-avatar-icon"/>
         </div>
-        <div class="attendant-name" :title="attendant.name">
-          {{ attendant.name }}
+        <div class="attendant-name" :title="nameWithCount(attendant)">
+          <span class="attendant-name-text">{{ attendant.name }}</span>
+          <span class="attendant-booking-count">({{ rawBookingCount(attendant.id) }})</span>
         </div>
       </div>
     </div>
@@ -45,6 +46,21 @@ export default {
     isHidden: {
       type: Boolean,
       default: false
+    },
+    /** Map assistant id -> count of distinct bookings on the selected day */
+    bookingCountsByAttendantId: {
+      type: Object,
+      default: () => ({})
+    }
+  },
+  methods: {
+    rawBookingCount(attendantId) {
+      const map = this.bookingCountsByAttendantId || {};
+      const n = map[attendantId] ?? map[String(attendantId)];
+      return typeof n === 'number' ? n : 0;
+    },
+    nameWithCount(attendant) {
+      return `${attendant.name} (${this.rawBookingCount(attendant.id)})`;
     }
   }
 };
@@ -74,10 +90,10 @@ export default {
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background: rgb(255 255 255 / 50%);
+  background: transparent;
   border-radius: 8px;
   height: 48px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, .05);
+  box-shadow: none;
 }
 
 .attendant-avatar {
@@ -88,8 +104,8 @@ export default {
   height: 32px;
   border-radius: 50%;
   overflow: hidden;
-  border: 2px solid #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 2px solid rgba(226, 232, 240, 0.95);
+  box-shadow: none;
   color: #04409F;
 }
 
@@ -106,7 +122,23 @@ export default {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 200px;
+  max-width: 240px;
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  min-width: 0;
+}
+
+.attendant-name-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.attendant-booking-count {
+  flex-shrink: 0;
+  font-weight: 600;
+  font-size: 0.92em;
+  color: #64748b;
 }
 
 .attendant-column {

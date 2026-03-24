@@ -58,6 +58,10 @@ class Bookings_Controller extends REST_Controller
                             'type' => 'integer',
                         ),
                     ),
+                    'shop' => array(
+                        'description' => __( 'Shop id.', 'salon-booking-system' ),
+                        'type'        => 'integer',
+                    ),
                     'start_date' => array(
                         'description'       => __('Start date.', 'salon-booking-system'),
                         'type'              => 'string',
@@ -245,6 +249,26 @@ class Bookings_Controller extends REST_Controller
                 'permission_callback' => array( $this, 'get_item_permissions_check' ),
             ),
         ) );
+
+        register_rest_route( $this->namespace, '/' . $this->rest_base . '/no-show', array(
+            array(
+                'methods'             => WP_REST_Server::CREATABLE,
+                'callback'            => array( $this, 'toggle_no_show' ),
+                'permission_callback' => array( $this, 'update_item_permissions_check' ),
+                'args'                => array(
+                    'bookingId' => array(
+                        'description' => __( 'Booking ID.', 'salon-booking-system' ),
+                        'type'        => 'integer',
+                        'required'    => true,
+                    ),
+                    'noShow' => array(
+                        'description' => __( 'No-show status (0 or 1).', 'salon-booking-system' ),
+                        'type'        => 'integer',
+                        'required'    => true,
+                    ),
+                ),
+            ),
+        ) );
     }
 
     public function get_stats( $request )
@@ -328,11 +352,15 @@ class Bookings_Controller extends REST_Controller
 
     public function get_items( $request )
     {
+        error_log('🔵 Bookings API get_items called');
+        error_log('🔵 Request params: ' . print_r($request->get_params(), true));
         if( !current_user_can( 'manage_salon' ) ){
+            error_log('🔴 Permission denied: user cannot manage_salon');
             return rest_ensure_response( array(
                 'status' => '403',
                 ) );
         }
+        error_log('🔵 Permission OK');
         $prepared_args          = array();
         $prepared_args['order'] = $request->get_param('order');
         $prepared_args['order'] = isset($prepared_args['order']) && in_array(strtolower($prepared_args['order']), array('asc', 'desc')) ? $prepared_args['order'] : 'asc';
@@ -413,6 +441,27 @@ class Bookings_Controller extends REST_Controller
 
         if ($request->get_param('customers')) {
             $prepared_args['author__in'] = $request->get_param('customers');
+            error_log('🔵 Customers filter applied: ' . print_r($prepared_args['author__in'], true));
+        }
+
+        if ($request->get_param('shop')) {
+            if ( ! isset( $prepared_args['meta_query'] ) ) {
+                $prepared_args['meta_query'] = array();
+            }
+
+            // Include bookings with matching shop OR no shop (for backward compatibility)
+            $prepared_args['meta_query'][] = array(
+                'relation' => 'OR',
+                array(
+                    'key'     => '_sln_booking_shop',
+                    'value'   => $request->get_param('shop'),
+                    'compare' => '=',
+                ),
+                array(
+                    'key'     => '_sln_booking_shop',
+                    'compare' => 'NOT EXISTS',
+                ),
+            );
         }
 
         if ($request->get_param('services')) {
@@ -483,7 +532,17 @@ class Bookings_Controller extends REST_Controller
 
 	$prepared_args = apply_filters('sln_api_bookings_get_items_prepared_args', $prepared_args, $request);
 
+        error_log('🔵 Bookings API WP_Query args: ' . print_r($prepared_args, true));
+        
+        // DEBUG: Log the SQL query
+        add_filter('posts_request', function($sql) {
+            error_log('🔵 SQL Query: ' . $sql);
+            return $sql;
+        }, 999);
+        
         $query = new WP_Query( $prepared_args );
+        error_log('🔵 Bookings API found posts: ' . $query->found_posts);
+        error_log('🔵 Bookings API post IDs: ' . print_r($query->posts, true));
 
         try {
             foreach ( $query->posts as $booking ) {
@@ -700,6 +759,35 @@ class Bookings_Controller extends REST_Controller
         return SLN_Plugin::getInstance()->createBooking($booking);
     }
 
+    /**
+     * Featured image URL (thumbnail size) for mobile UI chips.
+     *
+     * @param \SLN_Wrapper_AttendantInterface|array|null $attendant
+     * @return string
+     */
+    protected function get_attendant_thumbnail_url_for_response( $attendant ) {
+        if ( empty( $attendant ) ) {
+            return '';
+        }
+        if ( is_array( $attendant ) ) {
+            foreach ( $attendant as $att ) {
+                if ( ! $att || ! is_object( $att ) || ! method_exists( $att, 'getId' ) ) {
+                    continue;
+                }
+                $thumb = wp_get_attachment_image_url( (int) get_post_thumbnail_id( $att->getId() ), 'thumbnail' );
+                if ( $thumb ) {
+                    return $thumb;
+                }
+            }
+            return '';
+        }
+        if ( is_object( $attendant ) && method_exists( $attendant, 'getId' ) ) {
+            $thumb = wp_get_attachment_image_url( (int) get_post_thumbnail_id( $attendant->getId() ), 'thumbnail' );
+            return $thumb ? $thumb : '';
+        }
+        return '';
+    }
+
     public function prepare_response_for_collection($booking)
     {
         $tmp_services = $booking->getBookingServices();
@@ -719,6 +807,7 @@ class Bookings_Controller extends REST_Controller
                 $attName = null;
                 $attId = null;
             }
+            $assistant_image_url = $this->get_attendant_thumbnail_url_for_response( ! empty( $attendant ) ? $attendant : null );
             $services[] = array(
                 'start_at'       => $service->getStartsAt()->format('H:i'),
                 'end_at'         => $service->getEndsAt()->format('H:i'),
@@ -727,6 +816,7 @@ class Bookings_Controller extends REST_Controller
                 'service_price'  => $service->getService() ? $service->getService()->getPrice() : null,
                 'assistant_id'   => $attId,
                 'assistant_name' => $attName,
+                'assistant_image_url' => $assistant_image_url,
                 'resource_id'   => $service->getResource() ? $service->getResource()->getId() : null,
                 'resource_name' => $service->getResource() ? $service->getResource()->getTitle() : null,
             );
@@ -824,10 +914,27 @@ class Bookings_Controller extends REST_Controller
             'currency'            => SLN_Plugin::getInstance()->getSettings()->getCurrencySymbol(),
             'transaction_id'      => $booking->getTransactionId(),
             'note'                => $booking->getNote(),
+            'no_show'             => get_post_meta($booking->getId(), 'no_show', true) == 1,
+            'rating'              => $booking->getRating(),
+            'feedback'            => $this->get_booking_feedback($booking->getId()),
             'custom_fields'       => $custom_fields,
         );
 
 	return apply_filters('sln_api_bookings_prepare_response_for_collection', $response, $booking);
+    }
+
+    /**
+     * Get booking feedback/review comment
+     * 
+     * @param int $booking_id
+     * @return string
+     */
+    private function get_booking_feedback($booking_id)
+    {
+        $comments = get_comments("post_id={$booking_id}&type=sln_review&status=approve");
+        $comment  = isset($comments[0]) ? $comments[0] : null;
+        
+        return !empty($comment) ? $comment->comment_content : '';
     }
 
     /**
@@ -1774,6 +1881,97 @@ class Bookings_Controller extends REST_Controller
         );
 
         return apply_filters('sln_api_bookings_get_item_schema', $schema);
+    }
+
+    /**
+     * Toggle no-show status for a booking
+     *
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response|WP_Error
+     */
+    public function toggle_no_show( $request )
+    {
+        if ( ! defined( 'SLN_VERSION_PAY' ) || ! SLN_VERSION_PAY ) {
+            return new WP_Error(
+                'salon_rest_forbidden',
+                __( 'This feature requires Salon Booking System PRO.', 'salon-booking-system' ),
+                array( 'status' => 403 )
+            );
+        }
+
+        $bookingId = $request->get_param('bookingId');
+        $noShow = $request->get_param('noShow');
+        $currentUserId = get_current_user_id();
+        $currentTime = current_time('mysql');
+
+        // Validate booking exists
+        if (!$bookingId || !get_post($bookingId)) {
+            return new WP_Error(
+                'salon_rest_booking_not_found',
+                __('Booking not found', 'salon-booking-system'),
+                array('status' => 404)
+            );
+        }
+
+        // Toggle the value
+        if ($noShow === 0) {
+            $noShow = 1;
+            
+            // Store metadata when marking as no-show
+            update_post_meta($bookingId, 'no_show', 1);
+            update_post_meta($bookingId, 'no_show_marked_at', $currentTime);
+            update_post_meta($bookingId, 'no_show_marked_by', $currentUserId);
+            
+            // Log action
+            SLN_Plugin::getInstance()->addLog(sprintf(
+                'Booking #%d marked as no-show by user #%d (%s) via mobile API',
+                $bookingId,
+                $currentUserId,
+                wp_get_current_user()->display_name
+            ));
+            
+            // Fire action hook for extensions
+            do_action('sln.booking.marked_no_show', $bookingId, $currentUserId);
+            
+        } else {
+            $noShow = 0;
+            
+            // Store metadata when unmarking
+            update_post_meta($bookingId, 'no_show', 0);
+            update_post_meta($bookingId, 'no_show_unmarked_at', $currentTime);
+            
+            // Log action
+            SLN_Plugin::getInstance()->addLog(sprintf(
+                'Booking #%d unmarked as no-show by user #%d (%s) via mobile API',
+                $bookingId,
+                $currentUserId,
+                wp_get_current_user()->display_name
+            ));
+            
+            // Fire action hook for extensions
+            do_action('sln.booking.unmarked_no_show', $bookingId, $currentUserId);
+        }
+
+        // Get booking for customer info
+        try {
+            $booking = SLN_Plugin::getInstance()->createBooking($bookingId);
+            $customerId = $booking->getUserId();
+            $customerName = $booking->getDisplayName();
+        } catch (Exception $e) {
+            $customerId = 0;
+            $customerName = '';
+        }
+
+        return rest_ensure_response(array(
+            'success'      => true,
+            'id'           => $bookingId,
+            'noShow'       => $noShow,
+            'markedAt'     => $currentTime,
+            'markedBy'     => $currentUserId,
+            'markedByName' => wp_get_current_user()->display_name,
+            'customerId'   => $customerId,
+            'customerName' => $customerName,
+        ));
     }
 
 }

@@ -2335,7 +2335,10 @@ if (!String.prototype.formatNum) {
     );
   });
   $("#sln-note-phone-device .sln-popup--close").on("click", function () {
-    $(this).closest("#sln-note-phone-device").hide();
+    $(this).closest(".sln-free-pwa-calendar-promo-wrap").hide();
+  });
+  $("#sln-pro-pwa-calendar-promo-backdrop").on("click", function () {
+    $(this).closest(".sln-free-pwa-calendar-promo-wrap").hide();
   });
   $(document).on("click", ".sln-helpchat__close", function () {
     Beacon("close");
@@ -2719,17 +2722,7 @@ if (!String.prototype.formatNum) {
     },
     
     trackEvent: function(eventName, data) {
-      // Track analytics event
-      if (typeof salon !== 'undefined' && salon.ajax_url) {
-        $.post(salon.ajax_url, {
-          action: 'salon',
-          method: 'trackCarouselEvent',
-          event_name: eventName,
-          event_data: data
-        });
-      }
-      
-      // Console log for debugging
+      // Console log for debugging (AJAX tracking not implemented)
       if (window.console && console.log) {
         console.log('Calendar Carousel Event:', eventName, data);
       }

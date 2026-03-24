@@ -1607,6 +1607,10 @@ function sln_stepDate($) {
     function refreshAvailableDatesOnLoad() {
         var form = $("#salon-step-date").closest("form");
         if (!form.length) return;
+        var currentDate = form.find("input[name='sln[date]']").val();
+        if (!currentDate) {
+            return;
+        }
         
         var data = form.serialize();
         
@@ -1659,14 +1663,9 @@ function sln_stepDate($) {
         });
     }
     
-    // Defer refreshAvailableDatesOnLoad so that sln_initDatepickers has
-    // already populated sln[date] before form.serialize() is called inside
-    // it.  Without the defer, the request goes out without a date, and the
-    // server may return an intervals object with empty `times`; if that
-    // response arrives after the validate() AJAX has already rendered time
-    // slots, sln_updateDatepickerTimepickerSlots would re-add .disabled to
-    // all time-slot spans (since they are not in response.intervals.times).
-    setTimeout(refreshAvailableDatesOnLoad, 0);
+    // Keep init flow deterministic: validate() (called at step init) is the
+    // only source of truth for first render of dates+times.
+    // refreshAvailableDatesOnLoad();
     var debounce = function (fn, delay) {
         var inDebounce;
         return function () {
@@ -1800,6 +1799,9 @@ function sln_stepDate($) {
     // requests when the user rapidly taps through calendar dates, which can
     // exhaust server/CDN rate limits and trigger HTTP 429 responses.
     var validateDebounceTimer = null;
+    // Guard to avoid infinite auto-retry loops when intervals contain dates
+    // but no time slots for the current date.
+    var autoRetryEmptyTimes = false;
 
     function validate(obj, autosubmit) {
         // Debounce: cancel any pending call and wait 400 ms of inactivity
@@ -1891,25 +1893,54 @@ function sln_stepDate($) {
                     isValid = true;
                     if (autosubmit) submit();
                 }
-                bindIntervals(data.intervals);
-                if (data.debug) {
-                    bindDebugTimeLog(data.debug.times);
+                if (data.success) {
+                    bindIntervals(data.intervals);
+                    if (data.debug) {
+                        bindDebugTimeLog(data.debug.times);
+                    }
+                    var intervalDates = data.intervals && data.intervals.dates
+                        ? Object.values(data.intervals.dates)
+                        : [];
+                    var intervalTimes = data.intervals && data.intervals.times
+                        ? Object.values(data.intervals.times)
+                        : [];
+                    if (
+                        !autoRetryEmptyTimes &&
+                        intervalDates.length > 0 &&
+                        intervalTimes.length === 0
+                    ) {
+                        autoRetryEmptyTimes = true;
+                        // Skip dates with no available times. When the current date has no
+                        // attendants/slots (e.g. it's late in the day and duration exceeds
+                        // closing time), retry with the first date that differs from today.
+                        var currentDate = $("input[name='sln[date]']").val();
+                        var retryDate = intervalDates.find(function(d) { return d !== currentDate; });
+                        if (!retryDate) { retryDate = intervalDates[0]; }
+                        $("input[name='sln[date]']").val(retryDate);
+                        $("input[name='sln[time]']").val("");
+                        validateImmediate(obj, false);
+                        return;
+                    }
+                    autoRetryEmptyTimes = false;
+                    var timeValue = Object.values(data.intervals.times)[0] || "";
+                    var hours = parseInt(timeValue, 10) || 0;
+                    var datetimepicker = $(".sln_timepicker div").data(
+                        "datetimepicker"
+                    );
+                    datetimepicker.viewDate.setUTCHours(hours);
+                    var minutes =
+                        parseInt(
+                            timeValue.substr(timeValue.indexOf(":") + 1),
+                            10
+                        ) || 0;
+                    datetimepicker.viewDate.setUTCMinutes(minutes);
+                    sln_renderAvailableTimeslots($, data);
+                    $("body").trigger("sln_date");
+                    $("input[name='sln[time]']").val(timeValue);
+                } else {
+                    // Keep last valid intervals/times in UI when validation fails.
+                    autoRetryEmptyTimes = false;
                 }
-                var timeValue = Object.values(data.intervals.times)[0] || "";
-                var hours = parseInt(timeValue, 10) || 0;
-                var datetimepicker = $(".sln_timepicker div").data(
-                    "datetimepicker"
-                );
-                datetimepicker.viewDate.setUTCHours(hours);
-                var minutes =
-                    parseInt(
-                        timeValue.substr(timeValue.indexOf(":") + 1),
-                        10
-                    ) || 0;
-                datetimepicker.viewDate.setUTCMinutes(minutes);
-                sln_renderAvailableTimeslots($, data);
-                $("body").trigger("sln_date");
-                $("input[name='sln[time]']").val(timeValue);
             },
             error: function (xhr, status) {
                 // Aborted requests are intentional (a newer validate() is
@@ -3205,14 +3236,23 @@ function sln_applyTipsAmount() {
     var $ = jQuery;
     var amount = $("#sln_tips").val();
 
-    var data =
-        "sln[tips]=" +
-        amount +
-        "&action=salon&method=applyTipsAmount&security=" +
-        salon.ajax_nonce;
+    if (!amount || amount.trim() === '') {
+        $("#sln_tips_status").html("").append(
+            $('<div class="sln-alert sln-alert--paddingleft sln-alert--problem"></div>')
+                .append($("<p>").html("Please enter a tip amount"))
+        );
+        return false;
+    }
+
+    var data = {
+        'sln[tips]': amount,
+        'action': 'salon',
+        'method': 'applyTipsAmount',
+        'security': salon.ajax_nonce
+    };
 
     if (salon.client_id) {
-        data += "&sln_client_id=" + encodeURIComponent(salon.client_id);
+        data.sln_client_id = salon.client_id;
     }
 
     $.ajax({
@@ -3221,6 +3261,7 @@ function sln_applyTipsAmount() {
         method: "POST",
         dataType: "json",
         success: function (data) {
+            console.log('[Tips] AJAX response:', data);
             $("#sln_tips_status").find(".sln-alert").remove();
             var alertBox;
             if (data.success) {
@@ -3229,12 +3270,39 @@ function sln_applyTipsAmount() {
                     "hide",
                     parseFloat(data.tips.replace(/[^0-9.,]/g, "")) === 0
                 );
-                $(".sln-total-price").html(data.total);
+                
+                // Update total amount in summary section
+                $(".sln-summary-row .sln-total-price").html(data.total);
+                
+                // Update Pay button amount
+                // Two scenarios:
+                // 1. Deposit > 0: Button shows deposit amount in <strong> (no class)
+                // 2. Deposit = 0: Button shows total amount in <strong class="sln-total-price">
+                if (data.deposit) {
+                    var depositValue = parseFloat(data.deposit.replace(/[^0-9.,]/g, ""));
+                    
+                    if (depositValue > 0) {
+                        // Deposit mode: update the deposit amount (strong without class)
+                        var $depositButton = $(".sln-btn--nextstep .sln-btn__info strong:not(.sln-total-price)");
+                        if ($depositButton.length) {
+                            $depositButton.html(data.deposit);
+                            console.log('[Tips] Updated deposit button to:', data.deposit);
+                        }
+                    } else {
+                        // No deposit mode: update the total amount (strong.sln-total-price in button)
+                        var $totalButton = $(".sln-btn--nextstep .sln-btn__info strong.sln-total-price");
+                        if ($totalButton.length) {
+                            $totalButton.html(data.total);
+                            console.log('[Tips] Updated total button to:', data.total);
+                        }
+                    }
+                }
 
                 alertBox = $(
                     '<div class="sln-alert sln-alert--paddingleft sln-alert--success"></div>'
                 );
             } else {
+                console.log('[Tips] Error - no success flag in response');
                 alertBox = $(
                     '<div class="sln-alert sln-alert--paddingleft sln-alert--problem"></div>'
                 );
@@ -3244,9 +3312,12 @@ function sln_applyTipsAmount() {
             });
             $("#sln_tips_status").html("").append(alertBox);
         },
-        error: function (data) {
-            alert("error");
-            //console.log(data);
+        error: function (xhr, status, error) {
+            console.error('[Tips] AJAX error:', {xhr: xhr, status: status, error: error});
+            $("#sln_tips_status").html("").append(
+                $('<div class="sln-alert sln-alert--paddingleft sln-alert--problem"></div>')
+                    .append($("<p>").html("Network error. Please try again."))
+            );
         },
     });
 

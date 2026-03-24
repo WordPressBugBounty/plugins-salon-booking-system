@@ -334,7 +334,7 @@ export default {
             formattedToTime = this.normalizeTime(nextTimeslot);
           }
         } else {
-          const endMoment = this.moment(formattedFromTime,'HH:mm').add(30,'minutes');
+          const endMoment = this.moment(formattedFromTime, 'HH:mm').add(30, 'minute');
           const endHours = endMoment.hours();
           const endMinutes = endMoment.minutes();
           if (endHours === 0 && endMinutes === 0) {

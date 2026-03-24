@@ -81,13 +81,34 @@ class Plugin {
 
         $labels = LabelProvider::getInstance()->getLabels();
 
+        $user_roles = (array) $user->roles;
+        $can_use_assistant_filter = in_array('administrator', $user_roles, true)
+            || in_array('shop_manager', $user_roles, true)
+            || in_array('sln_shop_manager', $user_roles, true);
+        $can_use_assistant_filter = apply_filters('sln_pwa_can_use_assistant_filter', $can_use_assistant_filter, $user);
+
+        $can_access_booking_resize_pref = in_array('administrator', $user_roles, true)
+            || in_array('shop_manager', $user_roles, true)
+            || in_array('sln_shop_manager', $user_roles, true);
+        $can_access_booking_resize_pref = apply_filters('sln_pwa_can_access_booking_resize_pref', $can_access_booking_resize_pref, $user);
+
         $data = array(
-            'api'               => home_url('wp-json/salon/api/mobile/v1/'),
-            'token'             => (new TokenHelper())->getUserAccessToken($user->ID),
-            'onesignal_app_id'  => \SLN_Plugin::getInstance()->getSettings()->get('onesignal_app_id'),
-            'locale'            => explode('_', \SLN_Plugin::getInstance()->getSettings()->getDateLocale())[0],
-            'is_shops'          => apply_filters('sln_is_shops_enabled', false),
-            'labels'            => $labels,
+            'is_pro'                           => defined('SLN_VERSION_PAY') && SLN_VERSION_PAY,
+            'pro_pricing_url'                  => apply_filters('sln_pwa_pro_pricing_url', 'https://www.salonbookingsystem.com/plugin-pricing/'),
+            'api'                              => home_url('wp-json/salon/api/mobile/v1/'),
+            'token'                            => (new TokenHelper())->getUserAccessToken($user->ID),
+            'onesignal_app_id'                 => \SLN_Plugin::getInstance()->getSettings()->get('onesignal_app_id'),
+            'locale'                           => explode('_', \SLN_Plugin::getInstance()->getSettings()->getDateLocale())[0],
+            'is_shops'                         => apply_filters('sln_is_shops_enabled', false),
+            'labels'                           => $labels,
+            'can_use_assistant_filter'         => (bool) $can_use_assistant_filter,
+            'can_access_booking_resize_pref'   => (bool) $can_access_booking_resize_pref,
+            /** Sample promo cards when store featured add-ons are unavailable. Disable: add_filter('sln_pwa_dummy_promo_cards', '__return_false'). */
+            'dummy_promo_cards'                => (bool) apply_filters('sln_pwa_dummy_promo_cards', true),
+            /** EDD downloads: add-on category + "featured" term; see FeaturedAddonPromos. */
+            'featured_addon_promos'            => FeaturedAddonPromos::get_slides(),
+            /** First promo card: free → PRO or Basic → Business; see PwaLicensePromo. */
+            'license_upgrade_promo'            => PwaLicensePromo::get_for_pwa(),
         );
 
         $dist_directory_path = SLN_PLUGIN_DIR . '/src/SLB_PWA/pwa/dist';
@@ -114,23 +135,35 @@ class Plugin {
                     file_get_contents($dist_directory_path . '/js/app.template.js'))
             );
             
-            file_put_contents(
-                $dist_directory_path . '/js/app.js.map', 
-                str_replace('{SLN_PWA_DIST_PATH}', $dist_url_path, 
-                    file_get_contents($dist_directory_path . '/js/app.js.template.map'))
-            );
-            
+            $app_js_map_template = $dist_directory_path . '/js/app.js.template.map';
+            if ( file_exists( $app_js_map_template ) ) {
+                file_put_contents(
+                    $dist_directory_path . '/js/app.js.map',
+                    str_replace(
+                        '{SLN_PWA_DIST_PATH}',
+                        $dist_url_path,
+                        file_get_contents( $app_js_map_template )
+                    )
+                );
+            }
+
             file_put_contents(
                 $dist_directory_path . '/service-worker.js', 
                 str_replace('{SLN_PWA_DIST_PATH}', $dist_url_path, 
                     file_get_contents($dist_directory_path . '/service-worker.template.js'))
             );
             
-            file_put_contents(
-                $dist_directory_path . '/service-worker.js.map', 
-                str_replace('{SLN_PWA_DIST_PATH}', $dist_url_path, 
-                    file_get_contents($dist_directory_path . '/service-worker.js.template.map'))
-            );
+            $sw_map_template = $dist_directory_path . '/service-worker.js.template.map';
+            if ( file_exists( $sw_map_template ) ) {
+                file_put_contents(
+                    $dist_directory_path . '/service-worker.js.map',
+                    str_replace(
+                        '{SLN_PWA_DIST_PATH}',
+                        $dist_url_path,
+                        file_get_contents( $sw_map_template )
+                    )
+                );
+            }
             
             file_put_contents(
                 $dist_directory_path . '/index.html', 
@@ -175,39 +208,13 @@ class Plugin {
             <meta name="msapplication-TileImage" content="<?php echo $dist ?>/img/icons/msapplication-icon-144x144.png">
             <meta name="msapplication-TileColor" content="#000000">
         </head>
-        <style>
-            .free-version-wrapper {
-                text-align: center;
-                padding: 20px;
-                background-color: #ecf1fa9b;
-                margin: 10px;
-            }
-            .free-version-button {
-                background-color: #0d6efd;
-                color: #fff;
-                padding: 6px 12px;
-                border-radius: 4px;
-                text-decoration: none;
-                margin-top: 10px;
-                display: inline-block;
-            }
-        </style>
         <body>
             <noscript>
                 <strong>We're sorry but salon-booking-plugin-pwa doesn't work properly without JavaScript enabled. Please enable it to continue.</strong></noscript>
             <script>
                 var slnPWA = JSON.parse('<?php echo addslashes(wp_json_encode($data)) ?>')
             </script>
-            <?php if ( ! defined('SLN_VERSION_PAY') ):  ?>
-                <div class="free-version-wrapper">
-                    <p><?php echo sprintf(
-                            // translators: %s will be replaced by the username
-                            __('Dear <b>%s</b>,<br/> to use our mobile app you need a PRO version of <b>Salon Booking System</b>', 'salon-booking-system'), $user->display_name); ?></p>
-                    <p><a href="https://www.salonbookingsystem.com/plugin-pricing/" target="_blank" class="free-version-button"><?php  esc_html_e('Switch to PRO', 'salon-booking-system') ?></a></p>
-                </div>
-            <?php else: ?>
-                <div id="app"></div>
-            <?php endif; ?>
+            <div id="app"></div>
         </body>
     </html>
     <?php

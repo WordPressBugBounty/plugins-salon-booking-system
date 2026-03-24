@@ -179,6 +179,19 @@ class SLB_Discount_Metabox_Discount extends SLN_Metabox_Abstract
                     ? SLN_TimeFunc::evalPickedDate(sanitize_text_field($rule['to_date']))
                     : null;
             }
+
+            // Time restriction
+            $rule['apply_time_range'] = ! empty($rule['apply_time_range']);
+
+            $rule['from'] = isset($rule['from']) && is_array($rule['from'])
+                ? array_map('sanitize_text_field', $rule['from'])
+                : array('9:00', '14:00');
+
+            $rule['to'] = isset($rule['to']) && is_array($rule['to'])
+                ? array_map('sanitize_text_field', $rule['to'])
+                : array('13:00', '19:00');
+
+            $rule['disable_second_shift'] = ! empty($rule['disable_second_shift']);
         }
         unset($rule);
 

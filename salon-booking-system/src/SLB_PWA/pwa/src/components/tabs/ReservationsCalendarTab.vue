@@ -18,7 +18,7 @@
                      :customerPersonalNotes="selectedCustomer.note"
                      @close="closeCustomerProfile"/>
     <BookingDetails v-else-if="showItem" :booking="item" @close="closeShowItem" @edit="setEditItem"
-                    @showCustomerImages="showCustomerImages"/>
+                    @showCustomerImages="showCustomerImages" @viewCustomerProfile="openCustomerProfile"/>
     <ReservationsCalendar
         v-else
         v-model="selectedDate"
@@ -66,6 +66,8 @@ export default {
         this.setShowItem(response.data.items[0])
       })
     }
+  },
+  beforeUnmount() {
   },
   data: function () {
     return {
@@ -146,6 +148,13 @@ export default {
       if (this.item) {
         this.showItem = true;
       }
+    },
+    showBookingFromCustomer(booking) {
+      console.log('🟢 showBookingFromCustomer called in ReservationsCalendarTab', booking)
+      // Close customer profile and show the selected booking
+      this.showCustomerProfile = false;
+      this.selectedCustomer = null;
+      this.setShowItem(booking);
     },
   },
   emits: ['hideTabsHeader'],

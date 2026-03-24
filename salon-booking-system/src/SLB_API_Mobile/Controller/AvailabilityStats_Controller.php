@@ -36,6 +36,10 @@ class AvailabilityStats_Controller extends REST_Controller
                     'required'          => true,
                     'validate_callback' => array($this, 'rest_validate_request_arg'),
                 ),
+                'shop' => array(
+                    'description' => __( 'Shop id.', 'salon-booking-system' ),
+                    'type'        => 'integer',
+                ),
                 'debug'     => array(
                     'description'       => __('Enable diagnostic mode.', 'salon-booking-system'),
                     'type'              => 'string',
@@ -63,6 +67,17 @@ class AvailabilityStats_Controller extends REST_Controller
             $to = (new SLN_DateTime)->setTimestamp( strtotime( sanitize_text_field( wp_unslash( $request->get_param('to_date') ) ) ) );
 
             do_action('sln_api_availability_stats_get_availability_stats_before_check', $request);
+
+            $shop_param = absint( $request->get_param( 'shop' ) );
+            $cache_key  = null;
+            if ( ! $debugMode ) {
+                $revision  = (int) get_option( 'sln_pwa_av_stats_revision', 0 );
+                $cache_key = 'sln_pwa_avst_' . md5( $from->format( 'Y-m-d' ) . '|' . $to->format( 'Y-m-d' ) . '|' . $shop_param . '|' . $revision );
+                $cached    = get_transient( $cache_key );
+                if ( false !== $cached && is_array( $cached ) ) {
+                    return $this->success_response( $cached );
+                }
+            }
 
             $plugin   = SLN_Plugin::getInstance();
             $settings = $plugin->getSettings();
@@ -157,6 +172,8 @@ class AvailabilityStats_Controller extends REST_Controller
             // Include diagnostic info in response if debug mode enabled
             if ($debugMode) {
                 $response['diagnostic'] = $diagnosticInfo;
+            } elseif ( null !== $cache_key ) {
+                set_transient( $cache_key, $response, 5 * MINUTE_IN_SECONDS );
             }
 
             return $this->success_response($response);
@@ -408,6 +425,11 @@ class AvailabilityStats_Controller extends REST_Controller
         } else {
             $criteria['day@min'] = $from;
             $criteria['day@max'] = $to;
+        }
+
+        // Add shop filtering if shop parameter is provided
+        if (!empty($_REQUEST['shop'])) {
+            $criteria['shop'] = intval($_REQUEST['shop']);
         }
 
         return $criteria;

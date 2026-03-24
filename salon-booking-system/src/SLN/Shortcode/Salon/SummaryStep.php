@@ -142,7 +142,8 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
                 $this->addError(self::SLOT_UNAVAILABLE);
                 return false;
             }
-            foreach ($bb->getMeta('discounts') as $discount){
+            $discounts = $bb->getMeta('discounts');
+            foreach (is_array($discounts) ? $discounts : [] as $discount){
                 $discount_ = new SLB_Discount_Wrapper_Discount($discount);
                 $discount_->incrementUsagesNumber($bb->getUserId());
                 $discount_->incrementTotalUsagesNumber();
@@ -238,11 +239,20 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
             $this->cleanupBookingLock($bb);
             return !$this->hasErrors();
         }elseif(isset($_GET['op']) || $mode){
+            SLN_Plugin::addLog(sprintf(
+                '[SummaryStep] Payment gateway return - Mode: %s, Op: %s, Booking ID: %d, Status: %s',
+                $mode ? $mode : 'NONE',
+                isset($_GET['op']) ? sanitize_text_field($_GET['op']) : 'NONE',
+                $bb->getId(),
+                $bb->getStatus()
+            ));
+            
             if ($bookingBuilder && method_exists($bookingBuilder, 'forceTransientStorage')) {
                 $bookingBuilder->forceTransientStorage();
             }
             if($error = $paymentMethod->dispatchThankyou($this, $bb)){
                 $this->addError($error);
+                SLN_Plugin::addLog('[SummaryStep] Payment gateway returned error: ' . $error);
             }
 
             // Re-check availability AFTER payment has been processed.
@@ -332,15 +342,47 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
             
             if ( ! $this->hasErrors() ) {
                 SLN_Plugin::addLog('SummaryStep::render() - Creating booking in DRAFT status');
-                // CRITICAL: Pass $clear = false to prevent wiping booking data after draft creation
-                // The builder's data is needed for the final confirmation step
-                // Explicit clear() calls after finalization (lines 157, 203, 215) still work as expected
-                $bb->create(SLN_Enum_BookingStatus::DRAFT, false);
                 
-                // Pass BookingBuilder to extensions for backward compatibility
-                // Extensions like SalonMultishop and Discount expect the builder object
-                // They can call $bb->getLastBooking() themselves if they need the booking
-                do_action('sln.shortcode.summary.dispatchForm.after_booking_creation', $bb);
+                try {
+                    // CRITICAL: Pass $clear = false to prevent wiping booking data after draft creation
+                    // The builder's data is needed for the final confirmation step
+                    // Explicit clear() calls after finalization (lines 157, 203, 215) still work as expected
+                    $bb->create(SLN_Enum_BookingStatus::DRAFT, false);
+                    
+                    $draftBooking = $bb->getLastBooking();
+                    if ($draftBooking) {
+                        SLN_Plugin::addLog(sprintf(
+                            '[SummaryStep] ✓ DRAFT booking created successfully - ID: %d, Status: %s, Customer: %s %s',
+                            $draftBooking->getId(),
+                            $draftBooking->getStatus(),
+                            $draftBooking->getFirstname(),
+                            $draftBooking->getLastname()
+                        ));
+                    } else {
+                        SLN_Plugin::addLog('[SummaryStep] ✗ CRITICAL: create() succeeded but getLastBooking() returned NULL');
+                    }
+                    
+                    // Pass BookingBuilder to extensions for backward compatibility
+                    // Extensions like SalonMultishop and Discount expect the builder object
+                    // They can call $bb->getLastBooking() themselves if they need the booking
+                    do_action('sln.shortcode.summary.dispatchForm.after_booking_creation', $bb);
+                    
+                } catch (Exception $e) {
+                    SLN_Plugin::addLog('[SummaryStep] ✗✗✗ EXCEPTION during booking creation: ' . $e->getMessage());
+                    SLN_Plugin::addLog('[SummaryStep] Stack trace: ' . $e->getTraceAsString());
+                    
+                    // Send critical error notification
+                    if (class_exists('SLN_Helper_ErrorNotification')) {
+                        SLN_Helper_ErrorNotification::send(
+                            'BOOKING_CREATION_EXCEPTION',
+                            'Exception during DRAFT booking creation in SummaryStep',
+                            "Error: " . $e->getMessage() . "\n\nStack Trace:\n" . $e->getTraceAsString()
+                        );
+                    }
+                    
+                    // Add user-facing error
+                    $this->addError(__('Unable to create booking. Please try again or contact us.', 'salon-booking-system'));
+                }
             } else {
                 SLN_Plugin::addLog('SummaryStep::render() - Has errors, not creating booking: ' . print_r($this->getErrors(), true));
             }

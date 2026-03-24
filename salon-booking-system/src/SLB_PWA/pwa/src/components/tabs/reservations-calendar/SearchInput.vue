@@ -79,7 +79,7 @@ export default {
 <style scoped>
 .search {
   position: relative;
-  margin-top: 1.5rem;
+  margin-top: 16px;
 }
 
 .search-icon {
@@ -87,21 +87,37 @@ export default {
   z-index: 1000;
   top: 12px;
   left: 15px;
-  color: #7f8ca2;
+  color: #64748B;
+  font-size: 14px;
 }
 
 .search .search-input {
   padding-left: 40px;
-  padding-right: 20px;
-  border-radius: 30px;
-  border-color: #7f8ca2;
+  padding-right: 36px;
+  border-radius: 999px;
+  border: 1px solid #E2E8F0;
+  background: #FFFFFF;
+  color: #0F172A;
+  font-size: 14px;
+}
+
+.search .search-input:focus {
+  border-color: #2563EB;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 .clear {
   position: absolute;
-  top: 10px;
+  top: 50%;
+  transform: translateY(-50%);
   z-index: 1000;
-  right: 15px;
+  right: 14px;
   cursor: pointer;
+  color: #94A3B8;
+  font-size: 16px;
+}
+
+.clear:hover {
+  color: #64748B;
 }
 </style>

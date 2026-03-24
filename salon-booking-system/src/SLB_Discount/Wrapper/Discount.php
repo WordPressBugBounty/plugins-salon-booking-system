@@ -608,6 +608,9 @@ class SLB_Discount_Wrapper_Discount extends SLN_Wrapper_Abstract
                 // Day key: (date('w') + 1) maps 0–6 → 1–7 matching SLN_Func::getDays() keys
                 $dayKey = (int) SLN_TimeFunc::date('w', $date) + 1;
                 if (!empty($rule['days']) && isset($rule['days'][$dayKey])) {
+                    if (!$this->isExclusionTimeMatch($rule, $date)) {
+                        continue;
+                    }
                     $ret[] = __('This discount is not available on this day.', 'salon-booking-system');
                     break;
                 }
@@ -617,6 +620,9 @@ class SLB_Discount_Wrapper_Discount extends SLN_Wrapper_Abstract
                     : array();
                 $bookingDate = SLN_TimeFunc::date('Y-m-d', $date);
                 if (in_array($bookingDate, $specificDates, true)) {
+                    if (!$this->isExclusionTimeMatch($rule, $date)) {
+                        continue;
+                    }
                     $ret[] = __('This discount is not available on this date.', 'salon-booking-system');
                     break;
                 }
@@ -655,6 +661,54 @@ class SLB_Discount_Wrapper_Discount extends SLN_Wrapper_Abstract
         }
 
         return true;
+    }
+
+    /**
+     * Checks whether the booking time falls within the exclusion rule's time restriction.
+     *
+     * Returns true when the exclusion should apply:
+     *   - Always true when no time restriction is configured (apply_time_range is false).
+     *   - True when the booking time falls inside at least one enabled shift.
+     *   - False when the booking time is outside all defined shifts (rule should not trigger).
+     *
+     * @param array $rule
+     * @param int   $date Unix timestamp of the booking start
+     * @return bool
+     */
+    private function isExclusionTimeMatch($rule, $date)
+    {
+        if (empty($rule['apply_time_range'])) {
+            return true;
+        }
+
+        $bookingMins = (int) SLN_TimeFunc::date('G', $date) * 60
+                     + (int) SLN_TimeFunc::date('i', $date);
+
+        $inShift = function ($from, $to) use ($bookingMins) {
+            if (empty($from) || empty($to)) {
+                return false;
+            }
+            list($h, $m) = array_map('intval', explode(':', $from));
+            $fromMins = $h * 60 + $m;
+            list($h, $m) = array_map('intval', explode(':', $to));
+            $toMins = $h * 60 + $m;
+            return $bookingMins >= $fromMins && $bookingMins < $toMins;
+        };
+
+        $from = isset($rule['from']) && is_array($rule['from']) ? $rule['from'] : array();
+        $to   = isset($rule['to'])   && is_array($rule['to'])   ? $rule['to']   : array();
+
+        if ($inShift(isset($from[0]) ? $from[0] : '', isset($to[0]) ? $to[0] : '')) {
+            return true;
+        }
+
+        $secondShiftDisabled = ! empty($rule['disable_second_shift']);
+        if (! $secondShiftDisabled
+            && $inShift(isset($from[1]) ? $from[1] : '', isset($to[1]) ? $to[1] : '')) {
+            return true;
+        }
+
+        return false;
     }
 
     private function validateDiscountForBookingAttendants($bookingAttendants) {

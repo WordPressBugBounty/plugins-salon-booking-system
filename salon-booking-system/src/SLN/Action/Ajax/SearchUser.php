@@ -27,51 +27,98 @@ class SLN_Action_Ajax_SearchUser extends SLN_Action_Ajax_Abstract
        }
        return $ret;
     }
+    
+    /**
+     * Clear all user search cache
+     * Called when user data is updated to ensure fresh results
+     */
+    public static function clearSearchCache()
+    {
+        global $wpdb;
+        
+        // Delete all user search transients
+        $wpdb->query("
+            DELETE FROM {$wpdb->options}
+            WHERE option_name LIKE '_transient_sln_user_search_%'
+            OR option_name LIKE '_transient_timeout_sln_user_search_%'
+        ");
+    }
     private function getResult($search)
     {
         global $wpdb;
+        
+        // Check cache first (5-minute TTL)
+        $cache_key = 'sln_user_search_' . md5(strtolower($search));
+        $cached = get_transient($cache_key);
+        
+        if ($cached !== false) {
+            return $cached;
+        }
         
         $user_role_helper = new UserRoleHelper();
         $hide_email = $user_role_helper->is_hide_customer_email();
         $search_like = '%' . $wpdb->esc_like($search) . '%';
         
-        // PERFORMANCE OPTIMIZATION: Single query with JOINs instead of N+1 queries
+        // PERFORMANCE OPTIMIZATION: Two-step approach with caching
         // Reference: PERFORMANCE_OPTIMIZATION_ANALYSIS.md - Issue #1
-        // Impact: 50x faster (3-5s → 50-100ms) for 100+ customers
-        $results = $wpdb->get_results($wpdb->prepare("
-            SELECT DISTINCT 
-                u.ID,
-                u.user_email,
-                u.user_nicename,
-                fn.meta_value as first_name,
-                ln.meta_value as last_name,
-                ph.meta_value as phone
-            FROM {$wpdb->users} u
-            LEFT JOIN {$wpdb->usermeta} fn ON (u.ID = fn.user_id AND fn.meta_key = 'first_name')
-            LEFT JOIN {$wpdb->usermeta} ln ON (u.ID = ln.user_id AND ln.meta_key = 'last_name')
-            LEFT JOIN {$wpdb->usermeta} ph ON (u.ID = ph.user_id AND ph.meta_key = '_sln_phone')
-            WHERE 
-                LOWER(fn.meta_value) LIKE %s
-                OR LOWER(ln.meta_value) LIKE %s
-                OR LOWER(CONCAT(fn.meta_value, ' ', ln.meta_value)) LIKE %s
-                OR LOWER(u.user_email) LIKE %s
-                OR LOWER(u.user_nicename) LIKE %s
-                OR ph.meta_value LIKE %s
-            LIMIT 10
-        ", $search_like, $search_like, $search_like, $search_like, $search_like, $search_like));
+        // Impact: 30x faster than N+1 (3-5s → 100ms), no database index required
+        // Cache hit: <1ms (instant)
         
-        if (empty($results)) {
+        // STEP 1: Search WordPress native fields (uses built-in indexes)
+        $user_query = new WP_User_Query(array(
+            'search'         => '*' . $search . '*',
+            'search_columns' => array('user_login', 'user_email', 'user_nicename', 'display_name'),
+            'number'         => 50,
+            'fields'         => array('ID', 'user_email'),
+        ));
+        
+        $user_ids = array();
+        $user_emails = array();
+        
+        foreach ($user_query->get_results() as $user) {
+            $user_ids[] = $user->ID;
+            $user_emails[$user->ID] = $user->user_email;
+        }
+        
+        // STEP 2: Search user meta (first_name, last_name, phone)
+        // Simple query without JOINs - works without custom indexes
+        if (count($user_ids) < 10) {
+            $meta_results = $wpdb->get_col($wpdb->prepare("
+                SELECT DISTINCT user_id 
+                FROM {$wpdb->usermeta}
+                WHERE meta_key IN ('first_name', 'last_name', '_sln_phone')
+                AND LOWER(meta_value) LIKE %s
+                LIMIT 50
+            ", $search_like));
+            
+            $user_ids = array_unique(array_merge($user_ids, $meta_results));
+        }
+        
+        if (empty($user_ids)) {
+            set_transient($cache_key, array(), 5 * MINUTE_IN_SECONDS);
             return array();
         }
         
+        // STEP 3: Load full user data (WordPress caches this automatically since WP 6.3)
+        $final_query = new WP_User_Query(array(
+            'include' => array_slice($user_ids, 0, 10),
+            'fields'  => array('ID', 'user_email'),
+        ));
+        
         $values = array();
-        foreach ($results as $user) {
+        foreach ($final_query->get_results() as $user) {
+            $first_name = get_user_meta($user->ID, 'first_name', true);
+            $last_name = get_user_meta($user->ID, 'last_name', true);
+            
             $values[] = array(
                 'id' => $user->ID,
-                'text' => $user->first_name . ' ' . $user->last_name . ' (' . 
+                'text' => $first_name . ' ' . $last_name . ' (' . 
                          ($hide_email ? '*******' : $user->user_email) . ')',
             );
         }
+        
+        // Cache results for 5 minutes
+        set_transient($cache_key, $values, 5 * MINUTE_IN_SECONDS);
         
         return $values;
     }

@@ -47,6 +47,34 @@ class Plugin {
     public function init()
     {
 	new NotificationListener();
+	$this->register_availability_stats_cache_hooks();
+    }
+
+    /**
+     * Invalidate PWA availability/stats transient cache when bookings change.
+     */
+    public function register_availability_stats_cache_hooks()
+    {
+	if ( ! class_exists( '\SLN_Plugin' ) ) {
+	    return;
+	}
+	$pt = \SLN_Plugin::POST_TYPE_BOOKING;
+	add_action( 'save_post_' . $pt, array( $this, 'bump_availability_stats_cache_revision' ) );
+	add_action( 'before_delete_post', array( $this, 'maybe_bump_availability_stats_cache_revision' ) );
+	add_action( 'trashed_post', array( $this, 'maybe_bump_availability_stats_cache_revision' ) );
+    }
+
+    public function bump_availability_stats_cache_revision()
+    {
+	update_option( 'sln_pwa_av_stats_revision', (int) get_option( 'sln_pwa_av_stats_revision', 0 ) + 1, false );
+    }
+
+    public function maybe_bump_availability_stats_cache_revision( $post_id )
+    {
+	if ( ! $post_id || get_post_type( $post_id ) !== \SLN_Plugin::POST_TYPE_BOOKING ) {
+	    return;
+	}
+	$this->bump_availability_stats_cache_revision();
     }
 
     public function rest_api_init()

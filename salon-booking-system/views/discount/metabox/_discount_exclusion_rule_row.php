@@ -9,20 +9,28 @@
 
 if ( empty( $row ) ) {
 	$row = array(
-		'mode'           => 'weekdays',
-		'days'           => array(),
-		'specific_dates' => '',
-		'always'         => true,
-		'from_date'      => null,
-		'to_date'        => null,
+		'mode'                 => 'weekdays',
+		'days'                 => array(),
+		'specific_dates'       => '',
+		'always'               => true,
+		'from_date'            => null,
+		'to_date'              => null,
+		'apply_time_range'     => false,
+		'from'                 => array( '9:00', '14:00' ),
+		'to'                   => array( '13:00', '19:00' ),
+		'disable_second_shift' => false,
 	);
 }
 
-$mode           = isset( $row['mode'] ) ? $row['mode'] : 'weekdays';
-$specificDates  = isset( $row['specific_dates'] ) ? $row['specific_dates'] : '';
-$always         = isset( $row['always'] ) ? (bool) $row['always'] : true;
-$dateFrom       = new SLN_DateTime( isset( $row['from_date'] ) ? $row['from_date'] : null );
-$dateTo         = new SLN_DateTime( isset( $row['to_date'] ) ? $row['to_date'] : null );
+$mode               = isset( $row['mode'] ) ? $row['mode'] : 'weekdays';
+$specificDates      = isset( $row['specific_dates'] ) ? $row['specific_dates'] : '';
+$always             = isset( $row['always'] ) ? (bool) $row['always'] : true;
+$dateFrom           = new SLN_DateTime( isset( $row['from_date'] ) ? $row['from_date'] : null );
+$dateTo             = new SLN_DateTime( isset( $row['to_date'] ) ? $row['to_date'] : null );
+$applyTimeRange     = isset( $row['apply_time_range'] ) ? (bool) $row['apply_time_range'] : false;
+$fromTimes          = isset( $row['from'] ) && is_array( $row['from'] ) ? $row['from'] : array( '9:00', '14:00' );
+$toTimes            = isset( $row['to'] ) && is_array( $row['to'] ) ? $row['to'] : array( '13:00', '19:00' );
+$disableSecondShift = isset( $row['disable_second_shift'] ) ? (bool) $row['disable_second_shift'] : false;
 ?>
 <div class="col-xs-12 sln-box--sub sln-booking-rule" data-n="<?php echo esc_attr( $rulenumber ); ?>">
 	<h2 class="sln-box-title">
@@ -94,6 +102,93 @@ $dateTo         = new SLN_DateTime( isset( $row['to_date'] ) ? $row['to_date'] :
 			</div>
 		</div>
 		<div class="clearfix"></div>
+	</div>
+
+	<!-- Time restriction -->
+	<div class="sln-exclusion-time-restriction">
+		<div class="col-12 form-group sln-switch">
+			<?php SLN_Form::fieldCheckboxSwitch(
+				$prefix . '[apply_time_range]',
+				$applyTimeRange,
+				__( 'All day', 'salon-booking-system' ),
+				__( 'Time restriction', 'salon-booking-system' ),
+				array(
+					'attrs' => array(
+						'data-type' => 'exclusion-time-restriction',
+					),
+				)
+			); ?>
+		</div>
+		<div class="sln-exclusion-time-shifts <?php echo ! $applyTimeRange ? 'hide' : ''; ?>">
+			<div class="row">
+				<div class="col-xs-12">
+					<div class="row">
+						<div class="col-xs-12 col-md-6 sln-slider-wrapper sln-slider-wrapper-first-shift">
+							<div class="sln-slider">
+								<h2 class="sln-box-title"><?php esc_html_e( 'First shift', 'salon-booking-system' ); ?></h2>
+								<div class="sln-slider__inner">
+									<div class="col col-time">
+										<h2 class="sln-slider--title col-time-title">
+											<em>
+												<strong class="slider-time-from"><?php echo esc_html( $fromTimes[0] ); ?></strong>
+												to
+												<strong class="slider-time-to"><?php echo esc_html( $toTimes[0] ); ?></strong>
+											</em>
+										</h2>
+										<input type="text" name="<?php echo esc_attr( $prefix ); ?>[from][0]"
+										       value="<?php echo esc_attr( $fromTimes[0] ); ?>"
+										       class="slider-time-input-from hidden">
+										<input type="text" name="<?php echo esc_attr( $prefix ); ?>[to][0]"
+										       value="<?php echo esc_attr( $toTimes[0] ); ?>"
+										       class="slider-time-input-to hidden">
+									</div>
+									<div class="sliders_step1 col col-slider">
+										<div class="slider-range"></div>
+									</div>
+									<div class="clearfix"></div>
+								</div>
+							</div>
+						</div>
+						<div class="col-xs-12 col-md-6 sln-slider-wrapper sln-slider-wrapper-second-shift">
+							<div class="sln-slider sln-second-shift">
+								<h2 class="sln-box-title"><?php esc_html_e( 'Second shift', 'salon-booking-system' ); ?></h2>
+								<div class="sln-slider__inner" <?php echo $disableSecondShift ? 'hidden' : ''; ?>>
+									<div class="col col-time">
+										<h2 class="sln-slider--title col-time-title">
+											<em>
+												<strong class="slider-time-from"><?php echo esc_html( isset( $fromTimes[1] ) ? $fromTimes[1] : '14:00' ); ?></strong>
+												to
+												<strong class="slider-time-to"><?php echo esc_html( isset( $toTimes[1] ) ? $toTimes[1] : '19:00' ); ?></strong>
+											</em>
+										</h2>
+										<input type="text" name="<?php echo esc_attr( $prefix ); ?>[from][1]"
+										       value="<?php echo esc_attr( isset( $fromTimes[1] ) ? $fromTimes[1] : '14:00' ); ?>"
+										       class="slider-time-input-from hidden"
+										       <?php echo $disableSecondShift ? 'disabled="disabled"' : ''; ?>>
+										<input type="text" name="<?php echo esc_attr( $prefix ); ?>[to][1]"
+										       value="<?php echo esc_attr( isset( $toTimes[1] ) ? $toTimes[1] : '19:00' ); ?>"
+										       class="slider-time-input-to hidden"
+										       <?php echo $disableSecondShift ? 'disabled="disabled"' : ''; ?>>
+									</div>
+									<div class="sliders_step1 col col-slider">
+										<div class="slider-range"></div>
+									</div>
+									<div class="clearfix"></div>
+								</div>
+							</div>
+							<div class="sln-switch sln-switch--inverted sln-switch--bare sln-disable-second-shift">
+								<?php SLN_Form::fieldCheckboxSwitch(
+									$prefix . '[disable_second_shift]',
+									$disableSecondShift,
+									__( 'Shift enabled', 'salon-booking-system' ),
+									__( 'Shift disabled', 'salon-booking-system' )
+								); ?>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
 	</div>
 
 	<!-- Date range scope (visible in weekdays mode only) -->

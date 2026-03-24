@@ -3,8 +3,17 @@
         <ImagesList :customer="showImagesCustomer" v-if="isShowCustomerImages" @close="closeShowCustomerImages" @takePhoto="showTakePhoto" :takePhotoFile="photo"/>
         <CustomersAddressBook v-else-if="isChooseCustomer" @closeChooseCustomer="closeChooseCustomer" :chooseCustomerAvailable="true" @choose="choose" :shop="item.shop"/>
         <EditBookingItem v-else-if="editItem" :booking="item" :customer="customer" @close="closeEditItem" @chooseCustomer="chooseCustomer"/>
-        <BookingDetails v-else-if="showItem" :booking="item" @close="closeShowItem" @edit="setEditItem" @showCustomerImages="showCustomerImages"/>
-        <UpcomingReservations @showItem="setShowItem" v-show="!showItem" :shop="shop"/>
+        <CustomerDetails v-else-if="showCustomerProfile"
+                         :customerID="selectedCustomer.id"
+                         :customerFirstname="selectedCustomer.first_name"
+                         :customerLastname="selectedCustomer.last_name"
+                         :customerEmail="selectedCustomer.email"
+                         :customerPhone="selectedCustomer.phone"
+                         :customerAddress="selectedCustomer.address"
+                         :customerPersonalNotes="selectedCustomer.note"
+                         @close="closeCustomerProfile"/>
+        <BookingDetails v-else-if="showItem" :booking="item" @close="closeShowItem" @edit="setEditItem" @showCustomerImages="showCustomerImages" @viewCustomerProfile="openCustomerProfile"/>
+        <UpcomingReservations @showItem="setShowItem" v-show="!showItem && !showCustomerProfile" :shop="shop"/>
     </div>
 </template>
 
@@ -15,6 +24,7 @@
     import EditBookingItem from './upcoming-reservations/EditBookingItem.vue'
     import CustomersAddressBook from './customers-address-book/CustomersAddressBook.vue'
     import ImagesList from './customers-address-book/ImagesList.vue'
+    import CustomerDetails from './customers-address-book/CustomerDetails.vue'
 
     export default {
         name: 'UpcomingReservationsTab',
@@ -31,6 +41,7 @@
             EditBookingItem,
             CustomersAddressBook,
             ImagesList,
+            CustomerDetails,
         },
         data: function () {
             return {
@@ -41,7 +52,13 @@
                 customer: null,
                 isShowCustomerImages: false,
                 showImagesCustomer: null,
+                showCustomerProfile: false,
+                selectedCustomer: null,
             }
+        },
+        mounted() {
+        },
+        beforeUnmount() {
         },
         methods: {
             setShowItem(item) {
@@ -80,6 +97,27 @@
                 this.item.customer_photos = customer.photos
                 this.isShowCustomerImages = false;
                 this.$emit('hideTabsHeader', false)
+            },
+            openCustomerProfile(customer) {
+                console.log('🟣 UpcomingReservationsTab openCustomerProfile() called with customer:', customer)
+                console.log('🟣 Customer ID:', customer.id)
+                this.selectedCustomer = customer;
+                this.showItem = false;
+                this.showCustomerProfile = true;
+            },
+            closeCustomerProfile() {
+                this.showCustomerProfile = false;
+                this.selectedCustomer = null;
+                if (this.item) {
+                    this.showItem = true;
+                }
+            },
+            showBookingFromCustomer(booking) {
+                console.log('🟢 showBookingFromCustomer called in UpcomingReservationsTab', booking)
+                // Close customer profile and show the selected booking
+                this.showCustomerProfile = false;
+                this.selectedCustomer = null;
+                this.setShowItem(booking);
             },
         },
         emits: ['hideTabsHeader'],

@@ -1,30 +1,43 @@
 <template>
-    <div>
-        <h5 class="title">
-            {{ this.getLabel('customersAddressBookTitle') }}
-        </h5>
-        <div class="search">
-            <font-awesome-icon icon="fa-solid fa-magnifying-glass" class="search-icon" />
-            <b-form-input v-model="search" class="search-input"></b-form-input>
-            <font-awesome-icon icon="fa-solid fa-circle-xmark" class="clear" @click="search = ''" v-if="search"/>
+    <div class="customers-screen">
+        <!-- Header -->
+        <div class="screen-header">
+            <h1 class="screen-title">{{ this.getLabel('customersAddressBookTitle') }}</h1>
+            <button class="header-icon-btn" @click="isSearchVisible = !isSearchVisible" aria-label="Search">
+                <font-awesome-icon :icon="isSearchVisible ? 'fa-solid fa-circle-xmark' : 'fa-solid fa-magnifying-glass'" />
+            </button>
         </div>
-        <b-row>
-            <b-col sm="12">
-                <div class="filters">
-                    <b-button
-                        variant="outline-primary"
-                        v-for="filter in filters"
-                        :key="filter.value"
-                        @click="searchFilter = filter.value"
-                        :pressed="searchFilter === filter.value"
-                    >
-                        {{ filter.label }}
-                    </b-button>
-                </div>
-            </b-col>
-        </b-row>
+
+        <!-- Search bar -->
+        <div class="search-bar" v-if="isSearchVisible">
+            <font-awesome-icon icon="fa-solid fa-magnifying-glass" class="search-bar-icon" />
+            <input
+                v-model="search"
+                class="search-bar-input"
+                placeholder="Search by name or phone…"
+                autofocus
+            />
+            <font-awesome-icon icon="fa-solid fa-circle-xmark" class="search-bar-clear" @click="search = ''; isSearchVisible = false" v-if="search"/>
+        </div>
+
+        <!-- Letter filter chips -->
+        <div class="filter-chips" v-if="!search">
+            <button
+                v-for="filter in filters"
+                :key="filter.value"
+                class="letter-chip"
+                :class="{ 'letter-chip--active': searchFilter === filter.value }"
+                @click="searchFilter = filter.value"
+            >
+                {{ filter.label }}
+            </button>
+        </div>
+
+        <!-- Customers list -->
         <div class="customers-list">
-            <b-spinner variant="primary" v-if="isLoading"></b-spinner>
+            <div class="loading-center" v-if="isLoading">
+                <b-spinner></b-spinner>
+            </div>
             <template v-else-if="customersList.length > 0">
                 <CustomerItem
                     v-for="customer in customersList"
@@ -37,12 +50,20 @@
                 />
             </template>
             <template v-else>
-                <span class="no-result">{{ this.getLabel('customersAddressBookNoResultLabel') }}</span>
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <font-awesome-icon icon="fa-regular fa-address-book" />
+                    </div>
+                    <p class="empty-state-title">No customers found</p>
+                    <p class="empty-state-sub">{{ this.getLabel('customersAddressBookNoResultLabel') }}</p>
+                </div>
             </template>
         </div>
-        <b-button variant="primary" class="go-back" @click="closeChooseCustomer" v-if="chooseCustomerAvailable">
+
+        <!-- Go back (when used as customer picker) -->
+        <button class="go-back-btn" @click="closeChooseCustomer" v-if="chooseCustomerAvailable">
             {{ this.getLabel('goBackButtonLabel') }}
-        </b-button>
+        </button>
     </div>
 </template>
 
@@ -120,6 +141,7 @@
                 isLoading: false,
                 search: '',
                 timeout: null,
+                isSearchVisible: false,
             }
         },
         methods: {
@@ -135,7 +157,10 @@
                 this.axios
                     .get('customers', {params: {search: this.searchFilter, search_type: 'start_with', search_field: 'first_name', order_by: 'first_name_last_name', shop: this.shop ? this.shop.id : null}})
                     .then((response) => {
-                        this.customersList = response.data.items
+                        this.customersList = response.data.items || [];
+                    })
+                    .catch(() => {
+                        this.customersList = [];
                     })
                     .finally(() => {
                         this.isLoading = false
@@ -149,7 +174,10 @@
                     this.axios
                         .get('customers', {params: {search: this.search, order_by: 'first_name_last_name', shop: this.shop ? this.shop.id : null}})
                         .then((response) => {
-                            this.customersList = response.data.items
+                            this.customersList = response.data.items || [];
+                        })
+                        .catch(() => {
+                            this.customersList = [];
                         })
                         .finally(() => {
                             this.isLoading = false
@@ -171,66 +199,183 @@
 </script>
 
 <style scoped>
-    .filters,
-    .customers-list,
-    .go-back {
-        margin-top: 1.5rem;
-    }
-    .search {
-        position: relative;
-    }
-    .clear {
-        position: absolute;
-        top: 10px;
-        z-index: 1000;
-        right: 15px;
-        cursor: pointer;
-    }
-    .go-back {
-        text-transform: uppercase;
-    }
-    .title {
-        text-align: left;
-        font-weight: bold;
-        color: #322D38;
-        font-size: 22px;
-    }
-    .search-icon {
-        position: absolute;
-        z-index: 1000;
-        top: 12px;
-        left: 15px;
-        color: #7F8CA2;
-    }
-    .search .search-input {
-        padding-left: 40px;
-        padding-right: 20px;
-        border-radius: 30px;
-        border-color: #7F8CA2;
-    }
-    .search {
-        margin-top: 1.5rem;
-    }
-    .filters .btn {
-        border-radius: 30px;
-        padding: 4px 20px;
-        background-color: #E1E6EF9B;
-        color: #04409F;
-        border-color: #7F8CA2;
-        text-transform: uppercase;
-        margin-right: 20px;
-    }
-    .filters .btn:hover,
-    .filters .btn.active {
-        color: #04409F;
-        background-color: #7F8CA2;
-        border-color: #7F8CA2;
-    }
-    .filters {
-        white-space: nowrap;
-        overflow: auto;
-    }
-    .filters::-webkit-scrollbar {
-        display: none;
-    }
+/* ── Screen ── */
+.customers-screen {
+    padding-top: 4px;
+}
+
+/* ── Header ── */
+.screen-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0 8px;
+}
+
+.screen-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--color-text-primary, #0F172A);
+    margin: 0;
+}
+
+.header-icon-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--color-text-secondary, #64748B);
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.12s ease;
+}
+
+.header-icon-btn:active {
+    background-color: var(--color-border, #E2E8F0);
+}
+
+/* ── Search bar ── */
+.search-bar {
+    position: relative;
+    margin-bottom: 12px;
+}
+
+.search-bar-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-text-muted, #94A3B8);
+    font-size: 15px;
+    pointer-events: none;
+}
+
+.search-bar-input {
+    width: 100%;
+    padding: 10px 40px 10px 40px;
+    border-radius: var(--radius-pill, 999px);
+    border: 1px solid var(--color-border, #E2E8F0);
+    background-color: var(--color-surface, #FFFFFF);
+    font-size: 15px;
+    font-family: inherit;
+    color: var(--color-text-primary, #0F172A);
+    outline: none;
+}
+
+.search-bar-input::placeholder {
+    color: var(--color-text-muted, #94A3B8);
+}
+
+.search-bar-input:focus {
+    border-color: var(--color-primary, #2563EB);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.search-bar-clear {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-text-muted, #94A3B8);
+    cursor: pointer;
+    font-size: 15px;
+}
+
+/* ── Letter filter chips ── */
+.filter-chips {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    margin-bottom: 14px;
+    scrollbar-width: none;
+}
+
+.filter-chips::-webkit-scrollbar {
+    display: none;
+}
+
+.letter-chip {
+    flex-shrink: 0;
+    min-width: 44px;
+    height: 32px;
+    border-radius: var(--radius-pill, 999px);
+    border: none;
+    background: transparent;
+    color: var(--color-text-secondary, #64748B);
+    font-size: 12px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.12s ease;
+    text-transform: uppercase;
+}
+
+.letter-chip--active {
+    background-color: var(--color-primary, #2563EB);
+    color: #FFFFFF;
+}
+
+/* ── Customers list ── */
+.customers-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    background-color: var(--color-surface, #FFFFFF);
+    border-radius: var(--radius-lg, 16px);
+    overflow: hidden;
+}
+
+.loading-center {
+    display: flex;
+    justify-content: center;
+    padding: 40px 0;
+}
+
+/* ── Empty state ── */
+.empty-state {
+    text-align: center;
+    padding: 60px 24px 24px;
+}
+
+.empty-state-icon {
+    font-size: 48px;
+    color: var(--color-text-muted, #94A3B8);
+    margin-bottom: 16px;
+}
+
+.empty-state-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--color-text-primary, #0F172A);
+    margin: 0 0 6px;
+}
+
+.empty-state-sub {
+    font-size: 14px;
+    color: var(--color-text-secondary, #64748B);
+    margin: 0;
+}
+
+/* ── Go back button ── */
+.go-back-btn {
+    display: block;
+    width: 100%;
+    margin-top: 16px;
+    padding: 13px;
+    background-color: var(--color-primary, #2563EB);
+    color: #FFFFFF;
+    border: none;
+    border-radius: var(--radius-lg, 16px);
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
 </style>

@@ -13,6 +13,10 @@ jQuery(function ($) {
 
     // Exclusion rules: mode selector (weekdays / specific_dates)
     sln_bindExclusionRuleModeChange($);
+
+    // Exclusion rules: time restriction toggle and second-shift toggle
+    sln_bindExclusionTimeRestriction($);
+    sln_bindExclusionSecondShift($);
 });
 
 function sln_bindDiscountTypeChange($) {
@@ -91,4 +95,49 @@ function sln_bindExclusionRuleModeChange($) {
 
     // Set correct initial state for every existing exclusion-rule row on page load.
     $('[data-type="discount-exclusion-rule-mode"]').trigger('change');
+}
+
+/**
+ * "All day / Time restriction" toggle inside each exclusion-rule row.
+ * Shows or hides the shift sliders. Uses document-level delegation so
+ * dynamically added rows (via prototype) are handled automatically.
+ * When revealed, re-initialises any sliders that were hidden on load.
+ */
+function sln_bindExclusionTimeRestriction($) {
+    $(document)
+        .off('change.sln-exclusion-time', '[data-type="exclusion-time-restriction"]')
+        .on('change.sln-exclusion-time', '[data-type="exclusion-time-restriction"]', function () {
+            var $row     = $(this).closest('.sln-booking-rule');
+            var $section = $row.find('.sln-exclusion-time-shifts');
+            var isOn     = $(this).prop('checked');
+
+            $section.toggleClass('hide', !isOn);
+
+            if (isOn && typeof sln_customSliderRange === 'function') {
+                sln_customSliderRange($, $section.find('.slider-range'));
+            }
+        });
+
+    $('[data-type="exclusion-time-restriction"]').trigger('change');
+}
+
+/**
+ * Second-shift toggle inside exclusion-rule rows.
+ * Shows/hides the slider inner content and enables/disables the hidden inputs.
+ * Scoped to #sln-discount-exclusion-rules to avoid conflicting with availability rows.
+ */
+function sln_bindExclusionSecondShift($) {
+    $(document)
+        .off('change.sln-exclusion-second-shift', '#sln-discount-exclusion-rules .sln-disable-second-shift input')
+        .on('change.sln-exclusion-second-shift', '#sln-discount-exclusion-rules .sln-disable-second-shift input', function () {
+            var $row      = $(this).closest('.sln-booking-rule');
+            var disabled  = $(this).prop('checked');
+            var $inner    = $row.find('.sln-second-shift .sln-slider__inner');
+
+            $inner.toggle(!disabled);
+            $row.find('.sln-second-shift .slider-time-input-from, .sln-second-shift .slider-time-input-to')
+                .prop('disabled', disabled);
+        });
+
+    $('#sln-discount-exclusion-rules .sln-disable-second-shift input').trigger('change');
 }

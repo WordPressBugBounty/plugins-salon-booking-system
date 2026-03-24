@@ -1,46 +1,107 @@
 <template>
-  <div>
-    <!-- Toast container for notifications -->
-    <b-toaster name="b-toaster-top-center" class="toast-container-custom"></b-toaster>
-    
-    <b-spinner variant="primary" v-if="isLoading"></b-spinner>
-    <div v-else-if="user" class="user-profile">
-      <div class="user-profile-top">
-        <h2 class="user-profile-name">{{ user.name }}</h2>
-        <p class="user-profile-email">{{ user.email }}</p>
-        <p class="user-profile-role">{{ user.role }}</p>
-      </div>
-      
-      <!-- Admin-only: Calendar Reset Button -->
-      <div v-if="isAdmin" class="admin-tools-section">
-        <h3 class="admin-tools-title">Administrator Tools</h3>
-        <button 
-          class="btn-reset-calendar"
-          @click="resetCalendar"
-          :disabled="isResetting"
-          title="Reset calendar cache - clears all cached data and reloads from server"
-        >
-          <i class="fas fa-sync-alt" :class="{ 'fa-spin': isResetting }"></i>
-          {{ isResetting ? 'Resetting...' : 'Reset Calendar Cache' }}
-        </button>
-        <button 
-          class="btn-force-update"
-          @click="forcePwaUpdate"
-          :disabled="isUpdating"
-          title="Force PWA update - clears all caches including service worker, ensures latest code is loaded"
-        >
-          <i class="fas fa-download" :class="{ 'fa-spin': isUpdating }"></i>
-          {{ isUpdating ? 'Updating...' : 'Force PWA Update' }}
-        </button>
-        <p class="admin-tools-description">
-          <strong>Reset Calendar Cache:</strong> Clears calendar data cache. Use if you experience data sync issues.<br>
-          <strong>Force PWA Update:</strong> Clears service worker cache and reloads. Use if booking emails show wrong data, or after plugin updates.
-        </p>
-      </div>
-      
-      <b-button class="btn-logout" variant="primary" @click="logOut">Log-out</b-button>
+  <div class="profile-screen">
+    <div class="profile-loading" v-if="isLoading">
+      <b-spinner></b-spinner>
     </div>
-    <div v-else>
+
+    <template v-else-if="user">
+      <!-- Hero -->
+      <div class="profile-hero">
+        <div class="profile-avatar">{{ userInitials }}</div>
+        <h2 class="profile-name">{{ user.name }}</h2>
+        <span class="profile-role-badge">{{ user.role }}</span>
+      </div>
+
+      <!-- Menu -->
+      <div class="menu-section">
+        <p class="menu-section-label">Active Users</p>
+        <div class="active-users-card">
+          <div class="active-users-loading" v-if="isLoadingUsers">
+            <b-spinner small></b-spinner>
+            <span>Loading active users...</span>
+          </div>
+          <div v-else-if="filteredActiveUsers.length > 0" class="active-users-list">
+            <div 
+              v-for="activeUser in filteredActiveUsers" 
+              :key="activeUser.id"
+              class="active-user-item"
+            >
+              <div class="active-user-avatar">{{ getUserInitials(activeUser.name) }}</div>
+              <div class="active-user-info">
+                <span class="active-user-name">{{ activeUser.name }}</span>
+                <span class="active-user-role">{{ activeUser.role }}</span>
+              </div>
+              <button 
+                v-if="activeUser.id !== user.id"
+                class="active-user-logout-btn"
+                @click="logoutUser(activeUser.id)"
+                :disabled="activeUser.isLoggingOut"
+              >
+                <font-awesome-icon 
+                  :icon="activeUser.isLoggingOut ? 'fa-solid fa-circle-xmark' : 'fa-solid fa-arrow-right-from-bracket'" 
+                  :class="{ 'fa-spin': activeUser.isLoggingOut }"
+                />
+              </button>
+              <span v-else class="active-user-indicator active-user-indicator--self">
+                You
+              </span>
+            </div>
+          </div>
+          <div v-else class="active-users-empty">
+            <p>No other users are currently active</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="menu-section">
+        <p class="menu-section-label">App</p>
+        <div class="menu-list">
+          <div v-if="canAccessBookingResizePref" class="menu-row menu-row--toggle">
+            <span class="menu-row-left">
+              <font-awesome-icon icon="fa-solid fa-arrows-up-down" class="menu-icon" />
+              <span class="menu-row-label">Disable drag-to-resize on bookings</span>
+            </span>
+            <label class="profile-switch" @click.stop>
+              <input
+                v-model="disableBookingDragResize"
+                type="checkbox"
+                class="profile-switch-input"
+                aria-label="Disable drag-to-resize on calendar bookings"
+              />
+              <span class="profile-switch-track" aria-hidden="true" />
+            </label>
+          </div>
+          <button class="menu-row" @click="forcePwaUpdate" :disabled="isUpdating">
+            <span class="menu-row-left">
+              <font-awesome-icon icon="fa-solid fa-rotate-right" class="menu-icon" :class="{ 'fa-spin': isUpdating }" />
+              <span class="menu-row-label">{{ isUpdating ? 'Updating…' : 'Force App Update' }}</span>
+            </span>
+          </button>
+          <button class="menu-row" v-if="isAdmin" @click="resetCalendar" :disabled="isResetting">
+            <span class="menu-row-left">
+              <font-awesome-icon icon="fa-solid fa-trash" class="menu-icon menu-icon--warning" :class="{ 'fa-spin': isResetting }" />
+              <span class="menu-row-label">{{ isResetting ? 'Resetting…' : 'Reset Calendar Cache' }}</span>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <div class="menu-section">
+        <p class="menu-section-label">Session</p>
+        <div class="menu-list">
+          <button class="menu-row menu-row--destructive" @click="logOut">
+            <span class="menu-row-left">
+              <font-awesome-icon icon="fa-solid fa-arrow-right-from-bracket" class="menu-icon" />
+              <span class="menu-row-label">Log Out</span>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <p class="app-version">Salon Booking System</p>
+    </template>
+
+    <div v-else class="profile-error">
       <p>Failed to load user information. Please try again.</p>
     </div>
   </div>
@@ -55,14 +116,69 @@ export default {
       user: null,
       isResetting: false,
       isUpdating: false,
+      activeUsers: [],
+      isLoadingUsers: false,
+      userRefreshInterval: null,
     };
   },
   computed: {
     isAdmin() {
-      // Check if user has administrator role
-      return this.user?.role?.toLowerCase().includes('admin') || 
+      return this.user?.role?.toLowerCase().includes('admin') ||
              this.user?.role?.toLowerCase().includes('administrator');
-    }
+    },
+    userInitials() {
+      if (!this.user?.name) return '?';
+      return this.user.name
+        .split(' ')
+        .slice(0, 2)
+        .map(w => w[0]?.toUpperCase() ?? '')
+        .join('');
+    },
+    userRoleLevel() {
+      const role = this.user?.role?.toLowerCase() || '';
+      if (role.includes('admin')) return 3;
+      if (role.includes('manager')) return 2;
+      if (role.includes('staff')) return 1;
+      return 0;
+    },
+    filteredActiveUsers() {
+      // Filter users by role hierarchy - show users with equal or lower role level
+      return this.activeUsers
+        .filter(u => {
+          const role = u.role?.toLowerCase() || '';
+          let userLevel = 0;
+          if (role.includes('admin')) userLevel = 3;
+          else if (role.includes('manager')) userLevel = 2;
+          else if (role.includes('staff')) userLevel = 1;
+          
+          return userLevel <= this.userRoleLevel;
+        })
+        .map(u => ({
+          ...u,
+          isLoggingOut: u.isLoggingOut || false
+        }))
+        .sort((a, b) => {
+          // Sort: current user first, then by role level (highest first), then by name
+          if (a.id === this.user.id) return -1;
+          if (b.id === this.user.id) return 1;
+          
+          const aLevel = this.getRoleLevel(a.role);
+        const bLevel = this.getRoleLevel(b.role);
+        if (aLevel !== bLevel) return bLevel - aLevel;
+        
+        return (a.name || '').localeCompare(b.name || '');
+      });
+    },
+    disableBookingDragResize: {
+      get() {
+        return !!(this.$root && this.$root.disableBookingDragResize);
+      },
+      set(val) {
+        if (this.$root && typeof this.$root.setDisableBookingDragResize === 'function') {
+          this.$root.setDisableBookingDragResize(val);
+        }
+      },
+    },
   },
   methods: {
     loadUserProfile() {
@@ -75,11 +191,58 @@ export default {
           .catch((error) => {
             // eslint-disable-next-line
             console.error('Error loading user profile:', error);
-            this.user = null;
+            if (process.env.NODE_ENV === 'development' && window.slnPWA?.mock_user) {
+              this.user = window.slnPWA.mock_user;
+            } else {
+              this.user = null;
+            }
           })
           .finally(() => {
             this.isLoading = false;
           });
+    },
+    async loadActiveUsers() {
+      this.isLoadingUsers = true;
+      try {
+        const response = await this.axios.get('/users/active');
+        this.activeUsers = response.data.users || [];
+      } catch (error) {
+        console.error('Error loading active users:', error);
+        this.activeUsers = [];
+      } finally {
+        this.isLoadingUsers = false;
+      }
+    },
+    async logoutUser(userId) {
+      // Find the user in the array and set loading state
+      const userIndex = this.activeUsers.findIndex(u => u.id === userId);
+      if (userIndex === -1) return;
+
+      this.$set(this.activeUsers[userIndex], 'isLoggingOut', true);
+
+      try {
+        await this.axios.post(`/users/${userId}/logout`);
+        // Remove user from active list after successful logout
+        this.activeUsers = this.activeUsers.filter(u => u.id !== userId);
+      } catch (error) {
+        console.error('Error logging out user:', error);
+        this.$set(this.activeUsers[userIndex], 'isLoggingOut', false);
+      }
+    },
+    getUserInitials(name) {
+      if (!name) return '?';
+      return name
+        .split(' ')
+        .slice(0, 2)
+        .map(w => w[0]?.toUpperCase() ?? '')
+        .join('');
+    },
+    getRoleLevel(role) {
+      const r = (role || '').toLowerCase();
+      if (r.includes('admin')) return 3;
+      if (r.includes('manager')) return 2;
+      if (r.includes('staff')) return 1;
+      return 0;
     },
     logOut() {
       this.axios
@@ -207,202 +370,369 @@ export default {
   },
   mounted() {
     this.loadUserProfile();
+    this.loadActiveUsers();
+    
+    // Refresh active users every 30 seconds
+    this.userRefreshInterval = setInterval(() => {
+      this.loadActiveUsers();
+    }, 30000);
+  },
+  beforeUnmount() {
+    if (this.userRefreshInterval) {
+      clearInterval(this.userRefreshInterval);
+    }
   },
 };
 </script>
 
 <style scoped>
-.user-profile {
+/* ── Screen wrapper ── */
+.profile-screen {
+  min-height: 100vh;
+  background-color: var(--color-background, #F4F6FA);
+}
+
+.profile-loading {
+  display: flex;
+  justify-content: center;
+  padding-top: 60px;
+}
+
+/* ── Hero ── */
+.profile-hero {
+  background: linear-gradient(180deg, var(--color-primary-light, #EFF6FF) 0%, var(--color-surface, #FFFFFF) 100%);
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 293px;
-  padding: 36px 30px 75px;
-  background-color: #F3F6FC;
-  border-radius: 3px;
+  align-items: center;
+  padding: 36px 16px 28px;
+  gap: 10px;
 }
 
-.user-profile .user-profile-top {
-  text-align: left;
-  width: 100%;
-}
-
-.user-profile .user-profile-name {
-  font-size: 26px;
-  line-height: 32px;
+.profile-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: var(--color-primary, #2563EB);
+  color: #fff;
+  font-size: 28px;
   font-weight: 700;
-  color: #322D38;
-  text-transform: capitalize;
-  margin: 0 0 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0.02em;
 }
 
-.user-profile p {
-  margin-bottom: 0;
+.profile-name {
   font-size: 22px;
-  line-height: 27px;
-  color: #7F8CA2;
+  font-weight: 700;
+  color: var(--color-text-primary, #0F172A);
+  margin: 4px 0 0;
+}
+
+.profile-role-badge {
+  background-color: var(--color-primary-light, #EFF6FF);
+  color: var(--color-primary, #2563EB);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 14px;
+  border-radius: var(--radius-pill, 999px);
+  text-transform: capitalize;
+}
+
+/* ── Menu sections ── */
+.menu-section {
+  margin-top: 24px;
+}
+
+.menu-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted, #94A3B8);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0 16px;
+  margin: 0 0 4px;
+}
+
+.menu-list {
+  background-color: var(--color-surface, #FFFFFF);
+  border-radius: var(--radius-lg, 16px);
+  overflow: hidden;
+}
+
+/* ── Menu row ── */
+.menu-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--color-border, #E2E8F0);
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+  text-align: left;
+}
+
+.menu-row:last-child {
+  border-bottom: none;
+}
+
+.menu-row:active {
+  background-color: var(--color-background, #F4F6FA);
+}
+
+.menu-row:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.menu-row-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.menu-icon {
+  width: 20px;
+  font-size: 17px;
+  color: var(--color-primary, #2563EB);
+  flex-shrink: 0;
+}
+
+.menu-icon--warning {
+  color: var(--color-pending, #D97706);
+}
+
+.menu-row-label {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-text-primary, #0F172A);
+}
+
+.menu-row-accessory {
+  font-size: 13px;
+  color: var(--color-text-muted, #94A3B8);
+}
+
+.menu-row--toggle {
+  cursor: default;
+  border-bottom: 1px solid var(--color-border, #e2e8f0);
+}
+
+.menu-row--toggle:active {
+  background-color: transparent;
+}
+
+/* iOS-style switch */
+.profile-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.profile-switch-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.profile-switch-track {
+  width: 46px;
+  height: 28px;
+  background: var(--color-border, #e2e8f0);
+  border-radius: 999px;
+  transition: background-color 0.2s ease;
+  position: relative;
+}
+
+.profile-switch-track::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.profile-switch-input:checked + .profile-switch-track {
+  background: var(--color-primary, #2563eb);
+}
+
+.profile-switch-input:checked + .profile-switch-track::after {
+  transform: translateX(18px);
+}
+
+.profile-switch-input:focus-visible + .profile-switch-track {
+  outline: 2px solid var(--color-primary, #2563eb);
+  outline-offset: 2px;
+}
+
+/* ── Destructive row ── */
+.menu-row--destructive .menu-icon,
+.menu-row--destructive .menu-row-label {
+  color: var(--color-error, #DC2626);
+}
+
+/* ── Active Users Card ── */
+.active-users-card {
+  background-color: var(--color-surface, #FFFFFF);
+  border-radius: var(--radius-lg, 16px);
+  overflow: hidden;
+  padding: 16px;
+}
+
+.active-users-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px;
+  color: var(--color-text-secondary, #64748B);
+  font-size: 14px;
+}
+
+.active-users-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.active-user-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background-color: var(--color-background, #F4F6FA);
+  border-radius: var(--radius-md, 12px);
+  transition: background-color 0.12s ease;
+}
+
+.active-user-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary, #2563EB), #1D4ED8);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+.active-user-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.active-user-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-primary, #0F172A);
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.user-profile .user-profile-email {
-  padding-bottom: 10px;
+.active-user-role {
+  font-size: 12px;
+  color: var(--color-text-secondary, #64748B);
 }
 
-.user-profile .user-profile-role {
-  text-transform: capitalize;
-}
-
-.user-profile .btn-logout {
-  font-size: 25px;
-  line-height: 1;
-  letter-spacing: 1.75px;
-  font-weight: 500;
-  padding: 19px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: #04409F;
-  background-color: #F3F6FC;
-  border: 2px solid #04409F;
-  border-radius: 3px;
-  max-width: 318px;
-  width: 100%;
-  margin: auto;
-  transition: all .3s ease;
-}
-
-.user-profile .btn-logout:active,
-.user-profile .btn-logout:hover {
-  color: #F3F6FC;
-  background-color: #7f8ca2;
-  border-color: #7f8ca2;
-}
-
-/* Admin Tools Section */
-.admin-tools-section .btn-force-update {
-  margin-top: 10px;
-}
-
-.admin-tools-section {
-  width: 100%;
-  padding: 20px;
-  background-color: #FFF9E6;
-  border: 2px solid #FFC107;
-  border-radius: 8px;
-  margin: 20px 0;
-}
-
-.admin-tools-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: #FF9800;
-  margin: 0 0 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.admin-tools-title::before {
-  content: "⚙️";
-  font-size: 20px;
-}
-
-.admin-tools-description {
-  font-size: 13px;
-  color: #7F8CA2;
-  margin: 8px 0 0;
-  line-height: 1.4;
-}
-
-.btn-reset-calendar,
-.btn-force-update {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 12px 16px;
-  border-radius: 6px;
-  font-size: 16px;
+.active-user-indicator {
+  font-size: 11px;
   font-weight: 600;
+  color: var(--color-success, #16A34A);
+  background-color: rgba(22, 163, 74, 0.1);
+  padding: 4px 10px;
+  border-radius: var(--radius-pill, 999px);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.active-user-indicator--self {
+  color: var(--color-primary, #2563EB);
+  background-color: var(--color-primary-light, #EFF6FF);
+}
+
+.active-user-logout-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: transparent;
+  border: 1.5px solid var(--color-border, #E2E8F0);
+  color: var(--color-error, #DC2626);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.12s ease;
+  flex-shrink: 0;
+  font-size: 14px;
 }
 
-.btn-reset-calendar {
-  background-color: #FFF;
-  border: 2px solid #FF9800;
-  color: #FF9800;
+.active-user-logout-btn:hover:not(:disabled) {
+  background-color: rgba(220, 38, 38, 0.1);
+  border-color: var(--color-error, #DC2626);
 }
 
-.btn-force-update {
-  background-color: #FFF;
-  border: 2px solid #2196F3;
-  color: #2196F3;
+.active-user-logout-btn:active:not(:disabled) {
+  transform: scale(0.95);
 }
 
-.btn-reset-calendar:hover:not(:disabled),
-.btn-force-update:hover:not(:disabled) {
-  color: #FFF;
-  transform: translateY(-1px);
-}
-
-.btn-reset-calendar:hover:not(:disabled) {
-  background-color: #FF9800;
-  box-shadow: 0 4px 8px rgba(255, 152, 0, 0.3);
-}
-
-.btn-force-update:hover:not(:disabled) {
-  background-color: #2196F3;
-  box-shadow: 0 4px 8px rgba(33, 150, 243, 0.3);
-}
-
-.btn-reset-calendar:active:not(:disabled),
-.btn-force-update:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.btn-reset-calendar:disabled,
-.btn-force-update:disabled {
-  opacity: 0.6;
+.active-user-logout-btn:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
-  transform: none;
 }
 
-.btn-reset-calendar i,
-.btn-force-update i {
-  font-size: 16px;
+.active-users-empty {
+  padding: 30px 16px;
+  text-align: center;
 }
 
-.btn-reset-calendar i.fa-spin,
-.btn-force-update i.fa-spin {
+.active-users-empty p {
+  font-size: 14px;
+  color: var(--color-text-secondary, #64748B);
+  margin: 0;
+}
+
+/* ── App version ── */
+.app-version {
+  text-align: center;
+  font-size: 12px;
+  color: var(--color-text-muted, #94A3B8);
+  margin: 32px 0 16px;
+}
+
+/* ── Error state ── */
+.profile-error {
+  padding: 40px 16px;
+  text-align: center;
+  color: var(--color-text-secondary, #64748B);
+}
+
+/* ── Spin animation for loading icons ── */
+.fa-spin {
   animation: fa-spin 1s infinite linear;
 }
 
 @keyframes fa-spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
-}
-
-.toast-container-custom {
-  z-index: 9999;
-}
-
-@media screen and (max-width: 424px){
-  .user-profile p {
-    font-size: 18px;
-    line-height: 1.2;
-  }
-  .user-profile .user-profile-name {
-     font-size: 22px;
-     line-height: 26px;
-     margin: 0 0 18px;
-   }
-  .user-profile .btn-logout {
-    font-size: 22px;
-    letter-spacing: 1px;
-    padding: 14px;
-  }
 }
 </style>

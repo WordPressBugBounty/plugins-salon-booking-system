@@ -44,7 +44,8 @@ export default {
 
   computed: {
     formattedDate() {
-      return this.moment(this.date).locale(this.getLabel('calendarLocale')).format("dddd DD YYYY");
+      const locale = this.dayjsLocale(this.getLabel('calendarLocale'));
+      return this.moment(this.date).locale(locale).format('dddd DD YYYY');
     },
 
     isAttendantViewLocal: {
@@ -69,36 +70,30 @@ export default {
 .slots-headline {
   display: flex;
   align-items: center;
+  margin-top: 20px;
 }
 
 .selected-date {
-  margin-top: 55px;
   font-size: 18px;
-  font-weight: 700;
-  color: #322d38;
+  font-weight: 600;
+  color: #0F172A;
   text-align: left;
 }
 
 .attendant-toggle {
-  margin-top: 55px;
   margin-left: auto;
-  color: #4A454F;
+  color: #64748B;
   font-weight: 400;
-  font-size: 14px;
+  font-size: 13px;
   user-select: none;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 @media screen and (max-width: 600px) {
-  .attendant-toggle {
-    margin-top: 32px;
-  }
-
   .selected-date {
     font-size: 16px;
-    margin-top: 32px;
   }
 }
 </style>

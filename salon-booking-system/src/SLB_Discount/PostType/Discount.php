@@ -8,6 +8,8 @@ class SLB_Discount_PostType_Discount extends SLN_PostType_Abstract
     {
         parent::init();
 
+        trigger_error( '[SLB_Discount] PostType init() called. is_admin=' . (is_admin() ? 'true' : 'false'), E_USER_NOTICE );
+
         if (is_admin()) {
             add_action('manage_'.$this->getPostType().'_posts_custom_column', array($this, 'manage_column'), 10, 2);
             add_filter('manage_'.$this->getPostType().'_posts_columns', array($this, 'manage_columns'));
@@ -20,6 +22,7 @@ class SLB_Discount_PostType_Discount extends SLN_PostType_Abstract
             add_filter('posts_join', array($this, 'search_join'), 10, 2);
             add_filter('posts_search', array($this, 'search_where'), 10, 2);
             add_filter('posts_groupby', array($this, 'search_groupby'), 10, 2);
+            add_filter('posts_where', array($this, 'restrict_admin_list_statuses'), 10, 2);
         }
     }
 
@@ -156,7 +159,6 @@ class SLB_Discount_PostType_Discount extends SLN_PostType_Abstract
                 'title',
                 'excerpt',
                 'thumbnail',
-                'revisions',
             ),
             'labels' => array(
                 'name' => __('Discounts', 'salon-booking-system'),
@@ -187,6 +189,48 @@ class SLB_Discount_PostType_Discount extends SLN_PostType_Abstract
         }
     }
 
+    /**
+     * Restrict the discount admin list to standard WordPress post statuses.
+     *
+     * Booking custom statuses (confirmed, canceled, etc.) are registered
+     * globally with show_in_admin_all_list=true. Without this fix, using
+     * post_status=all in the discount list URL causes WordPress to include
+     * those statuses in the query, surfacing discounts that were accidentally
+     * assigned a booking status alongside revisions with status=inherit.
+     */
+    public function restrict_admin_list_statuses( $where, $query ) {
+        global $pagenow, $wpdb;
+
+        trigger_error( '[SLB_Discount] restrict_admin_list_statuses fired. pagenow=' . $pagenow . ' post_type_get=' . $query->get('post_type') . ' GET_post_type=' . ( isset($_GET['post_type']) ? $_GET['post_type'] : 'N/A' ), E_USER_NOTICE );
+
+        if (
+            ! is_admin()
+            || $pagenow !== 'edit.php'
+            || ! isset( $_GET['post_type'] )
+            || sanitize_key( $_GET['post_type'] ) !== $this->getPostType()
+            || $query->get( 'post_type' ) !== $this->getPostType()
+        ) {
+            return $where;
+        }
+
+        $requested_status = isset( $_GET['post_status'] ) ? sanitize_key( $_GET['post_status'] ) : '';
+
+        // Only intercept the catch-all "all" request.
+        // Explicit single-status filters (e.g. ?post_status=draft) are left untouched.
+        if ( $requested_status !== 'all' && $requested_status !== '' ) {
+            return $where;
+        }
+
+        $statuses      = array( 'publish', 'draft', 'pending', 'private', 'future' );
+        $placeholders  = implode( ', ', array_fill( 0, count( $statuses ), '%s' ) );
+        $where        .= $wpdb->prepare(
+            " AND {$wpdb->posts}.post_status IN ($placeholders)",
+            $statuses
+        );
+
+        return $where;
+    }
+
     public function search_join($join, $query)
     {
         global $wpdb;
@@ -205,7 +249,14 @@ class SLB_Discount_PostType_Discount extends SLN_PostType_Abstract
 
         if ($query->is_main_query() && $query->get('post_type') === $this->getPostType() && $query->get('s') && ! empty($search)) {
             $term     = '%' . $wpdb->esc_like($query->get('s')) . '%';
-            $search  .= $wpdb->prepare(' OR slb_dc_meta.meta_value LIKE %s', $term);
+            // Keep the meta search inside the existing WordPress search group.
+            // Appending a raw "OR ..." at the end can break SQL precedence and
+            // unexpectedly include rows outside the post_type/status constraints.
+            $search_expression = preg_replace('/^\s*AND\s*/', '', $search);
+            $search            = $wpdb->prepare(
+                " AND ( {$search_expression} OR slb_dc_meta.meta_value LIKE %s )",
+                $term
+            );
         }
 
         return $search;

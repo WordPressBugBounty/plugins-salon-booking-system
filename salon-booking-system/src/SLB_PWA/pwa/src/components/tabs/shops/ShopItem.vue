@@ -1,33 +1,19 @@
 <template>
-    <b-row>
-        <b-col sm="12" class="shop-wrapper">
-            <div class="shop">
-                <b-row>
-                    <b-col sm="12" class="shop-info">
-                        <div class="shop-name">
-                            {{ name }}
-                        </div>
-                        <div class="shop-address">
-                            {{ address }}
-                        </div>
-                        <div class="shop-email">
-                            {{ email }}
-                        </div>
-                        <div class="shop-actions">
-                            <div class="shop-phone">
-                                {{ phone }}
-                            </div>
-                            <div class="shop-actions-wrapper">
-                                <span class="details-link">
-                                    <font-awesome-icon icon="fa-solid fa-chevron-right" @click="applyShop"/>
-                                </span>
-                            </div>
-                        </div>
-                    </b-col>
-                </b-row>
-            </div>
-        </b-col>
-    </b-row>
+  <div class="shop-card" @click="applyShop">
+    <div class="shop-icon-wrap">
+      <font-awesome-icon icon="fa-solid fa-store" class="shop-icon" />
+    </div>
+    <div class="shop-info">
+      <div class="shop-name">{{ name }}</div>
+      <div class="shop-meta" v-if="address || phone">
+        <span v-if="address">{{ address }}</span>
+        <span v-if="address && phone"> · </span>
+        <span v-if="phone">{{ phone }}</span>
+      </div>
+      <div class="shop-email-text" v-if="email">{{ email }}</div>
+    </div>
+    <font-awesome-icon icon="fa-solid fa-chevron-right" class="shop-chevron" />
+  </div>
 </template>
 
 <script>
@@ -64,39 +50,52 @@
 </script>
 
 <style scoped>
-    .shop {
-        padding: 10px 10px 10px 20px;
-        text-align: left;
-        margin-bottom: 1rem;
-        background-color: #ECF1FA9B;
-    }
-    .shop-name {
-        white-space: nowrap;
-        overflow: hidden;
-        color: #04409F;
-        font-size: 22px;
-        text-overflow: ellipsis;
-    }
-    .shop-actions {
-        display: flex;
-        justify-content: space-between;
-    }
-    .shop-actions-wrapper {
-        display: flex;
-        justify-content: flex-end;
-        align-items: baseline;
-        font-size: 20px;
-    }
-    .details-link {
-        color: #04409F;
-    }
-    .shop-info {
-        display: flex;
-        color: #637491;
-        font-size: 18px;
-        flex-direction: column;
-    }
-    .details-link {
-        cursor: pointer;
-    }
+.shop-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: var(--color-surface, #fff);
+  border-radius: var(--radius-md, 12px);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.shop-card:active { background: var(--color-background, #F4F6FA); }
+.shop-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm, 8px);
+  background: var(--color-primary-light, #EFF6FF);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.shop-icon {
+  font-size: 18px;
+  color: var(--color-primary, #2563EB);
+}
+.shop-info { flex: 1; }
+.shop-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-primary, #0F172A);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.shop-meta {
+  font-size: 13px;
+  color: var(--color-text-secondary, #64748B);
+  margin-top: 2px;
+}
+.shop-email-text {
+  font-size: 12px;
+  color: var(--color-text-muted, #94A3B8);
+  margin-top: 2px;
+}
+.shop-chevron {
+  font-size: 14px;
+  color: var(--color-text-muted, #94A3B8);
+}
 </style>

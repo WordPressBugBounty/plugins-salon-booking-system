@@ -267,6 +267,14 @@ class SLN_TimeFunc
         if ($val instanceof DateTime || $val instanceof DateTimeImmutable ) {
             $val = $val->format('H:i');
         }
+
+        // Defensive normalization for malformed imported meta values.
+        if (is_array($val)) {
+            $val = self::flattenTimeCandidate($val);
+        } elseif (is_object($val)) {
+            $val = method_exists($val, '__toString') ? (string) $val : null;
+        }
+
         if (empty($val)) {
             return null;
         }
@@ -327,6 +335,25 @@ class SLN_TimeFunc
             SLN_Plugin::addLog('ERROR: Invalid time format "' . $val . '": ' . $e->getMessage());
             return '00:00';
         }
+    }
+
+    protected static function flattenTimeCandidate($value) {
+        if (is_scalar($value) || $value === null) {
+            return $value;
+        }
+
+        if (!is_array($value)) {
+            return null;
+        }
+
+        foreach ($value as $item) {
+            $candidate = self::flattenTimeCandidate($item);
+            if ($candidate !== null && $candidate !== '') {
+                return $candidate;
+            }
+        }
+
+        return null;
     }
 
     public static function getTimezoneWpSettingsOption() {

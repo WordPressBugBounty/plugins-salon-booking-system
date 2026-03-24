@@ -1,429 +1,335 @@
 <template>
-  <div @click="showTimeslots = false">
-    <b-row>
-      <b-col sm="12">
-        <div class="booking-details-customer-info">
-          <b-row>
-            <b-col sm="10"></b-col>
-            <b-col sm="2" class="actions">
-              <font-awesome-icon icon="fa-solid fa-circle-xmark" @click="close"/>
-            </b-col>
-          </b-row>
-          <b-row>
-            <b-col sm="6">
-              <div class="date">
-                <span>{{ this.getLabel('dateTitle') }}</span>
-                <b-input-group>
-                  <template #prepend>
-                    <b-input-group-text>
-                      <font-awesome-icon icon="fa-solid fa-calendar-days"/>
-                    </b-input-group-text>
-                  </template>
-                  <Datepicker
-                      format="yyyy-MM-dd"
-                      v-model="elDate"
-                      :auto-apply="true"
-                      :text-input="true"
-                      :hide-input-icon="true"
-                      :clearable="false"
-                      :class="{required: requiredFields.indexOf('date') > -1}"
-                  ></Datepicker>
-                </b-input-group>
-              </div>
-            </b-col>
-            <b-col sm="6">
-              <div class="time">
-                <span>{{ this.getLabel('timeTitle') }}</span>
-                <b-input-group>
-                  <template #prepend>
-                    <b-input-group-text>
-                      <font-awesome-icon icon="fa-regular fa-clock"/>
-                    </b-input-group-text>
-                  </template>
-                  <b-form-input v-model="elTime"
-                                @click.stop="showTimeslots = !showTimeslots"
-                                class="timeslot-input"
-                                :class="{required: requiredFields.indexOf('time') > -1}"/>
-                  <div class="timeslots" :class="{hide: !this.showTimeslots}" @click.stop>
-                                <span v-for="timeslot in timeslots"
-                                      :key="timeslot"
-                                      class="timeslot"
-                                      :class="{free: freeTimeslots.includes(this.moment(timeslot, this.getTimeFormat()).format('HH:mm'))}"
-                                      @click="setTime(timeslot)">
-                                    {{ timeslot }}
-                                </span>
-                  </div>
-                </b-input-group>
-              </div>
-            </b-col>
-          </b-row>
-          <b-row>
-            <b-col sm="12">
-              <div class="select-existing-client">
-                <b-button variant="primary" @click="chooseCustomer">
-                  <font-awesome-icon icon="fa-solid fa-users"/>
-                  {{ this.getLabel('selectExistingClientButtonLabel') }}
-                </b-button>
-              </div>
-            </b-col>
-          </b-row>
-          <b-row>
-            <b-col sm="12">
-              <div class="customer-firstname">
-                <b-form-input :placeholder="this.getLabel('customerFirstnamePlaceholder')" v-model="elCustomerFirstname"
-                              :class="{required: requiredFields.indexOf('customer_first_name') > -1}"/>
-              </div>
-            </b-col>
-          </b-row>
-          <b-row>
-            <b-col sm="12">
-              <div class="customer-lastname">
-                <b-form-input :placeholder="this.getLabel('customerLastnamePlaceholder')" v-model="elCustomerLastname"/>
-              </div>
-            </b-col>
-          </b-row>
-          <b-row>
-            <b-col sm="12">
-              <div class="customer-email">
-                <b-form-input
-                    :type="(this.bookingID && shouldHideEmail) ? 'password' : 'text'"
-                    :placeholder="getLabel('customerEmailPlaceholder')"
-                    v-model="elCustomerEmail"
-                />
-              </div>
-            </b-col>
-          </b-row>
-          <b-row>
-            <b-col sm="12">
-              <div class="customer-address">
-                <b-form-input :placeholder="this.getLabel('customerAddressPlaceholder')" v-model="elCustomerAddress"/>
-              </div>
-            </b-col>
-          </b-row>
-          <b-row>
-            <b-col sm="12">
-              <div class="customer-phone">
-                <b-form-input
-                    :type="(this.bookingID && shouldHidePhone) ? 'password' : 'tel'"
-                    :placeholder="getLabel('customerPhonePlaceholder')"
-                    v-model="elCustomerPhone"
-                />
-              </div>
-            </b-col>
-          </b-row>
-          <b-row>
-            <b-col sm="12">
-              <div class="customer-notes">
-                <b-form-textarea
-                    v-model="elCustomerNotes"
-                    :placeholder="this.getLabel('customerNotesPlaceholder')"
-                    rows="3"
-                    max-rows="6"
-                ></b-form-textarea>
-              </div>
-            </b-col>
-          </b-row>
-          <b-row>
-            <div class="save-as-new-customer">
-              <b-form-checkbox v-model="saveAsNewCustomer" switch
-              >{{ this.getLabel('saveAsNewCustomerLabel') }}
-              </b-form-checkbox>
-            </div>
-          </b-row>
-        </div>
-      </b-col>
-    </b-row>
-    <b-row>
-      <b-col sm="12">
-        <div class="booking-details-extra-info">
-          <div class="booking-details-extra-info-header">
-            <div class="booking-details-extra-info-header-title">
-              {{ this.getLabel('extraInfoLabel') }}
-            </div>
-            <div>
-                            <span
-                                class="booking-details-extra-info-header-btn"
-                                :class="visibleExtraInfo ? null : 'collapsed'"
-                                :aria-expanded="visibleExtraInfo ? 'true' : 'false'"
-                                aria-controls="collapse-2"
-                                @click="visibleExtraInfo = !visibleExtraInfo"
-                            >
-                                <font-awesome-icon icon="fa-solid fa-circle-chevron-down" v-if="!visibleExtraInfo"/>
-                                <font-awesome-icon icon="fa-solid fa-circle-chevron-up" v-else/>
-                            </span>
-            </div>
+  <div class="booking-form" @click="showTimeslots = false" @scroll.capture="showTimeslots = false">
+
+    <!-- Date & Time -->
+    <div class="form-card">
+      <p class="form-section-label">{{ getLabel('dateTitle') }} &amp; {{ getLabel('timeTitle') }}</p>
+      <div class="form-row-2col">
+        <div class="form-field" @click.stop="showTimeslots = false">
+          <label class="field-label">{{ getLabel('dateTitle') }}</label>
+          <div class="input-icon-wrap date-picker-wrap" :class="{'field-required': requiredFields.indexOf('date') > -1}" @click="openDatePicker">
+            <font-awesome-icon icon="fa-solid fa-calendar-days" class="field-icon" />
+            <Datepicker
+                ref="datePicker"
+                format="yyyy-MM-dd"
+                v-model="elDate"
+                :auto-apply="true"
+                :text-input="true"
+                :hide-input-icon="true"
+                :clearable="false"
+                :enable-time-picker="false"
+                :disabled="isLoadingDates"
+                @updateMonthYear="handleMonthYearChange"
+                @open="handleDatePickerOpen"
+            >
+              <template #day="{ day, date }">
+                <template v-if="isLoadingDates">
+                  <div class="day day-loading">{{ day }}</div>
+                </template>
+                <template v-else-if="isDateAvailable(date)">
+                  <div class="day day-available">{{ day }}</div>
+                </template>
+                <template v-else>
+                  <div class="day day-unavailable">{{ day }}</div>
+                </template>
+              </template>
+            </Datepicker>
           </div>
-          <b-collapse id="collapse-2" class="mt-2" v-model="visibleExtraInfo">
-            <template v-for="field in customFieldsList" :key="field.key">
-              <CustomField :field="field" :value="getCustomFieldValue(field.key, field.default_value)"
-                           @update="updateCustomField"/>
-            </template>
-            <b-row class="field">
-              <b-col sm="12">
-                <div class="customer-personal-notes">
-                  <label class="label" for="customer_personal_notes">{{
-                      this.getLabel('customerPersonalNotesLabel')
-                    }}</label>
-                  <b-form-textarea
-                      v-model.lazy="elCustomerPersonalNotes"
-                      id="customer_personal_notes"
-                      :placeholder="this.getLabel('customerPersonalNotesPlaceholder')"
-                      rows="3"
-                      max-rows="6"
-                  ></b-form-textarea>
-                </div>
-              </b-col>
-            </b-row>
-          </b-collapse>
         </div>
-      </b-col>
-    </b-row>
-    <b-row>
-      <b-col sm="12">
-        <div class="booking-details-total-info">
-          <template v-if="!isLoadingServicesAssistants">
-            <b-row v-for="(service, index) in elServices" :key="index" class="service-row">
-              <b-col sm>
-                <div class="service">
-                  <vue-select ref="select-service" class="service-select" close-on-select v-model="service.service_id"
-                              :options="getServicesListBySearch(servicesList, serviceSearch[index])"
-                              label-by="[serviceName, price, duration, category]" value-by="value"
-                              :class="{required: requiredFields.indexOf('services_service_' + index) > -1}">
-                    <template #label="{ selected }">
-                      <template v-if="selected">
-                        <div class="option-item option-item-selected">
-                          <div class="name">
-                            <span>{{ selected.category }}</span>
-                            <span v-if="selected.category"> | </span>
-                            <span class="service-name">{{ selected.serviceName }}</span>
-                          </div>
-                          <div class="info">
-                            <div class="price">
-                              <span>{{ selected.price }}</span>
-                              <span v-html="selected.currency"></span>
-                              <span> | </span>
-                              <span>{{ selected.duration }}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </template>
-                      <template v-else>{{ this.getLabel('selectServicesPlaceholder') }}</template>
-                    </template>
-                    <template #dropdown-item="{ option }">
-                      <div class="option-item">
-                        <div class="availability-wrapper">
-                          <div class="availability" :class="{available: option.available}"></div>
-                          <div class="name">
-                            <span>{{ option.category }}</span>
-                            <span v-if="option.category"> | </span>
-                            <span class="service-name">{{ option.serviceName }}</span>
-                          </div>
-                        </div>
-                        <div class="info">
-                          <div class="price">
-                            <span>{{ option.price }}</span>
-                            <span v-html="option.currency"></span>
-                            <span> | </span>
-                            <span>{{ option.duration }}</span>
-                          </div>
-                        </div>
+        <div class="form-field time-field">
+          <label class="field-label">{{ getLabel('timeTitle') }}</label>
+          <div class="input-icon-wrap" :class="{'field-required': requiredFields.indexOf('time') > -1}" ref="timeInputWrap">
+            <font-awesome-icon icon="fa-regular fa-clock" class="field-icon" />
+            <b-form-input
+                v-model="elTime"
+                @click.stop="openTimeslots"
+                class="time-input"
+                readonly
+            />
+            <teleport to="body">
+              <div class="timeslots-dropdown" v-if="showTimeslots" @click.stop :style="{ top: timeDropdownTop + 'px' }">
+                <span
+                    v-for="timeslot in timeslots"
+                    :key="timeslot"
+                    class="timeslot-item"
+                    :class="{free: freeTimeslots.includes(moment(timeslot, getTimeFormat()).format('HH:mm'))}"
+                    @click="setTime(timeslot)"
+                >{{ timeslot }}</span>
+              </div>
+            </teleport>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Customer -->
+    <div class="form-card">
+      <p class="form-section-label">Customer</p>
+      <button class="select-customer-btn" type="button" @click="chooseCustomer">
+        <font-awesome-icon icon="fa-solid fa-users" />
+        {{ getLabel('selectExistingClientButtonLabel') }}
+      </button>
+      <div class="form-field">
+        <b-form-input
+            :placeholder="getLabel('customerFirstnamePlaceholder')"
+            v-model="elCustomerFirstname"
+            :class="{'field-required': requiredFields.indexOf('customer_first_name') > -1}"
+        />
+      </div>
+      <div class="form-field">
+        <b-form-input :placeholder="getLabel('customerLastnamePlaceholder')" v-model="elCustomerLastname" />
+      </div>
+      <div class="form-field">
+        <b-form-input
+            :type="(bookingID && shouldHideEmail) ? 'password' : 'text'"
+            :placeholder="getLabel('customerEmailPlaceholder')"
+            v-model="elCustomerEmail"
+        />
+      </div>
+      <div class="form-field">
+        <b-form-input :placeholder="getLabel('customerAddressPlaceholder')" v-model="elCustomerAddress" />
+      </div>
+      <div class="form-field">
+        <b-form-input
+            :type="(bookingID && shouldHidePhone) ? 'password' : 'tel'"
+            :placeholder="getLabel('customerPhonePlaceholder')"
+            v-model="elCustomerPhone"
+        />
+      </div>
+      <div class="form-field">
+        <b-form-textarea
+            v-model="elCustomerNotes"
+            :placeholder="getLabel('customerNotesPlaceholder')"
+            rows="2"
+            max-rows="4"
+        />
+      </div>
+      <div class="toggle-row">
+        <span class="toggle-label">{{ getLabel('saveAsNewCustomerLabel') }}</span>
+        <b-form-checkbox v-model="saveAsNewCustomer" switch />
+      </div>
+    </div>
+
+    <!-- Services -->
+    <div class="form-card">
+      <p class="form-section-label">Services</p>
+      <template v-if="!isLoadingServicesAssistants">
+        <div v-for="(service, index) in elServices" :key="index" class="service-block">
+          <div class="service-block-header">
+            <span class="service-block-num">{{ index + 1 }}</span>
+            <button class="remove-btn" type="button" @click="deleteService(index)">
+              <font-awesome-icon icon="fa-solid fa-circle-xmark" />
+            </button>
+          </div>
+          <div class="service">
+            <vue-select ref="select-service" class="service-select" close-on-select
+                        v-model="service.service_id"
+                        :options="getServicesListBySearch(servicesList, serviceSearch[index])"
+                        label-by="[serviceName, price, duration, category]" value-by="value"
+                        :class="{required: requiredFields.indexOf('services_service_' + index) > -1}">
+              <template #label="{ selected }">
+                <template v-if="selected">
+                  <div class="option-item option-item-selected">
+                    <div class="name">
+                      <span>{{ selected.category }}</span>
+                      <span v-if="selected.category"> | </span>
+                      <span class="service-name">{{ selected.serviceName }}</span>
+                    </div>
+                    <div class="info">
+                      <div class="price">
+                        <span>{{ selected.price }}</span>
+                        <span v-html="selected.currency"></span>
+                        <span> | </span>
+                        <span>{{ selected.duration }}</span>
                       </div>
-                    </template>
-                  </vue-select>
-                  <li class="vue-select-search">
-                    <font-awesome-icon icon="fa-solid fa-magnifying-glass" class="vue-select-search-icon"/>
-                    <b-form-input v-model="serviceSearch[index]" class="vue-select-search-input"
-                                  :placeholder="this.getLabel('selectServicesSearchPlaceholder')"
-                                  @mousedown.stop></b-form-input>
-                  </li>
+                    </div>
+                  </div>
+                </template>
+                <template v-else>{{ getLabel('selectServicesPlaceholder') }}</template>
+              </template>
+              <template #dropdown-item="{ option }">
+                <div class="option-item">
+                  <div class="availability-wrapper">
+                    <div class="availability" :class="{available: option.available}"></div>
+                    <div class="name">
+                      <span>{{ option.category }}</span>
+                      <span v-if="option.category"> | </span>
+                      <span class="service-name">{{ option.serviceName }}</span>
+                    </div>
+                  </div>
+                  <div class="info">
+                    <div class="price">
+                      <span>{{ option.price }}</span>
+                      <span v-html="option.currency"></span>
+                      <span> | </span>
+                      <span>{{ option.duration }}</span>
+                    </div>
+                  </div>
                 </div>
-              </b-col>
-              <b-col sm v-if="isShowResource(service)">
-                <div class="resource">
-                  <vue-select ref="select-resource" class="service-select" close-on-select v-model="service.resource_id"
-                              :options="getAttendantsOrResourcesListBySearch(resourcesList, resourceSearch[index])"
-                              label-by="text" value-by="value"
-                              :class="{required: requiredFields.indexOf('services_assistant_' + index) > -1}"
-                              @focus="loadAvailabilityResources(service.service_id)">
-                    <template #label="{ selected }">
-                      <template v-if="selected">
-                        <div class="option-item option-item-selected">
-                          <div class="name">
-                            <span>{{ selected.text }}</span>
-                          </div>
-                        </div>
-                      </template>
-                      <template v-else>{{ this.getLabel('selectResourcesPlaceholder') }}</template>
-                    </template>
-                    <template #dropdown-item="{ option }">
-                      <div class="option-item">
-                        <div class="availability-wrapper">
-                          <div class="availability" :class="{available: option.available}"></div>
-                          <div class="name">
-                            {{ option.text }}
-                          </div>
-                        </div>
-                      </div>
-                    </template>
-                  </vue-select>
-                  <li class="vue-select-search">
-                    <font-awesome-icon icon="fa-solid fa-magnifying-glass" class="vue-select-search-icon"/>
-                    <b-form-input v-model="resourceSearch[index]" class="vue-select-search-input"
-                                  :placeholder="this.getLabel('selectResourcesSearchPlaceholder')"
-                                  @mousedown.stop></b-form-input>
-                  </li>
+              </template>
+            </vue-select>
+            <li class="vue-select-search">
+              <font-awesome-icon icon="fa-solid fa-magnifying-glass" class="vue-select-search-icon" />
+              <b-form-input v-model="serviceSearch[index]" class="vue-select-search-input"
+                            :placeholder="getLabel('selectServicesSearchPlaceholder')" @mousedown.stop />
+            </li>
+          </div>
+          <div class="resource" v-if="isShowResource(service)">
+            <vue-select ref="select-resource" class="service-select" close-on-select
+                        v-model="service.resource_id"
+                        :options="getAttendantsOrResourcesListBySearch(resourcesList, resourceSearch[index])"
+                        label-by="text" value-by="value"
+                        :class="{required: requiredFields.indexOf('services_assistant_' + index) > -1}"
+                        @focus="loadAvailabilityResources(service.service_id)">
+              <template #label="{ selected }">
+                <template v-if="selected">
+                  <div class="option-item option-item-selected"><div class="name"><span>{{ selected.text }}</span></div></div>
+                </template>
+                <template v-else>{{ getLabel('selectResourcesPlaceholder') }}</template>
+              </template>
+              <template #dropdown-item="{ option }">
+                <div class="option-item">
+                  <div class="availability-wrapper">
+                    <div class="availability" :class="{available: option.available}"></div>
+                    <div class="name">{{ option.text }}</div>
+                  </div>
                 </div>
-              </b-col>
-              <b-col sm v-if="isShowAttendant(service)">
-                <div class="attendant">
-                  <vue-select ref="select-assistant" class="service-select" close-on-select
-                              v-model="service.assistant_id"
-                              :options="getAttendantsOrResourcesListBySearch(attendantsList, assistantSearch[index])"
-                              label-by="text" value-by="value"
-                              :class="{required: requiredFields.indexOf('services_assistant_' + index) > -1}"
-                              @focus="loadAvailabilityAttendants(service.service_id)">
-                    <template #label="{ selected }">
-                      <template v-if="selected">
-                        <div class="option-item option-item-selected">
-                          <div class="name">
-                            <span>{{ selected.text }}</span>
-                          </div>
-                        </div>
-                      </template>
-                      <template v-else>{{ this.getLabel('selectAttendantsPlaceholder') }}</template>
-                    </template>
-                    <template #dropdown-item="{ option }">
-                      <div class="option-item">
-                        <div class="availability-wrapper">
-                          <div class="availability" :class="{available: option.available}"></div>
-                          <div class="name">
-                            <span>{{ option.text }}</span>
-                            <span v-if="option.variable_price">
-                                                    <span> [</span>
-                                                    <span>{{ option.variable_price }}</span>
-                                                    <span v-html="option.currency"></span>
-                                                    <span>]</span>
-                                                </span>
-                          </div>
-                        </div>
-                      </div>
-                    </template>
-                  </vue-select>
-                  <li class="vue-select-search">
-                    <font-awesome-icon icon="fa-solid fa-magnifying-glass" class="vue-select-search-icon"/>
-                    <b-form-input v-model="assistantSearch[index]" class="vue-select-search-input"
-                                  :placeholder="this.getLabel('selectAssistantsSearchPlaceholder')"
-                                  @mousedown.stop></b-form-input>
-                  </li>
+              </template>
+            </vue-select>
+            <li class="vue-select-search">
+              <font-awesome-icon icon="fa-solid fa-magnifying-glass" class="vue-select-search-icon" />
+              <b-form-input v-model="resourceSearch[index]" class="vue-select-search-input"
+                            :placeholder="getLabel('selectResourcesSearchPlaceholder')" @mousedown.stop />
+            </li>
+          </div>
+          <div class="attendant" v-if="isShowAttendant(service)">
+            <vue-select ref="select-assistant" class="service-select" close-on-select
+                        v-model="service.assistant_id"
+                        :options="getAttendantsOrResourcesListBySearch(attendantsList, assistantSearch[index])"
+                        label-by="text" value-by="value"
+                        :class="{required: requiredFields.indexOf('services_assistant_' + index) > -1}"
+                        @focus="loadAvailabilityAttendants(service.service_id)">
+              <template #label="{ selected }">
+                <template v-if="selected">
+                  <div class="option-item option-item-selected"><div class="name"><span>{{ selected.text }}</span></div></div>
+                </template>
+                <template v-else>{{ getLabel('selectAttendantsPlaceholder') }}</template>
+              </template>
+              <template #dropdown-item="{ option }">
+                <div class="option-item">
+                  <div class="availability-wrapper">
+                    <div class="availability" :class="{available: option.available}"></div>
+                    <div class="name">
+                      <span>{{ option.text }}</span>
+                      <span v-if="option.variable_price"> [{{ option.variable_price }}<span v-html="option.currency"></span>]</span>
+                    </div>
+                  </div>
                 </div>
-              </b-col>
-              <b-col sm="1" class="service-row-delete">
-                <font-awesome-icon icon="fa-solid fa-circle-xmark" @click="deleteService(index)"/>
-              </b-col>
-            </b-row>
+              </template>
+            </vue-select>
+            <li class="vue-select-search">
+              <font-awesome-icon icon="fa-solid fa-magnifying-glass" class="vue-select-search-icon" />
+              <b-form-input v-model="assistantSearch[index]" class="vue-select-search-input"
+                            :placeholder="getLabel('selectAssistantsSearchPlaceholder')" @mousedown.stop />
+            </li>
+          </div>
+        </div>
+      </template>
+      <div class="add-item-row">
+        <button class="add-item-btn" type="button" @click="addService" :disabled="isLoadingServicesAssistants">
+          <font-awesome-icon icon="fa-solid fa-plus" />
+          {{ getLabel('addServiceButtonLabel') }}
+        </button>
+        <b-spinner variant="primary" small v-if="isLoadingServicesAssistants" />
+      </div>
+      <b-alert :show="requiredFields.indexOf('services') > -1" fade variant="danger" class="mt-2">
+        {{ getLabel('addServiceMessage') }}
+      </b-alert>
+    </div>
+
+    <!-- Discounts -->
+    <div class="form-card" v-if="showDiscount">
+      <p class="form-section-label">{{ getLabel('addDiscountButtonLabel') }}</p>
+      <template v-if="!isLoadingDiscounts">
+        <div v-for="(discount, index) in elDiscounts" :key="index" class="discount-block">
+          <div class="discount">
+            <vue-select ref="select-discount" class="discount-select" close-on-select
+                        v-model="elDiscounts[index]"
+                        :options="getDiscountsListBySearch(discountsList, discountSearch[index])"
+                        label-by="text" value-by="value">
+              <template #label="{ selected }">
+                <template v-if="selected"><span class="discount-name">{{ selected.text }}</span></template>
+                <template v-else>{{ getLabel('selectDiscountLabel') }}</template>
+              </template>
+              <template #dropdown-item="{ option }">
+                <div class="option-item">
+                  <span class="discount-name">{{ option.text }}</span>
+                  <div class="info"><span>expires: {{ option.expires }}</span></div>
+                </div>
+              </template>
+            </vue-select>
+            <li class="vue-select-search">
+              <font-awesome-icon icon="fa-solid fa-magnifying-glass" class="vue-select-search-icon" />
+              <b-form-input v-model="discountSearch[index]" class="vue-select-search-input"
+                            :placeholder="getLabel('selectDiscountsSearchPlaceholder')" @mousedown.stop />
+            </li>
+          </div>
+          <button class="remove-btn remove-btn--inline" type="button" @click="deleteDiscount(index)">
+            <font-awesome-icon icon="fa-solid fa-circle-xmark" />
+          </button>
+        </div>
+      </template>
+      <div class="add-item-row">
+        <button class="add-item-btn" type="button" @click="addDiscount" :disabled="isLoadingDiscounts">
+          <font-awesome-icon icon="fa-solid fa-plus" />
+          {{ getLabel('addDiscountButtonLabel') }}
+        </button>
+        <b-spinner variant="primary" small v-if="isLoadingDiscounts" />
+      </div>
+    </div>
+
+    <!-- Extra Info -->
+    <div class="form-card">
+      <div class="collapsible-header" @click="visibleExtraInfo = !visibleExtraInfo">
+        <p class="form-section-label mb-0">{{ getLabel('extraInfoLabel') }}</p>
+        <font-awesome-icon :icon="visibleExtraInfo ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down'" class="collapsible-icon" />
+      </div>
+      <b-collapse v-model="visibleExtraInfo">
+        <div class="mt-2">
+          <template v-for="field in customFieldsList" :key="field.key">
+            <CustomField :field="field" :value="getCustomFieldValue(field.key, field.default_value)" @update="updateCustomField" />
           </template>
-          <b-row>
-            <b-col sm="6" class="add-service-wrapper">
-              <div class="add-service">
-                <b-button variant="primary" @click="addService" :disabled="isLoadingServicesAssistants">
-                  <font-awesome-icon icon="fa-solid fa-plus"/>
-                  {{ this.getLabel('addServiceButtonLabel') }}
-                </b-button>
-                <b-spinner variant="primary" class="selects-loader" v-if="isLoadingServicesAssistants"></b-spinner>
-              </div>
-              <div class="add-service-required">
-                <b-alert :show="requiredFields.indexOf('services') > -1" fade variant="danger">
-                  {{ this.getLabel('addServiceMessage') }}
-                </b-alert>
-              </div>
-            </b-col>
-          </b-row>
+          <div class="form-field mt-2">
+            <label class="field-label" for="customer_personal_notes">{{ getLabel('customerPersonalNotesLabel') }}</label>
+            <b-form-textarea
+                v-model.lazy="elCustomerPersonalNotes"
+                id="customer_personal_notes"
+                :placeholder="getLabel('customerPersonalNotesPlaceholder')"
+                rows="2"
+                max-rows="4"
+            />
+          </div>
         </div>
-      </b-col>
-    </b-row>
-    <b-row>
-      <b-col sm="12">
-        <div v-if="showDiscount" class="booking-discount-info">
-          <template v-if="!isLoadingDiscounts">
-            <b-row v-for="(discount, index) in elDiscounts" :key="index" class="discount-row">
-              <b-col sm="5">
-                <div class="discount">
-                  <vue-select ref="select-discount" class="discount-select" close-on-select
-                              v-model="elDiscounts[index]"
-                              :options="getDiscountsListBySearch(discountsList, discountSearch[index])"
-                              label-by="text" value-by="value">
-                    <template #label="{ selected }">
-                      <template v-if="selected">
-                        <span class="discount-name">{{ selected.text }}</span>
-                      </template>
-                      <template v-else>{{ this.getLabel('selectDiscountLabel') }}</template>
-                    </template>
-                    <template #dropdown-item="{ option }">
-                      <div class="option-item">
-                        <span class="discount-name">{{ option.text }}</span>
-                        <div class="info">
-                          <span>expires: {{ option.expires }}</span>
-                        </div>
-                      </div>
-                    </template>
-                  </vue-select>
-                  <li class="vue-select-search">
-                    <font-awesome-icon icon="fa-solid fa-magnifying-glass"
-                                       class="vue-select-search-icon"/>
-                    <b-form-input v-model="discountSearch[index]" class="vue-select-search-input"
-                                  :placeholder="this.getLabel('selectDiscountsSearchPlaceholder')"
-                                  @mousedown.stop></b-form-input>
-                  </li>
-                </div>
-              </b-col>
-              <b-col sm="2" class="discount-row-delete">
-                <font-awesome-icon icon="fa-solid fa-circle-xmark" @click="deleteDiscount(index)"/>
-              </b-col>
-            </b-row>
-          </template>
-          <b-row>
-            <b-col sm="6" class="add-discount-wrapper">
-              <div class="add-discount">
-                <b-button variant="primary" @click="addDiscount" :disabled="isLoadingDiscounts">
-                  <font-awesome-icon icon="fa-solid fa-plus"/>
-                  {{ this.getLabel('addDiscountButtonLabel') }}
-                </b-button>
-                <b-spinner variant="primary" class="selects-loader"
-                           v-if="isLoadingDiscounts"></b-spinner>
-              </div>
-            </b-col>
-          </b-row>
-        </div>
-      </b-col>
-    </b-row>
-    <b-row>
-      <b-col sm="12">
-        <div class="booking-details-status-info">
-          <b-row>
-            <b-col sm="6" class="status">
-              <b-form-select v-model="elStatus" :options="statusesList"></b-form-select>
-            </b-col>
-            <b-col sm="6">
-              <b-row>
-                <b-col sm="6" class="save-button-wrapper">
-                  <b-button variant="primary" @click="save">
-                    <font-awesome-icon icon="fa-solid fa-check"/>
-                    {{ this.getLabel('saveButtonLabel') }}
-                  </b-button>
-                </b-col>
-                <b-col sm="6" class="save-button-result-wrapper">
-                  <b-spinner variant="primary" v-if="isLoading"></b-spinner>
-                  <b-alert :show="isSaved" fade variant="success">{{ this.getLabel('savedLabel') }}</b-alert>
-                  <b-alert :show="isError" fade variant="danger">{{ errorMessage }}</b-alert>
-                                <b-alert :show="!isValid && requiredFields.length > 1" fade variant="danger">{{ this.getLabel('validationMessage') }}</b-alert>
-                                <b-alert :show="shopError" fade variant="warning">{{ this.getLabel('selectShopFirstMessage') }}</b-alert>
-                </b-col>
-              </b-row>
-            </b-col>
-          </b-row>
-        </div>
-      </b-col>
-    </b-row>
+      </b-collapse>
+    </div>
+
+    <!-- Status & Save -->
+    <div class="form-card">
+      <p class="form-section-label">Status</p>
+      <b-form-select v-model="elStatus" :options="statusesList" class="status-select" />
+      <div class="save-row">
+        <button class="save-btn" type="button" @click="save" :disabled="isLoading">
+          <b-spinner small v-if="isLoading" />
+          <font-awesome-icon icon="fa-solid fa-check" v-else />
+          {{ getLabel('saveButtonLabel') }}
+        </button>
+      </div>
+      <b-alert :show="isSaved" fade variant="success" class="mt-2">{{ getLabel('savedLabel') }}</b-alert>
+      <b-alert :show="isError" fade variant="danger" class="mt-2">{{ errorMessage }}</b-alert>
+      <b-alert :show="!isValid && requiredFields.length > 1" fade variant="danger" class="mt-2">{{ getLabel('validationMessage') }}</b-alert>
+      <b-alert :show="shopError" fade variant="warning" class="mt-2">{{ getLabel('selectShopFirstMessage') }}</b-alert>
+    </div>
+
   </div>
 </template>
 
@@ -540,6 +446,7 @@ export default {
     this.loadDiscounts()
     this.loadAvailabilityIntervals()
     this.loadAvailabilityServices()
+    this.loadAvailableDates()
     this.loadCustomFields()
     this.isLoadingServicesAssistants = true
     Promise.all([
@@ -588,6 +495,7 @@ export default {
       elAttendantsList: [],
       elResourcesList: [],
       showTimeslots: false,
+      timeDropdownTop: 0,
       availabilityIntervals: {},
       saveAsNewCustomer: false,
       availabilityServices: [],
@@ -604,6 +512,10 @@ export default {
       resourceSearch: [],
       availabilityAttendants: [],
       availabilityResources: [],
+      availabilityDates: [],
+      currentMonth: null,
+      currentYear: null,
+      isLoadingDates: false,
       vueTelInputOptions: {
         'placeholder': this.getLabel('customerPhonePlaceholder')
       },
@@ -639,6 +551,7 @@ export default {
     },
     bookingServices() {
       this.loadDiscounts()
+      this.loadAvailableDates()
     },
     shop(newShop, oldShop) {
       if (newShop?.id !== oldShop?.id) {
@@ -819,7 +732,7 @@ export default {
         }
 
         const durationMinutes = this.convertDurationToMinutes(serviceData.duration);
-        const endTime = this.moment(currentStartTime).add(durationMinutes, 'minutes');
+        const endTime = this.moment(currentStartTime).add(durationMinutes, 'minute');
 
         const serviceTime = {
           service_id: service.service_id,
@@ -989,7 +902,6 @@ export default {
           })
           .then(response => {
             this.elDiscountsList = response.data.items;
-            this.isLoadingDiscounts = false;
             this.discountSearch = [];
             this.elDiscounts = this.elDiscounts.filter(elDiscount => {
               const dl = this.discountsList.map(discount => discount.value);
@@ -998,6 +910,12 @@ export default {
             this.elDiscounts.forEach((i, index) => {
               this.addDiscountsSelectSearchInput(index);
             });
+          })
+          .catch(() => {
+            this.elDiscountsList = [];
+          })
+          .finally(() => {
+            this.isLoadingDiscounts = false;
           });
     },
     loadServices() {
@@ -1092,6 +1010,64 @@ export default {
             this.availabilityResources = response.data.resources;
           });
     },
+    loadAvailableDates() {
+      // Only load if we have services selected
+      if (!this.bookingServices || this.bookingServices.length === 0) {
+        console.log('EditBooking: No services selected, skipping date availability load');
+        this.availabilityDates = [];
+        return;
+      }
+
+      // Determine date range for the current month view
+      const year = this.currentYear || this.moment(this.elDate).year();
+      const month = this.currentMonth !== null ? this.currentMonth : this.moment(this.elDate).month();
+      
+      const fromDate = this.moment().year(year).month(month).startOf('month').format('YYYY-MM-DD');
+      const toDate = this.moment().year(year).month(month).endOf('month').format('YYYY-MM-DD');
+
+      console.log('EditBooking: Loading available dates', { fromDate, toDate, shop: this.shop?.id });
+
+      this.isLoadingDates = true;
+      this.axios
+          .get('availability/stats', {
+            params: {
+              from_date: fromDate,
+              to_date: toDate,
+              shop: this.shop ? this.shop.id : 0,
+            }
+          })
+          .then(response => {
+            this.availabilityDates = response.data.stats || [];
+            console.log('EditBooking: Loaded availability dates', this.availabilityDates.length, 'dates');
+            console.log('EditBooking: Sample dates:', this.availabilityDates.slice(0, 5));
+          })
+          .catch(error => {
+            console.error('Error loading available dates:', error);
+            this.availabilityDates = [];
+          })
+          .finally(() => {
+            this.isLoadingDates = false;
+          });
+    },
+    handleMonthYearChange(data) {
+      console.log('EditBooking: Month/Year changed', data);
+      this.currentMonth = data.month;
+      this.currentYear = data.year;
+      this.loadAvailableDates();
+    },
+    isDateAvailable(date) {
+      if (!this.availabilityDates || this.availabilityDates.length === 0) {
+        return true; // Show all dates as available if no data loaded yet
+      }
+      
+      const dateStr = this.moment(date).format('YYYY-MM-DD');
+      const dateInfo = this.availabilityDates.find(d => d.date === dateStr);
+      
+      const available = dateInfo ? dateInfo.available : false;
+      // console.log('EditBooking: Date check', dateStr, available ? 'available' : 'unavailable');
+      
+      return available;
+    },
     loadCustomFields() {
       this.axios.get('custom-fields/booking').then(response => {
         this.customFieldsList = response.data.items.filter(
@@ -1116,6 +1092,67 @@ export default {
     deleteService(index) {
       this.elServices.splice(index, 1);
       this.serviceSearch.splice(index, 1);
+    },
+    openDatePicker(event) {
+      // Prevent click from bubbling
+      event.stopPropagation();
+      
+      // Open the date picker programmatically
+      if (this.$refs.datePicker && this.$refs.datePicker.openMenu) {
+        this.$refs.datePicker.openMenu();
+      }
+    },
+    handleDatePickerOpen() {
+      // Close time picker when date picker opens
+      this.showTimeslots = false;
+      
+      // Force full width and remove blue styles using JavaScript
+      this.$nextTick(() => {
+        setTimeout(() => {
+          // Make date picker full width
+          const menu = document.querySelector('.dp__menu');
+          if (menu) {
+            const rect = menu.getBoundingClientRect();
+            menu.style.position = 'fixed';
+            menu.style.width = '100vw';
+            menu.style.left = '0';
+            menu.style.right = '0';
+            menu.style.top = rect.top + 'px';
+            menu.style.margin = '0';
+            menu.style.borderRadius = '0';
+            menu.style.maxWidth = '100vw';
+            menu.style.transform = 'none';
+          }
+          
+          // Make calendar content full width
+          const calendar = document.querySelector('.dp__calendar');
+          if (calendar) {
+            calendar.style.width = '100%';
+            calendar.style.maxWidth = '100%';
+          }
+          
+          // Remove blue styles from date picker cells
+          const cells = document.querySelectorAll('.dp__cell_inner');
+          cells.forEach(cell => {
+            cell.style.background = 'transparent';
+            cell.style.backgroundColor = 'transparent';
+            cell.style.border = 'none';
+            cell.style.boxShadow = 'none';
+          });
+        }, 10);
+      });
+    },
+    openTimeslots() {
+      if (this.showTimeslots) {
+        this.showTimeslots = false;
+        return;
+      }
+      const el = this.$refs.timeInputWrap;
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        this.timeDropdownTop = rect.bottom + 4;
+      }
+      this.showTimeslots = true;
     },
     setTime(timeslot) {
       this.elTime = this.moment(timeslot, this.getTimeFormat()).format('HH:mm');
@@ -1326,125 +1363,263 @@ export default {
 </script>
 
 <style scoped>
-.booking-details-customer-info,
-.booking-details-total-info,
-.booking-discount-info,
-.booking-details-status-info,
-.booking-details-extra-info {
-  border: solid 1px #ccc;
-  padding: 20px;
-  text-align: left;
-  margin-bottom: 20px;
+.booking-form {
+  background: var(--color-background, #F4F6FA);
+  padding-bottom: 32px;
+}
+.form-card {
+  background: var(--color-surface, #fff);
+  border-radius: var(--radius-md, 12px);
+  margin: 12px var(--spacing-page, 16px) 0;
+  padding: var(--spacing-card, 14px);
+}
+.form-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted, #94A3B8);
+  margin-bottom: 10px;
+}
+.form-row-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.form-field {
+  margin-bottom: 12px;
+}
+.form-field:last-child { margin-bottom: 0; }
+.field-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary, #64748B);
+  margin-bottom: 5px;
+  display: block;
 }
 
-.actions {
-  text-align: right;
+/* ── Input overrides ── */
+.form-field :deep(.form-control) {
+  border: 1.5px solid var(--color-border, #E2E8F0);
+  border-radius: var(--radius-sm, 8px);
+  padding: 10px 12px;
+  font-size: 15px;
+  color: var(--color-text-primary, #0F172A);
+  background: var(--color-surface, #fff);
+  transition: border-color 0.15s, box-shadow 0.15s;
+  line-height: 1.5;
 }
-
-.date,
-.time,
-.customer-firstname,
-.customer-lastname,
-.customer-email,
-.customer-address,
-.customer-phone,
-.customer-notes,
-.service,
-.attendant,
-.resource,
-.discount {
-  border-bottom: solid 1px #ccc;
-  margin-bottom: 20px;
-  padding-bottom: 5px;
+.form-field :deep(.form-control::placeholder) {
+  color: var(--color-text-muted, #94A3B8);
+  font-size: 14px;
 }
-
-.booking-details-status-info .row {
-  align-items: center;
+.form-field :deep(.form-control:focus) {
+  border-color: var(--color-primary, #2563EB);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  outline: none;
 }
-
-.fa-circle-xmark {
-  cursor: pointer;
+.form-field.vue-select-search :deep(.form-control) {
+  border: none;
+  border-radius: 0;
+  padding: 6px 10px;
+  font-size: 14px;
+  box-shadow: none;
 }
-
-.select-existing-client {
-  margin-bottom: 20px;
-}
-
-.alert {
-  padding: 6px 12px;
-  margin-bottom: 0;
-}
-
-.spinner-border {
-  vertical-align: middle;
-}
-
-.discount-row {
-  align-items: center;
-}
-
-.service-row {
-  align-items: baseline;
-}
-
-.timeslots {
-  width: 50%;
-  height: 200px;
-  position: absolute;
-  z-index: 100000;
-  background-color: white;
-  top: 40px;
-  display: flex;
-  border: solid 1px #ccc;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 20px;
-  flex-wrap: wrap;
-}
-
-.time {
+.input-icon-wrap {
   position: relative;
+  display: flex;
+  align-items: center;
 }
+.field-icon {
+  position: absolute;
+  left: 10px;
+  color: var(--color-text-muted, #94A3B8);
+  z-index: 1;
+  pointer-events: none;
+}
+.input-icon-wrap :deep(.dp__input),
+.input-icon-wrap .time-input {
+  padding-left: 32px !important;
+  height: 48px !important;
+  min-height: 48px !important;
+}
+.field-required :deep(.dp__input),
+.field-required .time-input {
+  border-color: #dc3545 !important;
+}
+.time-field { position: relative; }
+.time-input { width: 100%; cursor: pointer; }
 
-.timeslot {
-  padding: 10px;
-  color: #dc3545;
+/* Make entire date picker input area clickable */
+.date-picker-wrap {
   cursor: pointer;
 }
-
-.timeslot.free {
-  color: #28a745;
+.date-picker-wrap :deep(.dp__input) {
+  cursor: pointer;
+  pointer-events: all;
 }
-
-.timeslots.hide {
-  display: none;
-}
-
-.timeslot-input {
+.date-picker-wrap :deep(.dp__input_wrap) {
   width: 100%;
-  max-width: 274px;
 }
-
-.input-group {
-  flex-wrap: nowrap;
+.date-picker-wrap :deep(.dp__input_icon) {
+  pointer-events: none;
 }
-
-.form-control option {
+.timeslots-dropdown {
+  position: fixed;
+  left: 0;
+  right: 0;
+  background: var(--color-surface, #fff);
+  border-top: 1px solid var(--color-border, #E2E8F0);
+  border-radius: var(--radius-md, 12px) var(--radius-md, 12px) 0 0;
+  /* 6 rows × (item height 30px + gap 4px) + top/bottom padding 12px */
+  max-height: 216px;
+  overflow-y: auto;
+  z-index: 9999;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  padding: 12px;
+  gap: 8px;
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.12);
+}
+.timeslot-item {
+  padding: 6px 4px;
+  border-radius: var(--radius-pill, 999px);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  cursor: pointer;
+  color: var(--color-error, #DC2626);
+  background: rgba(220,38,38,0.08);
+}
+.timeslot-item.free {
+  color: var(--color-confirmed, #16A34A);
+  background: rgba(22,163,74,0.08);
+}
+.select-customer-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  border: 1.5px dashed var(--color-primary, #2563EB);
+  border-radius: var(--radius-sm, 8px);
+  background: var(--color-primary-light, #EFF6FF);
+  color: var(--color-primary, #2563EB);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.toggle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 6px;
+}
+.toggle-label {
+  font-size: 14px;
+  color: var(--color-text-secondary, #64748B);
+}
+.service-block {
+  background: var(--color-background, #F4F6FA);
+  border-radius: var(--radius-sm, 8px);
+  padding: 10px;
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.service-block-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
+.service-block-num {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-muted, #94A3B8);
+}
+.remove-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-error, #DC2626);
+  font-size: 18px;
+  cursor: pointer;
+}
+.remove-btn--inline {
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+.discount-block {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.discount-block .discount { flex: 1; }
+.add-item-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 4px;
+}
+.add-item-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--radius-pill, 999px);
+  border: 1.5px solid var(--color-primary, #2563EB);
+  background: none;
+  color: var(--color-primary, #2563EB);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.add-item-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.collapsible-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+.collapsible-icon { color: var(--color-text-muted, #94A3B8); font-size: 14px; }
+.status-select {
+  width: 100%;
+  margin-bottom: 12px;
+}
+.save-row { display: flex; justify-content: flex-end; }
+.save-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  border-radius: var(--radius-pill, 999px);
+  border: none;
+  background: var(--color-primary, #2563EB);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  width: 100%;
+  justify-content: center;
+  letter-spacing: 0.01em;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.save-btn:hover { background: #1D4ED8; box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35); }
+.save-btn:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; }
 
+/* vue-select search */
 .service-select,
 .discount-select {
   width: 100%;
   font-size: 1rem;
   color: #212529;
-
   line-height: 1.5;
   border-radius: .375rem;
 }
-
 .option-item {
   display: flex;
   flex-direction: row;
@@ -1453,63 +1628,13 @@ export default {
   color: #637491;
   padding: 4px;
 }
-
 .option-item-selected {
   color: #000;
   width: 100%;
   padding-right: 10px;
   padding-left: 10px;
 }
-
-.form-switch {
-  display: flex;
-  justify-content: space-between;
-  flex-direction: row-reverse;
-  padding-left: 0;
-  align-items: center;
-}
-
-.form-switch :deep(.form-check-input) {
-  width: 3em;
-  height: 1.5em;
-}
-
-.vue-select-search {
-  display: none;
-  position: relative;
-  margin-top: 10px;
-  margin-bottom: 20px;
-}
-
-.vue-dropdown .vue-select-search {
-  display: list-item;
-}
-
-.vue-select-search-icon {
-  position: absolute;
-  z-index: 1000;
-  top: 12px;
-  left: 15px;
-  color: #7F8CA2;
-}
-
-.vue-select-search-input {
-  padding-left: 40px;
-  padding-right: 20px;
-  border-radius: 30px;
-  border-color: #fff;
-}
-
-.service-select :deep(.vue-dropdown) {
-  padding-top: 15px;
-  padding-bottom: 15px;
-}
-
-.availability-wrapper {
-  display: flex;
-  align-items: center;
-}
-
+.availability-wrapper { display: flex; align-items: center; }
 .availability {
   width: 10px;
   height: 10px;
@@ -1517,96 +1642,124 @@ export default {
   background-color: #9F0404;
   border-radius: 10px;
 }
+.availability.available { background-color: #1EAD3F; }
+.service-name { font-weight: bold; }
+.required { border: solid 1px #9F0404; }
 
-.availability.available {
-  background-color: #1EAD3F;
-}
-
-.service-name {
-  font-weight: bold;
-}
-
-.required {
-  border: solid 1px #9F0404;
-}
-
-.add-service-wrapper {
+/* Date picker day styling */
+.day {
+  width: 100%;
+  height: 100%;
   display: flex;
-}
-
-.add-service-required {
-  margin-left: 10px;
-}
-
-.booking-details-extra-info-header {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  padding: 4px;
 }
 
-.booking-details-extra-info-header-btn {
-  font-size: 22px;
-  color: #0d6efd;
+.day-loading {
+  color: #D1D5DB !important;
+  background: transparent !important;
+  font-weight: 400;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
-.selects-loader {
-  margin-left: 20px;
+.day-available {
+  color: var(--color-confirmed, #16A34A) !important;
+  background: rgba(22,163,74,0.08) !important;
+  font-weight: 500;
 }
 
-.save-button-result-wrapper {
-  display: flex;
-  gap: 8px;
-  flex-direction: column;
-  align-items: flex-start;
+.day-unavailable {
+  color: #DC2626 !important;
+  background: rgba(220, 38, 38, 0.08) !important;
+  font-weight: 500;
 }
 
-@media (max-width: 576px) {
-  .status {
-    margin-bottom: 10px;
-  }
+/* Make date picker span full width */
+:deep(.dp__menu) {
+  position: fixed !important;
+  width: 100vw !important;
+  left: 0 !important;
+  right: 0 !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  max-width: 100vw !important;
+}
 
-  .timeslot-input {
-    max-width: 100%;
-  }
+:deep(.dp__instance_calendar) {
+  width: 100% !important;
+}
 
-  .timeslots {
-    width: 100%;
-  }
+:deep(.dp__calendar) {
+  width: 100% !important;
+}
 
-  .service-row,
-  .discount-row {
-    width: 100%;
-    position: relative;
-  }
+:deep(.dp__calendar_header),
+:deep(.dp__calendar_row) {
+  width: 100% !important;
+}
 
-  .service-row-delete {
-    position: absolute;
-    top: 30%;
-    text-align: right;
-    right: -20px;
-    width: 30px;
-  }
+:deep(.dp__calendar_item) {
+  flex: 1 !important;
+  background: transparent !important;
+}
 
-  .discount-row-delete {
-    position: absolute;
-    text-align: right;
-    top: 40%;
-    right: -20px;
-    width: 30px;
-  }
+/* AGGRESSIVE: Force remove ALL default blue styles - target the actual cell inner */
+:deep(.dp__cell_inner) {
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background: transparent !important;
+  background-color: transparent !important;
+}
 
-  .save-button-wrapper {
-    width: 60%;
-  }
+:deep(.dp__cell_inner):hover {
+  background: transparent !important;
+  background-color: transparent !important;
+}
 
-  .save-button-result-wrapper {
-    width: 40%;
-    text-align: center;
-  }
+/* Override the day wrapper to take full control */
+:deep(.dp__cell_inner .day) {
+  border: none !important;
+  position: absolute;
+  inset: 0;
+  margin: 2px;
+}
 
-  :deep(.vue-dropdown) {
-    left: -50px;
-    width: calc(100vw - 25px);
-  }
+/* Disable date picker cells while loading */
+:deep(.dp__calendar_item.dp__disabled) {
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+.vue-select-search {
+  display: none;
+  position: relative;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+.vue-dropdown .vue-select-search { display: list-item; }
+.vue-select-search-icon {
+  position: absolute;
+  z-index: 1000;
+  top: 10px;
+  left: 12px;
+  color: #7F8CA2;
+}
+.vue-select-search-input {
+  padding-left: 36px;
+  padding-right: 16px;
+  border-radius: 30px;
+  border-color: #fff;
+}
+.service-select :deep(.vue-dropdown) {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+:deep(.vue-dropdown) {
+  left: 0;
+  width: 100%;
 }
 </style>

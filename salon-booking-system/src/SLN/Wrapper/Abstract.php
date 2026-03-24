@@ -134,8 +134,7 @@ abstract class SLN_Wrapper_Abstract
         
         $result = wp_update_post($post);
         
-        // CRITICAL: If wp_update_post fails, use direct database update as fallback
-        // This is especially important for IPN processing when user doesn't return from PayPal
+        // CRITICAL: If wp_update_post fails outright, use direct database update as fallback
         if (is_wp_error($result) || $result === 0) {
             if (method_exists('SLN_Plugin', 'addLog')) {
                 $error_msg = is_wp_error($result) ? $result->get_error_message() : 'wp_update_post returned 0';
@@ -147,59 +146,83 @@ abstract class SLN_Wrapper_Abstract
                     $error_msg
                 ));
             }
+            $this->setStatusDirectDb($currentStatus, $status);
+        } else {
+            // wp_update_post returned "success" but a wp_insert_post_data filter from another
+            // plugin (security, cache, SEO) may have silently overridden the status back to its
+            // previous value. Verify the status was actually written to the database.
+            clean_post_cache($this->getId());
+            $savedStatus = get_post_status($this->getId());
             
-            // Attempt direct database update as fallback
-            global $wpdb;
-            
-            $updateData = array('post_status' => $status);
-            $updateFormat = array('%s');
-            
-            // Include post_date fields if transitioning from auto-draft
-            if ($currentStatus === 'auto-draft' && $status !== 'auto-draft') {
-                $updateData['post_date'] = current_time('mysql');
-                $updateData['post_date_gmt'] = current_time('mysql', true);
-                $updateFormat[] = '%s';
-                $updateFormat[] = '%s';
-            }
-            
-            $directResult = $wpdb->update(
-                $wpdb->posts,
-                $updateData,
-                array('ID' => $this->getId()),
-                $updateFormat,
-                array('%d')
-            );
-            
-            if ($directResult !== false) {
-                // Success - clear cache and reload object
-                clean_post_cache($this->getId());
-                $this->reload();
-                
-                if (method_exists('SLN_Plugin', 'addLog')) {
-                    SLN_Plugin::addLog(sprintf(
-                        'setStatus: Direct DB update SUCCEEDED for post #%d from %s to %s (wp_update_post had failed)',
-                        $this->getId(),
-                        $currentStatus,
-                        $status
-                    ));
-                }
+            if ($savedStatus !== $status) {
+                SLN_Plugin::addLog(sprintf(
+                    'setStatus SILENT FAILURE detected for post #%d: wp_update_post returned success but DB has "%s" instead of "%s". Using direct DB update...',
+                    $this->getId(),
+                    $savedStatus,
+                    $status
+                ));
+                $this->setStatusDirectDb($currentStatus, $status);
             } else {
-                // Both methods failed - log critical error
-                if (method_exists('SLN_Plugin', 'addLog')) {
-                    SLN_Plugin::addLog(sprintf(
-                        'setStatus CRITICAL ERROR: Both wp_update_post and direct DB update failed for post #%d from %s to %s. DB Error: %s',
-                        $this->getId(),
-                        $currentStatus,
-                        $status,
-                        $wpdb->last_error
-                    ));
-                }
+                SLN_Plugin::addLog(sprintf(
+                    'setStatus: wp_update_post VERIFIED for post #%d - DB status is now "%s"',
+                    $this->getId(),
+                    $savedStatus
+                ));
             }
         }
         
         $this->object->post_status = $status;
 
         return $this;
+    }
+
+    /**
+     * Writes post_status directly to the database, bypassing wp_update_post and all filters.
+     * Used as a fallback when wp_update_post fails or is silently overridden by a third-party
+     * wp_insert_post_data filter (e.g. security plugins, caching layers, SEO plugins).
+     */
+    private function setStatusDirectDb($currentStatus, $status)
+    {
+        global $wpdb;
+
+        $updateData   = array('post_status' => $status);
+        $updateFormat = array('%s');
+
+        // When transitioning from auto-draft, also set post dates so WordPress
+        // treats the post as a real published record instead of an unsaved draft.
+        if ($currentStatus === 'auto-draft' && $status !== 'auto-draft') {
+            $updateData['post_date']     = current_time('mysql');
+            $updateData['post_date_gmt'] = current_time('mysql', true);
+            $updateFormat[]              = '%s';
+            $updateFormat[]              = '%s';
+        }
+
+        $directResult = $wpdb->update(
+            $wpdb->posts,
+            $updateData,
+            array('ID' => $this->getId()),
+            $updateFormat,
+            array('%d')
+        );
+
+        if ($directResult !== false) {
+            clean_post_cache($this->getId());
+            $this->reload();
+            SLN_Plugin::addLog(sprintf(
+                'setStatus: Direct DB update SUCCEEDED for post #%d from %s to %s',
+                $this->getId(),
+                $currentStatus,
+                $status
+            ));
+        } else {
+            SLN_Plugin::addLog(sprintf(
+                'setStatus CRITICAL ERROR: Direct DB update also FAILED for post #%d from %s to %s. DB Error: %s',
+                $this->getId(),
+                $currentStatus,
+                $status,
+                $wpdb->last_error
+            ));
+        }
     }
 
     public function getTitle()

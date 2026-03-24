@@ -1,8 +1,12 @@
 <template>
-  <div v-show="show">
-    <h5>
-      {{ this.getLabel('editReservationTitle') }}
-    </h5>
+  <div v-show="show" class="screen-wrapper">
+    <div class="screen-header">
+      <button class="back-btn" type="button" @click="close()">
+        <font-awesome-icon icon="fa-solid fa-arrow-left" />
+      </button>
+      <h1 class="screen-title">{{ getLabel('editReservationTitle') }}</h1>
+      <span class="back-btn-placeholder"></span>
+    </div>
     <EditBooking
         :bookingID="booking.id"
         :date="booking.date"
@@ -105,3 +109,43 @@ export default {
   emits: ['close', 'chooseCustomer']
 }
 </script>
+
+<style scoped>
+.screen-wrapper {
+  min-height: 100vh;
+  background: var(--color-background, #F4F6FA);
+}
+.screen-header {
+  display: flex;
+  align-items: center;
+  padding: 12px var(--spacing-page, 16px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.back-btn {
+  background: none;
+  border: none;
+  padding: 6px 8px;
+  color: var(--color-text-primary, #0F172A);
+  font-size: 18px;
+  cursor: pointer;
+  min-width: 40px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.15s;
+}
+.back-btn:hover { background: rgba(0,0,0,0.06); }
+.back-btn-placeholder { min-width: 40px; }
+.screen-title {
+  flex: 1;
+  text-align: center;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--color-text-primary, #0F172A);
+  margin: 0;
+}
+</style>

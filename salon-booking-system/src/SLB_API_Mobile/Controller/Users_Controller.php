@@ -5,6 +5,7 @@ namespace SLB_API_Mobile\Controller;
 
 use WP_Error;
 use WP_REST_Server;
+use WP_Session_Tokens;
 use SLN_Plugin;
 
 class Users_Controller extends REST_Controller
@@ -55,6 +56,36 @@ class Users_Controller extends REST_Controller
                 ),
             )
         );
+
+        register_rest_route(
+            $this->namespace,
+            '/' . $this->rest_base . '/active',
+            array(
+                array(
+                    'methods'   => WP_REST_Server::READABLE,
+                    'callback'  => array($this, 'get_active_users'),
+                    'permission_callback' => array($this, 'check_permissions'),
+                ),
+            )
+        );
+
+        register_rest_route(
+            $this->namespace,
+            '/' . $this->rest_base . '/(?P<id>[\d]+)/logout',
+            array(
+                array(
+                    'methods'   => WP_REST_Server::CREATABLE,
+                    'callback'  => array($this, 'logout_specific_user'),
+                    'permission_callback' => array($this, 'check_admin_permissions'),
+                    'args' => array(
+                        'id' => array(
+                            'required' => true,
+                            'type' => 'integer',
+                        ),
+                    ),
+                ),
+            )
+        );
     }
 
     public function get_current_user($request)
@@ -92,9 +123,116 @@ class Users_Controller extends REST_Controller
         ));
     }
 
+    public function get_active_users($request)
+    {
+        // Get current user info
+        $current_user = wp_get_current_user();
+        if (!$current_user || $current_user->ID === 0) {
+            return new WP_Error('no_user', __('No user is currently logged in.', 'salon-booking-system'), array('status' => 401));
+        }
+
+        // Role mapping for display
+        $roles_map = array(
+            'administrator' => __('Administrator', 'salon-booking-system'),
+            SLN_Plugin::USER_ROLE_WORKER => __('Salon Manager', 'salon-booking-system'),
+            SLN_Plugin::USER_ROLE_STAFF => __('Salon Staff Member', 'salon-booking-system'),
+        );
+
+        // Get all relevant users (administrators, managers, and staff)
+        $users = get_users(array(
+            'role__in' => array('administrator', SLN_Plugin::USER_ROLE_WORKER, SLN_Plugin::USER_ROLE_STAFF),
+        ));
+
+        $active_users = array();
+        $current_time = time();
+        $activity_threshold = 15 * MINUTE_IN_SECONDS; // Consider active if session within last 15 minutes
+
+        foreach ($users as $user) {
+            // Get user sessions
+            $sessions = get_user_meta($user->ID, 'session_tokens', true);
+            
+            if (empty($sessions) || !is_array($sessions)) {
+                continue; // Skip users with no active sessions
+            }
+
+            // Check if any session is recent
+            $has_active_session = false;
+            foreach ($sessions as $token => $session) {
+                if (isset($session['expiration']) && $session['expiration'] > $current_time) {
+                    // Session is not expired
+                    // Check if session has recent activity (login time)
+                    if (isset($session['login']) && ($current_time - $session['login']) <= $activity_threshold) {
+                        $has_active_session = true;
+                        break;
+                    }
+                    // If no 'login' timestamp, consider any non-expired session as active
+                    if (!isset($session['login'])) {
+                        $has_active_session = true;
+                        break;
+                    }
+                }
+            }
+
+            if ($has_active_session) {
+                $user_role = !empty($user->roles) ? $user->roles[0] : '';
+                $readable_role = isset($roles_map[$user_role]) ? $roles_map[$user_role] : ucfirst($user_role);
+
+                $active_users[] = array(
+                    'id' => $user->ID,
+                    'name' => $user->display_name,
+                    'role' => $readable_role,
+                );
+            }
+        }
+
+        return rest_ensure_response(array(
+            'users' => $active_users,
+        ));
+    }
+
+    public function logout_specific_user($request)
+    {
+        $user_id = (int) $request['id'];
+        $current_user = wp_get_current_user();
+
+        // Prevent users from logging themselves out via this endpoint
+        if ($user_id === $current_user->ID) {
+            return new WP_Error('cannot_logout_self', __('Cannot logout yourself using this endpoint.', 'salon-booking-system'), array('status' => 400));
+        }
+
+        // Verify the target user exists
+        $target_user = get_user_by('id', $user_id);
+        if (!$target_user) {
+            return new WP_Error('user_not_found', __('User not found.', 'salon-booking-system'), array('status' => 404));
+        }
+
+        // Destroy all sessions for the target user
+        $sessions = get_user_meta($user_id, 'session_tokens', true);
+        if (!empty($sessions)) {
+            WP_Session_Tokens::get_instance($user_id)->destroy_all();
+        }
+
+        return rest_ensure_response(array(
+            'success' => true,
+            'message' => sprintf(__('User %s has been logged out.', 'salon-booking-system'), $target_user->display_name),
+        ));
+    }
+
     public function check_permissions()
     {
         return is_user_logged_in();
+    }
+
+    public function check_admin_permissions()
+    {
+        $current_user = wp_get_current_user();
+        
+        // Allow administrators, salon managers, and salon staff
+        return $current_user && (
+            in_array('administrator', $current_user->roles) ||
+            in_array(SLN_Plugin::USER_ROLE_WORKER, $current_user->roles) ||
+            in_array(SLN_Plugin::USER_ROLE_STAFF, $current_user->roles)
+        );
     }
 
     public function update_item( $request )

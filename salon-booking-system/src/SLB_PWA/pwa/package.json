@@ -6,6 +6,7 @@
     "serve": "vue-cli-service serve",
     "prebuild": "node scripts/update-version.js",
     "build": "vue-cli-service build",
+    "postbuild": "node scripts/verify-dist-placeholder.js && node scripts/sync-pwa-dist-templates.js",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
@@ -22,7 +23,7 @@
     "bootstrap-vue-3": "^0.3.3",
     "core-js": "3.35.1",
     "interactjs": "^1.10.27",
-    "moment": "^2.29.4",
+    "dayjs": "^1.11.13",
     "register-service-worker": "^1.7.2",
     "vue": "^3.2.13",
     "vue-next-select": "^2.10.4",

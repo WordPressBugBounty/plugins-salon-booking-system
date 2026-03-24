@@ -528,24 +528,35 @@ jQuery(function ($) {
 			.addClass(self.data("class"));
 		self.closest(".sln-booking-confirmation").addClass("loading");
 
-		jQuery.ajax({
-			url: ajaxurl,
-			type: "POST",
-			data: {
-				action: "salon",
-				method: "setBookingStatus",
-				status: self.data("status"),
-				booking_id: self.data("booking-id"),
-			},
-			cache: false,
-			dataType: "json",
-			success: function (response) {
-				self.closest("tr")
-					.find(".booking_status")
-					.html(response.status);
-				self.closest("td").html("");
-			},
-		});
+	jQuery.ajax({
+		url: ajaxurl,
+		type: "POST",
+		data: {
+			action: "salon",
+			method: "setBookingStatus",
+			status: self.data("status"),
+			booking_id: self.data("booking-id"),
+			security: salon.ajax_nonce,
+		},
+		cache: false,
+		dataType: "json",
+		success: function (response) {
+			if (response.errors && response.errors.length) {
+				self.closest(".sln-booking-confirmation").removeClass("loading");
+				alert(response.errors.join("\n"));
+				return;
+			}
+			self.closest("tr")
+				.find(".booking_status")
+				.html(response.status);
+			self.closest("td").html("");
+		},
+		error: function (xhr, status, error) {
+			self.closest(".sln-booking-confirmation").removeClass("loading");
+			alert("Error updating booking status. Please try again.");
+			console.error("SetBookingStatus AJAX error:", error);
+		},
+	});
 
 		return false;
 	});

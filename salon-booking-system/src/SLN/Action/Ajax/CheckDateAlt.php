@@ -79,11 +79,9 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
         if (!is_array($dates)) {
             $dates = array();
         }
-        // When Smart Availability + choose-for-me: limit days to prevent timeout (~3–5 sec per day).
-        $maxDaysSmartAvail = (int) apply_filters('sln_checkdatealt_smart_avail_max_days', 14);
-        if ($isSmartAvailability && $maxDaysSmartAvail > 0 && count($dates) > $maxDaysSmartAvail) {
-            $dates = array_slice($dates, 0, $maxDaysSmartAvail, true);
-        }
+        // Note: No day-count limit for Smart Availability. getAllAttendantsAvailableTimes
+        // with earlyExit=true stops at the first valid slot per day, so the date loop
+        // is efficient even across large booking windows.
         $dateCount = count($dates);
         SLN_Plugin::addLog('[CheckDateAlt] Scanning ' . $dateCount . ' dates | smartAvail=' . ($isSmartAvailability ? 'yes' : 'no'));
 
@@ -91,38 +89,44 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
             $available = false;
             $tmpDate   = new SLN_DateTime($v->getDateTime());
             $dateLog = $v->getDateTime()->format('Y-m-d');
-            $dateTimeLog->addDateLog( $dateLog, $this->checkDayServicesAndAttendants($bservices, $tmpDate), __( 'The attendant is unavailable on this day', 'salon-booking-system' ) );
-            if ($this->checkDayServicesAndAttendants($bservices, $tmpDate)) {
+            $dayServicesOk = $this->checkDayServicesAndAttendants($bservices, $tmpDate);
+            $dateTimeLog->addDateLog( $dateLog, $dayServicesOk, __( 'The attendant is unavailable on this day', 'salon-booking-system' ) );
+            if ($dayServicesOk) {
 	            $ah->setDate($tmpDate, $this->booking);
 	            
-	            // SMART AVAILABILITY: Use all attendants' availability when appropriate
 	            if ($isSmartAvailability) {
-	                $times = $this->getAllAttendantsAvailableTimes(Date::create($tmpDate), $bservices);
+	                // Accurate date-availability check: verify at least one attendant is
+	                // genuinely available (not on holiday, has the service, works this day).
+	                // earlyExit=true stops scanning as soon as any valid slot is found, keeping
+	                // per-date cost low even over large booking windows.
+	                $dayTimes = $this->getAllAttendantsAvailableTimes(Date::create($tmpDate), $bservices, $this->duration, true);
+	                $available = !empty($dayTimes);
 	            } else {
+	                // Non-smart path: use booking cache free_slots (legacy behaviour).
 	                // PHP 8+ compatibility: Safely access array elements
 	                $dayData = $bc->getDay(Date::create($tmpDate));
 	                // Double-check that free_slots is actually an array, not a string
 	                $times = (is_array($dayData) && isset($dayData['free_slots']) && is_array($dayData['free_slots'])) ? $dayData['free_slots'] : array();
-	            }
-	            
-	            foreach ($times as $timeKey => $timeValue) {
-	                // Handle both formats: cache returns strings, getAllAttendantsAvailableTimes returns objects
-	                if (is_object($timeValue)) {
-	                    $time = $timeKey; // Key is the time string like "12:00"
-	                } else {
-	                    $time = $timeValue; // Value is the time string (from cache)
-	                }
 	                
-                    $d = $v->getDateTime()->format('Y-m-d');
-                    $tmpDateTime = new SLN_DateTime("$d $time");
-                    if(!$hb->check($tmpDateTime)) {
-                        continue;
-                    }
-		            $errors = $this->checkDateTimeServicesAndAttendants($bservices, $tmpDateTime);
-		            if (empty($errors)) {
-			            $available = true;
-			            break;
-		            }
+	                foreach ($times as $timeKey => $timeValue) {
+	                    // Handle both formats: cache returns strings, objects have time keys
+	                    if (is_object($timeValue)) {
+	                        $time = $timeKey;
+	                    } else {
+	                        $time = $timeValue;
+	                    }
+	                    
+	                    $d = $v->getDateTime()->format('Y-m-d');
+	                    $tmpDateTime = new SLN_DateTime("$d $time");
+	                    if (!$hb->check($tmpDateTime)) {
+	                        continue;
+	                    }
+	                    $errors = $this->checkDateTimeServicesAndAttendants($bservices, $tmpDateTime);
+	                    if (empty($errors)) {
+	                        $available = true;
+	                        break;
+	                    }
+	                }
 	            }
             }
             $dateTimeLog->addDateLog( $dateLog, $available, __( 'There are no free time slots on this day', 'salon-booking-system' ) );
@@ -354,8 +358,15 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
 
             $bb = $plugin->getBookingBuilder();
             $bservices = $bb->getAttendantsIds();
+            $skipAutoAttendantCheck = !$this->hasExplicitTimeSelection();
+            SLN_Plugin::addLog(sprintf(
+                '[TRACE_DATEFLOW][CheckDateAlt.checkDateTime] explicitTime=%s skipAutoAttendantCheck=%s services=%d',
+                $skipAutoAttendantCheck ? 'no' : 'yes',
+                $skipAutoAttendantCheck ? 'yes' : 'no',
+                is_array($bservices) ? count($bservices) : 0
+            ));
 
-            $errors = $this->checkDateTimeServicesAndAttendants($bservices, $date);
+            $errors = $this->checkDateTimeServicesAndAttendants($bservices, $date, false, $skipAutoAttendantCheck);
 
             foreach($errors as $error) {
                 $this->addError($error);
@@ -364,7 +375,7 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
 
     }
 
-    public function checkDateTimeServicesAndAttendants($services, $date, $check_duration = false) {
+    public function checkDateTimeServicesAndAttendants($services, $date, $check_duration = false, $skipAutoAttendantCheck = false) {
         $errors = array();
 
         $plugin = $this->plugin;
@@ -403,6 +414,10 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
             }
 
             if ($bookingService->getAttendant() === false) {
+                if ($skipAutoAttendantCheck) {
+                    SLN_Plugin::addLog('[TRACE_DATEFLOW][CheckDateAlt.autoAttendant] skipped strict check (init context)');
+                    continue;
+                }
                 // AUTO-ATTENDANT MODE: Check if any attendant is available for this service
                 $autoAttendantErrors = $this->checkAutoAttendantAvailability($bookingService);
                 if (!empty($autoAttendantErrors)) {
@@ -460,6 +475,27 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
         }
 
         return $errors;
+    }
+
+    /**
+     * Detect whether the current request contains an explicitly selected time.
+     * We must not use empty() because "00:00" is a valid value but considered empty.
+     *
+     * @return bool
+     */
+    private function hasExplicitTimeSelection()
+    {
+        if (isset($_POST['sln']) && array_key_exists('time', $_POST['sln'])) {
+            $time = sanitize_text_field(wp_unslash($_POST['sln']['time']));
+            return $time !== '';
+        }
+
+        if (isset($_POST['_sln_booking_time'])) {
+            $time = sanitize_text_field(wp_unslash($_POST['_sln_booking_time']));
+            return $time !== '';
+        }
+
+        return isset($this->time) && $this->time !== '';
     }
 
     /**
@@ -563,9 +599,11 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
             return false;
         }
         
-        // Check if any service has attendant = false (Choose assistant for me)
+        // Check if any service has no attendant selected (Choose assistant for me).
+        // The booking builder stores 0 (integer) for "no attendant", not boolean false,
+        // so we must accept both 0 and false to correctly activate Smart Availability.
         foreach ($bservices as $serviceId => $attendantValue) {
-            if ($attendantValue === false) {
+            if ($attendantValue === false || (is_int($attendantValue) && $attendantValue === 0)) {
                 return true;
             }
         }
@@ -574,11 +612,18 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
     }
     
     /**
-     * Get all available time slots by checking ALL attendants individually
-     * This is used when Smart Availability is enabled with "Choose assistant for me"
-     * OPTIMIZED: Uses getAvailableAttsIdsForBookingService which is much faster
+     * Get all available time slots by checking ALL attendants individually.
+     * Used for Smart Availability ("Choose assistant for me") both in the date loop
+     * (where $earlyExit=true stops at the first valid slot) and for the full time
+     * response (where $earlyExit=false collects all valid slots).
+     *
+     * @param \Salon\Util\Date $date
+     * @param array            $bservices
+     * @param Time|null        $duration
+     * @param bool             $earlyExit When true, return as soon as one valid slot is found.
+     * @return array
      */
-    private function getAllAttendantsAvailableTimes($date, $bservices, $duration = null) {
+    private function getAllAttendantsAvailableTimes($date, $bservices, $duration = null, $earlyExit = false) {
         $startTime = microtime(true);
         $plugin = $this->plugin;
         $ah = $plugin->getAvailabilityHelper();
@@ -593,10 +638,13 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
         
         $totalSlots = count($allPossibleTimes);
         // For each time slot, check if ANY attendant is available.
-        // Use slot step to reduce checks (every 2nd slot) - still finds availability, halves the work.
-        $slotStep = (int) apply_filters('sln_getallattendants_slot_step', 2);
-        $slotStep = max(1, min($slotStep, 5));
-        $maxChecks = (int) apply_filters('sln_getallattendants_max_checks', 80);
+        // slotStep/maxChecks are optimisations that only make sense for the date-availability
+        // scan (earlyExit=true), where we only need to confirm *any* slot exists and can
+        // stop as soon as we find one. For the full time-list response (earlyExit=false)
+        // every slot must be evaluated so the user sees the complete set of bookable times.
+        $slotStep  = $earlyExit ? (int) apply_filters('sln_getallattendants_slot_step', 2) : 1;
+        $slotStep  = max(1, min($slotStep, 5));
+        $maxChecks = $earlyExit ? (int) apply_filters('sln_getallattendants_max_checks', 80) : PHP_INT_MAX;
         $count = 0;
 
         foreach ($allPossibleTimes as $timeStr => $timeObj) {
@@ -605,7 +653,7 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
                 break;
             }
             if ($slotStep > 1 && ($count - 1) % $slotStep !== 0) {
-                continue; // Skip this slot (sample every Nth)
+                continue; // Skip this slot (date-availability scan only)
             }
                 
                 $tmpDateTime = new SLN_DateTime($date->toString() . ' ' . $timeStr);
@@ -640,15 +688,19 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
                     }
                 }
                 
-                // If at least one attendant is available, include this time slot
                 if ($hasAvailableAttendant) {
                     $availableTimes[$timeStr] = $timeObj;
+                    if ($earlyExit) {
+                        // Date-availability check: we only need to know if *any* slot
+                        // is bookable — stop scanning as soon as we find one.
+                        break;
+                    }
                 }
         }
         
         $elapsed = round((microtime(true) - $startTime) * 1000);
         if ($elapsed > 2000) {
-            SLN_Plugin::addLog('[getAllAttendantsAvailableTimes] SLOW | date=' . $date->toString() . ' | found=' . count($availableTimes) . ' | ' . $elapsed . 'ms');
+            SLN_Plugin::addLog('[getAllAttendantsAvailableTimes] SLOW | date=' . $date->toString() . ' | found=' . count($availableTimes) . ' | earlyExit=' . ($earlyExit ? 'yes' : 'no') . ' | ' . $elapsed . 'ms');
         }
         return $availableTimes;
     }

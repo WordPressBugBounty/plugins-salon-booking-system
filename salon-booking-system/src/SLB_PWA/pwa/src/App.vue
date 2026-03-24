@@ -1,18 +1,17 @@
 <template>
     <div>
         <TabsList @applyShop="applyShop" :isShopsEnabled="isShopsEnabled"/>
-        <PWAPrompt/>
     </div>
 </template>
 
 <script>
 
 import TabsList from './components/TabsList.vue'
-import PWAPrompt from './components/PWAPrompt.vue'
 
 export default {
     name: 'App',
     mounted() {
+        this.loadBookingDragResizePref()
         this.loadSettings()
         this.displayBuildVersion()
     },
@@ -34,6 +33,8 @@ export default {
                 'sln-b-canceled': {label: this.getLabel('canceledStatusLabel'), color: '#dc3545'},
             },
             shop: null,
+            /** When true, calendar booking cards hide drag-to-resize (see Profile toggle). */
+            disableBookingDragResize: false,
         }
     },
     watch: {
@@ -42,6 +43,30 @@ export default {
         },
     },
     methods: {
+        loadBookingDragResizePref() {
+            try {
+                if (!window.slnPWA?.can_access_booking_resize_pref) {
+                    this.disableBookingDragResize = false
+                    return
+                }
+                this.disableBookingDragResize = localStorage.getItem('sln_pwa_disable_booking_drag_resize') === '1'
+            } catch (e) {
+                this.disableBookingDragResize = false
+            }
+        },
+        setDisableBookingDragResize(value) {
+            if (!window.slnPWA?.can_access_booking_resize_pref) {
+                return
+            }
+            this.disableBookingDragResize = !!value
+            try {
+                if (this.disableBookingDragResize) {
+                    localStorage.setItem('sln_pwa_disable_booking_drag_resize', '1')
+                } else {
+                    localStorage.removeItem('sln_pwa_disable_booking_drag_resize')
+                }
+            } catch (e) { /* ignore */ }
+        },
         loadSettings() {
           this.axios.get('app/settings', {params: {shop: this.shop ? this.shop.id : null}}).then((response) => {
             this.settings = response.data.settings;
@@ -73,7 +98,6 @@ export default {
     },
     components: {
         TabsList,
-        PWAPrompt,
     },
     beforeCreate() {
         if (this.$OneSignal) {
@@ -93,32 +117,89 @@ export default {
 </script>
 
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Brand */
+  --color-primary: #2563EB;
+  --color-primary-light: #EFF6FF;
+
+  /* Surface */
+  --color-surface: #FFFFFF;
+  --color-background: #F4F6FA;
+  --color-border: #E2E8F0;
+
+  /* Text */
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #64748B;
+  --color-text-muted: #94A3B8;
+
+  /* Status */
+  --color-confirmed: #16A34A;
+  --color-pending: #D97706;
+  --color-info: #0891B2;
+  --color-error: #DC2626;
+
+  /* Nav */
+  --color-nav-active: #2563EB;
+  --color-nav-inactive: #94A3B8;
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-pill: 999px;
+
+  /* Spacing */
+  --spacing-page: 16px;
+  --spacing-card: 14px;
+  --spacing-gap: 8px;
+}
+
+* {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 50px;
+  box-sizing: border-box;
 }
+
+body {
+  background-color: var(--color-background) !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+}
+
+#app {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: var(--color-text-primary);
+  background-color: var(--color-background);
+  margin-top: 0;
+  min-height: 100vh;
+}
+
+/* ── Spinner ── */
+.spinner-border {
+  color: var(--color-primary) !important;
+}
+
+/* ── vue-next-select overrides ── */
 .service-select .vue-dropdown .vue-dropdown-item.highlighted,
 .discount-select .vue-dropdown .vue-dropdown-item.highlighted {
-  background-color:#0d6efd;
+  background-color: var(--color-primary);
 }
 .service-select .vue-dropdown .vue-dropdown-item.highlighted span,
 .service-select .vue-dropdown .vue-dropdown-item.highlighted .option-item,
 .discount-select .vue-dropdown .vue-dropdown-item.highlighted span,
 .discount-select .vue-dropdown .vue-dropdown-item.highlighted .option-item {
-  color:#fff;
+  color: #fff;
 }
 .service-select .vue-dropdown,
 .discount-select .vue-dropdown {
-  background-color:#edeff2;
-  padding: 0px 10px;
+  background-color: #edeff2;
+  padding: 0 10px;
 }
 .service-select .vue-input,
 .discount-select .vue-input {
-  width:100%;
+  width: 100%;
   font-size: 1rem;
 }
 </style>
