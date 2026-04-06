@@ -13,11 +13,11 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
         SLN_Plugin::addLog('Mode: ' . (isset($_GET['mode']) ? $_GET['mode'] : 'NONE'));
         SLN_Plugin::addLog('Booking ID in URL: ' . (isset($_GET['sln_booking_id']) ? $_GET['sln_booking_id'] : 'NONE'));
         
-        // Session validation
+        // Do not block finalization on session_status() alone. Booking state is persisted in
+        // session and/or transients (client_id); rejecting here caused false "expired" flows and
+        // empty builder → redirect back to services with no booking created.
         if (session_status() !== PHP_SESSION_ACTIVE) {
-            SLN_Plugin::addLog("ERROR: Session not active in SummaryStep::dispatchForm");
-            $this->addError(__('Your session has expired. Please start the booking process again.', 'salon-booking-system'));
-            return false;
+            SLN_Plugin::addLog('WARNING: Session not active in SummaryStep::dispatchForm — continuing (transient/client_id may still hold state)');
         }
 
         // Bot protection: reCAPTCHA verification
@@ -191,7 +191,24 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
                     SLN_Plugin::addLog('[SummaryStep] Status set to CONFIRMED (fallback)');
                 }
             }
+            // Capture the status we just assigned so we can detect — and revert —
+            // any unintended override by setPrepaidServices().
+            $statusBeforePrepaid = $bb->getStatus();
             $bb->setPrepaidServices();
+
+            // DEFENSIVE: For zero-amount bookings the guard inside setPrepaidServices()
+            // should prevent it from changing CONFIRMED/PENDING to PAID, but we add an
+            // explicit check here so a future refactor cannot silently re-introduce the bug.
+            if ($bb->getAmount() <= 0.0 && $bb->getStatus() !== $statusBeforePrepaid) {
+                SLN_Plugin::addLog(sprintf(
+                    '[SummaryStep] WARNING: setPrepaidServices() changed status from %s to %s on zero-amount booking #%d — reverting.',
+                    $statusBeforePrepaid,
+                    $bb->getStatus(),
+                    $bb->getId()
+                ));
+                $bb->setStatus($statusBeforePrepaid);
+            }
+
             $bookingBuilder->clear($bb->getId());
             $this->cleanupBookingLock($bb);
             return !$this->hasErrors();
@@ -283,6 +300,24 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
             } catch (\Exception $e) {
                 SLN_Plugin::addLog('[SummaryStep] Post-payment availability check threw exception (booking proceeds normally): ' . $e->getMessage());
             }
+        } elseif (!empty($paymentMethod) && $bb->getAmount() > 0.0) {
+            // PENDING_PAYMENT / PAY_LATER bookings arriving via email Pay link have no 'mode'
+            // because the link is a direct URL (not a form submission). Return false without
+            // an error so render() can display the summary + payment form.
+            if (in_array($bb->getStatus(), array(
+                SLN_Enum_BookingStatus::PENDING_PAYMENT,
+                SLN_Enum_BookingStatus::PAY_LATER,
+                SLN_Enum_BookingStatus::PENDING,
+            ))) {
+                SLN_Plugin::addLog('[SummaryStep] dispatchForm: ' . $bb->getStatus() . ' booking with no mode — deferring to render() to show payment form');
+                return false;
+            }
+            // For DRAFT bookings in the normal flow: user somehow submitted without clicking Pay.
+            SLN_Plugin::addLog('[SummaryStep] dispatchForm: paid booking (amount > 0) with no matching handler — refusing to clear state');
+            $this->addError(
+                __('Please use the payment button to pay now, or Pay later if available. If the problem continues, refresh the page and try again.', 'salon-booking-system')
+            );
+            return false;
         }
         if(!$this->hasErrors()){
             $bookingBuilder->clear($bb->getId());
@@ -301,7 +336,35 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
     public function render()
     {
         $bb = $this->getPlugin()->getBookingBuilder();
-        
+
+        // EMAIL PAY LINK: When a customer arrives via the "PAY" button in a Payment Pending
+        // email, there is no active session (fresh browser visit). The booking ID is carried
+        // in the URL as sln_booking_id. Inject it into the builder so that getLastBooking()
+        // works for both this method and the summary view template.
+        if (!$bb->get('services') && !$bb->getLastBooking() && isset($_GET['sln_booking_id'])) {
+            $emailPayBookingId = intval(sanitize_text_field(wp_unslash($_GET['sln_booking_id'])));
+            if ($emailPayBookingId) {
+                try {
+                    $emailPayBooking = $this->getPlugin()->createBooking($emailPayBookingId);
+                    if ($emailPayBooking && in_array($emailPayBooking->getStatus(), array(
+                        SLN_Enum_BookingStatus::PENDING_PAYMENT,
+                        SLN_Enum_BookingStatus::PAY_LATER,
+                        SLN_Enum_BookingStatus::PENDING,
+                    ))) {
+                        SLN_Plugin::addLog(sprintf(
+                            '[SummaryStep] Email pay link: injecting booking #%d (status: %s) into builder',
+                            $emailPayBookingId,
+                            $emailPayBooking->getStatus()
+                        ));
+                        // clear($id, false) sets lastId without wiping builder data
+                        $bb->clear($emailPayBookingId, false);
+                    }
+                } catch (Exception $e) {
+                    SLN_Plugin::addLog('[SummaryStep] Email pay link: failed to load booking #' . $emailPayBookingId . ': ' . $e->getMessage());
+                }
+            }
+        }
+
         // Debug: Log booking builder state
         SLN_Plugin::addLog('SummaryStep::render() - Start');
         SLN_Plugin::addLog('Has services: ' . ($bb->get('services') ? 'YES' : 'NO'));
@@ -404,7 +467,15 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
             if(empty($bb->get('services'))){
                 SLN_Plugin::addLog('SummaryStep::render() - ERROR: No services data, redirecting to services step');
                 $this->addError(self::SERVICES_DATA_EMPTY);
-                $this->redirect(add_query_arg(array('sln_step_page' => 'services')));
+                // Must pass explicit booking page URL: during DOING_AJAX, add_query_arg() alone uses
+                // REQUEST_URI (admin-ajax.php), which yields a broken URL and WordPress responds with "0".
+                $payId       = $this->getPlugin()->getSettings()->getPayPageId();
+                $servicesUrl = $payId ? get_permalink($payId) : home_url('/');
+                $requestArgs = $this->getSanitizedRequestArgs();
+                if (isset($requestArgs['lang'])) {
+                    $servicesUrl = add_query_arg('lang', $requestArgs['lang'], $servicesUrl);
+                }
+                $this->redirect(add_query_arg(array('sln_step_page' => 'services'), $servicesUrl));
                 return parent::render(); // Return content after redirect for AJAX
             }else{
                 SLN_Plugin::addLog('SummaryStep::render() - ERROR: Slot unavailable');

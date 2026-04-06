@@ -82,7 +82,12 @@ class Shops_Controller extends REST_Controller
         if ($this->is_shop_manager()) {
             return true;
         }
-        
+
+        // Same as other salon REST read access (e.g. reports dashboard shop selector)
+        if ( current_user_can( 'manage_salon' ) ) {
+            return true;
+        }
+
         return false;
     }
 }

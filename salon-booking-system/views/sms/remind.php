@@ -22,7 +22,7 @@ if ($template) {
 	),
 	array(
 	    $booking->getDisplayName(),
-	    $plugin->getSettings()->getSalonName(),
+	    $plugin->getSettings()->getSalonName($booking),
 	    $plugin->format()->date($bookingDateTime),
 	    $plugin->format()->time($bookingDateTime),
 	    $booking->getAmount(),
@@ -44,7 +44,7 @@ if ($template) {
 $message =
 __('Hi','salon-booking-system') .' ' . $booking->getFirstname() . ' ' . $booking->getLastname()
 
-. ' ' . __('don\'t forget your reservation at','salon-booking-system').' '. $plugin->getSettings()->getSalonName()
+. ' ' . __('don\'t forget your reservation at','salon-booking-system').' '. $plugin->getSettings()->getSalonName($booking)
 . ' ' . __('on','salon-booking-system').' '. $plugin->format()->date($bookingDateTime)
 . ' ' . __('at','salon-booking-system').' '. $plugin->format()->time($bookingDateTime)
 . ' ' . __('| Booking ID ','salon-booking-system') .$booking->getId()

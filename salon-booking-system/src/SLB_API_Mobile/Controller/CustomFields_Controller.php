@@ -31,8 +31,17 @@ class CustomFields_Controller extends REST_Controller
     {
         $user_profile = $request->get_param('user_profile');
         $customer_id = $request->get_param('customer_id');
-        $fields          = array();
-        $booking_fields  = SLN_Enum_CheckoutFields::forBooking();
+        $fields       = array();
+        /*
+         * Booking/checkout flows use forBooking() (excludes booking_hidden fields).
+         * WP admin "Edit Customer" uses forCustomer() — it includes additional fields
+         * that are on the customer profile even when "hidden on booking" (booking_hidden).
+         * PWA CustomerDetails passes user_profile=1; use the same field set as admin
+         * so Extra Info is not empty for those salons.
+         */
+        $booking_fields = $user_profile
+            ? SLN_Enum_CheckoutFields::forCustomer()
+            : SLN_Enum_CheckoutFields::forBooking();
 
         foreach ( $booking_fields as $field ) {
             if ($field->isAdditional() && (!$user_profile || $field->isCustomer())) {

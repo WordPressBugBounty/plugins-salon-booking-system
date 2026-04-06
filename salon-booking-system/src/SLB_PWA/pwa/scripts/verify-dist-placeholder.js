@@ -8,7 +8,9 @@ const path = require('path');
 
 const dist = path.join(__dirname, '../dist');
 const appJs = path.join(dist, 'js/app.js');
+const swJs = path.join(dist, 'service-worker.js');
 const PLACEHOLDER = '/{SLN_PWA_DIST_PATH}/';
+const TOKEN = '{SLN_PWA_DIST_PATH}';
 
 function walkJsFiles(dir, out) {
   if (!fs.existsSync(dir)) return;
@@ -34,6 +36,13 @@ if (!appSrc.includes(PLACEHOLDER)) {
   process.exit(1);
 }
 
+if (appSrc.includes('/wp-content/plugins/') || appSrc.includes('wp-content\\plugins\\')) {
+  console.error(
+    'verify-dist-placeholder: dist/js/app.js contains wp-content/plugins — run a clean `npm run build` in pwa/; do not commit files after opening the PWA on a site.'
+  );
+  process.exit(1);
+}
+
 if (appSrc.toLowerCase().includes('symlink')) {
   console.error(
     'verify-dist-placeholder: dist/js/app.js contains "symlink" — rebuild; vue.config must use mode-based publicPath.'
@@ -51,9 +60,20 @@ for (const f of jsFiles) {
   }
 }
 
-const swPath = path.join(dist, 'service-worker.js');
-if (fs.existsSync(swPath)) {
-  const sw = fs.readFileSync(swPath, 'utf8');
+if (fs.existsSync(swJs)) {
+  const sw = fs.readFileSync(swJs, 'utf8');
+  if (!sw.includes(PLACEHOLDER) && !sw.includes(TOKEN)) {
+    console.error(
+      'verify-dist-placeholder: dist/service-worker.js must include "/{SLN_PWA_DIST_PATH}/" or "{SLN_PWA_DIST_PATH}" (Workbox precache).'
+    );
+    process.exit(1);
+  }
+  if (sw.includes('/wp-content/plugins/') || sw.includes('wp-content\\plugins\\')) {
+    console.error(
+      'verify-dist-placeholder: dist/service-worker.js contains wp-content/plugins — rebuild; only placeholder paths may be committed.'
+    );
+    process.exit(1);
+  }
   if (sw.toLowerCase().includes('symlink')) {
     console.error('verify-dist-placeholder: dist/service-worker.js contains "symlink".');
     process.exit(1);

@@ -560,12 +560,11 @@ export default {
     timeToMinutes(time) {
       if (!time) return 0;
       if (time === this.END_OF_DAY || time === '24:00') return this.MINUTES_IN_DAY;
-      if (this.$root.settings.time_format.js_format === 'h:iip') {
+      const jsFormat = this.$root.settings?.time_format?.js_format;
+      if (jsFormat && jsFormat.toLowerCase() === 'h:iip' && /[ap]m/i.test(time)) {
         const momentTime = this.moment(time, 'h:mm A');
-        const [hours, minutes] = [momentTime.hours(), momentTime.minutes()];
-        return hours * 60 + minutes;
+        return momentTime.hours() * 60 + momentTime.minutes();
       }
-
       const [hours, minutes] = time.split(':').map(Number);
       return hours * 60 + minutes;
     },
@@ -590,6 +589,11 @@ export default {
       return `${attendantId}-${timeslot}-${nextTimeslot}`;
     },
     isTimeSlotAllowedByRule(rule, slotMinutes, currentDate) {
+      // Normalize from/to to plain arrays regardless of whether the API
+      // returned a JSON array or a JSON object with numeric string keys.
+      const fromArr = Array.isArray(rule.from) ? rule.from : Object.values(rule.from || {});
+      const toArr   = Array.isArray(rule.to)   ? rule.to   : Object.values(rule.to   || {});
+
       /* check for specific dates */
       if (rule.select_specific_dates && rule.specific_dates) {
         const specificDates = rule.specific_dates.split(',');
@@ -598,13 +602,11 @@ export default {
           return false;
         }
         // check time intervals if available
-        if (Array.isArray(rule.from) && Array.isArray(rule.to) && rule.from.length > 0 && rule.to.length > 0) {
-          return Object.keys(rule.from).some(index => {
-            if (index > 0 && rule.disable_second_shift) {
-              return false;
-            }
-            const fromMin = this.getTimeInMinutes(rule.from[index]);
-            const toMin = this.getTimeInMinutes(rule.to[index]);
+        if (fromArr.length > 0 && toArr.length > 0) {
+          return fromArr.some((fromTime, index) => {
+            if (index > 0 && rule.disable_second_shift) return false;
+            const fromMin = this.getTimeInMinutes(fromTime);
+            const toMin   = this.getTimeInMinutes(toArr[index]);
             return slotMinutes >= fromMin && slotMinutes < toMin;
           });
         }
@@ -618,7 +620,7 @@ export default {
       /* check for date range limits */
       if (!rule.always && (rule.from_date || rule.to_date)) {
         const ruleFromDate = rule.from_date ? this.moment(rule.from_date, 'YYYY-MM-DD') : null;
-        const ruleToDate = rule.to_date ? this.moment(rule.to_date, 'YYYY-MM-DD') : null;
+        const ruleToDate   = rule.to_date   ? this.moment(rule.to_date,   'YYYY-MM-DD') : null;
         if (ruleFromDate && currentDate.isBefore(ruleFromDate, 'day')) {
           return false;
         }
@@ -633,22 +635,20 @@ export default {
       }
 
       /* check time intervals (from/to pairs) */
-      if (Array.isArray(rule.from) && Array.isArray(rule.to)) {
+      if (fromArr.length > 0 && toArr.length > 0) {
         // check if current day is allowed
         if (!rule.days || rule.days[currentDate.isoWeekday()] !== 1) {
           return false;
         }
-        return Object.keys(rule.from).some(index => {
-          if (index > 0 && rule.disable_second_shift) {
-            return false;
-          }
-          const fromMin = this.getTimeInMinutes(rule.from[index]);
-          const toMin = this.getTimeInMinutes(rule.to[index]);
+        return fromArr.some((fromTime, index) => {
+          if (index > 0 && rule.disable_second_shift) return false;
+          const fromMin = this.getTimeInMinutes(fromTime);
+          const toMin   = this.getTimeInMinutes(toArr[index]);
           return slotMinutes >= fromMin && slotMinutes < toMin;
         });
       }
 
-      /* true for non-specific dates */
+      /* true for non-specific dates with no time restrictions */
       if (rule.always && rule.days && rule.days[currentDate.isoWeekday()] === 1) {
         return true;
       }
@@ -675,7 +675,7 @@ export default {
         /* PART 1: CHECK SALON AVAILABILITY */
         /* -- step 1: salon working day -- */
         const availableDays = this.$root.settings?.available_days || {};
-        if (availableDays[weekdaySalon] !== '1') return true;
+        if (availableDays[weekdaySalon] != 1) return true;
 
         /* -- step 2: hard blocks -- */
         // 2.1: check all holiday rules (salon-wide and assistant-specific)
@@ -731,7 +731,7 @@ export default {
         const salonAvail = this.$root.settings?.availabilities || [];
         if (salonAvail.length) {
           // get all applicable rules for this day
-          const rule = salonAvail.filter(r => r.days?.[weekdaySalon] === '1');
+          const rule = salonAvail.filter(r => r.days?.[weekdaySalon] == 1);
           if (rule.length === 0) return true; // ==> no rules for this day = day off
 
           // check if time is in ANY shift of ANY applicable rule
@@ -778,9 +778,15 @@ export default {
       if (!time) return time;
       if (time === this.END_OF_DAY || time === '24:00') return this.END_OF_DAY;
 
-      if (this.$root.settings?.time_format?.js_format === 'h:iip') {
-        const momentTime = this.moment(time, 'h:mm A');
-        return momentTime.format('HH:mm');
+      const jsFormat = this.$root.settings?.time_format?.js_format;
+      if (jsFormat && jsFormat.toLowerCase() === 'h:iip') {
+        // AM/PM display format: input may be a user-visible "9:00 AM" or an
+        // internally stored 24h time like "9:00" / "19:00".
+        if (/[ap]m/i.test(time)) {
+          return this.moment(time, 'h:mm A').format('HH:mm');
+        }
+        // Stored 24h time — parse with H:mm to avoid Invalid Date.
+        return this.moment(time, 'H:mm').format('HH:mm');
       }
 
       const momentFormat = this.getTimeFormat();

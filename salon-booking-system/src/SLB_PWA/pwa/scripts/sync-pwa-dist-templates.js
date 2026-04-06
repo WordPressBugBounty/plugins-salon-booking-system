@@ -13,6 +13,8 @@ const pairs = [
   ['js/app.js.map', 'js/app.js.template.map'],
   ['service-worker.js', 'service-worker.template.js'],
   ['service-worker.js.map', 'service-worker.js.template.map'],
+  /** Plugin.php also hydrates index.html from this template on each PWA load. */
+  ['index.html', 'index.template.html'],
 ];
 
 for (const [fromRel, toRel] of pairs) {

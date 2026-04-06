@@ -161,8 +161,17 @@ class SLB_Discount_Plugin {
 		$data["discounts"] = array();
 		$discountValues = 0;
 		$first = true;
+		$bookingTimestamp = $booking->getDate() ? $booking->getDate()->getTimestamp() : (new SLN_DateTime())->getTimestamp();
 		foreach ($discounts as $discountId) {
 			$discount        = $dRepo->create($discountId);
+
+			// Skip expired or otherwise invalid discounts.
+			$discountErrors = $discount->validateDiscount($bookingTimestamp);
+			if (!empty($discountErrors)) {
+				SLN_Plugin::addLog(sprintf('[Discount] Skipping invalid discount %d (admin path) for booking %d: %s', $discountId, $booking->getId(), implode(', ', $discountErrors)));
+				continue;
+			}
+
 			$discountValues  = $discount->applyDiscountToBookingServices($bookingServices, true,  $booking->getAttendantsIds());
 
 			$data["discounts"][] = $discountId;
@@ -339,6 +348,17 @@ class SLB_Discount_Plugin {
 		}
 		$data = array('discounts' => array());
 		if(!empty($discounts_to_increment)){
+			// Filter out expired or otherwise invalid discounts before applying them.
+			$bookingTimestamp = $booking->getDate() ? $booking->getDate()->getTimestamp() : (new SLN_DateTime())->getTimestamp();
+			$discounts_to_increment = array_filter($discounts_to_increment, function($discount) use ($bookingTimestamp) {
+				$errors = $discount->validateDiscount($bookingTimestamp);
+				if (!empty($errors)) {
+					SLN_Plugin::addLog(sprintf('[Discount] Skipping invalid discount %d (API path): %s', $discount->getId(), implode(', ', $errors)));
+					return false;
+				}
+				return true;
+			});
+
 			// Calculete discount data
 			foreach($discounts_to_increment as $discount){
 				$data['discounts'][] = $discount->getId();
@@ -363,8 +383,8 @@ class SLB_Discount_Plugin {
 					}
 					$data["discount_score"] = array_merge(isset($data["discount_score"]) ? $data["discount_score"] : array(), $discountScores);
 				}
-				//$discount->incrementUsagesNumber($booking->getUserId());
-				//$discount->incrementTotalUsagesNumber();
+				$discount->incrementUsagesNumber($booking->getUserId());
+				$discount->incrementTotalUsagesNumber();
 			}
 			// Calculate new service price
 			foreach($bookingServices->getItems() as $bookingService){

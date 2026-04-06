@@ -67,7 +67,6 @@
         <a :href="'sms:' + customerPhone" class="contact-btn"><font-awesome-icon icon="fa-solid fa-message" /></a>
         <a :href="'https://wa.me/' + customerPhone" class="contact-btn"><font-awesome-icon icon="fa-brands fa-whatsapp" /></a>
       </div>
-      <div class="customer-note-text" v-if="customerNote">{{ customerNote }}</div>
     </div>
 
     <!-- Services -->
@@ -114,20 +113,33 @@
       </div>
     </div>
 
+    <!-- Notes -->
+    <div class="detail-card" v-if="customerNote || customerPersonalNote || adminNote">
+      <p class="section-label">{{ getLabel('notesTitle') || 'Notes' }}</p>
+      <div class="note-block" v-if="customerNote">
+        <span class="note-block-label">{{ getLabel('customerMessageLabel') || 'Customer message' }}</span>
+        <p class="note-block-text">{{ customerNote }}</p>
+      </div>
+      <div class="note-block" v-if="customerPersonalNote">
+        <span class="note-block-label">{{ getLabel('customerPersonalNotesLabel') }}</span>
+        <p class="note-block-text">{{ customerPersonalNote }}</p>
+      </div>
+      <div class="note-block" v-if="adminNote">
+        <span class="note-block-label">{{ getLabel('adminNoteLabel') || 'Administration note' }}</span>
+        <p class="note-block-text">{{ adminNote }}</p>
+      </div>
+    </div>
+
     <!-- Extra Info -->
-    <div class="detail-card" v-if="customFieldsList.length || customerPersonalNote">
+    <div class="detail-card" v-if="bookingCustomFieldsList.length">
       <div class="collapsible-header" @click="visibleExtraInfo = !visibleExtraInfo">
         <p class="section-label mb-0">{{ getLabel('extraInfoLabel') }}</p>
         <font-awesome-icon :icon="visibleExtraInfo ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down'" class="collapsible-icon" />
       </div>
       <b-collapse v-model="visibleExtraInfo">
-        <div class="extra-field" v-for="field in customFieldsList" :key="field.key">
+        <div class="extra-field" v-for="field in bookingCustomFieldsList" :key="field.key">
           <span class="extra-field-label">{{ field.label }}</span>
           <strong class="extra-field-value">{{ field.value }}</strong>
-        </div>
-        <div class="extra-field" v-if="customerPersonalNote">
-          <span class="extra-field-label">{{ getLabel('customerPersonalNotesLabel') }}</span>
-          <strong class="extra-field-value">{{ customerPersonalNote }}</strong>
         </div>
       </b-collapse>
     </div>
@@ -176,6 +188,9 @@
             customerPersonalNote() {
                 return this.bookingData.customer_personal_note
             },
+            adminNote() {
+                return this.bookingData.admin_note
+            },
             services() {
                 return this.bookingData.services
             },
@@ -200,6 +215,9 @@
             },
             customFieldsList() {
                 return this.bookingData.custom_fields.filter(i => ['html', 'file'].indexOf(i.type) === -1)
+            },
+            bookingCustomFieldsList() {
+                return this.customFieldsList.filter(i => !i.is_customer && i.value)
             },
             photos() {
                 return this.bookingData.customer_photos
@@ -443,12 +461,23 @@
   font-size: 15px;
   text-decoration: none;
 }
-.customer-note-text {
-  font-size: 13px;
+.note-block {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-border, #E2E8F0);
+}
+.note-block:last-child { border-bottom: none; }
+.note-block-label {
+  font-size: 12px;
   color: var(--color-text-secondary, #64748B);
-  padding-top: 8px;
-  border-top: 1px solid var(--color-border, #E2E8F0);
-  margin-top: 4px;
+  margin-bottom: 4px;
+  display: block;
+}
+.note-block-text {
+  font-size: 14px;
+  color: var(--color-text-primary, #0F172A);
+  margin: 0;
+  line-height: 1.5;
+  white-space: pre-wrap;
 }
 .service-row-item {
   padding: 8px 0;

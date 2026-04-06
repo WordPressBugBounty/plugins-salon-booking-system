@@ -10,15 +10,21 @@ abstract class SLN_Action_Ajax_AbstractImport extends SLN_Action_Ajax_Abstract
 
     public function execute()
     {
-        $data = array();
-        $nonce = isset($_GET['_wpnonce']) ? $_GET['_wpnonce'] : $_POST['_wpnonce'];
-        if (!wp_verify_nonce($nonce, '_sln_action_import')) {
+        if ( ! current_user_can( 'manage_salon' ) ) {
             wp_die(
                 '<p>' . esc_html__( 'Sorry, you are not allowed access to this page.' ) . '</p>',
                 403
             );
-			
-		}
+        }
+
+        $data  = array();
+        $nonce = isset( $_GET['_wpnonce'] ) ? $_GET['_wpnonce'] : ( isset( $_POST['_wpnonce'] ) ? $_POST['_wpnonce'] : '' );
+        if ( ! wp_verify_nonce( $nonce, '_sln_action_import' ) ) {
+            wp_die(
+                '<p>' . esc_html__( 'Sorry, you are not allowed access to this page.' ) . '</p>',
+                403
+            );
+        }
 
         $step   = ucfirst(isset($_POST['step']) ? sanitize_text_field( wp_unslash($_POST['step']) ) : '');
         $step = isset($step) && !empty($step) ? $step :  ucfirst(isset($_GET['step']) ? sanitize_text_field( wp_unslash($_GET['step']) ) : '');

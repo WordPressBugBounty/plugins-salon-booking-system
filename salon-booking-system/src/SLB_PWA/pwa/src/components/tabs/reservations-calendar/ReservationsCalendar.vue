@@ -905,10 +905,10 @@ export default {
         let sys = false;
         try {
           if (!intervalsEmpty) {
-            if (settings.available_days?.[weekday] !== '1') {
+            if (settings.available_days?.[weekday] != 1) {
               sys = true;
             } else if (availabilities.length) {
-              const rule = availabilities.find(availabilityRule => availabilityRule.days?.[weekday] === '1');
+              const rule = availabilities.find(availabilityRule => availabilityRule.days?.[weekday] == 1);
               if (!rule) {
                 sys = true;
               } else {
@@ -1022,7 +1022,7 @@ export default {
                   if (manualLock) {
                     sl = true;
                   } else if (availabilities.length) {
-                    const dayRules = availabilities.filter(availabilityRule => availabilityRule.days?.[weekday] === '1');
+                    const dayRules = availabilities.filter(availabilityRule => availabilityRule.days?.[weekday] == 1);
                     if (dayRules.length === 0) {
                       sl = true;
                     } else {

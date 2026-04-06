@@ -18,7 +18,7 @@ $message = str_replace(
     ),
     array(
 	$booking->getDisplayName(),
-	$plugin->getSettings()->getSalonName(),
+	$plugin->getSettings()->getSalonName($booking),
     ),
     $message
 );

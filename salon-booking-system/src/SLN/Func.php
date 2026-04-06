@@ -300,6 +300,32 @@ class SLN_Func
         }
     } 
 
+    /**
+     * Return the smallest standard alignment interval (in minutes) that is >= the given duration.
+     *
+     * Used by the "Auto-align time slots" feature to determine which time slots to display
+     * when a service has a fixed duration. A 70-minute service aligns to 75-minute slots,
+     * a 60-minute service aligns to 60-minute slots, etc.
+     *
+     * Valid intervals cover 30 min → 4 hours in common salon increments.
+     * Services < 30 min are excluded by callers; this method still returns 30 as a floor.
+     *
+     * @param int $durationMinutes Service duration in minutes.
+     * @return int Alignment interval in minutes.
+     */
+    public static function getAutoAlignInterval($durationMinutes)
+    {
+        $validIntervals = array(30, 45, 60, 75, 90, 105, 120, 135, 150, 180, 210, 240);
+
+        foreach ($validIntervals as $interval) {
+            if ($durationMinutes <= $interval) {
+                return $interval;
+            }
+        }
+
+        return 240;
+    }
+
     public static function convertToHoursMins($time, $format = '%02d:%02d')
     {
         settype($time, 'integer');

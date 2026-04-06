@@ -1,25 +1,23 @@
 <template>
-    <b-row class="field">
-        <b-col sm="12">
-            <template v-if="type === 'text'">
-                <b-form-input v-model.lazy="elValue" :id="key" />
-                <label class="label" :for="key">{{ label }}</label>
-            </template>
-            <template v-if="type === 'textarea'">
-                <b-form-textarea v-model.lazy="elValue" :id="key"></b-form-textarea>
-                <label class="label" :for="key">{{ label }}</label>
-            </template>
-            <template v-if="type === 'checkbox'">
-                <b-form-checkbox v-model="elValue" :id="key">
-                    {{ label }}
-                </b-form-checkbox>
-            </template>
-            <template v-if="type === 'select'">
-                <b-form-select v-model="elValue" :id="key" :options="options"></b-form-select>
-                <label class="label" :for="key">{{ label }}</label>
-            </template>
-        </b-col>
-    </b-row>
+    <div class="custom-field">
+        <template v-if="type === 'text'">
+            <label class="label" :for="key">{{ displayLabel }}</label>
+            <b-form-input v-model.lazy="elValue" :id="key" class="custom-field-control" />
+        </template>
+        <template v-else-if="type === 'textarea'">
+            <label class="label" :for="key">{{ displayLabel }}</label>
+            <b-form-textarea v-model.lazy="elValue" :id="key" class="custom-field-control" />
+        </template>
+        <template v-else-if="type === 'checkbox'">
+            <b-form-checkbox v-model="elValue" :id="key" class="custom-field-checkbox">
+                {{ displayLabel }}
+            </b-form-checkbox>
+        </template>
+        <template v-else-if="type === 'select'">
+            <label class="label" :for="key">{{ displayLabel }}</label>
+            <b-form-select v-model="elValue" :id="key" :options="options" class="custom-field-control" />
+        </template>
+    </div>
 </template>
 
 <script>
@@ -61,14 +59,28 @@
             type() {
                 return this.field.type
             },
-            label() {
-                return this.field.label
+            displayLabel() {
+                return this.sanitizeLabel(this.field.label)
             },
             options() {
-                return this.field.options.map(i => ({value: i.value, text: i.label}))
+                const opts = this.field.options || []
+                return opts.map(i => ({
+                    value: i.value,
+                    text: this.sanitizeLabel(i.label),
+                }))
             },
         },
         methods: {
+            sanitizeLabel(str) {
+                if (str == null) {
+                    return ''
+                }
+                let s = String(str)
+                /* Stored/exported labels sometimes contain literal "\u00a0" or NBSP */
+                s = s.replace(/\\u00a0/gi, ' ').replace(/\\u200b/gi, '')
+                s = s.replace(/\u00a0/g, ' ').replace(/\u200b/g, '')
+                return s.trim()
+            },
             update() {
                 this.$emit('update', this.key, this.elValue);
             },
@@ -78,11 +90,28 @@
 </script>
 
 <style scoped>
-    .field + .field {
-        margin-top: 10px;
+    .custom-field + .custom-field {
+        margin-top: 1.25rem;
     }
     .label {
-        color: #888;
+        display: block;
+        margin: 0 0 6px;
+        padding: 0;
+        color: var(--color-text-secondary, #64748B);
         font-size: 14px;
+        font-weight: 600;
+        line-height: 1.35;
+    }
+    .custom-field-control {
+        margin: 0 !important;
+    }
+    .custom-field-checkbox {
+        margin: 0;
+        padding-top: 2px;
+    }
+    .custom-field :deep(.form-control),
+    .custom-field :deep(.form-select) {
+        margin-bottom: 0;
+        margin-top: 0;
     }
 </style>

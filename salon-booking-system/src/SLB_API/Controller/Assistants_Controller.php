@@ -245,8 +245,8 @@ class Assistants_Controller extends REST_Controller
 
             $availabilities[] = array(
                 'days'      => $avDays,
-                'from'      => (object)$data['from'],
-                'to'        => (object)$data['to'],
+                'from'      => array_values( (array) $data['from'] ),
+                'to'        => array_values( (array) $data['to'] ),
                 'always'    => $data['always'],
                 'from_date' => $data['from_date'],
                 'to_date'   => $data['to_date'],

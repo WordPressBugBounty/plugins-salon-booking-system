@@ -101,7 +101,10 @@ class App_Controller extends REST_Controller
             $holidays_daily = $s->get('holidays_daily');
 
             $firstRule = reset($availabilities);
-            $availableDays = $firstRule['days'] ?? [];
+            // Normalize days values to strings so JS comparisons are consistent
+            // (days may be stored as integer 1 when set programmatically/via onboarding)
+            $firstDays = isset($firstRule['days']) && is_array($firstRule['days']) ? $firstRule['days'] : [];
+            $availableDays = array_map('strval', $firstDays);
 
             $rulesData = array();
             foreach ($availabilities as $idx => $rule) {
@@ -118,14 +121,15 @@ class App_Controller extends REST_Controller
                         'disabled' => !empty($rule['disable_second_shift']),
                     );
                 }
+                $ruleDays = isset($rule['days']) && is_array($rule['days']) ? array_map('strval', $rule['days']) : array();
                 $rulesData[] = array(
-                    'days' => $rule['days'] ?? array(),
+                    'days' => $ruleDays,
                     'shifts' => $shifts,
                     'always' => !empty($rule['always']),
                     'from_date' => $rule['from_date'] ?? null,
                     'to_date' => $rule['to_date'] ?? null,
                 );
-                $availableDays += isset($rule['days']) && is_array($rule['days']) ? $rule['days'] : array();
+                $availableDays += $ruleDays;
             }
             $date_format = $s->get('date_format');
             $time_format = $s->get('time_format');

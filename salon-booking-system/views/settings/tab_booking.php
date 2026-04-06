@@ -9,6 +9,7 @@ sum(
 	array('#sln-nested_bookings', __('Nested bookings', 'salon-booking-system')),
 	array('#sln-customers_per_session', __('Customers per session', 'salon-booking-system')),
 	array('#sln-session_average_duration', __('Session average duration', 'salon-booking-system')),
+	array('#sln-auto_align_slots', __('Auto-align time slots', 'salon-booking-system')),
 	array('#sln-booking_steps_order', __('Booking steps order', 'salon-booking-system')),
 	array('#sln-offset_between_reservations', __('Offset between reservations', 'salon-booking-system')),
 	array('#sln-booking_time_range', __('Booking time range', 'salon-booking-system')),
@@ -92,6 +93,7 @@ echo $plugin->loadView('settings/_tab_booking_nested_bookings');
     </div>
 </div>
 <?php
+echo $plugin->loadView('settings/_tab_booking_auto_align_slots', array('helper' => $this));
 echo $plugin->loadView('settings/_tab_booking_form_steps_alt_order', array('helper' => $this));
 echo $plugin->loadView('settings/_tab_booking_offset', array('helper' => $this));
 echo $plugin->loadView('settings/_tab_booking_timing'); ?>

@@ -207,7 +207,7 @@ class Customers_Controller extends REST_Controller
             array(
                 'methods'             => WP_REST_Server::READABLE,
                 'callback'            => array( $this, 'get_customer_no_shows' ),
-                'permission_callback' => array( $this, 'create_item_permissions_check' ),
+                'permission_callback' => array( $this, 'get_item_permissions_check' ),
                 'args' => array(
                     'limit' => array(
                         'description' => __( 'Limit number of no-show bookings to return.', 'salon-booking-system' ),
@@ -230,7 +230,13 @@ class Customers_Controller extends REST_Controller
         if ($capability === 'read' && $this->is_shop_manager()) {
             return true;
         }
-        
+
+        // Align with REST_Controller: salon roles with manage_salon (e.g. salon_staff) can read
+        // report/analytics endpoints that use get_items_permissions_check( 'read' ).
+        if ( $capability === 'read' && current_user_can( 'manage_salon' ) ) {
+            return true;
+        }
+
         $capabilities = array(
             'create' => 'add_users',
             'edit'   => 'edit_users',

@@ -234,6 +234,11 @@ class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
 
         $amount = 0;
 
+        // Rebuild line items from post meta on every total calculation. Cached SLN_Wrapper_Booking_Service
+        // objects can carry mutated prices (e.g. prepaid credits zeroing a line) across multiple evalTotal()
+        // calls in the same request; stale cache caused wrong totals when tips or other meta changed later.
+        $this->bookingServices = null;
+
         SLN_Plugin::addLog(__CLASS__ . ' eval total of' . $this->getId());
         
         // Check for prepaid services (package credits)
@@ -295,16 +300,27 @@ class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
         $bookingServices = apply_filters('sln.calc_booking_total.apply_prepaid_services', $this->getBookingServices(), $this);
 
         foreach ($bookingServices->getItems() as $bookingService) {
-            if(isset($bookingService->toArray()['service'])){
-                $variable = get_post_meta($bookingService->toArray()['service'],'_sln_service_variable_duration', true);
+            $row = $bookingService->toArray();
+            $rawVar = isset($row['service'])
+                ? get_post_meta((int) $row['service'], '_sln_service_variable_duration', true)
+                : false;
+            // Only explicit boolean truthy meta (WP checkboxes: '1'); stray values like "-1" must not enable variable pricing.
+            $vb = is_scalar($rawVar) || $rawVar === null
+                ? filter_var($rawVar, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE)
+                : false;
+            $variable = $vb === true;
+
+            $unit = (float) $bookingService->getPrice();
+            $qty  = max(1, (int) $bookingService->getCountServices());
+            $line = $variable ? ( $unit * $qty ) : $unit;
+
+            // Corrupt meta (e.g. negative quantity) must never make a positive-priced service subtract from the total when tips are added.
+            if ($unit >= 0.0 && $line < 0.0) {
+                $line = abs($unit) * ( $variable ? $qty : 1 );
             }
-            if($variable){
-                $price = $bookingService->getPrice() * $bookingService->getCountServices();
-            } else {
-                $price = $bookingService->getPrice();
-            }
-            $amount += $price;
-            SLN_Plugin::addLog(' - service ' . $bookingService->getService() . ' +' . $price);
+
+            $amount += $line;
+            SLN_Plugin::addLog(' - service ' . $bookingService->getService() . ' +' . $line);
         }
 
         if ($settings->get('enable_booking_tax_calculation') && 'inclusive' !== $settings->get('enter_tax_price')) {
@@ -798,7 +814,12 @@ class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
 
     public function getCountService($service_id){
         $services = $this->getMeta('service_count');
-        return (!empty($services) && isset($services[$service_id])) ? $services[$service_id] : 1;
+        if (empty($services) || ! isset($services[$service_id])) {
+            return 1;
+        }
+        $c = (int) $services[$service_id];
+
+        return $c > 0 ? $c : 1;
     }
 
     function getPaidRemainedAmount() {

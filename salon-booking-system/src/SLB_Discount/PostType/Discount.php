@@ -16,6 +16,7 @@ class SLB_Discount_PostType_Discount extends SLN_PostType_Abstract
             add_filter('manage_edit-'.$this->getPostType().'_sortable_columns', array($this, 'custom_columns_sort'));
             add_action('admin_head-post-new.php', array($this, 'posttype_admin_css'));
             add_action('admin_head-post.php', array($this, 'posttype_admin_css'));
+            add_action('admin_head', array($this, 'admin_list_coupon_column_styles'));
             add_action('admin_enqueue_scripts', array($this, 'load_scripts'));
             add_action('wp_ajax_sln_discount', array($this, 'ajax'));
             add_filter('post_row_actions', array($this, 'post_row_actions'), 10, 2);
@@ -37,9 +38,51 @@ class SLB_Discount_PostType_Discount extends SLN_PostType_Abstract
     {
         wp_enqueue_script('jquery-ui-core');
         wp_enqueue_script('jquery-ui-sortable');
-        $screen = get_current_screen();
-        if( $screen->id === 'edit-sln_discount'  && ! in_array(SLN_Plugin::USER_ROLE_WORKER,  wp_get_current_user()->roles) ){
+        $screen = function_exists('get_current_screen') ? get_current_screen() : null;
+        if ($screen && $screen->id === 'edit-' . $this->getPostType()) {
+            wp_enqueue_script(
+                'sln-discount-list',
+                SLN_PLUGIN_URL . '/js/discount/admin-discount-list.js',
+                array('jquery'),
+                SLN_Action_InitScripts::ASSETS_VERSION,
+                true
+            );
+            wp_localize_script(
+                'sln-discount-list',
+                'slnDiscountListL10n',
+                array(
+                    'copied'     => __('Copied!', 'salon-booking-system'),
+                    'copyFailed' => __('Could not copy to clipboard.', 'salon-booking-system'),
+                )
+            );
         }
+    }
+
+    /**
+     * Compact layout for coupon code + copy control on the discounts list table.
+     */
+    public function admin_list_coupon_column_styles()
+    {
+        if (!function_exists('get_current_screen')) {
+            return;
+        }
+        $screen = get_current_screen();
+        if (!$screen || $screen->id !== 'edit-' . $this->getPostType()) {
+            return;
+        }
+        echo '<style>
+            .column-discount_coupon_code{width:14%;}
+            .sln-discount-coupon-cell{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;vertical-align:middle;}
+            .sln-discount-coupon-code{font-size:13px;background:rgba(0,0,0,.04);padding:2px 6px;border-radius:2px;}
+            .sln-copy-coupon-code{
+                margin:0;padding:4px;border:none;background:transparent;box-shadow:none;border-radius:4px;
+                line-height:0;color:#50575e;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;
+            }
+            .sln-copy-coupon-code:hover,.sln-copy-coupon-code:focus{color:#2271b1;background:rgba(0,0,0,.04);box-shadow:none;}
+            .sln-copy-coupon-code:focus{outline:1px solid #2271b1;outline-offset:1px;}
+            .sln-copy-coupon-code .sln-copy-coupon-icon{display:block;}
+            .sln-copy-coupon-code.sln-is-copied{color:#00a32a;}
+        </style>';
     }
 
     public function ajax()
@@ -69,10 +112,11 @@ class SLB_Discount_PostType_Discount extends SLN_PostType_Abstract
         $new_columns = array(
             'cb' => $columns['cb'],
             'title' => $columns['title'],
+            'discount_coupon_code' => __('Coupon code', 'salon-booking-system'),
             'discount_type' => __('Type', 'salon-booking-system'),
             'discount_amount' => __('Amount', 'salon-booking-system'),
             'active' => __('Active', 'salon-booking-system'),
-            'discount_usages' => __('Discount usages', 'salon-booking-system'),
+            'discount_usages' => __('Usage (used / limit)', 'salon-booking-system'),
         );
 
         return $new_columns;
@@ -82,6 +126,29 @@ class SLB_Discount_PostType_Discount extends SLN_PostType_Abstract
     {
         $obj = SLB_Discount_Plugin::getInstance()->createDiscount($post_id);
         switch ($column) {
+            case 'discount_coupon_code':
+                if ($obj->getDiscountType() !== SLB_Discount_Enum_DiscountType::DISCOUNT_CODE) {
+                    echo '&mdash;';
+                    break;
+                }
+                $coupon_code = $obj->getCouponCode();
+                if ($coupon_code === '') {
+                    echo '&mdash;';
+                    break;
+                }
+                $copy_label = __('Copy to clipboard', 'salon-booking-system');
+                // Two overlapping sheets (standard “copy” glyph), stroke-only — no box border on the control.
+                $copy_icon = '<svg class="sln-copy-coupon-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="7" width="13" height="13" rx="2" ry="2"/><rect x="8" y="2" width="13" height="13" rx="2" ry="2"/></svg>';
+                echo '<span class="sln-discount-coupon-cell">';
+                echo '<code class="sln-discount-coupon-code">' . esc_html($coupon_code) . '</code>';
+                printf(
+                    '<button type="button" class="sln-copy-coupon-code" data-code="%1$s" title="%2$s" data-default-title="%2$s" aria-label="%2$s">%3$s</button>',
+                    esc_attr($coupon_code),
+                    esc_attr($copy_label),
+                    $copy_icon
+                );
+                echo '</span>';
+                break;
             case 'discount_type':
                 $type = SLB_Discount_Enum_DiscountType::getLabel($obj->getDiscountType());
                 echo esc_html($type);
@@ -100,7 +167,9 @@ class SLB_Discount_PostType_Discount extends SLN_PostType_Abstract
                 echo esc_html($status);
                 break;
             case 'discount_usages':
-                echo esc_html($obj->getTotalUsagesNumber());
+                $used  = (int) $obj->getTotalUsagesNumber();
+                $limit = $obj->isUnlimitedTotalUsages() ? '&infin;' : (int) $obj->getTotalUsagesLimit();
+                echo esc_html($used) . ' / ' . ( is_int($limit) ? esc_html($limit) : $limit );
                 break;
         }
     }

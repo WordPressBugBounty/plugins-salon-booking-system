@@ -286,26 +286,29 @@ abstract class SLN_Shortcode_Salon_Step
     {
         $warnings = array();
 
-        // Check if PHP sessions are working
+        // Ensure BookingBuilder runs first: its constructor calls session_start() when needed.
+        // Previously we tested session_status() before this, which falsely warned on many sites
+        // because nothing had started the session yet in this code path (salon.php init may not
+        // have run in edge contexts, or ordering differed). Real failures still surface below.
+        $bb = $this->getPlugin()->getBookingBuilder();
+
         if (session_status() !== PHP_SESSION_ACTIVE) {
             $warnings[] = __('PHP sessions are not active. The booking process requires sessions to work properly.', 'salon-booking-system');
-        }
-
-        // Test if session data can be stored and retrieved
-        $testKey = '_sln_session_test_' . time();
-        $testValue = 'test_' . rand(1000, 9999);
-        $_SESSION[$testKey] = $testValue;
-        
-        if (!isset($_SESSION[$testKey]) || $_SESSION[$testKey] !== $testValue) {
-            $warnings[] = __('Session data cannot be stored. Please enable cookies and sessions in your browser.', 'salon-booking-system');
         } else {
-            // Clean up test session
-            unset($_SESSION[$testKey]);
+            // Only test persistence when a session is actually active (avoids duplicate/noise warnings)
+            $testKey   = '_sln_session_test_' . time();
+            $testValue = 'test_' . wp_rand(1000, 9999);
+            $_SESSION[ $testKey ] = $testValue;
+
+            if ( ! isset( $_SESSION[ $testKey ] ) || $_SESSION[ $testKey ] !== $testValue ) {
+                $warnings[] = __( 'Session data cannot be stored. Please enable cookies and sessions in your browser.', 'salon-booking-system' );
+            } else {
+                unset( $_SESSION[ $testKey ] );
+            }
         }
 
         // Check if booking builder session data exists (for subsequent visits)
         // If user has been through steps before, session should have data
-        $bb = $this->getPlugin()->getBookingBuilder();
         $sessionData = $bb->get('services');
         
         // Only warn about cookies on the very first load (no session data yet)

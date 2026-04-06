@@ -167,7 +167,7 @@ class SLN_PostType_Service extends SLN_PostType_Abstract
                 echo $time ? $time : '-';
                 break;
             case 'service_price' :
-                echo $this->getPlugin()->format()->money($obj->getPrice());
+                echo '<span data-price="' . esc_attr($obj->getPrice()) . '">' . $this->getPlugin()->format()->money($obj->getPrice()) . '</span>';
                 break;
             case 'secondary' :
                 echo ($obj->isSecondary() ? esc_html__('YES', 'salon-booking-system') : '');

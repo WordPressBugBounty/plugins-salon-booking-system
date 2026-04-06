@@ -34,29 +34,44 @@ class SLN_Shortcode_Salon_AttendantHelper
         } else {
             $hb = $ah->getHoursBeforeHelper();
             $fromDate = Date::create($hb->getFromDate());
-            $count = $hb->getCountDays();
-            
-            // PERFORMANCE: Limit date scan to prevent timeout
-            // Most bookings happen within 2-3 weeks, scanning 60+ days is excessive
-            $maxDaysToScan = 21; // Scan up to 3 weeks
-            $count = min($count, $maxDaysToScan);
-            
-            while ($count > 0) { //check days in HoursBefore interval until we find available timeslot
-                $times = $ah->getCachedTimes($fromDate);
+
+            // Use getWorkTimes() instead of getCachedTimes() so that the scan is
+            // NOT gated by the max-booking-window range check.  This matters when a
+            // holiday period is longer than the window: getCachedTimes() returns
+            // empty for every day (holiday OR out-of-window), so the scanner never
+            // finds a valid slot and all assistants appear unavailable.
+            // getWorkTimes() only checks working-hour rules + global holidays, which
+            // is all we need to decide "does this assistant ever work?".
+            //
+            // Scan up to 21 *open* days (days the salon is actually open).
+            // Holiday/closed days don't count against the limit.
+            // A 90-calendar-day ceiling prevents an infinite loop when there is
+            // genuinely no availability in the foreseeable future.
+            $maxOpenDaysToScan = 21;
+            $openDaysScanned   = 0;
+            $calendarDaysScanned  = 0;
+            $maxCalendarDays      = 90;
+            $fromDateTime         = $fromDate->getDateTime(); // fallback for error helper
+
+            while ($openDaysScanned < $maxOpenDaysToScan && $calendarDaysScanned < $maxCalendarDays) {
+                $times        = $ah->getWorkTimes($fromDate);
                 $fromDateTime = $fromDate->getDateTime();
-                foreach ($times as $time) {
-                    $time_obj = Time::create($time);
-                    $fromDateTime->setTime($time_obj->getHours(), $time_obj->getMinutes());
-                    if(!$attendant->isNotAvailableOnDate($fromDateTime)) { //if available
-                        return;
+
+                if (!empty($times)) {
+                    $openDaysScanned++; // only open (non-holiday, non-closed) days count
+                    foreach ($times as $time) {
+                        $time_obj = Time::create($time);
+                        $fromDateTime->setTime($time_obj->getHours(), $time_obj->getMinutes());
+                        if (!$attendant->isNotAvailableOnDate($fromDateTime)) { //if available
+                            return;
+                        }
                     }
                 }
 
                 $fromDate = $fromDate->getNextDate();
-                $count--;
+                $calendarDaysScanned++;
             }
             return SLN_Helper_Availability_ErrorHelper::doAttendantNotAvailable($attendant, $fromDateTime); //if available timeslot wasn't found
-            //only last date will be logged as unavailable
         }
 
         return false;

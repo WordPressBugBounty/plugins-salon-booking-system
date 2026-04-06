@@ -3255,6 +3255,13 @@ function sln_applyTipsAmount() {
         data.sln_client_id = salon.client_id;
     }
 
+    // Always pass the booking ID from the form — prevents ApplyTipsAmount from
+    // picking up a stale booking via the session/transient when they are out of sync.
+    var bookingId = $('input[name="sln_booking_id"]').val();
+    if (bookingId) {
+        data.sln_booking_id = bookingId;
+    }
+
     $.ajax({
         url: salon.ajax_url,
         data: data,
@@ -3271,29 +3278,19 @@ function sln_applyTipsAmount() {
                     parseFloat(data.tips.replace(/[^0-9.,]/g, "")) === 0
                 );
                 
-                // Update total amount in summary section
-                $(".sln-summary-row .sln-total-price").html(data.total);
+                // Update total amount in summary section and non-deposit button strong
+                $(".sln-total-price").html(data.total);
                 
-                // Update Pay button amount
-                // Two scenarios:
-                // 1. Deposit > 0: Button shows deposit amount in <strong> (no class)
-                // 2. Deposit = 0: Button shows total amount in <strong class="sln-total-price">
+                // Update Pay button amount.
+                // Deposit button: <strong>£X</strong> (no class) inside .sln-btn__info
+                // No-deposit button: <strong class="sln-total-price">£X</strong> — already updated above.
                 if (data.deposit) {
-                    var depositValue = parseFloat(data.deposit.replace(/[^0-9.,]/g, ""));
-                    
-                    if (depositValue > 0) {
-                        // Deposit mode: update the deposit amount (strong without class)
-                        var $depositButton = $(".sln-btn--nextstep .sln-btn__info strong:not(.sln-total-price)");
-                        if ($depositButton.length) {
-                            $depositButton.html(data.deposit);
+                    var depositNum = parseFloat(data.deposit.replace(/[^0-9.,]/g, ""));
+                    if (depositNum > 0) {
+                        var $depositBtn = $(".sln-btn--nextstep .sln-btn__info strong:not(.sln-total-price)");
+                        if ($depositBtn.length) {
+                            $depositBtn.html(data.deposit);
                             console.log('[Tips] Updated deposit button to:', data.deposit);
-                        }
-                    } else {
-                        // No deposit mode: update the total amount (strong.sln-total-price in button)
-                        var $totalButton = $(".sln-btn--nextstep .sln-btn__info strong.sln-total-price");
-                        if ($totalButton.length) {
-                            $totalButton.html(data.total);
-                            console.log('[Tips] Updated total button to:', data.total);
                         }
                     }
                 }

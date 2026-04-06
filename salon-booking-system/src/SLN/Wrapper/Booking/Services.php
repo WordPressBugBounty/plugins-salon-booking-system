@@ -169,7 +169,9 @@ final class SLN_Wrapper_Booking_Services {
 
 			$parallelExec = $service->isExecutionParalleled();
 
-            $count = isset($serviceCount[$service->getId()]) ? $serviceCount[$service->getId()] : 1;
+            $rawCount = isset($serviceCount[$service->getId()]) ? $serviceCount[$service->getId()] : 1;
+            $c        = (int) $rawCount;
+            $count    = $c > 0 ? $c : 1;
 
 			$services[$i] = array(
 				'service'	=> $sId,

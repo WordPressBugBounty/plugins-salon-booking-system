@@ -1231,6 +1231,13 @@ class Bookings_Controller extends REST_Controller
             throw new \Exception(esc_html__( 'Save post error.', 'salon-booking-system' ));
         }
 
+        // Explicitly persist admin_note — meta_input can be silently skipped by
+        // caching plugins or wp_insert_post_data filters that strip unknown keys.
+        $admin_note_value = $request->get_param('admin_note');
+        if ( $admin_note_value !== null ) {
+            update_post_meta( $id, '_sln_booking_admin_note', $admin_note_value );
+        }
+
         $booking = $this->prepare_item_for_response($id, $request);
 
         do_action('sln.api.booking.pre_eval', $booking, $request->get_param('discounts'));

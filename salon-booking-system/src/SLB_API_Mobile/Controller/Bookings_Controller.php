@@ -352,15 +352,11 @@ class Bookings_Controller extends REST_Controller
 
     public function get_items( $request )
     {
-        error_log('🔵 Bookings API get_items called');
-        error_log('🔵 Request params: ' . print_r($request->get_params(), true));
         if( !current_user_can( 'manage_salon' ) ){
-            error_log('🔴 Permission denied: user cannot manage_salon');
             return rest_ensure_response( array(
                 'status' => '403',
                 ) );
         }
-        error_log('🔵 Permission OK');
         $prepared_args          = array();
         $prepared_args['order'] = $request->get_param('order');
         $prepared_args['order'] = isset($prepared_args['order']) && in_array(strtolower($prepared_args['order']), array('asc', 'desc')) ? $prepared_args['order'] : 'asc';
@@ -441,7 +437,6 @@ class Bookings_Controller extends REST_Controller
 
         if ($request->get_param('customers')) {
             $prepared_args['author__in'] = $request->get_param('customers');
-            error_log('🔵 Customers filter applied: ' . print_r($prepared_args['author__in'], true));
         }
 
         if ($request->get_param('shop')) {
@@ -516,10 +511,11 @@ class Bookings_Controller extends REST_Controller
         $plugin = SLN_Plugin::getInstance();
 
         $isCurrUserAtt = false;
-        if (in_array(SLN_Plugin::USER_ROLE_STAFF, wp_get_current_user()->roles)) {
+        $assistantsIDs = array();
+        $currentUserRoles = wp_get_current_user()->roles;
+        if (in_array(SLN_Plugin::USER_ROLE_STAFF, $currentUserRoles) || in_array(SLN_Plugin::USER_ROLE_WORKER, $currentUserRoles)) {
             $isCurrUserAtt = true;
 
-            $assistantsIDs = array();
             $repo       = $plugin->getRepository(SLN_Plugin::POST_TYPE_ATTENDANT);
             $attendants = $repo->getAll();
 
@@ -532,17 +528,7 @@ class Bookings_Controller extends REST_Controller
 
 	$prepared_args = apply_filters('sln_api_bookings_get_items_prepared_args', $prepared_args, $request);
 
-        error_log('🔵 Bookings API WP_Query args: ' . print_r($prepared_args, true));
-        
-        // DEBUG: Log the SQL query
-        add_filter('posts_request', function($sql) {
-            error_log('🔵 SQL Query: ' . $sql);
-            return $sql;
-        }, 999);
-        
         $query = new WP_Query( $prepared_args );
-        error_log('🔵 Bookings API found posts: ' . $query->found_posts);
-        error_log('🔵 Bookings API post IDs: ' . print_r($query->posts, true));
 
         try {
             foreach ( $query->posts as $booking ) {
@@ -724,10 +710,11 @@ class Bookings_Controller extends REST_Controller
         $plugin = SLN_Plugin::getInstance();
 
         $isCurrUserAtt = false;
-        if (in_array(SLN_Plugin::USER_ROLE_STAFF, wp_get_current_user()->roles)) {
+        $assistantsIDs = array();
+        $currentUserRoles = wp_get_current_user()->roles;
+        if (in_array(SLN_Plugin::USER_ROLE_STAFF, $currentUserRoles) || in_array(SLN_Plugin::USER_ROLE_WORKER, $currentUserRoles)) {
             $isCurrUserAtt = true;
 
-            $assistantsIDs = array();
             $repo       = $plugin->getRepository(SLN_Plugin::POST_TYPE_ATTENDANT);
             $attendants = $repo->getAll();
 
@@ -860,10 +847,11 @@ class Bookings_Controller extends REST_Controller
             $value = $field->isCustomer() && $booking->getCustomer() && $field->isAdditional() ? $field->getValue($booking->getCustomer()->getId())
             : (in_array('_sln_booking_' . $field['key'], get_post_custom_keys($booking->getId()) ?? array()) ? $booking->getMeta($field['key']) : (null !== $field['default_value'] ? $field['default_value'] : ''));
             $custom_fields[] = array(
-                'key'   => $field['key'],
-                'value' => $value,
-                'label' => __(sprintf('%s', $field['label']), 'salon-booking-system'),
-                'type'  => $field['type'],
+                'key'         => $field['key'],
+                'value'       => $value,
+                'label'       => __(sprintf('%s', $field['label']), 'salon-booking-system'),
+                'type'        => $field['type'],
+                'is_customer' => (bool) $field->isCustomer(),
             );
         }
 
@@ -914,6 +902,7 @@ class Bookings_Controller extends REST_Controller
             'currency'            => SLN_Plugin::getInstance()->getSettings()->getCurrencySymbol(),
             'transaction_id'      => $booking->getTransactionId(),
             'note'                => $booking->getNote(),
+            'admin_note'          => $booking->getAdminNote(),
             'no_show'             => get_post_meta($booking->getId(), 'no_show', true) == 1,
             'rating'              => $booking->getRating(),
             'feedback'            => $this->get_booking_feedback($booking->getId()),
@@ -1103,6 +1092,24 @@ class Bookings_Controller extends REST_Controller
 
         try {
             $booking = $this->prepare_item_for_response(current($query->posts), $request);
+
+            $currentUserRoles = wp_get_current_user()->roles;
+            if (in_array(SLN_Plugin::USER_ROLE_STAFF, $currentUserRoles) || in_array(SLN_Plugin::USER_ROLE_WORKER, $currentUserRoles)) {
+                $plugin        = SLN_Plugin::getInstance();
+                $assistantsIDs = array();
+                $attendants    = $plugin->getRepository(SLN_Plugin::POST_TYPE_ATTENDANT)->getAll();
+
+                foreach ($attendants as $attendant) {
+                    if ($attendant->getMeta('staff_member_id') == get_current_user_id() && $attendant->getIsStaffMemberAssignedToBookingsOnly()) {
+                        $assistantsIDs[] = $attendant->getId();
+                    }
+                }
+
+                if (!empty($assistantsIDs) && !array_intersect($assistantsIDs, $booking->getAttendantsIds())) {
+                    return new WP_Error( 'salon_rest_cannot_view', __( 'Sorry, resource not found.', 'salon-booking-system' ), array( 'status' => 404 ) );
+                }
+            }
+
             $booking = $this->prepare_response_for_collection($booking);
         } catch (\Exception $ex) {
             return new WP_Error( 'salon_rest_cannot_view', __( sprintf('Sorry, get resource error (%s).', $ex->getMessage()), 'salon-booking-system' ), array( 'status' => 404 ) );
@@ -1373,6 +1380,7 @@ class Bookings_Controller extends REST_Controller
             '_sln_booking_services_resources' => $bb->getResources(),
             '_sln_booking_discounts' => $request->get_param('discounts'),
             '_sln_booking_note'      => $request->get_param('note'),
+            '_sln_booking_admin_note' => $request->get_param('admin_note'),
         );
 
         $booking_fields  = SLN_Enum_CheckoutFields::forBooking();
@@ -1414,6 +1422,13 @@ class Bookings_Controller extends REST_Controller
 
         if ( is_wp_error($id) ) {
             throw new \Exception(esc_html__( 'Save post error.', 'salon-booking-system' ));
+        }
+
+        // Explicitly persist admin_note as a safeguard against meta_input being
+        // silently dropped by caching plugins or wp_insert_post_data filters.
+        $admin_note_value = $request->get_param('admin_note');
+        if ( $admin_note_value !== null ) {
+            update_post_meta( $id, '_sln_booking_admin_note', $admin_note_value );
         }
 
         $booking = $this->prepare_item_for_response($id, $request);
@@ -1829,6 +1844,15 @@ class Bookings_Controller extends REST_Controller
                     'description' => __( 'The description for the resource.', 'salon-booking-system' ),
                     'type'        => 'string',
                     'context'     => array( 'view' ),
+                    'arg_options' => array(
+                        'sanitize_callback' => 'sanitize_text_field',
+                        'default'           => '',
+                    ),
+                ),
+                'admin_note' => array(
+                    'description' => __( 'The admin note for the booking.', 'salon-booking-system' ),
+                    'type'        => 'string',
+                    'context'     => array( 'view', 'edit' ),
                     'arg_options' => array(
                         'sanitize_callback' => 'sanitize_text_field',
                         'default'           => '',

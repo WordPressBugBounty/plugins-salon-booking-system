@@ -88,6 +88,17 @@ class SLN_Action_Ajax_RefreshPaymentStatus extends SLN_Action_Ajax_Abstract
                     ) );
 
                     if ( $alreadyPaid ) {
+                        // If the booking is already paid but has no meaningful transaction ID recorded, save it now.
+                        // array_filter strips nulls/empty strings left by the old broken markPaid(null) calls.
+                        $existingTxn = array_filter( $booking->getTransactionId() );
+                        if ( empty( $existingTxn ) && ! empty( $transactionId ) ) {
+                            $booking->setMeta( 'transaction_id', array( $transactionId ) );
+                            SLN_Plugin::addLog( sprintf(
+                                'RefreshPaymentStatus: Saved missing transaction ID %s for already-paid booking #%d.',
+                                $transactionId,
+                                $booking->getId()
+                            ) );
+                        }
                         return array(
                             'success'        => true,
                             'status_updated' => false,

@@ -77,12 +77,40 @@
               <span class="menu-row-label">{{ isUpdating ? 'Updating…' : 'Force App Update' }}</span>
             </span>
           </button>
-          <button class="menu-row" v-if="isAdmin" @click="resetCalendar" :disabled="isResetting">
+          <button
+            class="menu-row"
+            v-if="isAdmin"
+            type="button"
+            @click="resetCalendar"
+            :disabled="isResetting"
+            :aria-busy="isResetting"
+          >
             <span class="menu-row-left">
               <font-awesome-icon icon="fa-solid fa-trash" class="menu-icon menu-icon--warning" :class="{ 'fa-spin': isResetting }" />
               <span class="menu-row-label">{{ isResetting ? 'Resetting…' : 'Reset Calendar Cache' }}</span>
             </span>
+            <span
+              v-if="showResetCalendarSuccess"
+              class="menu-row-feedback menu-row-feedback--success"
+              aria-hidden="true"
+            >
+              <font-awesome-icon icon="fa-solid fa-check" />
+            </span>
           </button>
+        </div>
+        <div
+          v-if="calendarResetBanner"
+          class="profile-inline-notice"
+          :class="'profile-inline-notice--' + calendarResetBanner.variant"
+          role="status"
+          aria-live="polite"
+        >
+          <font-awesome-icon
+            :icon="calendarResetBanner.variant === 'success' ? 'fa-regular fa-circle-check' : 'fa-solid fa-circle-xmark'"
+            class="profile-inline-notice-icon"
+            aria-hidden="true"
+          />
+          <span>{{ calendarResetBanner.text }}</span>
         </div>
       </div>
 
@@ -115,6 +143,12 @@ export default {
       isLoading: true,
       user: null,
       isResetting: false,
+      /** Brief checkmark on the reset row after success */
+      showResetCalendarSuccess: false,
+      /** Inline message under App menu (toast is often unavailable in bootstrap-vue-3) */
+      calendarResetBanner: null,
+      calendarResetBannerTimer: null,
+      showResetSuccessTimer: null,
       isUpdating: false,
       activeUsers: [],
       isLoadingUsers: false,
@@ -256,11 +290,26 @@ export default {
             console.error('Logout failed:', error);
           });
     },
+    clearCalendarResetTimers() {
+      if (this.calendarResetBannerTimer) {
+        clearTimeout(this.calendarResetBannerTimer);
+        this.calendarResetBannerTimer = null;
+      }
+      if (this.showResetSuccessTimer) {
+        clearTimeout(this.showResetSuccessTimer);
+        this.showResetSuccessTimer = null;
+      }
+    },
     async resetCalendar() {
       if (this.isResetting) return;
 
+      this.clearCalendarResetTimers();
+      this.calendarResetBanner = null;
+      this.showResetCalendarSuccess = false;
+
       try {
         this.isResetting = true;
+        await this.$nextTick();
 
         let clearedCount = 0;
 
@@ -282,86 +331,181 @@ export default {
         // 3. Dispatch event so Calendar tab reloads data (works even if Calendar is mounted but hidden)
         window.dispatchEvent(new CustomEvent('sln-calendar-cache-cleared'));
 
-        this.$bvToast.toast(
+        // Let "Resetting…" + spinner paint (work above is synchronous and very fast)
+        await new Promise((r) => setTimeout(r, 450));
+
+        const successText =
           clearedCount > 0
-            ? `Cache cleared (${clearedCount} items). Calendar data reloaded.`
-            : 'Cache cleared. Switch to Calendar tab to reload data.',
-          {
-            title: 'Cache Cleared',
-            variant: 'success',
-            solid: true,
-            autoHideDelay: 5000,
-          }
-        );
-        
+            ? `Removed ${clearedCount} stored item${clearedCount === 1 ? '' : 's'}. Calendar data was refreshed in the background.`
+            : 'Browser storage for this app was cleared. Open the Calendar tab if you want to confirm fresh data.';
+
+        this.calendarResetBanner = { variant: 'success', text: successText };
+        this.showResetCalendarSuccess = true;
+        this.showResetSuccessTimer = setTimeout(() => {
+          this.showResetCalendarSuccess = false;
+          this.showResetSuccessTimer = null;
+        }, 2800);
+
+        this.calendarResetBannerTimer = setTimeout(() => {
+          this.calendarResetBanner = null;
+          this.calendarResetBannerTimer = null;
+        }, 8000);
+
+        this.$bvToast?.toast(successText, {
+          title: 'Cache cleared',
+          variant: 'success',
+          solid: true,
+          autoHideDelay: 5000,
+          toaster: 'b-toaster-top-center',
+        });
       } catch (error) {
-        this.$bvToast.toast(
+        await new Promise((r) => setTimeout(r, 200));
+        this.calendarResetBanner = {
+          variant: 'danger',
+          text: 'Could not clear calendar storage. Try again or use Force App Update.',
+        };
+        this.calendarResetBannerTimer = setTimeout(() => {
+          this.calendarResetBanner = null;
+          this.calendarResetBannerTimer = null;
+        }, 8000);
+        this.$bvToast?.toast(
           'Failed to clear calendar cache. Please try again or contact support.',
           {
-            title: 'Reset Failed',
+            title: 'Reset failed',
             variant: 'danger',
             solid: true,
             autoHideDelay: 5000,
+            toaster: 'b-toaster-top-center',
           }
         );
       } finally {
         this.isResetting = false;
       }
     },
+    clearForceUpdateSafetyTimer() {
+      if (this._forceUpdateSafetyTimer != null) {
+        clearTimeout(this._forceUpdateSafetyTimer);
+        this._forceUpdateSafetyTimer = null;
+      }
+    },
+    /**
+     * Race a promise so SW/cache APIs cannot hang the UI forever (some WebViews stall on unregister).
+     */
+    _withTimeout(promise, ms, label) {
+      return Promise.race([
+        promise,
+        new Promise((_, reject) => {
+          setTimeout(() => reject(new Error(`${label} timed out`)), ms);
+        }),
+      ]);
+    },
     async forcePwaUpdate() {
       if (this.isUpdating) return;
 
+      this.clearForceUpdateSafetyTimer();
+
       try {
         this.isUpdating = true;
-        console.log('=== ADMIN: FORCE PWA UPDATE ===');
+        console.log('=== FORCE PWA UPDATE ===');
 
-        // 1. Unregister all service workers
+        // 1. Unregister all service workers (bounded wait — never hang "Updating…")
         if ('serviceWorker' in navigator) {
-          const registrations = await navigator.serviceWorker.getRegistrations();
+          let registrations = [];
+          try {
+            registrations = await this._withTimeout(
+              navigator.serviceWorker.getRegistrations(),
+              8000,
+              'serviceWorker.getRegistrations'
+            );
+          } catch (e) {
+            console.warn('Force update: getRegistrations failed', e);
+          }
           for (const registration of registrations) {
-            await registration.unregister();
-            console.log('   Unregistered service worker');
+            try {
+              await this._withTimeout(registration.unregister(), 8000, 'serviceWorker.unregister');
+              console.log('   Unregistered service worker');
+            } catch (e) {
+              console.warn('Force update: unregister failed', e);
+            }
           }
         }
 
         // 2. Clear all Cache API caches
         if ('caches' in window) {
-          const cacheNames = await caches.keys();
+          let cacheNames = [];
+          try {
+            cacheNames = await this._withTimeout(caches.keys(), 8000, 'caches.keys');
+          } catch (e) {
+            console.warn('Force update: caches.keys failed', e);
+          }
           for (const name of cacheNames) {
-            await caches.delete(name);
-            console.log('   Deleted cache:', name);
+            try {
+              await this._withTimeout(caches.delete(name), 5000, 'caches.delete');
+              console.log('   Deleted cache:', name);
+            } catch (e) {
+              console.warn('Force update: cache delete failed', name, e);
+            }
           }
         }
 
         // 3. Clear localStorage and sessionStorage
-        localStorage.clear();
-        sessionStorage.clear();
+        try {
+          localStorage.clear();
+          sessionStorage.clear();
+        } catch (e) {
+          console.warn('Force update: storage clear failed', e);
+        }
         console.log('   Cleared storage');
 
         console.log('=== RELOADING TO LOAD FRESH CODE ===');
-        this.$bvToast.toast(
+        this.$bvToast?.toast(
           'PWA cache cleared. Page will reload with latest code.',
           {
             title: 'Update Complete',
             variant: 'success',
             solid: true,
             autoHideDelay: 2000,
+            toaster: 'b-toaster-top-center',
           }
         );
 
-        // Hard reload to load fresh code (SW already unregistered, caches cleared)
+        // Hard reload — success path never set isUpdating=false; if reload is blocked (some PWAs),
+        // unlock after a delay so the button is not stuck forever.
+        this._forceUpdateSafetyTimer = setTimeout(() => {
+          this._forceUpdateSafetyTimer = null;
+          this.isUpdating = false;
+        }, 12000);
+
         setTimeout(() => {
-          window.location.reload();
+          try {
+            window.location.reload();
+          } catch (e) {
+            console.error('Force update: reload failed', e);
+            this.clearForceUpdateSafetyTimer();
+            this.isUpdating = false;
+            this.$bvToast?.toast(
+              'Could not reload automatically. Close this app tab and open it again.',
+              {
+                title: 'Reload blocked',
+                variant: 'warning',
+                solid: true,
+                autoHideDelay: 8000,
+                toaster: 'b-toaster-top-center',
+              }
+            );
+          }
         }, 500);
       } catch (error) {
         console.error('Force update error:', error);
-        this.$bvToast.toast(
+        this.clearForceUpdateSafetyTimer();
+        this.$bvToast?.toast(
           'Failed to clear cache. Try a hard refresh (Ctrl+Shift+R) or close and reopen the PWA.',
           {
             title: 'Update Failed',
             variant: 'danger',
             solid: true,
             autoHideDelay: 5000,
+            toaster: 'b-toaster-top-center',
           }
         );
         this.isUpdating = false;
@@ -381,6 +525,8 @@ export default {
     if (this.userRefreshInterval) {
       clearInterval(this.userRefreshInterval);
     }
+    this.clearCalendarResetTimers();
+    this.clearForceUpdateSafetyTimer();
   },
 };
 </script>
@@ -515,6 +661,68 @@ export default {
 .menu-row-accessory {
   font-size: 13px;
   color: var(--color-text-muted, #94A3B8);
+}
+
+.menu-row-feedback {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: profile-feedback-pop 0.35s ease;
+}
+
+.menu-row-feedback--success {
+  color: #059669;
+  font-size: 18px;
+}
+
+@keyframes profile-feedback-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.profile-inline-notice {
+  margin: 12px 16px 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.45;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.profile-inline-notice-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  font-size: 18px;
+}
+
+.profile-inline-notice--success {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.profile-inline-notice--success .profile-inline-notice-icon {
+  color: #059669;
+}
+
+.profile-inline-notice--danger {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.profile-inline-notice--danger .profile-inline-notice-icon {
+  color: #dc2626;
 }
 
 .menu-row--toggle {

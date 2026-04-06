@@ -1116,8 +1116,13 @@ if (!String.prototype.formatNum) {
 
     $(".sln-btn--icon.sln-icon--close.custom").on("click", function () {
       $.ajax({
-        url: salon.ajax_url + "&action=salon&method=RemoveNotice",
+        url: salon.ajax_url,
         type: "POST",
+        data: {
+          action: "salon",
+          method: "RemoveNotice",
+          security: salon.ajax_nonce,
+        },
         success: function ($data) {
           $(".row.notice_custom").remove();
         },
@@ -2075,11 +2080,14 @@ if (!String.prototype.formatNum) {
         var eventItem = $(event.target).closest(".event-item");
         var bookingId = eventItem.data("event-id");
         $.ajax({
-          url:
-            salon.ajax_url +
-            "&action=salon&method=SetBookingOnProcess&id=" +
-            bookingId,
+          url: salon.ajax_url,
           type: "POST",
+          data: {
+            action: "salon",
+            method: "SetBookingOnProcess",
+            id: bookingId,
+            security: salon.ajax_nonce,
+          },
           success: function ($data) {
             var iconCheckmark = $(
               '.event-item[data-event-id="' +

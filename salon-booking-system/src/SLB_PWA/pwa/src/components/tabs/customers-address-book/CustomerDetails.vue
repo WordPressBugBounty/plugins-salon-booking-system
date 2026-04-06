@@ -34,7 +34,7 @@
     <!-- Stats section: skeleton while loading -->
     <div class="stats-card stats-skeleton" v-if="isLoadingStats">
       <div class="stats-row">
-        <div class="stat-item" v-for="i in ($root.settings.fidelity_score_enabled ? 4 : 3)" :key="i">
+        <div class="stat-item" v-for="i in 4" :key="i">
           <span class="skeleton-line skeleton-value"></span>
           <span class="skeleton-line skeleton-label"></span>
         </div>
@@ -58,15 +58,31 @@
           <span class="stat-value">{{ statFormatLastVisit(stats.lastVisit) }}</span>
           <span class="stat-label">Last Visit</span>
         </div>
-        <template v-if="$root.settings.fidelity_score_enabled">
-          <div class="stat-divider"></div>
-          <div class="stat-item">
-            <span class="stat-value stat-value--score" :style="{ color: scoreColor(stats.score) }">{{ stats.score !== null ? stats.score : '—' }}</span>
+        <div class="stat-divider"></div>
+        <div class="stat-item stat-item--score">
+          <template v-if="$root.settings.fidelity_score_enabled">
+            <span class="stat-value stat-value--score stat-value--score-row" :style="{ color: scoreColor(stats.score) }">
+              <span class="stat-value--score-num">{{ stats.score !== null ? stats.score : '—' }}</span>
+              <font-awesome-icon icon="fa-solid fa-medal" class="stat-score-medal" aria-hidden="true" />
+            </span>
             <span class="stat-label">Score</span>
-          </div>
-        </template>
+          </template>
+          <template v-else>
+            <span class="stat-value stat-value--score-row">
+              <span>0</span>
+              <font-awesome-icon icon="fa-solid fa-medal" class="stat-score-medal stat-score-medal--inactive" aria-hidden="true" />
+            </span>
+            <span class="stat-label stat-label--inactive-score">Score not active</span>
+          </template>
+        </div>
       </div>
     </div>
+    <p
+      v-if="!isLoadingStats && stats.bookingsCount !== null"
+      class="stats-admin-disclaimer"
+    >
+      these data are visible to salon administrator only
+    </p>
 
     <!-- Recent Bookings: skeleton while loading -->
     <div class="form-card recent-bookings-card" v-if="isLoadingStats">
@@ -589,9 +605,13 @@ export default {
   display: flex;
   align-items: center;
   padding: 14px var(--spacing-page, 16px);
+  padding-top: max(14px, env(safe-area-inset-top, 0px));
   position: sticky;
   top: 0;
   z-index: 10;
+  background: var(--color-surface, #fff);
+  border-bottom: 1px solid var(--color-border, #E2E8F0);
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
 }
 .back-btn {
   background: none;
@@ -640,11 +660,26 @@ export default {
   flex: 1;
 }
 .stat-value {
-  font-size: 22px;
+  font-size: calc(22px * 0.85);
   font-weight: 700;
   color: var(--color-primary, #2563EB);
   line-height: 1.1;
   letter-spacing: -0.02em;
+}
+.stat-value--score-row {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.stat-score-medal {
+  font-size: calc(16px * 0.85);
+  flex-shrink: 0;
+  opacity: 0.92;
+}
+.stat-score-medal--inactive {
+  color: var(--color-primary, #2563EB);
+  opacity: 0.35;
 }
 .stat-label {
   font-size: 10px;
@@ -653,11 +688,33 @@ export default {
   letter-spacing: 0.08em;
   color: var(--color-text-muted, #94A3B8);
 }
+.stat-item--score {
+  min-width: 0;
+}
+.stat-label--inactive-score {
+  text-transform: none;
+  letter-spacing: 0.02em;
+  font-weight: 600;
+  font-size: 9px;
+  line-height: 1.25;
+  text-align: center;
+  max-width: 88px;
+}
 .stat-divider {
   width: 1px;
-  height: 36px;
+  height: calc(36px * 0.85);
   background: var(--color-border, #E2E8F0);
   flex-shrink: 0;
+}
+
+.stats-admin-disclaimer {
+  margin: 8px var(--spacing-page, 16px) 0;
+  padding: 0 var(--spacing-card, 14px);
+  font-size: 11px;
+  line-height: 1.35;
+  font-weight: 500;
+  text-align: center;
+  color: var(--color-text-muted, #94A3B8);
 }
 
 /* ── Recent Bookings ── */
@@ -785,7 +842,7 @@ export default {
   animation: skeleton-shimmer 1.4s infinite;
   border-radius: 6px;
 }
-.skeleton-value { width: 64px; height: 22px; }
+.skeleton-value { width: 64px; height: calc(22px * 0.85); }
 .skeleton-label { width: 48px; height: 11px; margin-top: 6px; }
 .booking-row-skeleton {
   display: flex;

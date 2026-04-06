@@ -19,6 +19,7 @@ class SLN_Admin_SettingTabs_BookingTab extends SLN_Admin_SettingTabs_AbstractTab
 		'hours_before_from',
 		'hours_before_to',
 		'interval',
+		'auto_align_slots', // auto-align time slots to service duration
 		'form_steps_alt_order',
 		'multiple_customers_for_assistant',
 		'rescheduling_disabled',

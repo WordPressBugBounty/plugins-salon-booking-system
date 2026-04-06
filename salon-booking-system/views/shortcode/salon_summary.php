@@ -27,7 +27,7 @@ $isTipRequestEnabled = $plugin->getSettings()->isTipRequestEnabled();
 $tipsValue = $bb->getTips();
 
 $payRemainingAmount = isset($_GET['pay_remaining_amount']) && $_GET['pay_remaining_amount'];
-$pendingPayment = $plugin->getSettings()->isPayEnabled() && $payRemainingAmount && !$booking->getPaidRemainedAmount();
+$pendingPayment = $plugin->getSettings()->isPayEnabled() && $payRemainingAmount && !$bb->getPaidRemainedAmount();
 $payLater = $plugin->getSettings()->get('pay_cash');
 $ajaxData = 'sln_step_page=' .$step->getStep() .'&submit_' .$step->getStep(). '=next&pay_remaining_amount=' . intval($payRemainingAmount);
 $ajaxData = apply_filters('sln.booking.thankyou-step.get-ajax-data', $ajaxData);

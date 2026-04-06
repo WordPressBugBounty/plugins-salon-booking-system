@@ -383,11 +383,13 @@ class SLN_Wrapper_Booking_Builder
             $ret = $ret + SLN_Func::filter($price, 'float');
         }
 
-	$ret += SLN_Func::filter($this->getTips(), 'float');
         $settings = SLN_Plugin::getInstance()->getSettings();
-        if($settings->get('enable_booking_tax_calculation') && 'inclusive' !== $settings->get('enter_tax_price')){
+        if ($settings->get('enable_booking_tax_calculation') && 'inclusive' !== $settings->get('enter_tax_price')) {
             $ret = $ret * (1 + floatval($settings->get('tax_value')) / 100);
         }
+
+        // Tips after tax, matching SLN_Wrapper_Booking::evalTotal() and CalcBookingTotal (exclusive tax).
+        $ret += SLN_Func::filter($this->getTips(), 'float');
 
         $ret = apply_filters('sln.booking_builder.getTotal', $ret, $this);
 
@@ -673,13 +675,19 @@ class SLN_Wrapper_Booking_Builder
 
     public function getCountService($serviceID)
     {
-        return isset($this->data['service_count'][$serviceID]) ? $this->data['service_count'][$serviceID] : 1;
+        if (! isset($this->data['service_count'][$serviceID])) {
+            return 1;
+        }
+        $c = (int) $this->data['service_count'][$serviceID];
+
+        return $c > 0 ? $c : 1;
     }
 
     public function addCountService($serviceID, $countService)
     {
         $serviceCount = $this->get('service_count') && is_array($this->get('service_count')) ? $this->get('service_count') : array();
-        $serviceCount[$serviceID] = $countService;
+        $c            = (int) $countService;
+        $serviceCount[$serviceID] = $c > 0 ? $c : 1;
 
         $this->set('service_count', $serviceCount);
     }

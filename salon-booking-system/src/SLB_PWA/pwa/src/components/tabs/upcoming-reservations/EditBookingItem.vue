@@ -19,6 +19,7 @@
         :customerAddress="customer ? customer.address : booking.customer_address"
         :customerNotes="booking.note"
         :customerPersonalNotes="customer ? customer.note : booking.customer_personal_note"
+        :adminNote="booking.admin_note"
         :services="booking.services"
         :discounts="booking.discounts"
         :status="booking.status"

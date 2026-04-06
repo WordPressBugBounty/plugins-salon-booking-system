@@ -21,7 +21,7 @@ $message = str_replace(
     ),
     array(
 	$booking->getDisplayName(),
-	$plugin->getSettings()->getSalonName(),
+	$plugin->getSettings()->getSalonName($booking),
 	$plugin->format()->date($bookingDateTime),
 	$plugin->format()->time($bookingDateTime),
 	$booking->getAmount(),

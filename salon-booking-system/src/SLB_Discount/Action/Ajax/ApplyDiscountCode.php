@@ -31,10 +31,22 @@ class SLB_Discount_Action_Ajax_ApplyDiscountCode extends SLN_Action_Ajax_Abstrac
 		);
 		$discounts = $plugin->getRepository(SLB_Discount_Plugin::POST_TYPE_DISCOUNT)->get($criteria);
 		
-		// FIX: Try to get the last booking first, if not available use the booking builder
-		// This handles both cases: booking already created (DRAFT) or still in progress
 		$bookingBuilder = $plugin->getBookingBuilder();
-		$bb = $bookingBuilder->getLastBooking();
+
+		// Prefer the explicit booking ID from the form — same approach as ApplyTipsAmount.
+		// The session/transient last_id can be stale (a previous booking), which causes
+		// the discount to be validated and totals to be computed against the wrong booking.
+		$bb = null;
+		if ( isset( $_POST['sln_booking_id'] ) ) {
+			$bookingId = intval( $_POST['sln_booking_id'] );
+			if ( $bookingId > 0 ) {
+				$bb = $plugin->createBooking( $bookingId );
+				SLN_Plugin::addLog( '[ApplyDiscountCode] Resolved booking #' . $bookingId . ' from POST sln_booking_id' );
+			}
+		}
+		if ( ! $bb ) {
+			$bb = $bookingBuilder->getLastBooking();
+		}
 		
             // If no saved booking exists, the booking is still in progress in the builder
 		// Create a temporary booking object from the builder data for discount validation
@@ -58,9 +70,11 @@ class SLB_Discount_Action_Ajax_ApplyDiscountCode extends SLN_Action_Ajax_Abstrac
 					);
 				}
 			} else {
-				// Create the booking now so we can apply the discount to it
+				// Create the booking now so we can apply the discount to it.
+				// create() returns void; lastId is set inside create — same pattern as SummaryStep::dispatchForm().
 				try {
-					$bb = $bookingBuilder->create(SLN_Enum_BookingStatus::DRAFT);
+					$bookingBuilder->create(SLN_Enum_BookingStatus::DRAFT);
+					$bb = $bookingBuilder->getLastBooking();
 				} catch (Exception $e) {
 					$this->addError(__('Unable to process discount. Please try again.', 'salon-booking-system'));
 					return array(
@@ -80,47 +94,56 @@ class SLB_Discount_Action_Ajax_ApplyDiscountCode extends SLN_Action_Ajax_Abstrac
 			);
 		}
 		
+		// $evalAmount holds the freshly-computed total so both error and success
+		// responses use it directly, bypassing any stale meta read.
+		$evalAmount    = 0;
+		$discountValue = 0;
+
 		if (!empty($discounts)) {
 			/** @var SLB_Discount_Wrapper_Discount $discount */
 			$discount = reset($discounts);
-			
 
-			$errors   = $discount->validateDiscountFullForBB($bb);
+			$errors = $discount->validateDiscountFullForBB($bb);
 			if (empty($errors)) {
 				do_action('sln.api.booking.pre_eval', $bb, $discounts);
-				$bb->evalTotal();
+				$evalAmount    = $bb->evalTotal();
 				$discountValue = array_sum($bb->getMeta('discount_amount'));
-			}
-			else {
+			} else {
 				$this->addError(reset($errors));
+				// Recompute without the (invalid) discount so the error response
+				// shows the correct current total (including any tips already applied).
+				$evalAmount = $bb->evalTotal();
 			}
-		}
-		else {
+		} else {
 			$this->addError(__('Coupon is not valid', 'salon-booking-system'));
 			do_action('sln.api.booking.pre_eval', $bb, array());
-			$bb->evalTotal();
+			$evalAmount = $bb->evalTotal();
 		}
 
+		$fee         = SLN_Helper_TransactionFee::getFee($evalAmount);
+		$totalToPay  = $evalAmount + $fee;
+
 		if ($errors = $this->getErrors()) {
-			$ret = compact('errors');
-			$ret['total'] = $plugin->format()->money($bb->getToPayAmount(false), false, false, true);
-			$ret['button'] = $plugin->loadView('shortcode/_salon_summary_next_button', array('plugin' => $plugin));
+			$ret          = compact('errors');
+			// Use the freshly-computed total — avoids stale meta returning £0 or
+			// a negative value when the previous evalTotal() never saved to cache.
+			$ret['total'] = $plugin->format()->money($totalToPay, false, false, true);
+			// Do not replace the summary "next" button on error: that container holds
+			// the full payment UI (renderPayButton). salon-discount.js would .html() it away.
 		} else {
-            $paymentMethod = $plugin->getSettings()->isPayEnabled() ? SLN_Enum_PaymentMethodProvider::getService($plugin->getSettings()->getPaymentMethod(), $plugin) : false;
+			$paymentMethod = $plugin->getSettings()->isPayEnabled() ? SLN_Enum_PaymentMethodProvider::getService($plugin->getSettings()->getPaymentMethod(), $plugin) : false;
 
-
-            $ret = array(
+			$ret = array(
 				'success'  => 1,
 				'discount' => $plugin->format()->money($discountValue, false, false, true),
-				'total'    => $plugin->format()->money($bb->getToPayAmount(false), true, false, true),
+				'total'    => $plugin->format()->money($totalToPay, true, false, true),
 				'errors'   => array(
 					__('Coupon was applied', 'salon-booking-system')
 				)
 			);
-			if($bb->getToPayAmount(false) <= 0.0){
+			if ($totalToPay <= 0.0) {
 				$ret['button'] = $plugin->loadView('shortcode/_salon_summary_next_button', array('plugin' => $plugin));
 			}
-
 		}
 
 		return $ret;

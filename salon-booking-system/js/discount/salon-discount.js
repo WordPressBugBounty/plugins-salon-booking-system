@@ -63,6 +63,13 @@ function sln_applyDiscountCode() {
         data += "&sln_client_id=" + encodeURIComponent(clientId);
     }
 
+    // Send the booking ID so the server always applies the discount to the
+    // correct booking, not a stale one from the session/transient.
+    var bookingId = $('input[name="sln_booking_id"]').val();
+    if (bookingId) {
+        data += "&sln_booking_id=" + encodeURIComponent(bookingId);
+    }
+
     $.ajax({
         url: salon.ajax_url,
         data: data,

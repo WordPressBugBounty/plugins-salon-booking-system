@@ -300,9 +300,18 @@
             <CustomField :field="field" :value="getCustomFieldValue(field.key, field.default_value)" @update="updateCustomField" />
           </template>
           <div class="form-field mt-2">
+            <label class="field-label" for="admin_note">{{ getLabel('adminNoteLabel') || 'Administration note' }}</label>
+            <textarea
+                v-model="elAdminNote"
+                id="admin_note"
+                class="form-control"
+                rows="3"
+            ></textarea>
+          </div>
+          <div class="form-field mt-2">
             <label class="field-label" for="customer_personal_notes">{{ getLabel('customerPersonalNotesLabel') }}</label>
             <b-form-textarea
-                v-model.lazy="elCustomerPersonalNotes"
+                v-model="elCustomerPersonalNotes"
                 id="customer_personal_notes"
                 :placeholder="getLabel('customerPersonalNotesPlaceholder')"
                 rows="2"
@@ -395,6 +404,11 @@ export default {
         return '';
       },
     },
+    adminNote: {
+      default: function () {
+        return '';
+      },
+    },
     services: {
       default: function () {
         return [];
@@ -480,6 +494,7 @@ export default {
       elCustomerAddress: this.customerAddress,
       elCustomerNotes: this.customerNotes,
       elCustomerPersonalNotes: this.customerPersonalNotes,
+      elAdminNote: this.adminNote,
       elServices: [...this.services].map(s => ({
         service_id: s.service_id,
         assistant_id: s.assistant_id,
@@ -867,6 +882,7 @@ export default {
         discounts: this.elDiscounts,
         note: this.elCustomerNotes,
         customer_personal_note: this.elCustomerPersonalNotes,
+        admin_note: this.elAdminNote,
         save_as_new_customer: this.saveAsNewCustomer,
         custom_fields: this.elCustomFields,
       }

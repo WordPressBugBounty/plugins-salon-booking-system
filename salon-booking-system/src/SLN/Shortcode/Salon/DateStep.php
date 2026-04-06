@@ -11,7 +11,8 @@ class SLN_Shortcode_Salon_DateStep extends SLN_Shortcode_Salon_Step
         SLN_TimeFunc::startRealTimezone();
         $plugin = $this->getPlugin();
         $bb = $plugin->getBookingBuilder();
-        $intervals = $plugin->getIntervals($bb->getDateTime());
+        $duration = $bb->getServices() ? \Salon\Util\Time::create($bb->getDuration()) : null;
+        $intervals = $plugin->getIntervals($bb->getDateTime(), $duration);
         $date = $intervals->getSuggestedDate();
         $customerTimezone = $plugin->getSettings()->isDisplaySlotsCustomerTimezone() ? $bb->get('customer_timezone') : '';
         
@@ -21,7 +22,13 @@ class SLN_Shortcode_Salon_DateStep extends SLN_Shortcode_Salon_Step
             $intervalsArray = $obj->getintervalsArray($customerTimezone);
             $date = new SLN_DateTime($intervalsArray['suggestedYear'].'-'.$intervalsArray['suggestedMonth'].'-'.$intervalsArray['suggestedDay'].' '.$intervalsArray['suggestedTime']);
             $dateTime = $customerTimezone ? (new SLN_DateTime($date, SLN_Func::createDateTimeZone($customerTimezone)))->setTimezone(SLN_DateTime::getWpTimezone()) : $date;
-            $this->addErrors($obj->checkDateTimeServicesAndAttendants($bb->getAttendantsIds(), $dateTime));
+            // Only validate the suggested date when actual bookable dates exist.
+            // When noAvailabilityMessage is set the suggested date is a calendar-navigation
+            // hint only (e.g. first day of the current window during a holiday), not a real
+            // bookable slot — validating it would just add confusing service errors.
+            if (empty($intervalsArray['noAvailabilityMessage'])) {
+                $this->addErrors($obj->checkDateTimeServicesAndAttendants($bb->getAttendantsIds(), $dateTime));
+            }
         }else{
             $intervalsArray = $intervals->toArray($customerTimezone);
         }

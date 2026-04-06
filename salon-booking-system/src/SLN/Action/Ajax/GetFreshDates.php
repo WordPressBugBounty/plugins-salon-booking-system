@@ -39,7 +39,9 @@ class SLN_Action_Ajax_GetFreshDates extends SLN_Action_Ajax_Abstract
             $dateTime = new SLN_DateTime();
         }
         
-        $intervals = $this->plugin->getIntervals($dateTime);
+        // Pass service duration for auto-align slots feature
+        $duration = $bb->getServices() ? \Salon\Util\Time::create($bb->getDuration()) : null;
+        $intervals = $this->plugin->getIntervals($dateTime, $duration);
         
         // Convert to array format with timezone support
         $intervalsArray = $intervals->toArray($timezone);

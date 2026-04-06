@@ -37,8 +37,13 @@ class SLN_Helper_RateLimiter
      */
     public static function checkRateLimit($identifier = null, $strict = false)
     {
-        // Skip rate limiting for logged-in admins
-        if (is_user_logged_in() && current_user_can('manage_salon_settings')) {
+        // Skip for salon settings admins and salon staff (manage_salon). PWA uses token auth +
+        // wp_set_current_user before permission checks; this also guards any code path that calls
+        // checkRateLimit() without the mobile API's edit_posts shortcut. Public/booking forms stay limited by IP.
+        if ( is_user_logged_in() && (
+            current_user_can( 'manage_salon_settings' )
+            || current_user_can( 'manage_salon' )
+        ) ) {
             return true;
         }
         

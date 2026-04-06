@@ -49,9 +49,11 @@ final class SLN_Wrapper_Booking_Service
 			$this->data['parallel_exec'] = $data['parallel_exec'];
 		}
 
-        if (!empty($data['count'])) {
-			$this->data['count'] = $data['count'];
-		}
+        if (isset($data['count'])) {
+            $c = (int) $data['count'];
+            // Never persist 0 / negative counts (breaks variable-duration: price * count becomes negative; tips look like "tip - service").
+            $this->data['count'] = $c > 0 ? $c : 1;
+        }
         if (!empty($data['resource'])) {
             $this->data['resource'] = SLN_Plugin::getInstance()->createResource($data['resource']);
         }
@@ -175,8 +177,15 @@ final class SLN_Wrapper_Booking_Service
 	}
 
     public function getCountServices() {
-		return !empty($this->data['count']) ? $this->data['count'] : 1;
-	}
+        if (! isset($this->data['count'])) {
+            return 1;
+        }
+        $c = (int) $this->data['count'];
+
+        // Corrupt or placeholder values (e.g. -1 from bad request/meta) must not flip line totals negative
+        // when variable-duration pricing multiplies price * count (tips then look like "tip - service").
+        return $c > 0 ? $c : 1;
+    }
 
     private function processBreakInfo() {
         if (isset($this->breakProcessed)) {

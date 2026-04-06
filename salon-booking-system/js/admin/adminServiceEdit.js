@@ -30,7 +30,7 @@ jQuery(function ($) {
 		var $post_name	    = $( '.post_name', $post_row ).text();
 		var $unit	    = $( '.sln-service-unit', $post_row ).attr('data-value');
 		var $duration	    = $( '.service_duration', $post_row ).text();
-		var $price	    = parseFloat($( '.service_price', $post_row ).text());
+		var $price	    = $( '.service_price span[data-price]', $post_row ).data('price') || '';
 		var $secondary	    = $( '.secondary', $post_row ).text() === 'YES' ? 1 : 0;
 
 		$('.tags_input', $post_row).each(function(){

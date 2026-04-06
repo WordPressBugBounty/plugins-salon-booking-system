@@ -1084,6 +1084,12 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
     if (class_exists('\SalonMultishop\Addon')) {
       $shop = isset($_GET['shop']) ? (int)($_GET['shop'])  : 0;
       if ($shop > 0) {
+        // Keep a full map before filtering so we can restore assistants if needed.
+        $all_assistants_map = array();
+        foreach ($this->assistants as $attendant) {
+          $all_assistants_map[$attendant->getId()] = $attendant;
+        }
+
         foreach ($this->assistants as $key => $attendant) {
           $attendant_shops = $attendant->getMeta('shops');
           if (!is_array($attendant_shops)) {
@@ -1091,6 +1097,27 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
           } else {
             if (!in_array($shop, $attendant_shops)) {
               unset($this->assistants[$key]);
+            }
+          }
+        }
+
+        // Re-include any assistant referenced by a booking that passed the shop
+        // filter. Without this, bookings whose attendant is missing from the shop's
+        // assistant list would be silently dropped in the assistant view.
+        $included_ids = array();
+        foreach ($this->assistants as $attendant) {
+          $included_ids[] = (int)$attendant->getId();
+        }
+
+        foreach ($this->bookings as $booking) {
+          foreach ($booking->getAttendantsIds() as $booking_attendant_id) {
+            $booking_attendant_id = (int)$booking_attendant_id;
+            if ($booking_attendant_id > 0
+              && !in_array($booking_attendant_id, $included_ids)
+              && isset($all_assistants_map[$booking_attendant_id])
+            ) {
+              $this->assistants[] = $all_assistants_map[$booking_attendant_id];
+              $included_ids[]     = $booking_attendant_id;
             }
           }
         }

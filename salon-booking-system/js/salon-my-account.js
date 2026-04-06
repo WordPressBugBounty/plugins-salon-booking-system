@@ -407,6 +407,25 @@ var sln_myAccount = {
                 if (typeof response.redirect != "undefined") {
                   window.location.href = response.redirect;
                 }
+                if (
+                  response.success === false &&
+                  response.errors &&
+                  response.errors.length
+                ) {
+                  var alertBox = jQuery(
+                    '<div class="sln-alert sln-alert--problem"></div>',
+                  );
+                  jQuery.each(response.errors, function (i, msg) {
+                    alertBox.append(jQuery("<p></p>").html(msg));
+                  });
+                  jQuery(self)
+                    .closest(".sln-reschedule-form")
+                    .find(".sln-notifications")
+                    .addClass("sln-notifications--active")
+                    .html("")
+                    .append(alertBox);
+                  return;
+                }
                 let date_string = response.booking_date;
                 let date_time = response.booking_time;
                 jQuery(self)

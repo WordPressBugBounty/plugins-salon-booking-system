@@ -60,6 +60,12 @@ class SLN_Helper_Intervals
             SLN_Helper_AvailabilityDebugger::logFilteredTimes($originalTimes, $times, 'Duration + Break Allowance Filter');
         }
 
+        if (SLN_Plugin::getInstance()->getSettings()->get('auto_align_slots') && $duration) {
+            $originalTimes = $times;
+            $times = $this->filterTimesAlignedToServiceDuration($times, $duration);
+            SLN_Helper_AvailabilityDebugger::logFilteredTimes($originalTimes, $times, 'Auto-Align Slots Filter');
+        }
+
         SLN_Helper_AvailabilityDebugger::logAvailableTimes($times, 'After all filtering');
         $this->times   = $times;
         $suggestedTime = $date->format('H:i');
@@ -313,5 +319,51 @@ class SLN_Helper_Intervals
         ksort($filtered);
 
         return $filtered;
+    }
+
+    /**
+     * Filter available times to only show slots aligned with service duration.
+     * Uses SLN_Func::getAutoAlignInterval() for the canonical interval list.
+     *
+     * @param array     $times    Available time slots (key = "HH:MM" string)
+     * @param Time      $duration Service duration
+     * @return array Filtered times; falls back to original array if nothing qualifies.
+     */
+    private function filterTimesAlignedToServiceDuration(array $times, Time $duration)
+    {
+        if (empty($times)) {
+            return $times;
+        }
+
+        $durationMinutes = SLN_Func::getMinutesFromDuration($duration->toString());
+
+        if ($durationMinutes < 30) {
+            return $times;
+        }
+
+        $alignmentInterval = SLN_Func::getAutoAlignInterval($durationMinutes);
+
+        // Anchor alignment to the first available slot of the day, not to midnight.
+        // Without this, a 75-min service with 9:00 opening would skip 9:00 entirely
+        // (540 % 75 = 15) and start at 10:00 instead of showing 9:00, 10:15, 11:30...
+        reset($times);
+        $firstKey = key($times);
+        if (!preg_match('/^(\d{2}):(\d{2})$/', $firstKey, $firstMatches)) {
+            return $times;
+        }
+        $anchorMinutes = ((int) $firstMatches[1] * 60) + (int) $firstMatches[2];
+
+        $alignedTimes = array();
+        foreach ($times as $timeKey => $timeValue) {
+            if (preg_match('/^(\d{2}):(\d{2})$/', $timeKey, $matches)) {
+                $totalMinutes  = ((int) $matches[1] * 60) + (int) $matches[2];
+                $offsetFromAnchor = $totalMinutes - $anchorMinutes;
+                if ($offsetFromAnchor >= 0 && $offsetFromAnchor % $alignmentInterval === 0) {
+                    $alignedTimes[$timeKey] = $timeValue;
+                }
+            }
+        }
+
+        return empty($alignedTimes) ? $times : $alignedTimes;
     }
 }

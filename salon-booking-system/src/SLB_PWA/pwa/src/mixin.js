@@ -2,6 +2,7 @@ import axios from 'axios'
 import dayjs from 'dayjs'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
 import isBetween from 'dayjs/plugin/isBetween'
+import isoWeek from 'dayjs/plugin/isoWeek'
 import localizedFormat from 'dayjs/plugin/localizedFormat'
 
 import 'dayjs/locale/en'
@@ -16,6 +17,7 @@ import 'dayjs/locale/ro'
 
 dayjs.extend(customParseFormat)
 dayjs.extend(isBetween)
+dayjs.extend(isoWeek)
 dayjs.extend(localizedFormat)
 
 // Provide a minimal mock in dev mode so the app renders without a WordPress backend

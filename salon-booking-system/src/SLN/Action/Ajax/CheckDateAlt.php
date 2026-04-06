@@ -146,6 +146,17 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
             $intervalsArray['dates'] = array();
             $intervalsArray['times'] = array();
             $intervalsArray['noAvailabilityMessage'] = __('No available appointments found for the selected service. No assistant pair is available in the current date range. Please try a different service or contact us.', 'salon-booking-system');
+
+            // Override the stale session-derived suggested date with the start of the
+            // current booking window (today + min-advance).  Without this, a stale past
+            // date drives the calendar to a previous month and it appears frozen.
+            $fromDate = $hb->getFromDate();
+            $intervalsArray['suggestedDate']          = $plugin->format()->date($fromDate);
+            $intervalsArray['suggestedYear']          = $fromDate->format('Y');
+            $intervalsArray['suggestedMonth']         = $fromDate->format('m');
+            $intervalsArray['suggestedDay']           = $fromDate->format('d');
+            $intervalsArray['universalSuggestedDate'] = $fromDate->format('Y-m-d');
+
             return $intervalsArray;
         }
 
@@ -195,9 +206,17 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
         
         // SMART AVAILABILITY: Use all attendants' availability for times as well
         if ($isSmartAvailability) {
+            // auto-align is already applied inside getAllAttendantsAvailableTimes() for performance
             $times = $this->getAllAttendantsAvailableTimes(Date::create($tmpDate), $bservices, $this->duration);
         } else {
             $times = $ah->getCachedTimes(Date::create($tmpDate), $this->duration);
+
+            // Apply auto-align for non-smart path (smart path applies it inside getAllAttendantsAvailableTimes)
+            if (SLN_Plugin::getInstance()->getSettings()->get('auto_align_slots') && $this->duration) {
+                $originalTimes = $times;
+                $times = $this->filterTimesAlignedToServiceDuration($times, $this->duration);
+                SLN_Helper_AvailabilityDebugger::logFilteredTimes($originalTimes, $times, 'Auto-Align Slots Filter');
+            }
         }
         
         // PHP 8+ compatibility: Ensure $times is always an array
@@ -635,7 +654,13 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
         if ($duration) {
             $allPossibleTimes = Time::filterTimesArrayByDuration($allPossibleTimes, $duration);
         }
-        
+
+        if ($plugin->getSettings()->get('auto_align_slots') && $duration) {
+            $originalTimes    = $allPossibleTimes;
+            $allPossibleTimes = $this->filterTimesAlignedToServiceDuration($allPossibleTimes, $duration);
+            SLN_Helper_AvailabilityDebugger::logFilteredTimes($originalTimes, $allPossibleTimes, 'Auto-Align Slots Filter');
+        }
+
         $totalSlots = count($allPossibleTimes);
         // For each time slot, check if ANY attendant is available.
         // slotStep/maxChecks are optimisations that only make sense for the date-availability
@@ -703,5 +728,51 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
             SLN_Plugin::addLog('[getAllAttendantsAvailableTimes] SLOW | date=' . $date->toString() . ' | found=' . count($availableTimes) . ' | earlyExit=' . ($earlyExit ? 'yes' : 'no') . ' | ' . $elapsed . 'ms');
         }
         return $availableTimes;
+    }
+
+    /**
+     * Filter available times to only show slots aligned with service duration.
+     * Uses SLN_Func::getAutoAlignInterval() for the canonical interval lookup.
+     *
+     * @param array $times    Available time slots (key = "HH:MM" string)
+     * @param Time  $duration Service duration
+     * @return array Filtered times; falls back to original array if nothing qualifies.
+     */
+    private function filterTimesAlignedToServiceDuration(array $times, $duration)
+    {
+        if (empty($times) || !$duration) {
+            return $times;
+        }
+
+        $durationMinutes = SLN_Func::getMinutesFromDuration($duration->toString());
+
+        if ($durationMinutes < 30) {
+            return $times;
+        }
+
+        $alignmentInterval = SLN_Func::getAutoAlignInterval($durationMinutes);
+
+        // Anchor alignment to the first available slot of the day, not to midnight.
+        // Without this, a 75-min service with 9:00 opening would skip 9:00 entirely
+        // (540 % 75 = 15) and start at 10:00 instead of showing 9:00, 10:15, 11:30...
+        reset($times);
+        $firstKey = key($times);
+        if (!preg_match('/^(\d{2}):(\d{2})$/', $firstKey, $firstMatches)) {
+            return $times;
+        }
+        $anchorMinutes = ((int) $firstMatches[1] * 60) + (int) $firstMatches[2];
+
+        $alignedTimes = array();
+        foreach ($times as $timeKey => $timeValue) {
+            if (preg_match('/^(\d{2}):(\d{2})$/', $timeKey, $matches)) {
+                $totalMinutes     = ((int) $matches[1] * 60) + (int) $matches[2];
+                $offsetFromAnchor = $totalMinutes - $anchorMinutes;
+                if ($offsetFromAnchor >= 0 && $offsetFromAnchor % $alignmentInterval === 0) {
+                    $alignedTimes[$timeKey] = $timeValue;
+                }
+            }
+        }
+
+        return empty($alignedTimes) ? $times : $alignedTimes;
     }
 }

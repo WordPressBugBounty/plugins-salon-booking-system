@@ -130,7 +130,7 @@ class SLN_Helper_Availability
 
         return $ret;
     }
-
+    
     public function getTimes(Date $date)
     {
         $ret = array();
@@ -338,6 +338,9 @@ class SLN_Helper_Availability
         if($duration && $times && $attendant->isNotAvailableOnDateDuration($times[0], $duration, $service)) {
             return SLN_Helper_Availability_ErrorHelper::doAttendantNotAvailable($attendant, $times[0]);
         }
+        if (empty($times)) {
+            return $this->validateAttendantOnTime($attendant, new SLN_DateTime($startAt->format('Y-m-d H:i:s')), $service);
+        }
         foreach ($times as $time) {
             $b = $this->getDayBookings();
             $bTime = $b->getTime($time->format('H'), $time->format('i'));
@@ -414,6 +417,12 @@ class SLN_Helper_Availability
         foreach($attendants as $attendant){
             if($duration && $times && $attendant->isNotAvailableOnDateDuration($times[0], $duration, $service)) {
                 return SLN_Helper_Availability_ErrorHelper::doAttendantNotAvailable($attendant, $times[0]);
+            }
+            if (empty($times)) {
+                if ($ret = $this->validateAttendantOnTime($attendant, new SLN_DateTime($startAt->format('Y-m-d H:i:s')), $service)) {
+                    return $ret;
+                }
+                continue;
             }
             foreach ($times as $time) {
                 $b = $this->getDayBookings();

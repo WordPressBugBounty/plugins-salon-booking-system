@@ -18,9 +18,37 @@ class Plugin {
         return self::$instance;
     }
 
+    /**
+     * Drop regeneration transients so the next PWA load rewrites dist URLs from templates.
+     * Call on plugin activation/update after shipping a new `pwa/dist` build.
+     */
+    public static function invalidate_dist_regeneration_cache() {
+        global $wpdb;
+        $like_val  = $wpdb->esc_like( '_transient_sln_pwa_dist_path_' ) . '%';
+        $like_time = $wpdb->esc_like( '_transient_timeout_sln_pwa_dist_path_' ) . '%';
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s", $like_val, $like_time ) );
+    }
+
     private function __construct()
     {
+        add_action('plugins_loaded', array($this, 'maybe_invalidate_pwa_cache_on_version_change'), 5);
         add_action('parse_request', array($this, 'render_page'));
+    }
+
+    /**
+     * After a plugin update, activation may not run; bump clears PWA dist regeneration transients once.
+     */
+    public function maybe_invalidate_pwa_cache_on_version_change() {
+        if ( ! defined( 'SLN_VERSION' ) ) {
+            return;
+        }
+        $opt_key = 'sln_pwa_dist_cache_plugin_version';
+        $prev    = get_option( $opt_key, '' );
+        if ( $prev !== SLN_VERSION ) {
+            self::invalidate_dist_regeneration_cache();
+            update_option( $opt_key, SLN_VERSION );
+        }
     }
     
     /**
@@ -117,66 +145,80 @@ class Plugin {
         // Cache key to track if files need regeneration
         $cache_key = 'sln_pwa_dist_path_' . md5($dist_url_path);
         $cached_path = get_transient($cache_key);
-        
-        // Check if source files are newer than cache (e.g., after rebuild)
-        $app_js_mtime = file_exists($app_js_path) ? filemtime($app_js_path) : 0;
-        $cache_timestamp_key = $cache_key . '_timestamp';
-        $cached_timestamp = get_transient($cache_timestamp_key);
-        
-        // Regenerate if: path changed, cache expired, OR source files are newer than cache
-        if ($cached_path !== $dist_url_path || $cached_timestamp < $app_js_mtime) {
-            // Ensure template files exist (only create once)
-            $this->ensure_templates_exist($dist_directory_path);
-            
-            // Regenerate processed files with current path
-            file_put_contents(
-                $dist_directory_path . '/js/app.js', 
-                str_replace('{SLN_PWA_DIST_PATH}', $dist_url_path, 
-                    file_get_contents($dist_directory_path . '/js/app.template.js'))
-            );
-            
-            $app_js_map_template = $dist_directory_path . '/js/app.js.template.map';
-            if ( file_exists( $app_js_map_template ) ) {
-                file_put_contents(
-                    $dist_directory_path . '/js/app.js.map',
-                    str_replace(
-                        '{SLN_PWA_DIST_PATH}',
-                        $dist_url_path,
-                        file_get_contents( $app_js_map_template )
-                    )
-                );
-            }
 
-            file_put_contents(
-                $dist_directory_path . '/service-worker.js', 
-                str_replace('{SLN_PWA_DIST_PATH}', $dist_url_path, 
-                    file_get_contents($dist_directory_path . '/service-worker.template.js'))
-            );
-            
-            $sw_map_template = $dist_directory_path . '/service-worker.js.template.map';
-            if ( file_exists( $sw_map_template ) ) {
+        $app_template_path = $dist_directory_path . '/js/app.template.js';
+        $cache_timestamp_key = $cache_key . '_timestamp';
+        $cached_timestamp    = (int) get_transient($cache_timestamp_key);
+
+        $this->ensure_templates_exist($dist_directory_path );
+
+        // Use *template* mtime, not processed app.js (PHP overwrites app.js each regen → mtime always "new" → regen every request).
+        $template_source_mtime = file_exists( $app_template_path ) ? (int) filemtime( $app_template_path ) : 0;
+
+        // Regenerate if site path changed, cache missing, or plugin shipped a newer webpack template build.
+        if ( $cached_path !== $dist_url_path || $cached_timestamp < $template_source_mtime ) {
+            $tpl_js    = file_exists( $app_template_path ) ? (string) file_get_contents( $app_template_path ) : '';
+            $tpl_sw    = file_exists( $dist_directory_path . '/service-worker.template.js' )
+                ? (string) file_get_contents( $dist_directory_path . '/service-worker.template.js' )
+                : '';
+            $tpl_index = file_exists( $dist_directory_path . '/index.template.html' )
+                ? (string) file_get_contents( $dist_directory_path . '/index.template.html' )
+                : '';
+
+            $templates_ok = ( $tpl_js !== '' && strpos( $tpl_js, '{SLN_PWA_DIST_PATH}' ) !== false
+                && $tpl_sw !== '' && strpos( $tpl_sw, '{SLN_PWA_DIST_PATH}' ) !== false
+                && $tpl_index !== '' && strpos( $tpl_index, '{SLN_PWA_DIST_PATH}' ) !== false );
+
+            if ( ! $templates_ok ) {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+                error_log( 'SLB_PWA: dist templates missing {SLN_PWA_DIST_PATH}. Run npm run build in src/SLB_PWA/pwa/. Skipping dist URL rewrite.' );
+            } else {
                 file_put_contents(
-                    $dist_directory_path . '/service-worker.js.map',
+                    $dist_directory_path . '/js/app.js',
+                    str_replace( '{SLN_PWA_DIST_PATH}', $dist_url_path, $tpl_js )
+                );
+
+                $app_js_map_template = $dist_directory_path . '/js/app.js.template.map';
+                if ( file_exists( $app_js_map_template ) ) {
+                    file_put_contents(
+                        $dist_directory_path . '/js/app.js.map',
+                        str_replace(
+                            '{SLN_PWA_DIST_PATH}',
+                            $dist_url_path,
+                            file_get_contents( $app_js_map_template )
+                        )
+                    );
+                }
+
+                file_put_contents(
+                    $dist_directory_path . '/service-worker.js',
+                    str_replace( '{SLN_PWA_DIST_PATH}', $dist_url_path, $tpl_sw )
+                );
+
+                $sw_map_template = $dist_directory_path . '/service-worker.js.template.map';
+                if ( file_exists( $sw_map_template ) ) {
+                    file_put_contents(
+                        $dist_directory_path . '/service-worker.js.map',
+                        str_replace(
+                            '{SLN_PWA_DIST_PATH}',
+                            $dist_url_path,
+                            file_get_contents( $sw_map_template )
+                        )
+                    );
+                }
+
+                file_put_contents(
+                    $dist_directory_path . '/index.html',
                     str_replace(
-                        '{SLN_PWA_DIST_PATH}',
-                        $dist_url_path,
-                        file_get_contents( $sw_map_template )
+                        array( '{SLN_PWA_DIST_PATH}', '{SLN_PWA_DATA}' ),
+                        array( $dist_url_path, addslashes( wp_json_encode( $data ) ) ),
+                        $tpl_index
                     )
                 );
+
+                set_transient( $cache_key, $dist_url_path, HOUR_IN_SECONDS );
+                set_transient( $cache_timestamp_key, $template_source_mtime, HOUR_IN_SECONDS );
             }
-            
-            file_put_contents(
-                $dist_directory_path . '/index.html', 
-                str_replace(
-                    array('{SLN_PWA_DIST_PATH}', '{SLN_PWA_DATA}'), 
-                    array($dist_url_path, addslashes(wp_json_encode($data))), 
-                    file_get_contents($dist_directory_path . '/index.template.html')
-                )
-            );
-            
-            // Cache for 1 hour to avoid regenerating on every request
-            set_transient($cache_key, $dist_url_path, HOUR_IN_SECONDS);
-            set_transient($cache_timestamp_key, $app_js_mtime, HOUR_IN_SECONDS);
         }
 
     ?>

@@ -58,15 +58,22 @@ class SLN_Repository_BookingRepository extends SLN_Repository_AbstractWrapperRep
             }
         }
         
-        // Multi-Shop Support: Add shop filtering if shop ID is provided
-        // This ensures calendar bookings and tooltips respect shop selection
+        // Multi-Shop Support: Add shop filtering if shop ID is provided.
+        // Include bookings explicitly assigned to the shop OR bookings with no shop
+        // assignment at all (legacy/unassigned bookings belong to all shops).
         if (isset($criteria['shop']) && intval($criteria['shop']) > 0) {
-            $criteria['@wp_query']['meta_query'][] =
+            $criteria['@wp_query']['meta_query'][] = array(
+                'relation' => 'OR',
                 array(
-                    'key'     => '_sln_booking_shop',  // Correct meta key used by Multi-Shop
+                    'key'     => '_sln_booking_shop',
                     'value'   => intval($criteria['shop']),
                     'compare' => '=',
-                );
+                ),
+                array(
+                    'key'     => '_sln_booking_shop',
+                    'compare' => 'NOT EXISTS',
+                ),
+            );
             unset($criteria['shop']);
         }
 

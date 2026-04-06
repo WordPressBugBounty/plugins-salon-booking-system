@@ -130,13 +130,16 @@ class SLN_Settings {
 		return $this->get('time_format') ? $this->get('time_format') : SLN_Enum_TimeFormat::_DEFAULT;
 	}
 
-	public function getSalonName() {
+	/**
+	 * @param SLN_Wrapper_Booking|null $booking Optional booking so add-ons (e.g. Multi-Shops) can resolve the salon name from booking meta.
+	 */
+	public function getSalonName($booking = null) {
 		$ret = $this->get('gen_name');
 		if (!$ret) {
 			$ret = get_bloginfo('name');
 		}
 
-		return apply_filters('sln.settings.get_salon_name', $ret);
+		return apply_filters('sln.settings.get_salon_name', $ret, $booking);
 	}
 
 	public function getSalonEmail() {
