@@ -18,7 +18,7 @@ class SLN_Service_Sms
                 $this->plugin
             );
             $provider->send($number, trim($message), $sms_prefix);
-        } catch (SLN_Action_Sms_Exception $e) {
+        } catch (Exception $e) {
             $this->exception = $e;
         }
     }

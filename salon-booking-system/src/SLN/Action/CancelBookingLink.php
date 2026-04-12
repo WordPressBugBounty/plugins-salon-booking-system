@@ -32,16 +32,29 @@ class SLN_Action_CancelBookingLink {
 	    return;
 	}
 
-	// Sanitize booking ID (supports unique ID format: "123-hash")
+	// Sanitize booking ID — must be in secure "ID-hash" format.
+	// Plain numeric IDs are rejected: they allow any visitor to enumerate and cancel
+	// any booking without a token. All legitimate cancellation links (sent by email)
+	// already use getUniqueId() which produces the "ID-hash" format.
 	$booking_id_raw = sanitize_text_field(wp_unslash($_GET['booking_id']));
+
+	if ( strpos( $booking_id_raw, '-' ) === false ) {
+	    wp_die(
+		'<p>' . esc_html__('Invalid booking ID.', 'salon-booking-system') . '</p>',
+		esc_html__('Error', 'salon-booking-system'),
+		array('response' => 400)
+	    );
+	    return;
+	}
+
 	$booking = null;
 
 	try {
-	    // createBooking() handles both plain IDs and unique ID format (123-hash)
-	    // It validates the secure ID hash matches the booking
+	    // createBooking() parses the "ID-hash" format and validates the hash matches
+	    // the booking's stored uniqid — enforcing that only the token holder can cancel.
 	    $booking = $this->plugin->createBooking($booking_id_raw);
 	} catch (Exception $ex) {
-	    // Invalid booking ID or secure ID mismatch
+	    // Hash mismatch or booking not found
 	    wp_die(
 		'<p>' . esc_html__('Invalid booking ID.', 'salon-booking-system') . '</p>',
 		esc_html__('Error', 'salon-booking-system'),

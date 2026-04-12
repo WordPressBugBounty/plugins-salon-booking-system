@@ -186,6 +186,36 @@ class SLN_Repository_BookingRepository extends SLN_Repository_AbstractWrapperRep
 
     protected function cacheMultidateBookings($posts)
     {
+        if ( empty( $posts ) ) {
+            return;
+        }
+
+        // Pass 1: prime ALL booking post meta in one SQL query so that
+        // get_post_meta() calls inside the loop are served from WP's memory
+        // cache instead of hitting the database individually.
+        $bookingIds = wp_list_pluck( $posts, 'ID' );
+        update_meta_cache( 'post', $bookingIds );
+
+        // Collect unique service post IDs now that booking meta is cached.
+        $serviceIds = array();
+        foreach ( $posts as $post ) {
+            $services = get_post_meta( $post->ID, '_sln_booking_services', true );
+            if ( is_array( $services ) ) {
+                foreach ( $services as $s ) {
+                    if ( ! empty( $s['service'] ) ) {
+                        $serviceIds[] = (int) $s['service'];
+                    }
+                }
+            }
+        }
+
+        // Pass 2: prime ALL service post meta in one SQL query so that the
+        // lock/offset checks below never touch the database per-service.
+        if ( ! empty( $serviceIds ) ) {
+            update_meta_cache( 'post', array_unique( $serviceIds ) );
+        }
+
+        // Main loop — every get_post_meta() call is now served from cache.
         foreach ($posts as $post) {
             foreach (get_post_meta($post->ID, '_sln_booking_services', true) as $service) {
                 $service = $service['service'];

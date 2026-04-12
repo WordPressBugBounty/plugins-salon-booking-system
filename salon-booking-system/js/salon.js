@@ -513,11 +513,17 @@ function sln_init($) {
         const button = $(this);
         const form = button.closest("form");
 
+        // Lock the button immediately so the user cannot trigger a second payment
+        // request while the overbooking check or sln_loadStep AJAX is in-flight.
+        button.addClass('sln-pay-btn--loading');
+
         // Validate overbooking on "Pay later" (or similar) button click
         if (button.attr('href').includes('submit_summary=next')) {
             const isBookingValid = await sln_checkOverbooking(this);
 
             if (!isBookingValid) {
+                // Overbooking: restore the button before alerting so the user can act.
+                button.removeClass('sln-pay-btn--loading');
                 alert(salon.txt_overbooking);
                 location.reload();
                 return false;
@@ -550,6 +556,11 @@ function sln_init($) {
         e.preventDefault();
 
         const button = $(this);
+
+        // Lock the button immediately so the user cannot click it again while the
+        // overbooking check is in-flight and while the browser navigates to the
+        // payment gateway. The spinner is added via the CSS ::after pseudo-element.
+        button.addClass('sln-pay-btn--loading');
 
         // build data for check, including assistant
         const form = button.closest('form');
@@ -587,6 +598,7 @@ function sln_init($) {
                 if (checkData['sln[attendant]'] && !href.includes('sln[attendant]')) {
                     href += '&sln[attendant]=' + checkData['sln[attendant]'];
                 }
+                // Button stays locked — page is navigating to the payment gateway.
                 window.location = href;
             } else {
                 if (urlParams.has('pay_remaining_amount')) {
@@ -596,12 +608,16 @@ function sln_init($) {
                     }
                     window.location = href;
                 } else {
+                    // Overbooking: restore the button so the user can act on the alert.
+                    button.removeClass('sln-pay-btn--loading');
                     alert(salon.txt_overbooking);
                     location.reload();
                 }
 
             }
         } catch (error) {
+            // Network/server error: restore the button so the user can retry.
+            button.removeClass('sln-pay-btn--loading');
             console.error('Overbooking check error:', error);
             alert('Error checking availability');
         }
@@ -1325,6 +1341,9 @@ function sln_init($) {
             },
         });
     }
+    // Reveal the form once all synchronous JS initialization is complete.
+    // This removes the init loader overlay added by PHP to prevent FOUC.
+    $("#sln-salon-booking").removeClass("sln-is-initializing");
 }
 /**
  * Get reCAPTCHA token for bot protection
@@ -1802,8 +1821,22 @@ function sln_stepDate($) {
     // Guard to avoid infinite auto-retry loops when intervals contain dates
     // but no time slots for the current date.
     var autoRetryEmptyTimes = false;
+    // Suppresses loading indicators on the very first validateImmediate() call
+    // (the silent background refresh on step init). All subsequent calls —
+    // triggered by the user tapping a date — show the full loading UI.
+    var isInitialLoad = true;
 
     function validate(obj, autosubmit) {
+        // Apply the loading overlay immediately on every user-triggered call so
+        // the calendar is grayed out the instant the day is clicked. Without
+        // this, the datetimepicker library rebuilds its HTML on click (erasing
+        // all custom "disabled" classes), and the re-application of disabled
+        // states via func() only happens ~200 ms later — causing a visible
+        // flash where all dates briefly appear available.
+        // Skip on the very first (silent background) load.
+        if (!isInitialLoad) {
+            $(".datetimepicker.sln-datetimepicker").addClass("sln-calendar-loading");
+        }
         // Debounce: cancel any pending call and wait 400 ms of inactivity
         // before actually firing the request. This collapses rapid date
         // changes (e.g. browsing Mon → Tue → Wed) into a single AJAX call.
@@ -1822,6 +1855,11 @@ function sln_stepDate($) {
             validateXhr.abort();
         }
 
+        // Capture and immediately reset the flag so that any subsequent call
+        // (user date change, auto-retry for empty times) gets the full loading UI.
+        var silentLoad = isInitialLoad;
+        isInitialLoad = false;
+
         var form = $(obj).closest("form");
         var validatingMessage =
             '<div class="sln-alert sln-alert--wait">' +
@@ -1838,28 +1876,30 @@ function sln_stepDate($) {
         
         data += "&action=salon&method=checkDate&security=" + salon.ajax_nonce;
         
-        // Prevent flickering: Add loading class to make all dates look unavailable during AJAX
-        $(".datetimepicker.sln-datetimepicker").addClass("sln-calendar-loading");
-        
-        // UX improvement: Show progress bar in time slots box during validation
-        var timeSlotBox = $(".datetimepicker-minutes table tr td");
-        if (timeSlotBox.length) {
-            timeSlotBox.html('<div class="sln-loader">' + salon.txt_validating + '</div>');
+        if (!silentLoad) {
+            // Prevent flickering: Add loading class to make all dates look unavailable during AJAX
+            $(".datetimepicker.sln-datetimepicker").addClass("sln-calendar-loading");
+            
+            // UX improvement: Show progress bar in time slots box during validation
+            var timeSlotBox = $(".datetimepicker-minutes table tr td");
+            if (timeSlotBox.length) {
+                timeSlotBox.html('<div class="sln-loader">' + salon.txt_validating + '</div>');
+            }
+            
+            // UX improvement: Disable submit button during validation (no spinner)
+            $("#sln-step-submit")
+                .attr("disabled", true)
+                .parent()
+                .addClass("sln-btn--disabled");
+            
+            $("#sln-notifications")
+                .addClass("sln-notifications--active")
+                .append(validatingMessage);
+            $("#sln-debug-notifications")
+                .addClass("sln-notifications--active")
+                .html(validatingMessage);
+            $("#sln-debug-div").css("overflow-y", "hidden").scrollTop(0);
         }
-        
-        // UX improvement: Disable submit button during validation (no spinner)
-        $("#sln-step-submit")
-            .attr("disabled", true)
-            .parent()
-            .addClass("sln-btn--disabled");
-        
-        $("#sln-notifications")
-            .addClass("sln-notifications--active")
-            .append(validatingMessage);
-        $("#sln-debug-notifications")
-            .addClass("sln-notifications--active")
-            .html(validatingMessage);
-        $("#sln-debug-div").css("overflow-y", "hidden").scrollTop(0);
 
         validateXhr = $.ajax({
             url: salon.ajax_url,

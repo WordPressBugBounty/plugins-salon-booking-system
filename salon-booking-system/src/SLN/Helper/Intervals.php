@@ -343,25 +343,32 @@ class SLN_Helper_Intervals
 
         $alignmentInterval = SLN_Func::getAutoAlignInterval($durationMinutes);
 
-        // Anchor alignment to the first available slot of the day, not to midnight.
-        // Without this, a 75-min service with 9:00 opening would skip 9:00 entirely
-        // (540 % 75 = 15) and start at 10:00 instead of showing 9:00, 10:15, 11:30...
-        reset($times);
-        $firstKey = key($times);
-        if (!preg_match('/^(\d{2}):(\d{2})$/', $firstKey, $firstMatches)) {
-            return $times;
-        }
-        $anchorMinutes = ((int) $firstMatches[1] * 60) + (int) $firstMatches[2];
+        // The booking interval (in minutes) is used to detect shift boundaries.
+        // A gap between consecutive slots larger than this value signals a new shift,
+        // so the alignment anchor resets to the first slot of that shift.
+        $bookingInterval = (int) SLN_Plugin::getInstance()->getSettings()->get('interval') ?: 15;
 
-        $alignedTimes = array();
+        $alignedTimes  = array();
+        $anchorMinutes = null;
+        $prevMinutes   = null;
+
         foreach ($times as $timeKey => $timeValue) {
-            if (preg_match('/^(\d{2}):(\d{2})$/', $timeKey, $matches)) {
-                $totalMinutes  = ((int) $matches[1] * 60) + (int) $matches[2];
-                $offsetFromAnchor = $totalMinutes - $anchorMinutes;
-                if ($offsetFromAnchor >= 0 && $offsetFromAnchor % $alignmentInterval === 0) {
-                    $alignedTimes[$timeKey] = $timeValue;
-                }
+            if (!preg_match('/^(\d{2}):(\d{2})$/', $timeKey, $matches)) {
+                continue;
             }
+            $totalMinutes = ((int) $matches[1] * 60) + (int) $matches[2];
+
+            // Reset anchor at the start of each shift (gap wider than one booking interval).
+            if ($anchorMinutes === null || ($prevMinutes !== null && ($totalMinutes - $prevMinutes) > $bookingInterval)) {
+                $anchorMinutes = $totalMinutes;
+            }
+
+            $offsetFromAnchor = $totalMinutes - $anchorMinutes;
+            if ($offsetFromAnchor % $alignmentInterval === 0) {
+                $alignedTimes[$timeKey] = $timeValue;
+            }
+
+            $prevMinutes = $totalMinutes;
         }
 
         return empty($alignedTimes) ? $times : $alignedTimes;

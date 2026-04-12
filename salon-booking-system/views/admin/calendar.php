@@ -253,31 +253,6 @@ echo expirePopup();
 
     var replaceBookingModalWithPopup = +'<?php echo $replace_booking_modal_with_popup ?>';
 </script>
-<?php 
-// Show subscription debug info for admins when WP_DEBUG is enabled
-if (defined('WP_DEBUG') && WP_DEBUG && defined('SLN_VERSION_PAY') && SLN_VERSION_PAY) {
-    global $sln_license;
-    if ($sln_license) {
-        $debug_subscription_status = $sln_license->getSubscriptionStatus();
-        $subscriptions_data = $sln_license->get('subscriptions_data');
-        $last_check = get_transient('sln_subscription_last_check');
-        
-        echo '<div class="notice notice-info" style="margin: 20px 0; padding: 15px; border-left: 4px solid #0073aa;">';
-        echo '<h3 style="margin-top: 0;">🔍 Subscription Debug Info (WP_DEBUG Mode)</h3>';
-        echo '<p><strong>Subscription Status:</strong> ' . esc_html($debug_subscription_status['status'] ?? 'unknown') . '</p>';
-        echo '<p><strong>Expiration:</strong> ' . esc_html($debug_subscription_status['expiration'] ?? 'unknown') . '</p>';
-        echo '<p><strong>Last API Check:</strong> ' . ($last_check ? human_time_diff($last_check) . ' ago' : 'Never or expired') . '</p>';
-        echo '<p><strong>Subscriptions Count:</strong> ' . (isset($subscriptions_data->subscriptions) ? count($subscriptions_data->subscriptions) : 0) . '</p>';
-        if (isset($subscriptions_data->subscriptions[0])) {
-            $sub = $subscriptions_data->subscriptions[0];
-            $sub_status = isset($sub->status) ? $sub->status : (isset($sub->info->status) ? $sub->info->status : 'unknown');
-            echo '<p><strong>First Subscription Status:</strong> ' . esc_html($sub_status) . '</p>';
-        }
-        echo '<p style="margin: 0;"><em>Go to Plugins → License to refresh subscription data</em></p>';
-        echo '</div>';
-    }
-}
-?>
 <?php if (apply_filters('sln.show_branding', true)) : ?>
     <div class="sln-bootstrap sln-calendar-plugin-update-notice--wrapper">
         <?php if (!defined("SLN_VERSION_PAY")): ?>

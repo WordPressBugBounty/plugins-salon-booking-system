@@ -16,6 +16,8 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
   protected $intervalName;
   private $stopIteration = false;
   protected $attendantMode;
+  /** Cached result of getBookingStatusCounts() — computed once per request. */
+  private $statusCountsCache = null;
 
   public function getFrom()
   {
@@ -75,6 +77,13 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
       $holidays_assistants_rules = array();
       $assistants = $this->plugin->getRepository(\SLN_Plugin::POST_TYPE_ATTENDANT)->getAll();
 
+      // Prime ALL attendant post meta in one SQL query so that getMeta() calls
+      // for 'holidays_daily' and 'holidays' below are served from cache.
+      if (!empty($assistants)) {
+        $attIds = array_map(function ($a) { return $a->getId(); }, $assistants);
+        update_meta_cache('post', $attIds);
+      }
+
       foreach ($assistants as $att) {
         $holidays_daily = $att->getMeta('holidays_daily') ?: array();
         foreach ($holidays_daily as &$rule) {
@@ -124,19 +133,27 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
     $clone = clone $this->from;
     $ret = array();
 
+    // Pre-group bookings by date (Ymd key) so each day's stats loop is O(1)
+    // instead of O(N) — avoids iterating all bookings twice per day in the
+    // while-loop below (previously O(days × bookings × 2) total iterations).
+    $bookingsByDate = array();
+    foreach ($this->bookings as $b) {
+      $bookingsByDate[$b->getDate()->format('Ymd')][] = $b;
+    }
+
     while ($clone <= $this->to) {
       $dd = new Date($clone);
       $tmp = array('text' => '', 'busy' => 0, 'free' => 0);
 
+      $dayBookings = isset($bookingsByDate[$clone->format('Ymd')]) ? $bookingsByDate[$clone->format('Ymd')] : array();
+
       // Calculate booking stats (revenue, count)
       $tot = 0;
       $cnt = 0;
-      foreach ($this->bookings as $b) {
-        if ($b->getDate()->format('Ymd') == $clone->format('Ymd')) {
-          if (!$b->hasStatus(array(SLN_Enum_BookingStatus::CANCELED))) {
-            $tot += $b->getAmount();
-            $cnt++;
-          }
+      foreach ($dayBookings as $b) {
+        if (!$b->hasStatus(array(SLN_Enum_BookingStatus::CANCELED))) {
+          $tot += $b->getAmount();
+          $cnt++;
         }
       }
 
@@ -152,15 +169,13 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
 
       // Calculate busy time from actual bookings
       $busyMinutes = 0;
-      foreach ($this->bookings as $b) {
-        if ($b->getDate()->format('Ymd') == $clone->format('Ymd')) {
-          if (!$b->hasStatus(array(SLN_Enum_BookingStatus::CANCELED))) {
-            // Calculate duration of this booking
-            $services = $b->getBookingServices()->getItems();
-            foreach ($services as $service) {
-              $duration = $service->getDuration();
-              $busyMinutes += SLN_Func::getMinutesFromDuration($duration);
-            }
+      foreach ($dayBookings as $b) {
+        if (!$b->hasStatus(array(SLN_Enum_BookingStatus::CANCELED))) {
+          // Calculate duration of this booking
+          $services = $b->getBookingServices()->getItems();
+          foreach ($services as $service) {
+            $duration = $service->getDuration();
+            $busyMinutes += SLN_Func::getMinutesFromDuration($duration);
           }
         }
       }
@@ -249,6 +264,12 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
 
   private function getBookingStatusCounts()
   {
+    // Computed once per request — execute(), renderEvents() and renderDay()
+    // all call this method; without caching day view would run it 3 times.
+    if ($this->statusCountsCache !== null) {
+      return $this->statusCountsCache;
+    }
+
     $counts = array(
       'paid_confirmed' => 0,
       'pay_later' => 0,
@@ -260,6 +281,7 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
     // Skip expensive calculations for FREE version
     // This avoids iterating through bookings and making meta queries
     if (!defined('SLN_VERSION_PAY')) {
+      $this->statusCountsCache = $counts;
       return $counts;
     }
 
@@ -290,6 +312,7 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
       }
     }
 
+    $this->statusCountsCache = $counts;
     return $counts;
   }
 
@@ -318,7 +341,10 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
 
     if (!empty($this->bookings) && is_array($this->bookings)) {
       $tempBookings = array();
-      
+      // Shop name cache: avoids a get_the_title() WP_Query per booking when
+      // multiple today's bookings share the same shop.
+      $shopNameCache = array();
+
       foreach ($this->bookings as $booking) {
         if ($booking && method_exists($booking, 'getDate') && method_exists($booking, 'getStatus') && method_exists($booking, 'getStartsAt')) {
           $bookingDate = $booking->getDate();
@@ -331,12 +357,16 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
             if ($status === 'sln-b-paid' || $status === 'sln-b-confirmed' || $status === 'sln-b-paylater') {
               $count++;
               
-              // Get shop name for Multi-Shop support
+              // Get shop name for Multi-Shop support (cached to avoid one
+              // get_the_title() query per booking when shops repeat).
               $shopName = '';
               if (class_exists('\SalonMultishop\Addon')) {
                 $shopId = get_post_meta($booking->getId(), '_sln_booking_shop', true);
                 if (!empty($shopId)) {
-                  $shopName = get_the_title($shopId);
+                  if (!isset($shopNameCache[$shopId])) {
+                    $shopNameCache[$shopId] = get_the_title($shopId);
+                  }
+                  $shopName = $shopNameCache[$shopId];
                 }
               }
               
@@ -1032,6 +1062,15 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
     $this->bookings = $this->plugin
       ->getRepository(SLN_Plugin::POST_TYPE_BOOKING)
       ->get($this->getCriteria());
+
+    // Prime ALL booking post meta in one SQL query so that every subsequent
+    // getMeta() / get_post_meta() call during rendering (firstname, lastname,
+    // amount, date, time, services, no_show, shop …) is served from
+    // WordPress's in-memory cache rather than hitting the DB individually.
+    if (!empty($this->bookings)) {
+      $ids = array_map(function ($b) { return $b->getId(); }, $this->bookings);
+      update_meta_cache('post', $ids);
+    }
 
 
     if (in_array(SLN_Plugin::USER_ROLE_STAFF, wp_get_current_user()->roles) || in_array(SLN_Plugin::USER_ROLE_WORKER, wp_get_current_user()->roles)) {

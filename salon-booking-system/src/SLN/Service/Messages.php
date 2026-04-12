@@ -134,7 +134,13 @@ class SLN_Service_Messages
             $attendants = array();
 
             foreach ($tmpAttendants as $a) {
-                $attendants[$a->getId()] = $a;
+                if (is_array($a)) {
+                    foreach ($a as $singleAttendant) {
+                        $attendants[$singleAttendant->getId()] = $singleAttendant;
+                    }
+                } else {
+                    $attendants[$a->getId()] = $a;
+                }
             }
 
             foreach ($attendants as $attendant) {
@@ -178,7 +184,13 @@ class SLN_Service_Messages
             $attendants = array();
 
             foreach ($tmpAttendants as $a) {
-                $attendants[$a->getId()] = $a;
+                if (is_array($a)) {
+                    foreach ($a as $singleAttendant) {
+                        $attendants[$singleAttendant->getId()] = $singleAttendant;
+                    }
+                } else {
+                    $attendants[$a->getId()] = $a;
+                }
             }
 
             foreach ($attendants as $attendant) {
@@ -222,7 +234,13 @@ class SLN_Service_Messages
             $attendants = array();
 
             foreach ($tmpAttendants as $a) {
-                $attendants[$a->getId()] = $a;
+                if (is_array($a)) {
+                    foreach ($a as $singleAttendant) {
+                        $attendants[$singleAttendant->getId()] = $singleAttendant;
+                    }
+                } else {
+                    $attendants[$a->getId()] = $a;
+                }
             }
 
             foreach ($attendants as $attendant) {

@@ -58,6 +58,16 @@ class SLN_Admin_Onboarding extends SLN_Admin_AbstractPage
 
     public function show()
     {
+        if (
+            isset($_GET['sln_complete']) &&
+            '1' === $_GET['sln_complete'] &&
+            current_user_can($this->getCapability())
+        ) {
+            update_option('_sln_onboarding_completed', 1);
+            wp_safe_redirect(admin_url('admin.php?page=salon'));
+            exit();
+        }
+
         $use_react = apply_filters('sln_onboarding_use_react', true);
         $react_bundle = defined('SLN_PLUGIN_DIR') ? SLN_PLUGIN_DIR . '/onboarding-app/dist/onboarding.index.js' : '';
         $react_available = $use_react && $react_bundle && is_readable($react_bundle);

@@ -10935,6 +10935,29 @@ estetique.booklapp.it
   background-color: rgb(245, 245, 245);
   z-index: 999999;
 }
+#sln-salon-booking .sln-init-loader {
+  display: none;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: 10%;
+  background-color: rgb(245, 245, 245);
+  z-index: 99999;
+}
+#sln-salon-booking.sln-is-initializing {
+  position: relative;
+  min-height: 12em;
+}
+#sln-salon-booking.sln-is-initializing > #sln-salon-booking__content {
+  opacity: 0;
+  pointer-events: none;
+}
+#sln-salon-booking.sln-is-initializing .sln-init-loader {
+  display: block;
+}
+
 /*
 #sln-salon.sln-step-date #sln-notifications .sln-alert.sln-alert--wait {
 	position: absolute;

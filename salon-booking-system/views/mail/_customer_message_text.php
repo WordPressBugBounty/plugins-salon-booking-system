@@ -7,7 +7,7 @@
 	    $plugin->format()->date($booking->getDate()),
         $plugin->format()->time($booking->getTime()),
 	    $booking->getDisplayName(),
-	    $plugin->getSettings()->get('gen_name') ? $plugin->getSettings()->get('gen_name') : get_bloginfo('name'),
+	    $plugin->getSettings()->getSalonName($booking) ?: get_bloginfo('name'),
 	    '<br/>',
 	    '<br/>',
 	    '<br/>',

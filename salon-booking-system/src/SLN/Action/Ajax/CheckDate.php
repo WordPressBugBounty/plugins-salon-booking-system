@@ -33,9 +33,12 @@ class SLN_Action_Ajax_CheckDate extends SLN_Action_Ajax_Abstract
                     $this->time = $time;
                 }
                 
-                $settings = SLN_Plugin::getInstance()->getSettings();
-                $settings->set( 'debug', $_POST['sln']['debug'] ?? false );
-                $settings->save();
+                $settings  = SLN_Plugin::getInstance()->getSettings();
+                $newDebug  = (bool) ( $_POST['sln']['debug'] ?? false );
+                if ( (bool) $settings->get( 'debug' ) !== $newDebug ) {
+                    $settings->set( 'debug', $newDebug );
+                    $settings->save();
+                }
             }
             if(isset($_POST['_sln_booking_date'])) {
                 $date = sanitize_text_field(wp_unslash($_POST['_sln_booking_date']));

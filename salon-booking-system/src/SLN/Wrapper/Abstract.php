@@ -148,20 +148,45 @@ abstract class SLN_Wrapper_Abstract
             }
             $this->setStatusDirectDb($currentStatus, $status);
         } else {
-            // wp_update_post returned "success" but a wp_insert_post_data filter from another
-            // plugin (security, cache, SEO) may have silently overridden the status back to its
-            // previous value. Verify the status was actually written to the database.
+            // wp_update_post returned "success" but a wp_insert_post_data filter may have
+            // silently overridden the status. Verify the status was actually written to the DB.
             clean_post_cache($this->getId());
             $savedStatus = get_post_status($this->getId());
-            
+
             if ($savedStatus !== $status) {
-                SLN_Plugin::addLog(sprintf(
-                    'setStatus SILENT FAILURE detected for post #%d: wp_update_post returned success but DB has "%s" instead of "%s". Using direct DB update...',
-                    $this->getId(),
-                    $savedStatus,
-                    $status
-                ));
-                $this->setStatusDirectDb($currentStatus, $status);
+                // Before treating this as a "silent failure" caused by a third-party plugin,
+                // check whether our OWN wp_insert_post_data filter in Metabox/Abstract.php
+                // intentionally blocked the change to protect a PAID/CONFIRMED booking from
+                // reverting to draft.  In that case the filter is working correctly — we must
+                // NOT bypass it with a direct DB write; doing so would defeat the protection.
+                $isOwnFilterProtection = (
+                    in_array($savedStatus, ['sln-b-paid', 'sln-b-confirmed']) &&
+                    in_array($status, ['auto-draft', 'draft'])
+                );
+
+                if ($isOwnFilterProtection) {
+                    // The filter correctly held the paid/confirmed status.
+                    // Align the in-memory status with the actual DB value so the caller
+                    // does not see a stale object state.
+                    $status = $savedStatus;
+                    SLN_Plugin::addLog(sprintf(
+                        'setStatus: wp_insert_post_data filter correctly protected booking #%d — reversion from %s to %s was blocked. In-memory status aligned to DB (%s).',
+                        $this->getId(),
+                        $savedStatus,
+                        $this->object->post_status,
+                        $savedStatus
+                    ));
+                } else {
+                    // Genuine silent failure from a third-party filter (security plugin, SEO,
+                    // caching layer). Force the intended status directly to the DB.
+                    SLN_Plugin::addLog(sprintf(
+                        'setStatus SILENT FAILURE detected for post #%d: wp_update_post returned success but DB has "%s" instead of "%s". Using direct DB update...',
+                        $this->getId(),
+                        $savedStatus,
+                        $status
+                    ));
+                    $this->setStatusDirectDb($currentStatus, $status);
+                }
             } else {
                 SLN_Plugin::addLog(sprintf(
                     'setStatus: wp_update_post VERIFIED for post #%d - DB status is now "%s"',

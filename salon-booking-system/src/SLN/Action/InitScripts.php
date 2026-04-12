@@ -594,7 +594,7 @@ class SLN_Action_InitScripts
 
 	public static function enqueueIntlTelInput()
 	{
-		wp_enqueue_script('salon-intl-tel-input', SLN_PLUGIN_URL . '/js/intl-tel-input/build/js/intlTelInput.js', array('jquery'), self::ASSETS_VERSION, true);
+		wp_enqueue_script('salon-intl-tel-input', SLN_PLUGIN_URL . '/js/intl-tel-input/build/js/intlTelInput.min.js', array('jquery'), self::ASSETS_VERSION, true);
 		wp_enqueue_style('salon-intl-tel-input', SLN_PLUGIN_URL . '/js/intl-tel-input/build/css/intlTelInput.min.css', array(), self::ASSETS_VERSION, 'all');
 	}
 

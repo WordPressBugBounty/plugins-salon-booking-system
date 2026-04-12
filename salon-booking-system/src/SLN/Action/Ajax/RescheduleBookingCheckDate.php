@@ -18,13 +18,29 @@ class SLN_Action_Ajax_RescheduleBookingCheckDate extends SLN_Action_Ajax_Abstrac
 
 		$booking = $plugin->createBooking( $bookingId );
 
+		// Set the correct shop (location) context from the booking's own meta BEFORE any
+		// availability check runs.  This is the root cause of the recurring reschedule bypass:
+		// the AJAX handler runs in a request where no $_GET['shop'] or POST shop param is present,
+		// so SalonMultishop's handleCurrentShop() never sets a current shop.  Without a shop
+		// context the buildAttendant filter returns a plain SLN_Wrapper_Attendant, and shop-level
+		// availability overrides (e.g. "Gaia works only Wed-Thu at Basingstoke") are invisible to
+		// the validator — every day appears valid.  Pinning the shop from the booking record
+		// guarantees both checkDateTime() and the safety check below operate on the correct rules.
+		if ( class_exists( '\SalonMultishop\Addon' ) && $booking ) {
+			$shopId = $booking->getMeta( 'shop' );
+			if ( $shopId ) {
+				\SalonMultishop\Addon::getInstance()->setCurrentShop( $shopId );
+				SLN_Plugin::addLog( sprintf(
+					'[RESCHEDULE_VALIDATION] SalonMultishop shop context set to shop #%s for booking #%d',
+					$shopId,
+					$bookingId
+				) );
+			}
+		}
+
 		// Use Booking::getAttendantsIds() as the authoritative source of service→attendant mappings.
-		// That method applies the `sln_booking_attendants` filter which add-ons such as SalonMultishop
-		// use to reverse-map their internal shop-attendant IDs back to the base attendant post IDs.
-		// Using the base IDs is critical: the base attendant post carries the configured availability
-		// rules (e.g. "Wednesday & Thursday 9:30-17:00"), whereas the shop-attendant placeholder
-		// stored in _sln_booking_services after evalBookingServices() may have no rules at all,
-		// which would silently let any date/time through validation.
+		// ShopAttendant::getId() delegates to the base attendant's post ID, so the raw
+		// _sln_booking_services meta always holds base IDs regardless of evalBookingServices().
 		$services = array();
 		if ( $booking ) {
 			$services = $booking->getAttendantsIds();
@@ -76,12 +92,13 @@ class SLN_Action_Ajax_RescheduleBookingCheckDate extends SLN_Action_Ajax_Abstrac
 			wp_json_encode( is_array( $errors ) ? $errors : array() )
 		) );
 
-		// --- Filter-bypassing direct safety check ---
-		// Even when the full checkDateTime() machinery passes (e.g. because the buildAttendant
-		// filter returned a shop-attendant placeholder with no availability rules), we still
-		// verify each attendant directly using new SLN_Wrapper_Attendant($id) — no plugin filter,
-		// no createAttendant() chain — so that the attendant's own configured working hours are
-		// always enforced for reschedule operations.
+		// --- Direct safety check ---
+		// Runs even when checkDateTime() passes (defence in depth).
+		// We start from a plain SLN_Wrapper_Attendant (base post ID) then pass it through
+		// the same buildAttendant filter pipeline that checkDateTime() uses.  Now that the
+		// correct shop context has been set above, the filter returns a ShopAttendant wrapper
+		// that applies shop-specific availability overrides (e.g. "Gaia works only Wed-Thu at
+		// Basingstoke") rather than falling back to the base attendant's generic rules.
 		if ( empty( $errors ) ) {
 			$newDateTime = new SLN_DateTime( $date . ' ' . $time );
 			foreach ( $services as $serviceId => $attendantId ) {
@@ -89,18 +106,22 @@ class SLN_Action_Ajax_RescheduleBookingCheckDate extends SLN_Action_Ajax_Abstrac
 				if ( $attendantId <= 0 ) {
 					continue;
 				}
-				$directAttendant = new SLN_Wrapper_Attendant( $attendantId );
-				if ( $directAttendant->isEmpty() ) {
+				$baseAttendant = new SLN_Wrapper_Attendant( $attendantId );
+				if ( $baseAttendant->isEmpty() ) {
 					continue;
 				}
+				// Apply the same buildAttendant filter as checkDateTime() so ShopAttendant
+				// (with shop-specific availability) is used when SalonMultishop is active.
+				$attendantToCheck = apply_filters( 'sln.booking_services.buildAttendant', $baseAttendant );
 				SLN_Plugin::addLog( sprintf(
-					'[RESCHEDULE_VALIDATION] Direct attendant check: #%d (%s) at %s',
+					'[RESCHEDULE_VALIDATION] Direct attendant check: #%d (%s) at %s (class=%s)',
 					$attendantId,
-					$directAttendant->getName(),
-					$newDateTime->format( 'Y-m-d H:i' )
+					$baseAttendant->getName(),
+					$newDateTime->format( 'Y-m-d H:i' ),
+					get_class( $attendantToCheck )
 				) );
-				if ( $directAttendant->isNotAvailableOnDate( $newDateTime ) ) {
-					$errors = SLN_Helper_Availability_ErrorHelper::doAttendantNotAvailable( $directAttendant, $newDateTime );
+				if ( $attendantToCheck->isNotAvailableOnDate( $newDateTime ) ) {
+					$errors = SLN_Helper_Availability_ErrorHelper::doAttendantNotAvailable( $attendantToCheck, $newDateTime );
 					SLN_Plugin::addLog( '[RESCHEDULE_VALIDATION] Direct check: attendant unavailable — blocking reschedule.' );
 					break;
 				}

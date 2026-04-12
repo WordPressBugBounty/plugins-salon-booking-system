@@ -399,9 +399,11 @@
                             self.filterPastTimeSlots();
                         }
                         
-                        // FIX RISCHIO #2: Refresh dates if more than 2 minutes since last refresh
-                        // (Tab was in background for significant time)
-                        if (timeSinceDatesRefresh > 120000) {
+                        // Refresh dates only when the tab has been hidden longer than the
+                        // regular datesRefreshInterval (default 5 min). This prevents the
+                        // visibility event from stacking on top of the periodic timer and
+                        // firing a redundant AJAX call when the user briefly switches tabs.
+                        if (timeSinceDatesRefresh > self.config.datesRefreshInterval) {
                             self.log('Tab became visible after long absence, refreshing dates');
                             self.refreshAvailableDates();
                         }

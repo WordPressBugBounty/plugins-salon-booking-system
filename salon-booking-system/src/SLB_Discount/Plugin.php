@@ -430,7 +430,10 @@ class SLB_Discount_Plugin {
 	}
 
 	public function hook_wp_enqueue_scripts() {
-		wp_enqueue_script('salon-discount', SLN_PLUGIN_URL.'/js/discount/salon-discount.js', array('jquery'), false, true);
+		if ( ! wp_script_is( 'salon', 'enqueued' ) ) {
+			return;
+		}
+		wp_enqueue_script( 'salon-discount', SLN_PLUGIN_URL . '/js/discount/salon-discount.js', array( 'jquery' ), SLN_VERSION, true );
 	}
 
 	public function hook_isSalonPage($ret) {

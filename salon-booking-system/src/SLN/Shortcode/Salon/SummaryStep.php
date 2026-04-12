@@ -272,6 +272,21 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
                 SLN_Plugin::addLog('[SummaryStep] Payment gateway returned error: ' . $error);
             }
 
+            // DEFENSIVE: Reload $bb from the database after the payment handler returns.
+            // IPN handlers (and some other payment methods) update the booking status through
+            // a freshly-created booking object, leaving $bb with a stale post_status.
+            // Without this reload, the DRAFT check below would incorrectly call
+            // setStatus(getCreateStatus() = DRAFT) and overwrite a freshly-PAID booking.
+            if ($bb && $bb->getId()) {
+                clean_post_cache($bb->getId());
+                $bb->reload();
+                SLN_Plugin::addLog(sprintf(
+                    '[SummaryStep] Reloaded booking #%d after dispatchThankyou — status is now: %s',
+                    $bb->getId(),
+                    $bb->getStatus()
+                ));
+            }
+
             // Re-check availability AFTER payment has been processed.
             // The slot could have become unavailable (another booking, settings change) during
             // the time the customer was on the external payment page. Because the payment has
