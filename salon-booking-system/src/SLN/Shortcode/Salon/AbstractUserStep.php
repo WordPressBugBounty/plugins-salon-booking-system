@@ -37,7 +37,7 @@ abstract class SLN_Shortcode_Salon_AbstractUserStep extends SLN_Shortcode_Salon_
                 $data = array_map(function($file) {
                     return array(
                         'subdir' => wp_upload_dir()['subdir'],
-                        'file'   => $file,
+                        'file'   => basename((string) $file),
                     );
                 }, $values[$k]);
                 update_user_meta($errors, '_sln_'.$k, $data);
@@ -197,7 +197,7 @@ abstract class SLN_Shortcode_Salon_AbstractUserStep extends SLN_Shortcode_Salon_
                 $data = array_map(function($file) {
                     return array(
                         'subdir' => wp_upload_dir()['subdir'],
-                        'file'   => $file,
+                        'file'   => basename((string) $file),
                     );
                 }, $data);
             }

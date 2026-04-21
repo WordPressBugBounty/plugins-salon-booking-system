@@ -26,6 +26,10 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
 
   public function execute()
   {
+    if (!current_user_can('manage_salon')) {
+      wp_send_json_error(null, 403);
+    }
+
     $this->attendantMode = get_user_meta(get_current_user_id(), '_assistants_mode', true) == 'true';
     $offset = intval($_GET['offset']) * 60;
     $offsetEnd = isset($_GET['offsetEnd']) ? intval($_GET['offsetEnd']) * 60 : $offset;

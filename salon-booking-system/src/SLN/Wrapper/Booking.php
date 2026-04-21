@@ -501,6 +501,18 @@ class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
         return is_array($transactions) ? $transactions : ($transactions ? array($transactions) : array());
     }
 
+    /**
+     * Return device / browser info captured at booking creation time.
+     *
+     * @return array|null  Keys: user_agent, ip, parsed (platform/os/browser), captured_at.
+     *                     Returns null for bookings created before device-capture was added.
+     */
+    function getDeviceInfo()
+    {
+        $info = get_post_meta( $this->getId(), '_sln_booking_device_info', true );
+        return is_array( $info ) && ! empty( $info ) ? $info : null;
+    }
+
     function getStartsAt( $timezone='' )
     {
 		if($timezone)
@@ -600,6 +612,8 @@ class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
             $this->getStatus(),
             $transactionId
         ));
+
+        $wasPaid = in_array($this->getStatus(), [SLN_Enum_BookingStatus::PAID, SLN_Enum_BookingStatus::CONFIRMED]);
         
         $transactions = $this->getTransactionId();
         
@@ -648,7 +662,9 @@ class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
             ));
         }
 
-	do_action('sln_booking_mark_paid_after', $this);
+        if (!$wasPaid) {
+            do_action('sln_booking_mark_paid_after', $this);
+        }
     }
 
     public function getPayUrl($isPayRemainingAmount = false)

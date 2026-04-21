@@ -491,6 +491,22 @@ class SLN_Wrapper_Booking_Builder
         foreach ($this->data as $k => $v) {
             update_post_meta($id, '_'.SLN_Plugin::POST_TYPE_BOOKING.'_'.$k, $v);
         }
+
+        // Capture device / IP info at booking creation time (stored once, never overwritten).
+        // Skipped for admin-created bookings and REST API requests where no real browser UA is present.
+        $is_admin_create = is_admin() && !( defined('DOING_AJAX') && DOING_AJAX );
+        $is_rest         = defined('REST_REQUEST') && REST_REQUEST;
+        if ( ! $is_admin_create && ! $is_rest ) {
+            $user_agent = isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ) ) : '';
+            $ip_address = $this->getClientIp();
+            update_post_meta( $id, '_sln_booking_device_info', array(
+                'user_agent'  => $user_agent,
+                'ip'          => $ip_address,
+                'parsed'      => $this->parseUserAgent( $user_agent ),
+                'captured_at' => current_time( 'mysql' ),
+            ) );
+        }
+
         $discounts = $this->get('discounts');
         $this->clear($id, $clear);
         
@@ -540,6 +556,91 @@ class SLN_Wrapper_Booking_Builder
         }
         $this->plugin->getBookingCache()->processBooking($lastBooking, true);
 
+    }
+
+    /**
+     * Return the real client IP address, checking CDN / proxy headers first.
+     *
+     * @return string IP address or empty string.
+     */
+    private function getClientIp()
+    {
+        $headers = array(
+            'HTTP_CF_CONNECTING_IP', // Cloudflare
+            'HTTP_X_FORWARDED_FOR',  // Most reverse proxies
+            'HTTP_X_REAL_IP',
+            'REMOTE_ADDR',
+        );
+        foreach ( $headers as $header ) {
+            if ( ! empty( $_SERVER[ $header ] ) ) {
+                $ip = sanitize_text_field( wp_unslash( $_SERVER[ $header ] ) );
+                // X-Forwarded-For can be a comma-separated list; take the first
+                $ip = trim( explode( ',', $ip )[0] );
+                if ( filter_var( $ip, FILTER_VALIDATE_IP ) ) {
+                    return $ip;
+                }
+            }
+        }
+        return '';
+    }
+
+    /**
+     * Parse a User-Agent string into platform, OS, and browser labels.
+     *
+     * @param  string $ua Raw User-Agent string.
+     * @return array  Keys: platform, os, browser (all optional).
+     */
+    private function parseUserAgent( $ua )
+    {
+        if ( empty( $ua ) ) {
+            return array( 'platform' => 'Unknown' );
+        }
+
+        $parsed = array();
+
+        // Platform / device type
+        if ( preg_match( '/iPad/i', $ua ) ) {
+            $parsed['platform'] = 'Tablet';
+            $parsed['os']       = 'iPadOS';
+        } elseif ( preg_match( '/iPhone/i', $ua ) ) {
+            $parsed['platform'] = 'Mobile';
+            $parsed['os']       = 'iOS';
+        } elseif ( preg_match( '/Android.*Mobile/i', $ua ) ) {
+            $parsed['platform'] = 'Mobile';
+            $parsed['os']       = 'Android';
+        } elseif ( preg_match( '/Android/i', $ua ) ) {
+            $parsed['platform'] = 'Tablet';
+            $parsed['os']       = 'Android';
+        } elseif ( preg_match( '/Windows Phone/i', $ua ) ) {
+            $parsed['platform'] = 'Mobile';
+            $parsed['os']       = 'Windows Phone';
+        } elseif ( preg_match( '/Windows/i', $ua ) ) {
+            $parsed['platform'] = 'Desktop';
+            $parsed['os']       = 'Windows';
+        } elseif ( preg_match( '/Macintosh|Mac OS X/i', $ua ) ) {
+            $parsed['platform'] = 'Desktop';
+            $parsed['os']       = 'macOS';
+        } elseif ( preg_match( '/Linux/i', $ua ) ) {
+            $parsed['platform'] = 'Desktop';
+            $parsed['os']       = 'Linux';
+        } else {
+            $parsed['platform'] = 'Unknown';
+        }
+
+        // Browser — order matters: Edge/Opera before Chrome, Chrome before Safari
+        if ( preg_match( '/Edg\//i', $ua ) ) {
+            $parsed['browser'] = 'Edge';
+        } elseif ( preg_match( '/OPR\//i', $ua ) ) {
+            $parsed['browser'] = 'Opera';
+        } elseif ( preg_match( '/Chrome\//i', $ua ) ) {
+            $parsed['browser'] = 'Chrome';
+        } elseif ( preg_match( '/Firefox\//i', $ua ) ) {
+            $parsed['browser'] = 'Firefox';
+        } elseif ( preg_match( '/Safari\//i', $ua ) ) {
+            $parsed['browser'] = 'Safari';
+        }
+
+        return $parsed;
     }
 
     private function getCreateStatus()

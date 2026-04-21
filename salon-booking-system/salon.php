@@ -3,7 +3,7 @@
 /*
 Plugin Name: Salon Booking System - Free Version
 Description: Let your customers book you services through your website. Perfect for hairdressing salons, barber shops and beauty centers.
-Version: 10.30.25
+Version: 10.30.26
 Plugin URI: http://salonbookingsystem.com/
 Author: Salon Booking System
 Author URI: http://salonbookingsystem.com/
@@ -45,7 +45,7 @@ if (defined('SLN_PLUGIN_BASENAME')) {
 define('SLN_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('SLN_PLUGIN_DIR', untrailingslashit(dirname(__FILE__)));
 define('SLN_PLUGIN_URL', untrailingslashit(plugins_url('', __FILE__)));
-define('SLN_VERSION', '10.30.25');
+define('SLN_VERSION', '10.30.26');
 define('SLN_STORE_URL', 'https://salonbookingsystem.com');
 define('SLN_AUTHOR', 'Salon Booking');
 define('SLN_UPLOADS_DIR', wp_upload_dir()['basedir'] . '/sln_uploads/');
@@ -153,6 +153,8 @@ add_action("in_plugin_update_message-" . plugin_basename(__FILE__), function ($p
 	echo '</strong></span>';
 }, 10, 2);
 
+spl_autoload_register($sln_autoload);
+
 add_action('plugins_loaded', function () {
 	add_filter('plugin_locale', function ($locale, $domain) {
 		if ($domain === 'salon-booking-system') {
@@ -167,13 +169,13 @@ add_action('plugins_loaded', function () {
 	// 2. WP_LANG_DIR/loco/plugins/ (Loco Translate custom location)
 	// 3. Plugin's own /languages/ directory (Autore location)
 	load_plugin_textdomain('salon-booking-system', false, basename(SLN_PLUGIN_DIR) . '/languages');
-});
+
+	global $sln_plugin;
+	$sln_plugin = SLN_Plugin::getInstance();
+	do_action('sln.init', $sln_plugin);
+}, 1);
 // phpcs:ignoreFile WordPress.Security.NonceVerification.Missing
 // phpcs:ignoreFile WordPress.Security.NonceVerification.Recommended
-
-spl_autoload_register($sln_autoload);
-$sln_plugin = SLN_Plugin::getInstance();
-do_action('sln.init', $sln_plugin);
 
 // Initialize rollback handler after WordPress is fully loaded (PRO only)
 if (defined('SLN_VERSION_PAY')) {

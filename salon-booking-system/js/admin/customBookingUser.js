@@ -40,24 +40,29 @@ jQuery(function ($) {
 				booking_id: bookingId,
 				nonce:      nonce,
 			},
-			success: function (resp) {
-				var isSuccess = resp && resp.success;
-				var msg       = (resp && resp.message) ? resp.message : "An unexpected error occurred.";
+		success: function (resp) {
+			var isSuccess = resp && resp.success;
+			var msg       = (resp && resp.message) ? resp.message : "An unexpected error occurred.";
 
-				$result
-					.addClass(isSuccess ? "sln-alert sln-alert--success" : "sln-alert sln-alert--problem")
-					.html(msg)
-					.show();
+			$result
+				.addClass(isSuccess ? "sln-alert sln-alert--success" : "sln-alert sln-alert--problem")
+				.html(msg)
+				.show();
 
-				if (resp && resp.status_updated) {
-					// Reload the page so the booking status badge reflects the change
-					setTimeout(function () {
-						window.location.reload();
-					}, 1500);
-				} else {
-					$btn.prop("disabled", false).text(label);
-				}
-			},
+			// Render rich payment details panel if returned by the server
+			if (resp && resp.payment_details && Object.keys(resp.payment_details).length) {
+				slnRenderPaymentDetailsPanel(resp.payment_details, resp.gateway || gateway);
+			}
+
+			if (resp && resp.status_updated) {
+				// Reload the page so the booking status badge reflects the change
+				setTimeout(function () {
+					window.location.reload();
+				}, 1500);
+			} else {
+				$btn.prop("disabled", false).text(label);
+			}
+		},
 			error: function (xhr, status) {
 				var msg = status === "timeout"
 					? "Request timed out. Stripe may be slow — please try again."
@@ -75,6 +80,7 @@ jQuery(function ($) {
 	$(document).on("change", 'select[name="_sln_booking[discounts][]"]', function () {
 		sln_calculateTotal();
 	});
+
 	
 	// Auto-calculate when services change
 	$(document).on("change", 'select[name="_sln_booking[service][]"]', function () {
@@ -2197,3 +2203,81 @@ sln_booking_list_view();
 		});
 	});
 })(jQuery);
+
+/**
+ * Render the rich Stripe payment details panel (#sln-payment-details-panel).
+ * Called after a successful "Refresh Payment Status" AJAX response.
+ *
+ * @param {Object} details  payment_details object from PHP response
+ * @param {string} gateway  'stripe' | 'paypal'
+ */
+function slnRenderPaymentDetailsPanel(details, gateway) {
+	var $panel = jQuery("#sln-payment-details-panel");
+	if (!$panel.length) return;
+
+	var walletLabels = {
+		apple_pay:   "🍎 Apple Pay",
+		google_pay:  "🤖 Google Pay",
+		link:        "🔗 Stripe Link",
+		samsung_pay: "Samsung Pay"
+	};
+	var cardIcons = {
+		visa:       "💳 Visa",
+		mastercard: "💳 Mastercard",
+		amex:       "💳 Amex",
+		discover:   "💳 Discover",
+		jcb:        "💳 JCB",
+		unionpay:   "💳 UnionPay"
+	};
+
+	var rows = [];
+
+	if (details.card_brand) {
+		var cardLabel = cardIcons[details.card_brand] || ("💳 " + details.card_brand.charAt(0).toUpperCase() + details.card_brand.slice(1));
+		if (details.card_last4) { cardLabel += " ****" + details.card_last4; }
+		rows.push(["Card", cardLabel]);
+	}
+	if (details.wallet_type) {
+		var walletLabel = walletLabels[details.wallet_type] ||
+			details.wallet_type.replace(/_/g, " ").replace(/\b\w/g, function(l) { return l.toUpperCase(); });
+		rows.push(["Paid via", walletLabel]);
+	}
+	if (details.charge_country) {
+		rows.push(["Card Country", details.charge_country]);
+	}
+	if (details.charge_date) {
+		rows.push(["Charged On", details.charge_date]);
+	}
+	if (typeof details.refunded !== "undefined") {
+		var refundLabel;
+		if (details.refunded) {
+			refundLabel = details.amount_refunded
+				? "<span style='color:#dc3232;font-weight:600;'>Refunded (" + (details.amount_refunded / 100).toFixed(2) + ")</span>"
+				: "<span style='color:#dc3232;font-weight:600;'>Refunded</span>";
+		} else {
+			refundLabel = "<span style='color:#46b450;font-weight:600;'>None</span>";
+		}
+		rows.push(["Refund", refundLabel]);
+	}
+	if (details.receipt_url) {
+		rows.push(["Receipt", "<a href='" + details.receipt_url + "' target='_blank' style='font-size:12px;'>View Receipt ↗</a>"]);
+	}
+
+	if (!rows.length) { return; }
+
+	var gridItems = rows.map(function(row) {
+		return "<div style='min-width:150px;'>" +
+			"<div style='color:#999;font-size:11px;text-transform:uppercase;letter-spacing:.4px;'>" + row[0] + "</div>" +
+			"<div style='font-weight:600;margin-top:2px;'>" + row[1] + "</div>" +
+			"</div>";
+	}).join("");
+
+	$panel.html(
+		"<div style='border:1px solid #e0e0e0;border-radius:6px;padding:14px 16px;background:#fafafa;font-size:13px;'>" +
+			"<strong style='font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:#666;'>Payment Details</strong>" +
+			"<div style='display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-top:10px;'>" +
+			gridItems +
+			"</div>" +
+		"</div>"
+	).show();
+}

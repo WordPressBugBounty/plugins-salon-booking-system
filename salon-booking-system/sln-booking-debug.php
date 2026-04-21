@@ -362,7 +362,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 /**
  * Helper function to get status class
  */
-function get_status_class($status) {
+function sln_debug_get_status_class($status) {
     $status = str_replace(['sln-b-', '-'], '', $status);
     return 'status-' . $status;
 }
@@ -370,7 +370,7 @@ function get_status_class($status) {
 /**
  * Helper function to display booking details
  */
-function display_booking_details($post, $show_meta = true) {
+function sln_debug_display_booking_details($post, $show_meta = true) {
     global $wpdb;
     
     $status_labels = [
@@ -387,7 +387,7 @@ function display_booking_details($post, $show_meta = true) {
     ];
     
     $status_label = isset($status_labels[$post->post_status]) ? $status_labels[$post->post_status] : $post->post_status;
-    $status_class = get_status_class($post->post_status);
+    $status_class = sln_debug_get_status_class($post->post_status);
     
     // Get all booking meta
     $meta = get_post_meta($post->ID);
@@ -605,7 +605,7 @@ if (isset($_POST['fix_status']) && isset($_POST['fix_booking_id']) && isset($_PO
             
             // Refresh and display the updated booking
             $post = get_post($fix_booking_id);
-            display_booking_details($post);
+            sln_debug_display_booking_details($post);
         } else {
             echo '<div class="results-card" style="background: rgba(233, 69, 96, 0.1); border: 1px solid var(--danger);">';
             echo '<h2 style="color: var(--danger);">❌ Error</h2>';
@@ -637,7 +637,7 @@ if (isset($_POST['search'])) {
             echo '<div class="results-card" style="background: rgba(0, 210, 106, 0.1); border: 1px solid var(--success);">';
             echo '<h2 style="color: var(--success);">✅ Booking Found by ID</h2>';
             echo '</div>';
-            display_booking_details($post);
+            sln_debug_display_booking_details($post);
         } else if ($post) {
             echo '<div class="results-card" style="background: rgba(255, 193, 7, 0.1); border: 1px solid var(--warning);">';
             echo '<h2 style="color: var(--warning);">⚠️ Post Found but NOT a Booking</h2>';
@@ -679,7 +679,7 @@ if (isset($_POST['search'])) {
             echo '</div>';
             
             foreach ($results as $post) {
-                display_booking_details($post, count($results) === 1);
+                sln_debug_display_booking_details($post, count($results) === 1);
             }
         } else if (!$found) {
             echo '<div class="results-card" style="background: rgba(233, 69, 96, 0.1); border: 1px solid var(--danger);">';
@@ -791,7 +791,7 @@ if (isset($_POST['show_errors'])) {
     
     if ($results) {
         foreach ($results as $post) {
-            display_booking_details($post, false);
+            sln_debug_display_booking_details($post, false);
         }
     } else {
         echo '<p style="color: var(--success);">✅ No error bookings found.</p>';
@@ -921,7 +921,7 @@ if (isset($_POST['check_statuses'])) {
         $total = 0;
         foreach ($results as $row) {
             $total += $row->count;
-            $status_class = get_status_class($row->post_status);
+            $status_class = sln_debug_get_status_class($row->post_status);
             echo '<div class="data-item">';
             echo '<div class="label">' . esc_html($row->post_status) . '</div>';
             echo '<div class="value"><span class="status-badge ' . esc_attr($status_class) . '">' . esc_html($row->count) . ' bookings</span></div>';
@@ -942,7 +942,7 @@ if (isset($_POST['check_statuses'])) {
         echo '<thead><tr><th>ID</th><th>Title</th><th>Status</th><th>Created</th></tr></thead>';
         echo '<tbody>';
         foreach ($recent as $post) {
-            $status_class = get_status_class($post->post_status);
+            $status_class = sln_debug_get_status_class($post->post_status);
             echo '<tr>';
             echo '<td>' . esc_html($post->ID) . '</td>';
             echo '<td>' . esc_html($post->post_title) . '</td>';

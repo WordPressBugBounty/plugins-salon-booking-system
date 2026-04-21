@@ -71,7 +71,7 @@ class SLB_Discount_Plugin {
 		add_action('admin_init', array($this, 'hook_admin_init'));
 
 		add_action('admin_enqueue_scripts', array($this, 'hook_admin_enqueue_scripts'));
-		add_action('wp_enqueue_scripts', array($this, 'hook_wp_enqueue_scripts'));
+		add_action('wp_enqueue_scripts', array($this, 'hook_wp_enqueue_scripts'), 100000);
 
 		add_filter('sln.func.isSalonPage', array($this, 'hook_isSalonPage'));
 
@@ -430,10 +430,9 @@ class SLB_Discount_Plugin {
 	}
 
 	public function hook_wp_enqueue_scripts() {
-		if ( ! wp_script_is( 'salon', 'enqueued' ) ) {
-			return;
-		}
-		wp_enqueue_script( 'salon-discount', SLN_PLUGIN_URL . '/js/discount/salon-discount.js', array( 'jquery' ), SLN_VERSION, true );
+		// salon-discount.js is now enqueued via SLN_Action_InitScripts::preloadScripts()
+		// which covers both the wp_enqueue_scripts path and the late preloadEnqueueScript()
+		// path used by page builders (Kadence, Elementor, etc.).
 	}
 
 	public function hook_isSalonPage($ret) {

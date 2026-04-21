@@ -179,7 +179,7 @@ class SLN_Shortcode_Salon_DetailsStep extends SLN_Shortcode_Salon_AbstractUserSt
                         $data = array_map(function($file) {
                             return array(
                                 'subdir' => wp_upload_dir()['subdir'],
-                                'file'   => $file,
+                                'file'   => basename((string) $file),
                             );
                         }, $values[$k]);
                         update_user_meta($current_user->ID, '_sln_'.$k, $data);

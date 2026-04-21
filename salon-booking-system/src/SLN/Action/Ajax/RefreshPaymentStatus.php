@@ -69,7 +69,7 @@ class SLN_Action_Ajax_RefreshPaymentStatus extends SLN_Action_Ajax_Abstract
 
                 $paymentIntent = \Stripe\PaymentIntent::retrieve( array(
                     'id'     => $session->payment_intent,
-                    'expand' => array( 'latest_charge' ),
+                    'expand' => array( 'latest_charge', 'payment_method' ),
                 ) );
 
                 if ( $paymentIntent->status === 'succeeded' ) {
@@ -77,6 +77,12 @@ class SLN_Action_Ajax_RefreshPaymentStatus extends SLN_Action_Ajax_Abstract
                     // deprecated charges list for older API versions.
                     $charge        = $paymentIntent->latest_charge ?? ( $paymentIntent->charges->data[0] ?? null );
                     $transactionId = $charge ? $charge->balance_transaction : $paymentIntent->id;
+
+                    // ---- Build and cache rich payment details ----
+                    $paymentDetails = $this->extractStripePaymentDetails( $paymentIntent, $charge );
+                    if ( ! empty( $paymentDetails ) ) {
+                        update_post_meta( $booking->getId(), '_sln_booking_payment_details', $paymentDetails );
+                    }
 
                     $alreadyPaid = in_array( $booking->getStatus(), array( SLN_Enum_BookingStatus::PAID, SLN_Enum_BookingStatus::CONFIRMED ), true );
 
@@ -100,23 +106,25 @@ class SLN_Action_Ajax_RefreshPaymentStatus extends SLN_Action_Ajax_Abstract
                             ) );
                         }
                         return array(
-                            'success'        => true,
-                            'status_updated' => false,
-                            'gateway'        => 'stripe',
-                            'transaction_id' => $transactionId,
-                            'message'        => __( 'Payment verified via Stripe. This booking was already marked as paid.', 'salon-booking-system' ),
+                            'success'         => true,
+                            'status_updated'  => false,
+                            'gateway'         => 'stripe',
+                            'transaction_id'  => $transactionId,
+                            'payment_details' => $paymentDetails,
+                            'message'         => __( 'Payment verified via Stripe. This booking was already marked as paid.', 'salon-booking-system' ),
                         );
                     }
 
                     $booking->markPaid( $transactionId, 0 );
 
                     return array(
-                        'success'        => true,
-                        'status_updated' => true,
-                        'gateway'        => 'stripe',
-                        'transaction_id' => $transactionId,
-                        'new_status'     => SLN_Enum_BookingStatus::getLabel( SLN_Enum_BookingStatus::PAID ),
-                        'message'        => __( 'Payment confirmed via Stripe. Booking status has been updated to Paid.', 'salon-booking-system' ),
+                        'success'         => true,
+                        'status_updated'  => true,
+                        'gateway'         => 'stripe',
+                        'transaction_id'  => $transactionId,
+                        'payment_details' => $paymentDetails,
+                        'new_status'      => SLN_Enum_BookingStatus::getLabel( SLN_Enum_BookingStatus::PAID ),
+                        'message'         => __( 'Payment confirmed via Stripe. Booking status has been updated to Paid.', 'salon-booking-system' ),
                     );
                 }
 
@@ -161,6 +169,42 @@ class SLN_Action_Ajax_RefreshPaymentStatus extends SLN_Action_Ajax_Abstract
                 ),
             );
         }
+    }
+
+    /**
+     * Extract rich payment details from a Stripe PaymentIntent + Charge for caching and display.
+     *
+     * @param \Stripe\PaymentIntent $paymentIntent
+     * @param \Stripe\Charge|null   $charge
+     * @return array
+     */
+    private function extractStripePaymentDetails( $paymentIntent, $charge )
+    {
+        $details = array();
+
+        // Card brand, last4, wallet type
+        $pm = isset( $paymentIntent->payment_method ) ? $paymentIntent->payment_method : null;
+        if ( $pm && isset( $pm->card ) ) {
+            $details['card_brand'] = $pm->card->brand ?? '';
+            $details['card_last4'] = $pm->card->last4 ?? '';
+            if ( isset( $pm->card->wallet ) && $pm->card->wallet ) {
+                $details['wallet_type'] = $pm->card->wallet->type ?? '';
+            }
+        }
+
+        // Charge-level data
+        if ( $charge ) {
+            $details['receipt_url']     = $charge->receipt_url ?? '';
+            $details['charge_country']  = $charge->billing_details->address->country ?? '';
+            $details['charge_date']     = ! empty( $charge->created )
+                ? gmdate( 'Y-m-d H:i:s', $charge->created )
+                : '';
+            $details['charge_amount']   = $charge->amount ?? 0;
+            $details['refunded']        = (bool) ( $charge->refunded ?? false );
+            $details['amount_refunded'] = $charge->amount_refunded ?? 0;
+        }
+
+        return $details;
     }
 
     private function refreshPaypal( $booking )

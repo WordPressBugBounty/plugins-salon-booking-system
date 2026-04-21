@@ -546,6 +546,12 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                             <?php endif; ?>
                         </div>
                     </div>
+                    <div class="col-xs-12 col-md-6">
+                        <div class="sln-checkbox--nu- sln-switch">
+                            <input type="checkbox" id="dont-notify-customer" name="_sln_booking_dont_notify_customer" value="1" <?php if ( ! $booking->getNotifyCustomer() ) echo 'checked'; ?> />
+                            <label for="dont-notify-customer"><?php esc_html_e('Do not notify customer', 'salon-booking-system') ?></label>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -640,7 +646,52 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
 
         <div id="sln-booking__totals" role="tabpanel" class="sln-box sln-box--main tab-pane sln-admin__tabpanel sln-admin__tabpanel--totals">
             <h4 class="sln-box-title--nu--sec"><?php esc_html_e('Totals', 'salon-booking-system'); ?></h4>
+            <?php
+            // ---- Payment info detection (used throughout this section) ----
+            $sln_pm_stripe_session = $booking->getMeta('stripe_session_id');
+            $sln_pm_paypal_data    = get_post_meta($booking->getId(), '_sln_paypal_return_data', true);
+            $sln_pm_paypal_token   = $booking->getMeta('paypal_token');
+            $sln_pm_is_stripe      = !empty($sln_pm_stripe_session);
+            $sln_pm_is_paypal      = !empty($sln_pm_paypal_data) || !empty($sln_pm_paypal_token);
+            $sln_pm_is_live        = $sln_pm_is_stripe && strpos($sln_pm_stripe_session, '_live_') !== false;
+            $sln_pm_stripe_prefix  = $sln_pm_is_live ? '' : 'test/';
+            $sln_pm_cached_details = get_post_meta($booking->getId(), '_sln_booking_payment_details', true);
+            $sln_pm_device_info    = $booking->getDeviceInfo();
+            ?>
             <div class="sln-box__fl sln-box__fl--75">
+
+                <?php // ---- Payment Gateway Badge ----
+                if ($sln_pm_is_stripe || $sln_pm_is_paypal) : ?>
+                <div class="sln-box__fl__item sln-box__fl__item--2col sln-input--simple" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                    <div>
+                        <label style="margin-bottom:4px;"><?php esc_html_e('Payment Gateway', 'salon-booking-system'); ?></label>
+                        <?php if ($sln_pm_is_stripe) : ?>
+                            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                                <span style="display:inline-flex;align-items:center;gap:5px;background:#635bff;color:#fff;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:600;letter-spacing:.3px;">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z" fill="#fff"/></svg>
+                                    Stripe
+                                </span>
+                                <?php if (!$sln_pm_is_live) : ?>
+                                    <span style="background:#ffc107;color:#333;padding:2px 7px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.5px;">TEST MODE</span>
+                                <?php endif; ?>
+                                <?php if ($sln_pm_stripe_session) : ?>
+                                    <a href="https://dashboard.stripe.com/<?php echo esc_attr($sln_pm_stripe_prefix); ?>checkout/sessions/<?php echo esc_attr($sln_pm_stripe_session); ?>"
+                                       target="_blank"
+                                       style="font-size:12px;text-decoration:none;color:#635bff;"
+                                       title="<?php esc_attr_e('Open session in Stripe Dashboard', 'salon-booking-system'); ?>">
+                                        <?php esc_html_e('View Session ↗', 'salon-booking-system'); ?>
+                                    </a>
+                                <?php endif; ?>
+                            </div>
+                        <?php elseif ($sln_pm_is_paypal) : ?>
+                            <div style="display:inline-flex;align-items:center;gap:5px;background:#003087;color:#fff;padding:4px 10px;border-radius:4px;font-size:12px;font-weight:600;">
+                                PayPal
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+
                 <div class="sln-box__fl__item sln-input--simple">
                     <div class="form-group sln_meta_field sln-select">
                         <label><?php esc_html_e('Duration', 'salon-booking-system'); ?></label>
@@ -654,9 +705,59 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                         $booking->getAmount()
                     ); ?>
                 </div>
-                <?php echo $booking->getTransactionId() ? '<div class="sln-box__fl__item sln-box__fl__item--transaction sln-input--simple"><label>' . esc_html__("Transaction ID", 'salon-booking-system') . '</label><h5 class="sln-box-title--nu--ter sln-box-title--nu--dark">' . esc_attr(implode(', ', $booking->getTransactionId())) . '</h5></div>' :
-                    '';
+
+                <?php // ---- Transaction ID (linked) ----
+                $sln_pm_txn_ids = $booking->getTransactionId();
+                if ($sln_pm_txn_ids) :
+                    $sln_pm_txn_display = implode(', ', $sln_pm_txn_ids);
+                    $sln_pm_first_txn   = $sln_pm_txn_ids[0];
+                    $sln_pm_txn_url     = '';
+                    if ($sln_pm_is_stripe) {
+                        if (strpos($sln_pm_first_txn, 'txn_') === 0) {
+                            $sln_pm_txn_url = 'https://dashboard.stripe.com/' . $sln_pm_stripe_prefix . 'balance/history/' . $sln_pm_first_txn;
+                        } elseif (strpos($sln_pm_first_txn, 'ch_') === 0 || strpos($sln_pm_first_txn, 'pi_') === 0) {
+                            $sln_pm_txn_url = 'https://dashboard.stripe.com/' . $sln_pm_stripe_prefix . 'payments/' . $sln_pm_first_txn;
+                        }
+                    } elseif ($sln_pm_is_paypal) {
+                        $sln_pm_txn_url = 'https://www.paypal.com/activity/payment/' . $sln_pm_first_txn;
+                    }
                 ?>
+                <div class="sln-box__fl__item sln-box__fl__item--transaction sln-input--simple">
+                    <label><?php esc_html_e('Transaction ID', 'salon-booking-system'); ?></label>
+                    <h5 class="sln-box-title--nu--ter sln-box-title--nu--dark" style="word-break:break-all;">
+                        <?php if ($sln_pm_txn_url) : ?>
+                            <a href="<?php echo esc_url($sln_pm_txn_url); ?>" target="_blank" title="<?php esc_attr_e('Open in payment dashboard', 'salon-booking-system'); ?>" style="color:inherit;">
+                                <?php echo esc_html($sln_pm_txn_display); ?> <span style="font-size:.75em;opacity:.7;">↗</span>
+                            </a>
+                        <?php else : ?>
+                            <?php echo esc_html($sln_pm_txn_display); ?>
+                        <?php endif; ?>
+                    </h5>
+                </div>
+                <?php endif; // transaction ID
+
+                // ---- Device Info (Tier 3 — captured for bookings made after upgrade) ----
+                if (!empty($sln_pm_device_info) && !empty($sln_pm_device_info['parsed'])) :
+                    $sln_pm_parsed = $sln_pm_device_info['parsed'];
+                    $sln_pm_platform_icons = array('Mobile' => '📱', 'Tablet' => '📲', 'Desktop' => '🖥️');
+                    $sln_pm_platform_icon  = isset($sln_pm_platform_icons[$sln_pm_parsed['platform']]) ? $sln_pm_platform_icons[$sln_pm_parsed['platform']] : '🌐';
+                ?>
+                <div class="sln-box__fl__item sln-input--simple">
+                    <label><?php esc_html_e('Booking Device', 'salon-booking-system'); ?></label>
+                    <div style="font-size:13px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px;">
+                        <span title="<?php echo esc_attr($sln_pm_parsed['platform'] ?? ''); ?>"><?php echo esc_html($sln_pm_platform_icon); ?></span>
+                        <?php if (!empty($sln_pm_parsed['os'])) : ?>
+                            <span style="background:#f0f0f0;padding:2px 7px;border-radius:3px;"><?php echo esc_html($sln_pm_parsed['os']); ?></span>
+                        <?php endif; ?>
+                        <?php if (!empty($sln_pm_parsed['browser'])) : ?>
+                            <span style="background:#f0f0f0;padding:2px 7px;border-radius:3px;"><?php echo esc_html($sln_pm_parsed['browser']); ?></span>
+                        <?php endif; ?>
+                        <?php if (!empty($sln_pm_device_info['ip'])) : ?>
+                            <span style="color:#999;font-size:11px;" title="<?php esc_attr_e('Customer IP at booking time', 'salon-booking-system'); ?>"><?php echo esc_html($sln_pm_device_info['ip']); ?></span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php endif; // device info ?>
                 <?php if ($settings->isTipRequestEnabled()): ?>
                     <div class="sln-box__fl__item sln-input--simple">
                         <?php $helper->showFieldText(
@@ -752,11 +853,8 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                     <span class="sln-calc-total-loading"></span>
                 </div>
 
-                <?php
-                $sln_stripe_session_id  = $booking->getMeta('stripe_session_id');
-                $sln_paypal_return_data = get_post_meta($booking->getId(), '_sln_paypal_return_data', true);
-                if ($sln_stripe_session_id || $sln_paypal_return_data) :
-                    $sln_gateway_label = $sln_stripe_session_id ? __('Stripe', 'salon-booking-system') : __('PayPal', 'salon-booking-system');
+                <?php if ($sln_pm_is_stripe || $sln_pm_is_paypal) :
+                    $sln_gateway_label = $sln_pm_is_stripe ? __('Stripe', 'salon-booking-system') : __('PayPal', 'salon-booking-system');
                 ?>
                 <div class="sln-box__fl__item sln-box__fl__item--2col" id="sln-refresh-payment-wrap">
                     <button
@@ -764,19 +862,100 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                         id="sln-refresh-payment-status"
                         data-booking-id="<?php echo intval($booking->getId()); ?>"
                         data-nonce="<?php echo esc_attr(wp_create_nonce('sln_refresh_payment_status')); ?>"
-                        data-gateway="<?php echo esc_attr($sln_stripe_session_id ? 'stripe' : 'paypal'); ?>"
+                        data-gateway="<?php echo esc_attr($sln_pm_is_stripe ? 'stripe' : 'paypal'); ?>"
                     >
-                        <?php
-                        printf(
-                            /* translators: %s: Payment gateway name (Stripe or PayPal) */
+                        <?php printf(
+                            /* translators: %s: Payment gateway name */
                             esc_html__('Refresh %s Payment Status', 'salon-booking-system'),
                             esc_html($sln_gateway_label)
-                        );
-                        ?>
+                        ); ?>
                     </button>
                     <div id="sln-refresh-payment-result" style="display:none; margin-top:8px; padding:8px 12px; border-radius:4px; font-size:13px;"></div>
                 </div>
-                <?php endif; ?>
+
+                <?php // ---- Rich Payment Details Panel (Tier 2) ----
+                // Pre-populated from cached meta; also refreshed dynamically by JS after AJAX call
+                $sln_pm_has_cached = !empty($sln_pm_cached_details) && is_array($sln_pm_cached_details);
+                ?>
+                <div class="sln-box__fl__item sln-box__fl__item--2col" id="sln-payment-details-panel"
+                     style="<?php echo $sln_pm_has_cached ? '' : 'display:none;'; ?>">
+                    <?php if ($sln_pm_has_cached) :
+                        $d = $sln_pm_cached_details;
+                        $sln_pm_wallet_labels = array(
+                            'apple_pay'  => '🍎 Apple Pay',
+                            'google_pay' => '🤖 Google Pay',
+                            'link'       => '🔗 Stripe Link',
+                            'samsung_pay'=> 'Samsung Pay',
+                        );
+                        $sln_pm_card_brand_icons = array(
+                            'visa'       => '💳 Visa',
+                            'mastercard' => '💳 Mastercard',
+                            'amex'       => '💳 Amex',
+                            'discover'   => '💳 Discover',
+                            'jcb'        => '💳 JCB',
+                            'unionpay'   => '💳 UnionPay',
+                        );
+                        ?>
+                        <div style="border:1px solid #e0e0e0;border-radius:6px;padding:14px 16px;background:#fafafa;font-size:13px;">
+                            <strong style="font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:#666;"><?php esc_html_e('Payment Details', 'salon-booking-system'); ?></strong>
+                            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-top:10px;">
+                                <?php if (!empty($d['card_brand'])) : ?>
+                                <div>
+                                    <div style="color:#999;font-size:11px;text-transform:uppercase;letter-spacing:.4px;"><?php esc_html_e('Card', 'salon-booking-system'); ?></div>
+                                    <div style="font-weight:600;margin-top:2px;">
+                                        <?php echo esc_html(isset($sln_pm_card_brand_icons[$d['card_brand']]) ? $sln_pm_card_brand_icons[$d['card_brand']] : '💳 ' . ucfirst($d['card_brand'])); ?>
+                                        <?php if (!empty($d['card_last4'])) : ?>
+                                            ****<?php echo esc_html($d['card_last4']); ?>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+                                <?php if (!empty($d['wallet_type'])) : ?>
+                                <div>
+                                    <div style="color:#999;font-size:11px;text-transform:uppercase;letter-spacing:.4px;"><?php esc_html_e('Paid via', 'salon-booking-system'); ?></div>
+                                    <div style="font-weight:600;margin-top:2px;"><?php echo esc_html(isset($sln_pm_wallet_labels[$d['wallet_type']]) ? $sln_pm_wallet_labels[$d['wallet_type']] : ucfirst(str_replace('_', ' ', $d['wallet_type']))); ?></div>
+                                </div>
+                                <?php endif; ?>
+                                <?php if (!empty($d['charge_country'])) : ?>
+                                <div>
+                                    <div style="color:#999;font-size:11px;text-transform:uppercase;letter-spacing:.4px;"><?php esc_html_e('Card Country', 'salon-booking-system'); ?></div>
+                                    <div style="font-weight:600;margin-top:2px;"><?php echo esc_html($d['charge_country']); ?></div>
+                                </div>
+                                <?php endif; ?>
+                                <?php if (!empty($d['charge_date'])) : ?>
+                                <div>
+                                    <div style="color:#999;font-size:11px;text-transform:uppercase;letter-spacing:.4px;"><?php esc_html_e('Charged On', 'salon-booking-system'); ?></div>
+                                    <div style="font-weight:600;margin-top:2px;"><?php echo esc_html(date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($d['charge_date']))); ?></div>
+                                </div>
+                                <?php endif; ?>
+                                <?php if (isset($d['refunded'])) : ?>
+                                <div>
+                                    <div style="color:#999;font-size:11px;text-transform:uppercase;letter-spacing:.4px;"><?php esc_html_e('Refund', 'salon-booking-system'); ?></div>
+                                    <div style="font-weight:600;margin-top:2px;color:<?php echo $d['refunded'] ? '#dc3232' : '#46b450'; ?>;">
+                                        <?php if ($d['refunded']) :
+                                            $refundedAmt = !empty($d['amount_refunded']) ? $settings->getCurrencySymbol() . number_format($d['amount_refunded'] / 100, 2) : '';
+                                            echo esc_html($refundedAmt ? sprintf(__('Refunded (%s)', 'salon-booking-system'), $refundedAmt) : __('Refunded', 'salon-booking-system'));
+                                        else :
+                                            esc_html_e('None', 'salon-booking-system');
+                                        endif; ?>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+                                <?php if (!empty($d['receipt_url'])) : ?>
+                                <div>
+                                    <div style="color:#999;font-size:11px;text-transform:uppercase;letter-spacing:.4px;"><?php esc_html_e('Receipt', 'salon-booking-system'); ?></div>
+                                    <div style="margin-top:2px;">
+                                        <a href="<?php echo esc_url($d['receipt_url']); ?>" target="_blank" style="font-size:12px;">
+                                            <?php esc_html_e('View Receipt ↗', 'salon-booking-system'); ?>
+                                        </a>
+                                    </div>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    <?php endif; // has cached details ?>
+                </div>
+                <?php endif; // is stripe or paypal ?>
 
             </div>
         </div><!-- sln-booking__totals // END -->

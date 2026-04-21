@@ -518,7 +518,7 @@ $loader_svg = '<svg class="ext-loader-icon" xmlns="http://www.w3.org/2000/svg" v
                             <div class="ext-banner__plan-desc"><?php esc_html_e( 'Perfect for small salons and individual stylists', 'salon-booking-system' ); ?></div>
                         </div>
                         <div class="ext-banner__plan-price">
-                            <div class="ext-banner__plan-amount">$59</div>
+                            <div class="ext-banner__plan-amount">€89</div>
                             <div class="ext-banner__plan-period"><?php esc_html_e( '/year', 'salon-booking-system' ); ?></div>
                         </div>
                     </div>
@@ -534,7 +534,7 @@ $loader_svg = '<svg class="ext-loader-icon" xmlns="http://www.w3.org/2000/svg" v
                             <div class="ext-banner__plan-desc"><?php esc_html_e( 'Advanced features for growing salon businesses', 'salon-booking-system' ); ?></div>
                         </div>
                         <div class="ext-banner__plan-price">
-                            <div class="ext-banner__plan-amount">$129</div>
+                            <div class="ext-banner__plan-amount">€169</div>
                             <div class="ext-banner__plan-period"><?php esc_html_e( '/year', 'salon-booking-system' ); ?></div>
                         </div>
                     </div>

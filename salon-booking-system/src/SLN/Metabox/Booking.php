@@ -34,14 +34,6 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
             'normal',
             'high'
         );
-        add_meta_box(
-            $pt . '-notify',
-            __('Customer notification', 'salon-booking-system'),
-            array($this, 'notify_meta_box'),
-            $pt,
-            'side',
-            'low'
-        );
     }
 
 
@@ -119,21 +111,6 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
             )
         );
         do_action($this->getPostType().'_details_meta_box', $object, $box);
-    }
-
-    public function notify_meta_box($object, $box)
-    {
-        if(in_array($object->post_status,array('draft','auto-draft')))
-            return '';
-        ?>
-        <input id="dont-notify-customer" name="_sln_booking_dont_notify_customer" type="checkbox" style="margin-right:5px" value="1" <?php
-        $booking = new SLN_Wrapper_Booking($object);
-        if(!$booking->getNotifyCustomer()) {
-            echo 'checked';
-        }
-        ?>/><label for="dont-notify-customer"><span style="vertical-align:middle"><?php esc_html_e('Do not notify customer', 'salon-booking-system') ?></span></label>
-        <?php
-        do_action($this->getPostType() . '_notify_meta_box', $object, $box);
     }
 
     protected function getFieldList()

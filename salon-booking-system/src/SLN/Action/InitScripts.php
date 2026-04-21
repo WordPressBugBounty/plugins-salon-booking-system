@@ -127,7 +127,14 @@ class SLN_Action_InitScripts
 			true
 		);
 		wp_enqueue_script('salon', SLN_PLUGIN_URL . '/js/salon.js', array('jquery', 'salon-raty'), self::ASSETS_VERSION, true);
-		
+
+		// Enqueue discount JS alongside salon.js so it is available regardless of
+		// whether scripts are loaded via wp_enqueue_scripts or the late preloadEnqueueScript()
+		// path (used by page builders like Kadence Blocks that store shortcodes inside blocks).
+		if (class_exists('SLB_Discount_Plugin')) {
+			wp_enqueue_script('salon-discount', SLN_PLUGIN_URL . '/js/discount/salon-discount.js', array('jquery'), SLN_VERSION, true);
+		}
+
 		// FEATURE: Client-side time filtering to prevent past slot selection
 		// Filters out time slots that have passed for users with long sessions
 		// Reduces "slot no longer available" errors by ~70%

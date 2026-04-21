@@ -138,18 +138,19 @@ class SLN_Plugin
 
 	$settings['attachments'] = array();
     $additional_fields = SLN_Enum_CheckoutFields::additional();
+    $uploads_basedir = realpath(wp_get_upload_dir()['basedir']);
     foreach($additional_fields as $field){
         if($field['type'] === 'file' && isset($data['booking'])){
             $attachments = $data['booking']->getMeta($field['key']);
             if(is_array($attachments)){
                 foreach($data['booking']->getMeta($field['key']) as $f){
                     if($f){
-                        $settings['attachments'][] = implode('/', array_filter(array(wp_get_upload_dir()['basedir'], trim($f['subdir'], '/'), $f['file'])));
+                        $candidate = implode('/', array_filter(array(wp_get_upload_dir()['basedir'], trim($f['subdir'], '/'), basename((string) $f['file']))));
+                        $real = realpath($candidate);
+                        if ($real && $uploads_basedir && strpos($real, $uploads_basedir) === 0) {
+                            $settings['attachments'][] = $real;
+                        }
                     }
-                }
-            }else{
-                if($attachments){
-                    $settings['attachments'][] = implode('/', array_filter(array(wp_get_upload_dir()['basedir'], trim($f['subdir'], '/'), $attachments['file'])));
                 }
             }
         }

@@ -188,17 +188,15 @@ final class SLN_Wrapper_Booking_Services {
                 'resource'      => $resource,
 			);
 			if(!$parallelExec){
-				// Optimize scheduling: next service starts during previous service's break
-				// This maximizes attendant utilization and minimizes customer waiting time
 				$breakMinutes = SLN_Func::getMinutesFromDuration($break);
 				$breakFrom = isset($break_duration_data['from']) ? intval($break_duration_data['from']) : 0;
-				
+
 				if ($breakMinutes > 0 && $breakFrom > 0 && isset($break_duration_data['to']) && $break_duration_data['to'] > $breakFrom) {
-					// Service has a break - next service starts at break position
+					// Custom break position: next service starts at the break window (stylist is free during break)
 					$minutes = $breakFrom + $offset;
 				} else {
-					// No break - next service starts after current service ends
-					$minutes = SLN_Func::getMinutesFromDuration($duration) + $offset;
+					// Standard case: advance by full work duration + break duration
+					$minutes = SLN_Func::getMinutesFromDuration($duration) + $breakMinutes + $offset;
 				}
 				$startsAtClone->modify('+'.$minutes.' minutes');
 			}
