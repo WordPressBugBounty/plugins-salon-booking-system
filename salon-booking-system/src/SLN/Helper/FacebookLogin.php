@@ -95,11 +95,72 @@ class SLN_Helper_FacebookLogin
 	return static::createWpUser($fbUser, $createCustomerFields);
     }
 
+    /**
+     * Ensures the user access token was issued for this site's Facebook app (see Graph debug_token).
+     * Without this check, any valid token from any Facebook app can be used to impersonate a WP user by email.
+     *
+     * @param string $accessToken User access token from the client.
+     * @throws Exception When the token is missing, Facebook is not configured, or the token is not for this app.
+     */
+    protected static function assertUserAccessTokenForConfiguredApp($accessToken) {
+	$app_id     = static::getClientID();
+	$app_secret = static::getClientSecret();
+	if ( ! $app_id || ! $app_secret ) {
+	    throw new \Exception(esc_html__('Facebook login is not configured.', 'salon-booking-system'));
+	}
+
+	$app_access_token = $app_id . '|' . $app_secret;
+	$debug_url        = add_query_arg(
+	    array(
+		'input_token'  => $accessToken,
+		'access_token' => $app_access_token,
+	    ),
+	    static::API_URL . '/debug_token'
+	);
+
+	$response = wp_remote_get(
+	    $debug_url,
+	    array(
+		'timeout'   => 5,
+		'httpversion' => '1.0',
+	    )
+	);
+
+	if ( is_wp_error( $response ) ) {
+	    throw new \Exception( esc_html__( 'Unable to verify Facebook access token.', 'salon-booking-system' ) );
+	}
+
+	$status = wp_remote_retrieve_response_code( $response );
+	if ( 200 !== (int) $status ) {
+	    throw new \Exception( esc_html__( 'Unable to verify Facebook access token.', 'salon-booking-system' ) );
+	}
+
+	$payload = json_decode( wp_remote_retrieve_body( $response ), true );
+	if ( ! is_array( $payload ) ) {
+	    throw new \Exception( esc_html__( 'Invalid Facebook access token.', 'salon-booking-system' ) );
+	}
+	if ( ! empty( $payload['error'] ) ) {
+	    throw new \Exception( esc_html__( 'Invalid Facebook access token.', 'salon-booking-system' ) );
+	}
+
+	$data = isset( $payload['data'] ) && is_array( $payload['data'] ) ? $payload['data'] : array();
+	if ( empty( $data['is_valid'] ) || (string) $data['app_id'] !== (string) $app_id ) {
+	    throw new \Exception( esc_html__( 'Invalid Facebook access token.', 'salon-booking-system' ) );
+	}
+
+	// Require a user token (not an app/page token mistaken for login).
+	if ( empty( $data['user_id'] ) ) {
+	    throw new \Exception( esc_html__( 'Invalid Facebook access token.', 'salon-booking-system' ) );
+	}
+    }
+
     protected static function getFBUserInfo($accessToken) {
 
 	if ( ! $accessToken ) {
 	    throw new \Exception(esc_html__('Access token not found', 'salon-booking-system'));
 	}
+
+	static::assertUserAccessTokenForConfiguredApp( $accessToken );
 
 	$response = wp_remote_get(
 	    add_query_arg(

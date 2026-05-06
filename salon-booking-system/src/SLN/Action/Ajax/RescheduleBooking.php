@@ -40,9 +40,14 @@ class SLN_Action_Ajax_RescheduleBooking extends SLN_Action_Ajax_Abstract {
 			);
 		}
 
-		$curr_booking_date = get_post_meta( $id, '_' . SLN_Plugin::POST_TYPE_BOOKING . '_date', true ) . ' ' . get_post_meta( $id, '_' . SLN_Plugin::POST_TYPE_BOOKING . '_time', true );
-		$curr_booking_date = new DateTime( $curr_booking_date );
-		$curr_booking_date->modify( $this->plugin->getSettings()->get( 'days_before_rescheduling' ) . ' days' );
+		$curr_booking_date     = get_post_meta( $id, '_' . SLN_Plugin::POST_TYPE_BOOKING . '_date', true ) . ' ' . get_post_meta( $id, '_' . SLN_Plugin::POST_TYPE_BOOKING . '_time', true );
+		$curr_booking_date     = new DateTime( $curr_booking_date );
+		$reschedule_raw        = $this->plugin->getSettings()->get( 'days_before_rescheduling' );
+		$reschedule_legacy_map = array( '1' => 24, '2' => 48, '3' => 72, '7' => 168, '14' => 336 );
+		$reschedule_hours      = isset( $reschedule_legacy_map[ $reschedule_raw ] )
+			? $reschedule_legacy_map[ $reschedule_raw ]
+			: (int) $reschedule_raw;
+		$curr_booking_date->modify( '+' . $reschedule_hours . ' hours' );
 		if ( $curr_booking_date->getTimestamp() - time() < 0 ) {
 			return wp_die(
 				'<p>' . esc_html__( 'Sory, you not allowed reshedule old booking.' ) . '</p>',

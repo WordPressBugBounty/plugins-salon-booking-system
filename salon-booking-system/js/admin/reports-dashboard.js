@@ -1012,7 +1012,7 @@
                 });
 
                 // Update UI components
-                this.updateKPICards(stats, retention);
+                this.updateKPICards(stats, retention, customers);
                 this.updateRevenueChart(stats);
                 this.updateBookingHeatmap(peakTimes);
                 this.updateUtilizationMetrics(utilization);
@@ -1039,9 +1039,10 @@
         /**
          * Update KPI cards
          */
-        updateKPICards: function(stats, retention) {
+        updateKPICards: function(stats, retention, customerStats) {
             const current = stats.current_period;
             const comparison = stats.comparison || {};
+            const customerSummary = (customerStats && customerStats.summary) ? customerStats.summary : null;
 
             // Revenue card (unified with avg value)
             $('#kpi-revenue-value').text(formatCurrency(current.total_revenue));
@@ -1068,10 +1069,13 @@
                 (comparison.avg_value_change_pct >= 0 ? '+' : '') + formatPercentage(comparison.avg_value_change_pct)
             ).removeClass('positive negative').addClass(comparison.avg_value_change_pct >= 0 ? 'positive' : 'negative');
 
-            // Customers card (unified with rebooking rate)
-            $('#kpi-customers-value').text(formatNumber(current.unique_customers));
-            $('#kpi-customers-new').text(formatNumber(current.new_customers) + ' New');
-            $('#kpi-customers-returning').text(formatNumber(current.returning_customers) + ' Returning');
+            // Customers card — use /customers/stats summary for accurate new/returning breakdown
+            const uniqueCustomers = customerSummary ? customerSummary.total_customers : current.unique_customers;
+            const newCustomers    = customerSummary ? customerSummary.new_customers      : current.new_customers;
+            const returningCustomers = customerSummary ? customerSummary.returning_customers : current.returning_customers;
+            $('#kpi-customers-value').text(formatNumber(uniqueCustomers));
+            $('#kpi-customers-new').text(formatNumber(newCustomers) + ' New');
+            $('#kpi-customers-returning').text(formatNumber(returningCustomers) + ' Returning');
             
             // Rebooking rate card (unified with customers)
             if (retention) {
@@ -1624,9 +1628,19 @@
             const tbody = $('#assistants-table tbody');
             tbody.empty();
 
+            const settings = window.salonDashboard || {};
+            const adminUrl = settings.adminUrl || '';
+            const bookingPostType = settings.bookingPostType || 'sln_booking';
+
             assistants.items.forEach(assistant => {
+                const bookingsUrl = adminUrl + 'edit.php?post_type=' + bookingPostType + '&attendant=' + assistant.assistant_id;
+                const nameLink = $('<a>')
+                    .attr('href', bookingsUrl)
+                    .attr('title', 'View bookings for ' + assistant.assistant_name)
+                    .text(assistant.assistant_name);
+
                 const row = $('<tr>')
-                    .append($('<td>').text(assistant.assistant_name))
+                    .append($('<td>').append(nameLink))
                     .append($('<td>').text(formatNumber(assistant.bookings_count)))
                     .append($('<td>').text(formatCurrency(assistant.total_revenue)))
                     .append($('<td>').text(assistant.total_hours_worked.toFixed(1) + ' hrs'))
@@ -1791,10 +1805,19 @@
             const list = $('#top-customers-list');
             list.empty();
 
+            const settings = window.salonDashboard || {};
+            const adminUrl = settings.adminUrl || '';
+
             customers.top_customers.forEach((customer, index) => {
+                const profileUrl = adminUrl + 'user-edit.php?user_id=' + customer.customer_id;
+                const nameLink = $('<a>')
+                    .attr('href', profileUrl)
+                    .attr('title', 'View profile for ' + customer.customer_name)
+                    .text(customer.customer_name);
+
                 const item = $('<div class="customer-item">')
                     .append($('<span class="rank">').text('#' + (index + 1)))
-                    .append($('<span class="name">').text(customer.customer_name))
+                    .append($('<span class="name">').append(nameLink))
                     .append($('<span class="bookings">').text(formatNumber(customer.bookings_count) + ' bookings'))
                     .append($('<span class="spent">').text(formatCurrency(customer.total_spent)));
                 list.append(item);

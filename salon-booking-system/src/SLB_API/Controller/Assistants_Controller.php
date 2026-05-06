@@ -785,6 +785,7 @@ class Assistants_Controller extends REST_Controller
             $booking = SLN_Plugin::getInstance()->createBooking($booking_post->ID);
             
             $processed_assistants = array();
+            $counted_bookings_per_assistant = array();
             
             foreach ($booking->getBookingServices()->getItems() as $bookingService) {
                 $attendant = $bookingService->getAttendant();
@@ -824,23 +825,22 @@ class Assistants_Controller extends REST_Controller
                     // ✅ FIX: Split service price evenly among assistants for this service
                     $revenue_share = $num_assistants > 0 ? $service_price / $num_assistants : 0;
                     
-                    // ✅ FIX: Split service count evenly among assistants
-                    $service_count_share = $num_assistants > 0 ? $bookingService->getCountServices() / $num_assistants : 0;
-                    
                     foreach ($service_assistants as $att) {
                         $att_id = $att->getId();
                         
                         if (isset($assistants_stats[$att_id])) {
-                            // ✅ FIX: Count services, not bookings (to match RevenuesByAssistantsReport)
-                            // Use service ID + assistant ID as unique key to avoid double-counting
-                            $service_key = $att_id . '_' . $bookingService->getService()->getId();
-                            if (!in_array($service_key, $processed_assistants)) {
-                                $assistants_stats[$att_id]['bookings_count'] += $service_count_share;
-                                $processed_assistants[] = $service_key;
+                            // Count each booking exactly once per assistant (not once per service)
+                            if (!in_array($att_id, $counted_bookings_per_assistant)) {
+                                $assistants_stats[$att_id]['bookings_count']++;
+                                $counted_bookings_per_assistant[] = $att_id;
                             }
                             
-                            // ✅ FIX: Add revenue share (split service price, not booking amount)
-                            $assistants_stats[$att_id]['total_revenue'] += $revenue_share;
+                            // Revenue deduplication: one revenue share per service per assistant
+                            $service_key = $att_id . '_' . $bookingService->getService()->getId();
+                            if (!in_array($service_key, $processed_assistants)) {
+                                $assistants_stats[$att_id]['total_revenue'] += $revenue_share;
+                                $processed_assistants[] = $service_key;
+                            }
                             
                             // Add hours (convert duration to hours using plugin helper)
                             if ($service_duration) {

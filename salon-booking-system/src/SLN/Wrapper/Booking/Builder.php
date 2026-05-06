@@ -14,7 +14,7 @@ class SLN_Wrapper_Booking_Builder
 
     public function __construct(SLN_Plugin $plugin)
     {
-        if (session_id() == '' || session_status() !== PHP_SESSION_ACTIVE) {
+        if (! headers_sent() && ( session_id() === '' || session_status() !== PHP_SESSION_ACTIVE ) && session_status() === PHP_SESSION_NONE ) {
             session_start();
         }
         $this->plugin = $plugin;

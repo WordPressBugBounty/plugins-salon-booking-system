@@ -829,8 +829,17 @@ if (!String.prototype.formatNum) {
         type: "GET",
       })
         .done(function (json) {
-        if (!json.success) {
-          $.error(json.error);
+        if (!json || typeof json !== "object") {
+          $("#sln-pageloading").addClass("sln-pageloading--inactive");
+          return;
+        }
+        if (json.success === false) {
+          $("#sln-pageloading").addClass("sln-pageloading--inactive");
+          $("body").addClass("sln-body--scrolldef");
+          if (window.console && console.error) {
+            console.error("Calendar load failed:", json.error);
+          }
+          return;
         }
         if (json.render) {
           self.options.server_render = json.render;
@@ -875,8 +884,16 @@ if (!String.prototype.formatNum) {
           setTimeout(() => {
             $("body").addClass("sln-body--scrolldef");
           }, 3200);
+        } else {
+          // PHP fatal / wp_send_json_error / empty render: never leave the admin calendar on a permanent spinner.
+          $("#sln-pageloading").addClass("sln-pageloading--inactive");
+          $("body").addClass("sln-body--scrolldef");
         }
       })
+        .fail(function () {
+          $("#sln-pageloading").addClass("sln-pageloading--inactive");
+          $("body").addClass("sln-body--scrolldef");
+        })
         .always(function () {
           self._pendingLoadCount = Math.max(
             0,

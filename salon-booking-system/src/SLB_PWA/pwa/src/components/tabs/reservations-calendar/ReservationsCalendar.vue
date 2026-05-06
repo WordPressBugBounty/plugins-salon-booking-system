@@ -1326,6 +1326,7 @@ export default {
           params: this.withShop({
             from_date: this.moment(fd).format('YYYY-MM-DD'),
             to_date: this.moment(td).format('YYYY-MM-DD'),
+            staff_mode: 1,
           }),
         });
         this.availabilityStats = response.data.stats;
@@ -1360,27 +1361,13 @@ export default {
         const intervals = response.data.intervals;
         const returnedDate = intervals?.universalSuggestedDate;
         
-        // Check if backend returned data for a different date
+        // The reservations calendar is a staff-only view. Staff must always see the
+        // requested date's working hours regardless of booking-window restrictions
+        // (which only apply to customers). Ignore any date mismatch from the server.
         if (returnedDate && returnedDate !== requestedDate) {
-          console.warn(`Date mismatch: requested ${requestedDate}, got ${returnedDate}`);
-          
-          // If backend suggests a different date due to validation errors,
-          // clear intervals to prevent showing incorrect availability
-          // This will cause all slots to appear unavailable, which is correct
-          // since the requested date/time combination is invalid
-          this.availabilityIntervals = {
-            times: {},
-            workTimes: {},
-            dates: intervals.dates || [],
-            fullDays: intervals.fullDays || []
-          };
-          
-          // Optionally, you could navigate to the suggested date:
-          // this.date = new Date(returnedDate);
-          // this.loadTimeslots();
-        } else {
-          this.availabilityIntervals = intervals;
+          console.warn(`Date mismatch: requested ${requestedDate}, got ${returnedDate} — using requested date intervals for staff calendar`);
         }
+        this.availabilityIntervals = intervals;
         
         // Clear abort controller after success
         delete this.abortControllers[requestKey];

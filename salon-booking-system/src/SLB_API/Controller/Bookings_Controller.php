@@ -1925,13 +1925,16 @@ class Bookings_Controller extends REST_Controller
         // Sort timeline chronologically and convert to indexed array
         $sorted_timeline = $this->sort_timeline($timeline, $group_by);
 
+        $unique_customer_count = count($customers);
+        $new_customer_count    = $this->count_new_customers($customers, $start_date);
+
         return array(
             'total_revenue'       => round($total_revenue, 2),
             'total_bookings'      => $total_bookings,
             'avg_booking_value'   => round($avg_booking_value, 2),
-            'unique_customers'    => count($customers),
-            'new_customers'       => 0, // Would need more complex logic to determine
-            'returning_customers' => count($customers), // Simplified
+            'unique_customers'    => $unique_customer_count,
+            'new_customers'       => $new_customer_count,
+            'returning_customers' => $unique_customer_count - $new_customer_count,
             'by_status'           => $by_status,
             'timeline'            => $sorted_timeline,
             
@@ -1941,6 +1944,57 @@ class Bookings_Controller extends REST_Controller
             'cancellation_rate'   => $cancellation_rate,
             'no_show_count'       => $no_show_count,
         );
+    }
+
+    /**
+     * Count how many of the given customer IDs are "new" — i.e. had no qualifying
+     * booking before $start_date.
+     *
+     * @param array     $customers  Associative array keyed by customer user ID.
+     * @param \DateTime $start_date Period start date.
+     * @return int
+     */
+    private function count_new_customers(array $customers, \DateTime $start_date)
+    {
+        $new_count = 0;
+        foreach (array_keys($customers) as $customer_id) {
+            $prev = new \WP_Query(array(
+                'post_type'      => self::POST_TYPE,
+                'post_status'    => array(
+                    SLN_Enum_BookingStatus::PAID,
+                    SLN_Enum_BookingStatus::PAY_LATER,
+                    SLN_Enum_BookingStatus::CONFIRMED,
+                ),
+                'author'         => $customer_id,
+                'posts_per_page' => 1,
+                'fields'         => 'ids',
+                'meta_query'     => array(
+                    'relation' => 'AND',
+                    array(
+                        'key'     => '_sln_booking_date',
+                        'value'   => $start_date->format('Y-m-d'),
+                        'compare' => '<',
+                        'type'    => 'DATE',
+                    ),
+                    array(
+                        'relation' => 'OR',
+                        array(
+                            'key'     => 'no_show',
+                            'compare' => 'NOT EXISTS',
+                        ),
+                        array(
+                            'key'     => 'no_show',
+                            'value'   => '1',
+                            'compare' => '!=',
+                        ),
+                    ),
+                ),
+            ));
+            if ($prev->post_count === 0) {
+                $new_count++;
+            }
+        }
+        return $new_count;
     }
 
     /**

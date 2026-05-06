@@ -15,9 +15,15 @@ $bookingServices = $booking->getBookingServices()->getItems();
     <span class="sln-event-header-more-icon sln-event-header-more-icon-vertical" style="margin-left: auto;" data-tooltip-id='<?php echo $booking->getId() ?>' ></span>
 </div>
 <ul class='service_wrapper <?php echo 'duration-' . $minutes; ?>'>
-    <?php foreach($booking->getBookingServices()->getItems() as $bookingService) : ?>
+    <?php foreach ($booking->getBookingServices()->getItems() as $bookingService) : ?>
+        <?php
+        $svc = $bookingService->getService();
+        if (!($svc instanceof SLN_Wrapper_ServiceInterface)) {
+            continue;
+        }
+        ?>
         <li>
-            <span class='day-event-item__service'><?php echo $bookingService->getService()->getName() ?></span>
+            <span class='day-event-item__service'><?php echo $svc->getName() ?></span>
             <span class='day-event-item__attendant'><span class="day-event-item__attendant_name"><?php
                     echo ($attendant = $bookingService->getAttendant()) ?
                         (!is_array($attendant) ?

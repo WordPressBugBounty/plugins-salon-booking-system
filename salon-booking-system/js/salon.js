@@ -1341,6 +1341,32 @@ function sln_init($) {
             },
         });
     }
+
+    // Whole-row service toggle: outer wrapper is a div (nested labels broke mobile Safari).
+    // Clicks inside .sln-checkbox use the real input/label only; synthetic checkbox.click()
+    // bubbles with target=input and is ignored here to avoid double-toggle.
+    var slnServiceRowClickSel =
+        "#salon-step-services .sln-service-list .sln-list__item.sln-service, #salon-step-secondary .sln-service-list .sln-list__item.sln-service";
+    $("#sln-salon")
+        .off("click.slnServiceRow", slnServiceRowClickSel)
+        .on("click.slnServiceRow", slnServiceRowClickSel, function (e) {
+            var $target = $(e.target);
+            if (
+                $target.closest(
+                    ".sln-checkbox, .sln-service-variable-duration, a, button, select, textarea, .errors-area, [data-sln-no-row-toggle]"
+                ).length
+            ) {
+                return;
+            }
+            var cb = $(this).find(
+                'input[type="checkbox"][name*="sln[services]"]'
+            )[0];
+            if (!cb || cb.disabled) {
+                return;
+            }
+            cb.click();
+        });
+
     // Reveal the form once all synchronous JS initialization is complete.
     // This removes the init loader overlay added by PHP to prevent FOUC.
     $("#sln-salon-booking").removeClass("sln-is-initializing");

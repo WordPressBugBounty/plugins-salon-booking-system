@@ -144,11 +144,11 @@ final class SLN_Wrapper_Booking_Service
     }
 
     public function getStartsAtForDayBooking($day){
-        
         $s = $this->getService();
+        $lockMinutes = ($s instanceof SLN_Wrapper_ServiceInterface) ? $s->getLockInterval() : 0;
         $ret = clone $this->data['starts_at'];
-        $ret->modify('-'.$s->getLockInterval().' minutes');
-        if($ret < $day){
+        $ret->modify('-' . $lockMinutes . ' minutes');
+        if ($ret < $day) {
             $ret = new SLN_DateTime($day->format('Y-m-d'));
             return $ret;
         }
@@ -169,7 +169,11 @@ final class SLN_Wrapper_Booking_Service
 
     public function getEndsAtForDayBooking($day){
         $s = $this->getService();
-        return $this->getEndsAt()->modify('+'. ($s->getOffsetInterval() + $s->getLockInterval()). ' minutes');
+        $extraMinutes = 0;
+        if ($s instanceof SLN_Wrapper_ServiceInterface) {
+            $extraMinutes = $s->getOffsetInterval() + $s->getLockInterval();
+        }
+        return $this->getEndsAt()->modify('+' . $extraMinutes . ' minutes');
     }
 
 	public function getParallelExec() {

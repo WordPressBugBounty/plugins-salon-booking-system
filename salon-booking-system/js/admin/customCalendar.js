@@ -376,11 +376,9 @@ function sln_initSalonCalendar(
         );
         button.text(
           status
-            ? single
-              ? holidays_rules_locale.block_confirm
-              : holidays_rules_locale.block_confirm
-            : single
-              ? holidays_rules_locale.unblock_these_rows
+            ? holidays_rules_locale.block_confirm
+            : (rule && rule.gcal_locked)
+              ? holidays_rules_locale.unblock_gcal
               : holidays_rules_locale.unblock_these_rows,
         );
         button.css({
@@ -462,11 +460,9 @@ function sln_initSalonCalendar(
         );
         button.text(
           status
-            ? single
-              ? holidays_rules_locale.block_confirm
-              : holidays_rules_locale.block_confirm
-            : single
-              ? holidays_rules_locale.unblock_these_rows
+            ? holidays_rules_locale.block_confirm
+            : (rule && rule.gcal_locked)
+              ? holidays_rules_locale.unblock_gcal
               : holidays_rules_locale.unblock_these_rows,
         );
         button.css({

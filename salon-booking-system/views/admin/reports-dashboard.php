@@ -28,7 +28,9 @@
             isPro: <?php echo defined('SLN_VERSION_PAY') ? 'true' : 'false'; ?>,
             ajaxUrl: '<?php echo admin_url('admin-ajax.php'); ?>',
             restUrl: '<?php echo rest_url('sln/v1/'); ?>',
-            nonce: '<?php echo wp_create_nonce('wp_rest'); ?>'
+            nonce: '<?php echo wp_create_nonce('wp_rest'); ?>',
+            adminUrl: '<?php echo admin_url(); ?>',
+            bookingPostType: '<?php echo SLN_Plugin::POST_TYPE_BOOKING; ?>'
         };
     </script>
     
@@ -88,7 +90,14 @@
             <span class="dashicons dashicons-download"></span>
             <?php esc_html_e('Export', 'salon-booking-system') ?>
         </button>
+        <button id="sln-send-weekly-report" class="button button-secondary"
+                data-nonce="<?php echo esc_attr(wp_create_nonce('sln_send_weekly_report')); ?>"
+                style="display: inline-flex; align-items: center; gap: 5px;">
+            <span class="dashicons dashicons-email-alt"></span>
+            <?php esc_html_e('Send weekly report', 'salon-booking-system') ?>
+        </button>
     </div>
+    <div id="sln-weekly-report-notice" style="display: none; margin: 6px 0; font-size: 13px;"></div>
 
     <!-- Manager Warning Message -->
     <?php if (!empty($warning_message)): ?>
@@ -1556,6 +1565,40 @@
     font-style: italic;
 }
 </style>
+
+<script type="text/javascript">
+(function ($) {
+    'use strict';
+
+    $('#sln-send-weekly-report').on('click', function () {
+        var $btn    = $(this);
+        var $notice = $('#sln-weekly-report-notice');
+        var nonce   = $btn.data('nonce');
+        var label   = $btn.text().trim();
+
+        $btn.prop('disabled', true).find('.dashicons').addClass('dashicons-update spin');
+        $notice.hide();
+
+        $.post(
+            ajaxurl,
+            {
+                action : 'sln_send_weekly_report',
+                nonce  : nonce,
+            },
+            function (response) {
+                var color = response.success ? '#2e7d32' : '#b71c1c';
+                $notice.css('color', color).text(response.data.message).show();
+                setTimeout(function () { $notice.fadeOut(400); }, 4000);
+            }
+        ).always(function () {
+            $btn.prop('disabled', false)
+                .find('.dashicons')
+                .removeClass('dashicons-update spin')
+                .addClass('dashicons-email-alt');
+        });
+    });
+}(jQuery));
+</script>
 </div> <!-- Close #sln-reports-dashboard -->
 </div> <!-- Close #sln-salon--admin -->
 

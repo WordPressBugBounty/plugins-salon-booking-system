@@ -3,7 +3,7 @@
 /*
 Plugin Name: Salon Booking System - Free Version
 Description: Let your customers book you services through your website. Perfect for hairdressing salons, barber shops and beauty centers.
-Version: 10.30.26
+Version: 10.30.27
 Plugin URI: http://salonbookingsystem.com/
 Author: Salon Booking System
 Author URI: http://salonbookingsystem.com/
@@ -45,7 +45,7 @@ if (defined('SLN_PLUGIN_BASENAME')) {
 define('SLN_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('SLN_PLUGIN_DIR', untrailingslashit(dirname(__FILE__)));
 define('SLN_PLUGIN_URL', untrailingslashit(plugins_url('', __FILE__)));
-define('SLN_VERSION', '10.30.26');
+define('SLN_VERSION', '10.30.27');
 define('SLN_STORE_URL', 'https://salonbookingsystem.com');
 define('SLN_AUTHOR', 'Salon Booking');
 define('SLN_UPLOADS_DIR', wp_upload_dir()['basedir'] . '/sln_uploads/');
@@ -155,25 +155,37 @@ add_action("in_plugin_update_message-" . plugin_basename(__FILE__), function ($p
 
 spl_autoload_register($sln_autoload);
 
-add_action('plugins_loaded', function () {
-	add_filter('plugin_locale', function ($locale, $domain) {
-		if ($domain === 'salon-booking-system') {
-			// Get proper locale for multilingual plugins (WPML/Polylang)
-			$locale = SLN_Helper_Multilingual::getDateLocale();
+// WP 6.7+: load translations and boot the main plugin on init (not plugins_loaded) to avoid
+// _load_textdomain_just_in_time notices and accidental output before session_start().
+add_action(
+	'init',
+	function () {
+		static $sln_bootstrapped = false;
+		if ( $sln_bootstrapped ) {
+			return;
 		}
-		return $locale;
-	}, 10, 2);
-	
-	// Load translations - WordPress will check all standard locations:
-	// 1. WP_LANG_DIR/plugins/ (Sistema/Global - Loco Translate default)
-	// 2. WP_LANG_DIR/loco/plugins/ (Loco Translate custom location)
-	// 3. Plugin's own /languages/ directory (Autore location)
-	load_plugin_textdomain('salon-booking-system', false, basename(SLN_PLUGIN_DIR) . '/languages');
+		$sln_bootstrapped = true;
 
-	global $sln_plugin;
-	$sln_plugin = SLN_Plugin::getInstance();
-	do_action('sln.init', $sln_plugin);
-}, 1);
+		add_filter(
+			'plugin_locale',
+			function ( $locale, $domain ) {
+				if ( $domain === 'salon-booking-system' ) {
+					$locale = SLN_Helper_Multilingual::getDateLocale();
+				}
+				return $locale;
+			},
+			10,
+			2
+		);
+
+		load_plugin_textdomain( 'salon-booking-system', false, basename( SLN_PLUGIN_DIR ) . '/languages' );
+
+		global $sln_plugin;
+		$sln_plugin = SLN_Plugin::getInstance();
+		do_action( 'sln.init', $sln_plugin );
+	},
+	0
+);
 // phpcs:ignoreFile WordPress.Security.NonceVerification.Missing
 // phpcs:ignoreFile WordPress.Security.NonceVerification.Recommended
 
@@ -186,6 +198,9 @@ if (defined('SLN_VERSION_PAY')) {
 }
 
 add_action('init', function () {
+	if ( headers_sent() ) {
+		return;
+	}
 	if ((!session_id() || session_status() !== PHP_SESSION_ACTIVE)
 		&& !strstr($_SERVER['REQUEST_URI'], '/wp-admin/site-health.php')
 		&& !strstr($_SERVER['REQUEST_URI'], '/wp-json/wp-site-health')
@@ -218,7 +233,9 @@ add_action('init', function () {
 				true
 			);
 		}
-		session_start();
+		if ( session_status() === PHP_SESSION_NONE ) {
+			session_start();
+		}
 	}
 }, 1);
 
@@ -230,11 +247,13 @@ add_action('init', function () {
 
 	//TODO[feature-gcalendar]: move this require in the right place
 	require_once SLN_PLUGIN_DIR . "/src/SLN/Third/GoogleScope.php";
+	require_once SLN_PLUGIN_DIR . "/src/SLN/Third/GoogleCalendarSlotLocker.php";
 	$sln_googlescope = new SLN_GoogleScope();
 	$GLOBALS['sln_googlescope'] = $sln_googlescope;
 	$sln_googlescope->set_settings_by_plugin(SLN_Plugin::getInstance());
 	$sln_googlescope->wp_init();
 	SLN_Third_GoogleCalendarImport::launch($GLOBALS['sln_googlescope']);
+	SLN_Third_GoogleCalendarSlotLocker::launch($GLOBALS['sln_googlescope']);
 });
 
 $sln_api = \SLB_API\Plugin::get_instance();

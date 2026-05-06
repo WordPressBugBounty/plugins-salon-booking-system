@@ -137,8 +137,25 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
         ));
 
         if($mode == 'confirm' || empty($paymentMethod) || $bb->getAmount() <= 0.0){
-            $errors = $handler->checkDateTimeServicesAndAttendants($bb->getAttendantsIds(), $bb->getStartsAt());
+            // Acquire a MySQL advisory lock for this time slot before checking availability.
+            // This closes the race condition window where two concurrent requests both see the
+            // slot as free, both pass the availability check, and both finalize successfully —
+            // resulting in a double booking. GET_LOCK is atomic at the DB level: exactly one
+            // request acquires it, the other waits and then re-checks against the already-saved booking.
+            $slotLockKey = $this->getSlotLockKey($bb);
+            if (!$this->acquireSlotLock($slotLockKey)) {
+                SLN_Plugin::addLog('[SummaryStep] ⚠️ Slot lock unavailable — concurrent booking detected. Key: ' . $slotLockKey);
+                $this->addError(self::SLOT_UNAVAILABLE);
+                return false;
+            }
+            SLN_Plugin::addLog('[SummaryStep] ✅ Slot lock acquired: ' . $slotLockKey);
+
+            // FIX: Use getServicesMeta() instead of getAttendantsIds() to preserve services
+            // where attendant = false (auto-assignment). getAttendantsIds() silently drops
+            // those entries, producing an empty array and bypassing the conflict check entirely.
+            $errors = $handler->checkDateTimeServicesAndAttendants($bb->getServicesMeta(), $bb->getStartsAt());
             if(!empty($errors) && !class_exists('\\SalonMultishop\\Addon')){
+                $this->releaseSlotLock($slotLockKey);
                 $this->addError(self::SLOT_UNAVAILABLE);
                 return false;
             }
@@ -209,6 +226,9 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
                 $bb->setStatus($statusBeforePrepaid);
             }
 
+            // Booking status is now final in the DB — release the slot lock so any queued
+            // concurrent request can proceed and correctly find the slot taken.
+            $this->releaseSlotLock($slotLockKey);
             $bookingBuilder->clear($bb->getId());
             $this->cleanupBookingLock($bb);
             return !$this->hasErrors();
@@ -218,9 +238,18 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
                 $bb->getAmount(),
                 $bb->getStatus()
             ));
-            
-            $errors = $handler->checkDateTimeServicesAndAttendants($bb->getAttendantsIds(), $bb->getStartsAt());
+
+            $slotLockKey = $this->getSlotLockKey($bb);
+            if (!$this->acquireSlotLock($slotLockKey)) {
+                SLN_Plugin::addLog('[SummaryStep] ⚠️ Slot lock unavailable — concurrent booking detected. Key: ' . $slotLockKey);
+                $this->addError(self::SLOT_UNAVAILABLE);
+                return false;
+            }
+            SLN_Plugin::addLog('[SummaryStep] ✅ Slot lock acquired: ' . $slotLockKey);
+
+            $errors = $handler->checkDateTimeServicesAndAttendants($bb->getServicesMeta(), $bb->getStartsAt());
             if(!empty($errors) && !class_exists('\\SalonMultishop\\Addon')){
+                $this->releaseSlotLock($slotLockKey);
                 $this->addError(self::SLOT_UNAVAILABLE);
                 return false;
             }
@@ -251,7 +280,8 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
                     }
                 }
             }
-            
+
+            $this->releaseSlotLock($slotLockKey);
             $bookingBuilder->clear($bb->getId());
             $this->cleanupBookingLock($bb);
             return !$this->hasErrors();
@@ -298,7 +328,7 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
             // after the customer has already been charged.
             try {
                 $handler->setBooking($bb); // Exclude current booking from slot count to prevent false conflicts
-                $gatewayAvailErrors = $handler->checkDateTimeServicesAndAttendants($bb->getAttendantsIds(), $bb->getStartsAt());
+                $gatewayAvailErrors = $handler->checkDateTimeServicesAndAttendants($bb->getServicesMeta(), $bb->getStartsAt());
                 if ( ! empty($gatewayAvailErrors) && ! class_exists('\\SalonMultishop\\Addon') ) {
                     SLN_Plugin::addLog(sprintf(
                         '[SummaryStep] WARNING: Slot unavailable after payment gateway return for booking #%d. Errors: %s',
@@ -722,6 +752,61 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
             // This is a critical issue - logged-in user but no data in profile either
             SLN_Plugin::addLog('[Summary Step] ✗ ERROR: No customer data in user profile either');
         }
+    }
+
+    /**
+     * Return a stable MySQL lock key for the booking's time slot.
+     * Returns null if the booking has no valid start time (degenerate case).
+     *
+     * @param SLN_Wrapper_Booking $bb
+     * @return string|null
+     */
+    private function getSlotLockKey(SLN_Wrapper_Booking $bb)
+    {
+        $startsAt = $bb->getStartsAt();
+        if (!($startsAt instanceof DateTime)) {
+            SLN_Plugin::addLog('[SummaryStep] WARNING: getSlotLockKey — booking has no valid start time, skipping lock');
+            return null;
+        }
+        return 'sln_' . md5($startsAt->format('Y-m-d H:i'));
+    }
+
+    /**
+     * Acquire a MySQL advisory lock for the given slot key.
+     *
+     * Uses MySQL GET_LOCK() which is atomic at the database level — exactly one PHP
+     * request wins the lock; concurrent requests wait up to $timeout seconds and
+     * then fail. The lock is automatically released when the MySQL connection closes
+     * (end of the PHP request), so it can never be permanently orphaned.
+     *
+     * @param string|null $key     Lock name (≤64 chars for MySQL).
+     * @param int         $timeout Seconds to wait before giving up (default 2).
+     * @return bool True if the lock was acquired (or key is null), false otherwise.
+     */
+    private function acquireSlotLock($key, $timeout = 2)
+    {
+        if ($key === null) {
+            return true;
+        }
+        global $wpdb;
+        $result = $wpdb->get_var($wpdb->prepare('SELECT GET_LOCK(%s, %d)', $key, $timeout));
+        SLN_Plugin::addLog(sprintf('[SummaryStep] GET_LOCK(%s, %d) → %s', $key, $timeout, var_export($result, true)));
+        return $result === '1';
+    }
+
+    /**
+     * Release a MySQL advisory lock previously acquired via acquireSlotLock().
+     *
+     * @param string|null $key
+     */
+    private function releaseSlotLock($key)
+    {
+        if ($key === null) {
+            return;
+        }
+        global $wpdb;
+        $wpdb->get_var($wpdb->prepare('SELECT RELEASE_LOCK(%s)', $key));
+        SLN_Plugin::addLog('[SummaryStep] 🔓 Slot lock released: ' . $key);
     }
 
     /**

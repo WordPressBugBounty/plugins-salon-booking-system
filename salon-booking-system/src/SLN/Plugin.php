@@ -12,7 +12,7 @@ class SLN_Plugin
     const USER_ROLE_CUSTOMER = 'sln_customer';
     const USER_ROLE_WORKER = 'sln_worker';
     const TEXT_DOMAIN = 'salon-booking-system';
-    const DEBUG_ENABLED = true; // TEMPORARILY ENABLED FOR DEBUGGING SAFARI/MOBILE ISSUE
+    const DEBUG_ENABLED = false;
     const DEBUG_CACHE_ENABLED = false;
     const CATEGORY_ORDER = 'sln_service_category_order';
 

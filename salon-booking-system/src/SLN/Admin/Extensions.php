@@ -43,11 +43,10 @@ class SLN_Admin_Extensions extends SLN_Admin_AbstractPage
             wp_die( esc_html__( 'Insufficient permissions.', 'salon-booking-system' ) );
         }
 
-        // Delete the products transient and stored option so the next page load
-        // fetches a fresh list from salonbookingsystem.com.
+        // Drop all license-scoped EDD catalog caches so the next load refetches
+        // plan-specific flags (Basic vs Business, etc.).
         $slug = defined( 'SLN_ITEM_SLUG' ) ? SLN_ITEM_SLUG : 'salon-booking-wordpress-plugin';
-        delete_transient( $slug . '_products_cache' );
-        delete_option( $slug . '_products_data' );
+        SLN_Update_Manager::flushEddProductsCatalogCache( $slug );
 
         wp_safe_redirect( admin_url( 'admin.php?page=' . static::PAGE . '&sln_cache_cleared=1' ) );
         exit;

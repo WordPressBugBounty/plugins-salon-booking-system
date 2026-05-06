@@ -9,7 +9,8 @@ class SLN_Admin_SettingTabs_GcalendarTab extends SLN_Admin_SettingTabs_AbstractT
         'google_outh2_client_secret',
         'google_outh2_redirect_uri',
         'google_client_calendar',
-	'google_calendar_publish_pending_payment',
+        'google_calendar_publish_pending_payment',
+        'google_calendar_lock_slots',
     );
 
 	protected function validate(){

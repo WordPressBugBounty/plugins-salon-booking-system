@@ -106,6 +106,10 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
         $holidays_assistants_rules[$att->getId()] = array_merge($holidays_daily, $holidays);
       }
 
+      // Allow extensions (e.g. GCal slot locker) to inject extra blocked intervals
+      // into the rules JSON used by the client-side calendar for interactive highlighting.
+      $holidays_rules = apply_filters('sln.calendar.holidays_daily_rules', $holidays_rules, $this->from, $this->to);
+
       $ret = array(
         'success' => 1,
         'render' => $this->renderEvents(),
@@ -917,6 +921,12 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
       $holidays = array_merge($holidays, $attendant_holidays);
     }
 
+    // Allow extensions (e.g. GCal slot locker) to inject extra blocked intervals
+    // into the server-side day-view rendering. $this->startTime is the day start.
+    if (isset($this->startTime)) {
+      $holidays = apply_filters('sln.calendar.holidays_daily_rules', $holidays, $this->startTime, $this->startTime);
+    }
+
     if (empty($holidays) || !isset($holidays)) {
       return false;
     }
@@ -1319,16 +1329,20 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
     return $this->plugin->loadView('admin/_calendar_day', compact('booking'));
   }
 
-  private function getCalendarDayAssistants($booking)
-  {
-    $calendarDayAssistants = array();
+    private function getCalendarDayAssistants($booking)
+    {
+        $calendarDayAssistants = array();
 
-    foreach ($booking->getBookingServices()->getItems() as $bookingService) {
-      $calendarDayAssistants[$bookingService->getService()->getId()] = $this->plugin->loadView('admin/_calendar_day_assistant', compact('booking', 'bookingService'));
+        foreach ($booking->getBookingServices()->getItems() as $bookingService) {
+            $service = $bookingService->getService();
+            if (!($service instanceof SLN_Wrapper_ServiceInterface)) {
+                continue;
+            }
+            $calendarDayAssistants[$service->getId()] = $this->plugin->loadView('admin/_calendar_day_assistant', compact('booking', 'bookingService'));
+        }
+
+        return $calendarDayAssistants;
     }
-
-    return $calendarDayAssistants;
-  }
 
   private function getCalendarDayAssistant($booking, $bookingService)
   {
@@ -1340,16 +1354,20 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
     return $this->plugin->loadView('admin/_calendar_day_assistant_common', compact('booking', 'booking'));
   }
 
-  private function getCalendarDayTitleAssistants($booking)
-  {
-    $calendarDayAssistants = array();
+    private function getCalendarDayTitleAssistants($booking)
+    {
+        $calendarDayAssistants = array();
 
-    foreach ($booking->getBookingServices()->getItems() as $bookingService) {
-      $calendarDayAssistants[$bookingService->getService()->getId()] = $this->plugin->loadView('admin/_calendar_day_title_assistant', compact('booking', 'bookingService'));
+        foreach ($booking->getBookingServices()->getItems() as $bookingService) {
+            $service = $bookingService->getService();
+            if (!($service instanceof SLN_Wrapper_ServiceInterface)) {
+                continue;
+            }
+            $calendarDayAssistants[$service->getId()] = $this->plugin->loadView('admin/_calendar_day_title_assistant', compact('booking', 'bookingService'));
+        }
+
+        return $calendarDayAssistants;
     }
-
-    return $calendarDayAssistants;
-  }
 
   private function getBookingServiceTitle($booking, $bookingServiceArray)
   {

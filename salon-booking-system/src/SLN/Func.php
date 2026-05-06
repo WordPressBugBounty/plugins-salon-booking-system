@@ -326,6 +326,131 @@ class SLN_Func
         return 240;
     }
 
+    /**
+     * Auto-align time keys when the salon setting is enabled.
+     *
+     * Splits the slot list into contiguous segments (gap between sorted slots
+     * greater than the booking interval). For each segment, uses as anchor the
+     * earliest slot in that segment whose minute-of-day is divisible by the
+     * alignment interval when such a slot exists; otherwise falls back to the
+     * first slot of the segment (previous behaviour). This avoids skewing the
+     * whole day from an early grid origin (e.g. 8:30) so that a later real start
+     * (e.g. 9:00) is skipped in favour of 9:30.
+     *
+     * @param array         $times    Keys 'H:i', values preserved.
+     * @param string|object $duration Duration as H:i or object with toString().
+     * @return array
+     */
+    public static function filterTimesAlignedToServiceDurationSlots(array $times, $duration)
+    {
+        if (empty($times)) {
+            return $times;
+        }
+
+        $durationStr = '';
+        if (is_object($duration) && method_exists($duration, 'toString')) {
+            $durationStr = $duration->toString();
+        } elseif (is_string($duration)) {
+            $durationStr = $duration;
+        }
+
+        if ($durationStr === '') {
+            return $times;
+        }
+
+        $durationMinutes = self::getMinutesFromDuration($durationStr);
+        if ($durationMinutes < 30) {
+            return $times;
+        }
+
+        $alignmentInterval = self::getAutoAlignInterval($durationMinutes);
+        $bookingInterval     = (int) SLN_Plugin::getInstance()->getSettings()->get('interval');
+        if ($bookingInterval < 1) {
+            $bookingInterval = 15;
+        }
+
+        $keys = array_keys($times);
+        usort($keys, 'strcmp');
+
+        $segments = array();
+        $current  = array();
+        foreach ($keys as $k) {
+            if ($current === array()) {
+                $current[] = $k;
+                continue;
+            }
+            $pm = self::parseTimeKeyToMinutes(end($current));
+            $cm = self::parseTimeKeyToMinutes($k);
+            if (null === $pm || null === $cm) {
+                $current[] = $k;
+                continue;
+            }
+            if ($cm - $pm > $bookingInterval) {
+                $segments[] = $current;
+                $current    = array($k);
+            } else {
+                $current[] = $k;
+            }
+        }
+        if ($current !== array()) {
+            $segments[] = $current;
+        }
+
+        $alignedTimes = array();
+        foreach ($segments as $segmentKeys) {
+            if ($segmentKeys === array()) {
+                continue;
+            }
+
+            $anchorPhase = null;
+            foreach ($segmentKeys as $sk) {
+                $m = self::parseTimeKeyToMinutes($sk);
+                if (null === $m) {
+                    continue;
+                }
+                if ($m % $alignmentInterval === 0) {
+                    $anchorPhase = $m;
+                    break;
+                }
+            }
+
+            $firstMin = self::parseTimeKeyToMinutes($segmentKeys[0]);
+            if (null === $firstMin) {
+                continue;
+            }
+
+            $anchorMinutes = (null !== $anchorPhase) ? $anchorPhase : $firstMin;
+
+            foreach ($segmentKeys as $timeKey) {
+                $m = self::parseTimeKeyToMinutes($timeKey);
+                if (null === $m) {
+                    continue;
+                }
+                if ($m < $anchorMinutes) {
+                    continue;
+                }
+                if (($m - $anchorMinutes) % $alignmentInterval === 0) {
+                    $alignedTimes[$timeKey] = $times[$timeKey];
+                }
+            }
+        }
+
+        return empty($alignedTimes) ? $times : $alignedTimes;
+    }
+
+    /**
+     * @param string $timeKey "H:i"
+     * @return int|null Minutes from midnight
+     */
+    private static function parseTimeKeyToMinutes($timeKey)
+    {
+        if (! preg_match('/^(\d{2}):(\d{2})$/', $timeKey, $matches)) {
+            return null;
+        }
+
+        return ((int) $matches[1] * 60) + (int) $matches[2];
+    }
+
     public static function convertToHoursMins($time, $format = '%02d:%02d')
     {
         settype($time, 'integer');

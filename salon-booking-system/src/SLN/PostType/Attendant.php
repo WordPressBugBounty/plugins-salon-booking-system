@@ -130,6 +130,7 @@ class SLN_PostType_Attendant extends SLN_PostType_Abstract {
 
 		$new_columns = array(
 			'cb' => $columns['cb'],
+			'sln_sort_handle' => '<span class="screen-reader-text">' . esc_html__( 'Reorder', 'salon-booking-system' ) . '</span>',
 			'ID' => __('Attendant ID', 'salon-booking-system'),
 			'sln_thumb' => __('Thumbnail', 'salon-booking-system'),
 			'title' => $columns['title'],
@@ -149,6 +150,9 @@ class SLN_PostType_Attendant extends SLN_PostType_Abstract {
 	public function manage_column($column, $post_id) {
 		$obj = $this->getPlugin()->createAttendant($post_id);
 		switch ($column) {
+		case 'sln_sort_handle':
+			echo '<span class="sln-list-sort-handle" title="' . esc_attr__( 'Drag to reorder', 'salon-booking-system' ) . '"><span class="sln-list-sort-handle__grip" aria-hidden="true"></span><span class="screen-reader-text">' . esc_html__( 'Drag to reorder', 'salon-booking-system' ) . '</span></span>';
+			break;
 		case 'ID':
 			echo edit_post_link($post_id, '<p>', '</p>', $post_id);
 			break;

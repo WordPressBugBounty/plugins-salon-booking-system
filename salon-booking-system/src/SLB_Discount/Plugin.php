@@ -121,15 +121,32 @@ class SLB_Discount_Plugin {
 			else return;
 		}
 		if(!empty($_POST['_sln_booking_discounts']) && is_array($_POST['_sln_booking_discounts'])) $discounts = array_map('intval',$_POST['_sln_booking_discounts']);
-		$discounts_to_compare =  empty($discounts) ? array() : $discounts;
-		$discounts_to_decrement = array_diff($old_discounts,$discounts_to_compare);
-		$discounts_to_increment = array_diff($discounts_to_compare,$old_discounts);
+		if (!isset($discounts)) {
+			$discounts = array();
+		}
+		$discounts_to_compare = empty($discounts) ? array() : $discounts;
+		// Union canonical _sln_booking_discounts with per-coupon _sln_booking_discount_{id} meta so usage
+		// adjustments and clears stay correct when the list was emptied but stale per-coupon keys remained.
+		$old_discounts_safe           = is_array( $old_discounts ) ? $old_discounts : array();
+		$meta_coupon_ids               = $this->get_coupon_ids_from_per_discount_meta_keys($booking->getId());
+		$union_applied_discount_ids   = array_values(
+			array_unique(
+				array_filter(
+					array_map( 'intval', array_merge( $old_discounts_safe, $meta_coupon_ids ) ),
+					function ( $id ) {
+						return $id > 0;
+					}
+				)
+			)
+		);
+		$discounts_to_decrement       = array_diff($union_applied_discount_ids, $discounts_to_compare);
+		$discounts_to_increment       = array_diff($discounts_to_compare, $union_applied_discount_ids);
 		$dRepo = SLN_Plugin::getInstance()->getRepository(SLB_Discount_Plugin::POST_TYPE_DISCOUNT);
-		$discountId = null;
 		if (empty($discounts)){
 			foreach (['discounts',"discount_amount", "discount_score"] as $k) {
 	            delete_post_meta($booking->getId(), '_'.SLN_Plugin::POST_TYPE_BOOKING.'_'.$k);
             }
+			$this->delete_all_per_coupon_discount_meta_keys($booking->getId());
 	    	foreach($items as $sId => &$atId) {
 	    		$service = new SLN_Wrapper_Service($sId);
 				$price       = $service->getPrice();
@@ -144,12 +161,14 @@ class SLB_Discount_Plugin {
 				}
 			}
 			foreach ($discounts_to_decrement as $discountId) {
-				$discount        = $dRepo->create($discountId);
+				$discount = $this->get_discount_wrapper_or_null( $dRepo, $discountId );
+				if ( ! $discount ) {
+					continue;
+				}
 				$discount->decrementUsagesNumber($booking->getUserId());
 				$discount->decrementTotalUsagesNumber();
 			}
 			update_post_meta($booking->getId(), '_'.SLN_Plugin::POST_TYPE_BOOKING.'_services', $items);
-			update_post_meta($booking->getId(), '_'.SLN_Plugin::POST_TYPE_BOOKING.'_discount_'.$discountId, false);
 			return;
 		}
 		$bookingServices = $booking->getBookingServices();
@@ -163,7 +182,11 @@ class SLB_Discount_Plugin {
 		$first = true;
 		$bookingTimestamp = $booking->getDate() ? $booking->getDate()->getTimestamp() : (new SLN_DateTime())->getTimestamp();
 		foreach ($discounts as $discountId) {
-			$discount        = $dRepo->create($discountId);
+			$discount = $this->get_discount_wrapper_or_null( $dRepo, $discountId );
+			if ( ! $discount ) {
+				SLN_Plugin::addLog( sprintf( '[Discount] Skipping missing discount post %d (admin path) for booking %d', (int) $discountId, $booking->getId() ) );
+				continue;
+			}
 
 			// Skip expired or otherwise invalid discounts.
 			$discountErrors = $discount->validateDiscount($bookingTimestamp);
@@ -223,7 +246,10 @@ class SLB_Discount_Plugin {
 		}
 		foreach ($discounts_to_decrement as $discountId) {
 				$data["discount_{$discountId}"] = false;
-				$discount        = $dRepo->create($discountId);
+				$discount = $this->get_discount_wrapper_or_null( $dRepo, $discountId );
+				if ( ! $discount ) {
+					continue;
+				}
 				$discount->decrementUsagesNumber($booking->getUserId());
 				$discount->decrementTotalUsagesNumber();
 		}
@@ -233,6 +259,66 @@ class SLB_Discount_Plugin {
 		foreach ($data as $k => $v) {
 	            update_post_meta($booking->getId(), '_'.SLN_Plugin::POST_TYPE_BOOKING.'_'.$k, $v);
 	    }
+	}
+
+	/**
+	 * @param SLN_Repository_AbstractWrapperRepository $dRepo
+	 * @param int                                     $discountId
+	 * @return SLB_Discount_Wrapper_Discount|null
+	 */
+	private function get_discount_wrapper_or_null( $dRepo, $discountId ) {
+		$discountId = (int) $discountId;
+		if ( $discountId <= 0 ) {
+			return null;
+		}
+		$discount = $dRepo->create( $discountId );
+		if ( $discount->isEmpty() ) {
+			return null;
+		}
+		return $discount;
+	}
+
+	/**
+	 * Coupon post IDs referenced by _{booking_pt}_discount_{numeric_id} only (not discount_amount / discounts / discount_score).
+	 *
+	 * @param int $booking_id
+	 * @return int[]
+	 */
+	private function get_coupon_ids_from_per_discount_meta_keys($booking_id) {
+		$booking_id = (int) $booking_id;
+		$pt         = SLN_Plugin::POST_TYPE_BOOKING;
+		$prefix     = '_' . $pt . '_discount_';
+		$custom     = get_post_custom($booking_id);
+		$ids        = array();
+		if (!is_array($custom)) {
+			return $ids;
+		}
+		foreach (array_keys($custom) as $key) {
+			if (preg_match('/^' . preg_quote($prefix, '/') . '(\d+)$/', $key, $m)) {
+				$ids[] = (int) $m[1];
+			}
+		}
+		return $ids;
+	}
+
+	/**
+	 * Remove all per-coupon _{booking_pt}_discount_{id} meta rows (used when clearing discounts in admin).
+	 *
+	 * @param int $booking_id
+	 */
+	private function delete_all_per_coupon_discount_meta_keys($booking_id) {
+		$booking_id = (int) $booking_id;
+		$pt         = SLN_Plugin::POST_TYPE_BOOKING;
+		$prefix     = '_' . $pt . '_discount_';
+		$custom     = get_post_custom($booking_id);
+		if (!is_array($custom)) {
+			return;
+		}
+		foreach (array_keys($custom) as $key) {
+			if (preg_match('/^' . preg_quote($prefix, '/') . '(\d+)$/', $key)) {
+				delete_post_meta($booking_id, $key);
+			}
+		}
 	}
 
 	public function get_services_calc_booking_total($items, $bookingServices, $bookingAttendants) {

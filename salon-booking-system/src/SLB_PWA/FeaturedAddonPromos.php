@@ -178,17 +178,20 @@ class FeaturedAddonPromos {
         }
 
         if ( defined( 'SLN_ITEM_SLUG' ) && defined( 'SLN_API_KEY' ) && defined( 'SLN_API_TOKEN' ) && defined( 'SLN_STORE_URL' ) ) {
-            $transient_key = SLN_ITEM_SLUG . '_products_cache';
-            $products      = get_transient( $transient_key );
+            $stored_license = get_option( SLN_ITEM_SLUG . '_license_key', '' );
+            $cache_suffix   = class_exists( '\SLN_Update_Manager' )
+                ? \SLN_Update_Manager::edd_products_catalog_cache_suffix( $stored_license )
+                : ( is_string( $stored_license ) && trim( $stored_license ) !== '' ? substr( md5( trim( $stored_license ) ), 0, 16 ) : 'none' );
+            $transient_key  = SLN_ITEM_SLUG . '_products_cache_' . $cache_suffix;
+            $products       = get_transient( $transient_key );
             if ( false === $products ) {
                 $api_params = array(
                     'key'    => SLN_API_KEY,
                     'token'  => SLN_API_TOKEN,
                     'number' => -1,
                 );
-                $stored_license = get_option( SLN_ITEM_SLUG . '_license_key' );
-                if ( $stored_license ) {
-                    $api_params['license'] = $stored_license;
+                if ( is_string( $stored_license ) && trim( $stored_license ) !== '' ) {
+                    $api_params['license'] = trim( $stored_license );
                 }
                 $url      = add_query_arg( $api_params, SLN_STORE_URL . '/edd-api/products' );
                 $response = wp_remote_get( $url, array( 'timeout' => 15, 'sslverify' => false ) );

@@ -190,18 +190,37 @@ class SLN_Settings {
 	}
 
 	/**
-	 * Check if nested bookings (bookings during service breaks) are enabled globally
-	 * When enabled, all services with breaks will allow nested bookings
-	 * Note: This is a PRO-only feature
-	 * 
+	 * Check if nested bookings (bookings during service breaks) are enabled globally.
+	 * When enabled, all services with breaks will allow nested bookings (High-end mode only).
+	 * PRO-only feature.
+	 *
 	 * @return bool
 	 */
 	public function isNestedBookingsEnabled() {
-		// PRO-only feature
+		// PRO-only feature; only applies in High-end availability mode (see booking settings UI).
 		if (!defined('SLN_VERSION_PAY')) {
 			return false;
 		}
+		if ($this->getAvailabilityMode() !== 'highend') {
+			return false;
+		}
+
 		return (bool) $this->get('nested_bookings_enabled');
+	}
+
+	/**
+	 * When true, sequential services in one booking never use the "custom break position" shortcut:
+	 * the next service always starts after the previous service's duration + full break (wall-clock).
+	 * Only applies in High-end availability mode (matches booking settings UI).
+	 *
+	 * @return bool
+	 */
+	public function isDoNotNestSameBookingServicesEnabled() {
+		if ($this->getAvailabilityMode() !== 'highend') {
+			return false;
+		}
+
+		return (bool) $this->get('do_not_nest_same_booking_services');
 	}
 
 	public function getPaymentMethod() {

@@ -93,7 +93,8 @@ class SLN_Shortcode_SalonCalendar {
 
 	$criteria = apply_filters('sln_salon_calendar_shortcode_assistants_query_args', $criteria, $this->attrs);
 
-        $assistants = $plugin->getRepository(SLN_Plugin::POST_TYPE_ATTENDANT)->get($criteria);
+        $repo       = $plugin->getRepository(SLN_Plugin::POST_TYPE_ATTENDANT);
+        $assistants = $repo->sortByPos($repo->get($criteria));
         $attData    = array();
         foreach($assistants as $k => $assistant) {
             $attData[$assistant->getId()] = array(

@@ -89,8 +89,10 @@ final class SLN_Wrapper_Booking_Services {
 	 */
 	public static function build($data, SLN_DateTime $startsAt, $offset = 0, $serviceCount = array(), $resources = array()) {
 		$startsAtClone = clone $startsAt;
-		$services = array();
-        foreach($data as $i => $item) {
+		$services       = array();
+		$sequentialOnly = SLN_Plugin::getInstance()->getSettings()->isDoNotNestSameBookingServicesEnabled();
+
+		foreach ( $data as $i => $item ) {
 
             $sId      = null;
 			$atId     = null;
@@ -187,18 +189,21 @@ final class SLN_Wrapper_Booking_Services {
                 'count' => $count,
                 'resource'      => $resource,
 			);
-			if(!$parallelExec){
+			if ( ! $parallelExec ) {
 				$breakMinutes = SLN_Func::getMinutesFromDuration($break);
-				$breakFrom = isset($break_duration_data['from']) ? intval($break_duration_data['from']) : 0;
+				$breakFrom    = isset($break_duration_data['from']) ? intval($break_duration_data['from']) : 0;
 
-				if ($breakMinutes > 0 && $breakFrom > 0 && isset($break_duration_data['to']) && $break_duration_data['to'] > $breakFrom) {
-					// Custom break position: next service starts at the break window (stylist is free during break)
+				if (
+					! $sequentialOnly
+					&& $breakMinutes > 0 && $breakFrom > 0 && isset($break_duration_data['to']) && $break_duration_data['to'] > $breakFrom
+				) {
+					// Custom break position: next service starts at the break window (stylist is free during break).
 					$minutes = $breakFrom + $offset;
 				} else {
-					// Standard case: advance by full work duration + break duration
+					// Standard case: advance by full work duration + break duration.
 					$minutes = SLN_Func::getMinutesFromDuration($duration) + $breakMinutes + $offset;
 				}
-				$startsAtClone->modify('+'.$minutes.' minutes');
+				$startsAtClone->modify( '+' . $minutes . ' minutes' );
 			}
 		}
 		//usort($services, array('SLN_Repository_ServiceRepository', 'serviceCmp'));

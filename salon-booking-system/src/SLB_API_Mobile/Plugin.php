@@ -128,9 +128,26 @@ class Plugin {
             return $dispatch_result;
         }
 
-        // Allow unauthenticated access to availability endpoints
+        // Allow unauthenticated access to availability endpoints.
+        // For /availability/stats, also try a best-effort token auth so that
+        // staff_mode=1 requests from the PWA can identify the current user via
+        // wp_set_current_user() — without blocking public (tokenless) access.
         if (stristr($request->get_route(), '/availability/intervals') !== false ||
             stristr($request->get_route(), '/availability/stats') !== false) {
+
+            if (stristr($request->get_route(), '/availability/stats') !== false) {
+                $token_helper   = new TokenHelper();
+                $request_helper = new RequestHelper();
+                $access_token   = $request_helper->getAccessToken();
+
+                if (!empty($access_token) && $token_helper->isValidUserAccessToken($access_token)) {
+                    $user_id = $token_helper->getUserIdByAccessToken($access_token);
+                    if ($user_id) {
+                        wp_set_current_user($user_id);
+                    }
+                }
+            }
+
             return $dispatch_result;
         }
 

@@ -197,6 +197,7 @@ class SLN_TaxonomyType_ServiceCategory extends SLN_TaxonomyType_Abstract
     public function manage_columns($columns)
     {
         $new_columns = array(
+            'sln_sort_handle' => '<span class="screen-reader-text">' . esc_html__( 'Reorder', 'salon-booking-system' ) . '</span>',
             'term_id' => __('ID', 'salon-booking-system'),
 	);
 
@@ -206,6 +207,9 @@ class SLN_TaxonomyType_ServiceCategory extends SLN_TaxonomyType_Abstract
     public function manage_column($value, $column_name, $term_id)
     {
 	switch ($column_name) {
+            case 'sln_sort_handle':
+                echo '<span class="sln-list-sort-handle" title="' . esc_attr__( 'Drag to reorder', 'salon-booking-system' ) . '"><span class="sln-list-sort-handle__grip" aria-hidden="true"></span><span class="screen-reader-text">' . esc_html__( 'Drag to reorder', 'salon-booking-system' ) . '</span></span>';
+                break;
             case 'term_id' :
 		$term = get_term($term_id, $this->taxonomyType);
                 echo edit_term_link($term_id, '<p>', '</p>', $term);

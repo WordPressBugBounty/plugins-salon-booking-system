@@ -58,6 +58,12 @@ class SLN_Third_GoogleCalendarImport
             return;
         }
 
+        // Suppress all email/SMS notifications for the duration of the import so
+        // that Google-driven cancellations, reschedules, and new bookings do not
+        // send automated messages to customers without the salon's explicit action.
+        SLN_Plugin::getInstance()->messages()->setDisabled( true );
+
+        try {
         $syncToken = self::getSyncToken();
         $this->printMsg(sprintf("Current token '%s'", $syncToken));
 
@@ -120,6 +126,10 @@ class SLN_Third_GoogleCalendarImport
         $this->printMsg(sprintf("Next sync token '%s'", $syncToken));
 
         self::updateSyncToken($nextSyncToken);
+
+        } finally {
+            SLN_Plugin::getInstance()->messages()->setDisabled( false );
+        }
     }
     public function syncFullShops()
     {
@@ -133,11 +143,16 @@ class SLN_Third_GoogleCalendarImport
             ),
             ARRAY_A
         );
+
+        // Suppress notifications for the full shops import (same reason as syncFull).
+        SLN_Plugin::getInstance()->messages()->setDisabled( true );
+
+        try {
         foreach ($shops as $shop){
         $gScope = $this->gScope;
         $gScope->google_client_calendar = $shop['meta_value'];
         if ( ! $gScope->is_connected() ) {
-            return;
+            continue;
         }
 
         $syncToken = self::getSyncToken();
@@ -204,6 +219,9 @@ class SLN_Third_GoogleCalendarImport
         self::updateSyncToken($nextSyncToken);
         }
 
+        } finally {
+            SLN_Plugin::getInstance()->messages()->setDisabled( false );
+        }
     }
 
     private function importBookingsFromGoogleCalendarEvents($gEvents, $shop_id = false)

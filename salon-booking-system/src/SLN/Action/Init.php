@@ -277,6 +277,96 @@ class SLN_Action_Init
         return $actions;
     }, 10, 2);
 
+    // Add "Set status: …" entries to the bookings bulk-action dropdown.
+    // Uses toBackendWrapper() so payment statuses only appear when the payment
+    // extension is active. Workers are excluded (they cannot edit bookings).
+    add_filter('bulk_actions-edit-sln_booking', function ($actions) {
+        if ( in_array(SLN_Plugin::USER_ROLE_WORKER, wp_get_current_user()->roles) ) {
+            return $actions;
+        }
+        foreach ( SLN_Enum_BookingStatus::toBackendWrapper() as $status_value => $label ) {
+            $actions[ 'sln_set_status_' . $status_value ] = sprintf(
+                /* translators: %s: booking status label */
+                __('Set status: %s', 'salon-booking-system'),
+                $label
+            );
+        }
+        return $actions;
+    }, 20 );
+
+    // Handle the "Set status: …" bulk actions. Notifications are suppressed so
+    // that changing 50 bookings at once does not fire 50 customer emails/SMSes.
+    add_filter('handle_bulk_actions-edit-sln_booking', function ($redirect_to, $doaction, $post_ids) {
+        $prefix = 'sln_set_status_';
+        if ( strpos( $doaction, $prefix ) !== 0 ) {
+            return $redirect_to;
+        }
+
+        $new_status    = substr( $doaction, strlen( $prefix ) );
+        $valid_statuses = array_keys( SLN_Enum_BookingStatus::toBackendWrapper() );
+
+        if ( ! in_array( $new_status, $valid_statuses, true ) ) {
+            return $redirect_to;
+        }
+
+        $plugin = SLN_Plugin::getInstance();
+
+        // Disable all email/SMS notifications for the duration of the bulk update.
+        $plugin->messages()->setDisabled( true );
+
+        $count = 0;
+        foreach ( $post_ids as $post_id ) {
+            try {
+                $booking = $plugin->createBooking( (int) $post_id );
+                if ( $booking && $booking->getStatus() !== $new_status ) {
+                    $booking->setStatus( $new_status );
+                    $count++;
+                }
+            } catch ( Exception $e ) {
+                // Skip any booking that cannot be loaded.
+            }
+        }
+
+        // Re-enable notifications for subsequent requests.
+        $plugin->messages()->setDisabled( false );
+
+        $redirect_to = remove_query_arg( array( 'trashed', 'untrashed', 'deleted', 'ids' ), $redirect_to );
+        $redirect_to = add_query_arg( array(
+            'sln_bulk_status_updated' => $count,
+            'sln_bulk_status_to'      => rawurlencode( $new_status ),
+        ), $redirect_to );
+
+        return $redirect_to;
+    }, 10, 3 );
+
+    // Show an admin notice after a bulk status change.
+    add_action('admin_notices', function () {
+        $screen = get_current_screen();
+        if ( ! $screen || $screen->id !== 'edit-sln_booking' ) {
+            return;
+        }
+        if ( empty( $_GET['sln_bulk_status_updated'] ) ) {
+            return;
+        }
+        $count      = (int) $_GET['sln_bulk_status_updated'];
+        $status_val = isset( $_GET['sln_bulk_status_to'] ) ? rawurldecode( $_GET['sln_bulk_status_to'] ) : '';
+        $label      = SLN_Enum_BookingStatus::getLabel( $status_val );
+        printf(
+            '<div class="notice notice-success is-dismissible"><p>%s</p></div>',
+            sprintf(
+                /* translators: 1: number of bookings, 2: status label */
+                esc_html( _n(
+                    '%1$d booking updated to "%2$s". No notifications were sent to customers.',
+                    '%1$d bookings updated to "%2$s". No notifications were sent to customers.',
+                    $count,
+                    'salon-booking-system'
+                ) ),
+                $count,
+                esc_html( $label )
+            )
+        );
+    });
+
     add_action('admin_head-post.php', function() {
         if ( in_array(SLN_Plugin::USER_ROLE_WORKER,  wp_get_current_user()->roles) ) {
             echo '
@@ -474,6 +564,7 @@ class SLN_Action_Init
         add_action('wp_ajax_salon', $callback);
         add_action('wp_ajax_nopriv_salon', $callback);
         add_action('wp_ajax_saloncalendar', $callback);
+        add_action('wp_ajax_sln_send_weekly_report', array(new SLN_Action_Ajax_SendWeeklyReport($this->plugin), 'execute'));
         add_action('wp_ajax_sln_send_feedback_email', array(new SLN_Action_Ajax_SendFeedback($this->plugin), 'execute'));
         add_action('wp_ajax_sln_send_bulk_feedback', array(new SLN_Action_Ajax_SendBulkFeedback($this->plugin), 'execute'));
         add_action('wp_ajax_sln_preview_bulk_feedback', array(new SLN_Action_Ajax_PreviewBulkFeedback($this->plugin), 'execute'));

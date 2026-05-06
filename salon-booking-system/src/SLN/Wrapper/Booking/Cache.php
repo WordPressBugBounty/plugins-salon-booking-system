@@ -58,10 +58,10 @@ class SLN_Wrapper_Booking_Cache extends SLN_Wrapper_Booking_AbstractCache
         return parent::refresh($from, $to);
     }
 
-	public function processDate(Date $day)
+	public function processDate(Date $day, $staff_mode = false)
 	{
 		do_action('sln.booking_cache.processDate', $day);
 
-		return parent::processDate($day);
+		return parent::processDate($day, $staff_mode);
 	}
 }

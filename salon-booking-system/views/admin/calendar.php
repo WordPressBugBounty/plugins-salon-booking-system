@@ -222,6 +222,7 @@ echo expirePopup();
         'block_confirm': '<?php esc_html_e('Confirm', 'salon-booking-system'); ?>',
         'unblock': '<?php esc_html_e('Unlock', 'salon-booking-system'); ?>',
         'unblock_these_rows': '<?php esc_html_e('Unlock', 'salon-booking-system'); ?>',
+        'unblock_gcal': '<?php esc_html_e('Unlock (Google Calendar)', 'salon-booking-system'); ?>',
     }
     var sln_search_translation = {
         'tot': '<?php esc_html_e('Tot.', 'salon-booking-system'); ?>',

@@ -56,13 +56,13 @@ class SLN_Helper_Intervals
             $originalTimes = $times;
             // Check if any service allows nested bookings (per-service setting)
             // If yes, include break slots; otherwise use strict duration filtering
-            $times = $this->filterTimesByDurationWithBreakAllowance($times, $duration);
+            $times = $this->availabilityHelper->filterTimesArrayByDurationWithBreakAllowance($times, $duration);
             SLN_Helper_AvailabilityDebugger::logFilteredTimes($originalTimes, $times, 'Duration + Break Allowance Filter');
         }
 
         if (SLN_Plugin::getInstance()->getSettings()->get('auto_align_slots') && $duration) {
             $originalTimes = $times;
-            $times = $this->filterTimesAlignedToServiceDuration($times, $duration);
+            $times = SLN_Func::filterTimesAlignedToServiceDurationSlots($times, $duration);
             SLN_Helper_AvailabilityDebugger::logFilteredTimes($originalTimes, $times, 'Auto-Align Slots Filter');
         }
 
@@ -285,92 +285,4 @@ class SLN_Helper_Intervals
         return $this->workTimes;
     }
 
-    private function filterTimesByDurationWithBreakAllowance(array $times, Time $duration)
-    {
-        $filtered = Time::filterTimesArrayByDuration($times, $duration);
-
-        $missing = array_diff_key($times, $filtered);
-        if (empty($missing)) {
-            return $filtered;
-        }
-
-        $dayBookings = $this->availabilityHelper->getDayBookings();
-        if (!$dayBookings) {
-            return $filtered;
-        }
-
-        $breakSlots = array();
-        foreach ($missing as $label => $slot) {
-            if ($dayBookings->isBreakSlot($slot)) {
-                $filtered[$label] = $slot;
-                $breakSlots[$label] = $slot;
-            }
-        }
-
-        if (empty($filtered)) {
-            if (!empty($breakSlots)) {
-                ksort($breakSlots);
-                return $breakSlots;
-            }
-
-            return $filtered;
-        }
-
-        ksort($filtered);
-
-        return $filtered;
-    }
-
-    /**
-     * Filter available times to only show slots aligned with service duration.
-     * Uses SLN_Func::getAutoAlignInterval() for the canonical interval list.
-     *
-     * @param array     $times    Available time slots (key = "HH:MM" string)
-     * @param Time      $duration Service duration
-     * @return array Filtered times; falls back to original array if nothing qualifies.
-     */
-    private function filterTimesAlignedToServiceDuration(array $times, Time $duration)
-    {
-        if (empty($times)) {
-            return $times;
-        }
-
-        $durationMinutes = SLN_Func::getMinutesFromDuration($duration->toString());
-
-        if ($durationMinutes < 30) {
-            return $times;
-        }
-
-        $alignmentInterval = SLN_Func::getAutoAlignInterval($durationMinutes);
-
-        // The booking interval (in minutes) is used to detect shift boundaries.
-        // A gap between consecutive slots larger than this value signals a new shift,
-        // so the alignment anchor resets to the first slot of that shift.
-        $bookingInterval = (int) SLN_Plugin::getInstance()->getSettings()->get('interval') ?: 15;
-
-        $alignedTimes  = array();
-        $anchorMinutes = null;
-        $prevMinutes   = null;
-
-        foreach ($times as $timeKey => $timeValue) {
-            if (!preg_match('/^(\d{2}):(\d{2})$/', $timeKey, $matches)) {
-                continue;
-            }
-            $totalMinutes = ((int) $matches[1] * 60) + (int) $matches[2];
-
-            // Reset anchor at the start of each shift (gap wider than one booking interval).
-            if ($anchorMinutes === null || ($prevMinutes !== null && ($totalMinutes - $prevMinutes) > $bookingInterval)) {
-                $anchorMinutes = $totalMinutes;
-            }
-
-            $offsetFromAnchor = $totalMinutes - $anchorMinutes;
-            if ($offsetFromAnchor % $alignmentInterval === 0) {
-                $alignedTimes[$timeKey] = $timeValue;
-            }
-
-            $prevMinutes = $totalMinutes;
-        }
-
-        return empty($alignedTimes) ? $times : $alignedTimes;
-    }
 }

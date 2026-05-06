@@ -7,6 +7,7 @@ class SLN_Admin_SettingTabs_BookingTab extends SLN_Admin_SettingTabs_AbstractTab
 		'availabilities',
 		'holidays', // algolplus
 		'availability_mode',
+		'do_not_nest_same_booking_services', // sequential multi-service bookings: no start-during-break chaining
 		'nested_bookings_enabled', // nested bookings feature
 		'cancellation_enabled', // algolplus
 		'hours_before_cancellation', // algolplus
@@ -31,8 +32,20 @@ class SLN_Admin_SettingTabs_BookingTab extends SLN_Admin_SettingTabs_AbstractTab
 			$this->submitted['disabled'] = 0;
 		}
 
-		// Nested bookings is a PRO-only feature
-		if (!isset($this->submitted['nested_bookings_enabled']) || !defined('SLN_VERSION_PAY')) {
+		$availability_mode = isset($this->submitted['availability_mode']) && $this->submitted['availability_mode'] !== ''
+			? $this->submitted['availability_mode']
+			: $this->settings->getAvailabilityMode();
+
+		// Nesting logic options panel: High-end only (matches settings UI).
+		if ($availability_mode !== 'highend') {
+			$this->submitted['do_not_nest_same_booking_services'] = 0;
+		} elseif (!isset($this->submitted['do_not_nest_same_booking_services'])) {
+			$this->submitted['do_not_nest_same_booking_services'] = 0;
+		}
+
+		if (!defined('SLN_VERSION_PAY') || $availability_mode !== 'highend') {
+			$this->submitted['nested_bookings_enabled'] = 0;
+		} elseif (!isset($this->submitted['nested_bookings_enabled'])) {
 			$this->submitted['nested_bookings_enabled'] = 0;
 		}
 

@@ -6,14 +6,17 @@ if ( isset( $sln_license ) ) {
     $products = $sln_license->getEddProducts();
 } elseif ( defined( 'SLN_ITEM_SLUG' ) && defined( 'SLN_API_KEY' ) && defined( 'SLN_API_TOKEN' ) && defined( 'SLN_STORE_URL' ) ) {
     // License system not initialised (e.g. combined CC+PAY build) — query the store directly.
-    $transient_key = SLN_ITEM_SLUG . '_products_cache';
-    $products      = get_transient( $transient_key );
+    $stored_license = get_option( SLN_ITEM_SLUG . '_license_key', '' );
+    $cache_suffix   = class_exists( 'SLN_Update_Manager' )
+        ? SLN_Update_Manager::edd_products_catalog_cache_suffix( $stored_license )
+        : ( is_string( $stored_license ) && trim( $stored_license ) !== '' ? substr( md5( trim( $stored_license ) ), 0, 16 ) : 'none' );
+    $transient_key  = SLN_ITEM_SLUG . '_products_cache_' . $cache_suffix;
+    $products       = get_transient( $transient_key );
     if ( false === $products ) {
         $api_params = [ 'key' => SLN_API_KEY, 'token' => SLN_API_TOKEN, 'number' => -1 ];
         // Include the stored license key so EDD can tailor plan-specific access flags
-        $stored_license = defined('SLN_ITEM_SLUG') ? get_option( SLN_ITEM_SLUG . '_license_key' ) : '';
-        if ( $stored_license ) {
-            $api_params['license'] = $stored_license;
+        if ( is_string( $stored_license ) && trim( $stored_license ) !== '' ) {
+            $api_params['license'] = trim( $stored_license );
         }
         $url      = add_query_arg( $api_params, SLN_STORE_URL . '/edd-api/products' );
         $response = wp_remote_get( $url, [ 'timeout' => 15, 'sslverify' => false ] );

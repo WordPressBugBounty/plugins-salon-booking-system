@@ -97,11 +97,6 @@ class SLN_Helper_Availability_Highend_DayBookings extends SLN_Helper_Availabilit
                     $isDuringBreak = $hasBreak && $time >= $breakStart && $time < $breakEnd;
                     $isOutsideBreak = !$hasBreak || ($time < $breakStart || $time >= $breakEnd);
                     
-                    if ($hasBreak && $isDuringBreak && $nestedBookingsEnabled) {
-                        // Mark as available break slot (allows nested bookings)
-                        $ret[$key]['break'][] = $booking->getId();
-                    }
-                    
                     if($isWithinBooking){
                         // Add booking to slot if:
                         // 1. Outside break period, OR
@@ -110,8 +105,10 @@ class SLN_Helper_Availability_Highend_DayBookings extends SLN_Helper_Availabilit
                         
                         if ($shouldAddBooking && apply_filters('sln_build_timeslots_add_booking_to_timeslot', true, $key, $booking, $this->bookings)) {
                             $ret[$key]['booking'][] = $booking->getId();
-                        } elseif ($hasBreak && $nestedBookingsEnabled) {
-                            // Only mark as available break if nested bookings ARE allowed
+                        } elseif ($isDuringBreak && $hasBreak && $nestedBookingsEnabled) {
+                            // Nested break slot only for minutes inside the real break window.
+                            // If sln_build_timeslots_add_booking_to_timeslot is false during *work* minutes,
+                            // we must not push here — else isBreakSlot becomes true and validation skips overlaps (overbooking).
                             $ret[$key]['break'][] = $booking->getId();
                         }
                     }

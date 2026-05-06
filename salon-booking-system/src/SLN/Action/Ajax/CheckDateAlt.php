@@ -214,7 +214,7 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
             // Apply auto-align for non-smart path (smart path applies it inside getAllAttendantsAvailableTimes)
             if (SLN_Plugin::getInstance()->getSettings()->get('auto_align_slots') && $this->duration) {
                 $originalTimes = $times;
-                $times = $this->filterTimesAlignedToServiceDuration($times, $this->duration);
+                $times = SLN_Func::filterTimesAlignedToServiceDurationSlots($times, $this->duration);
                 SLN_Helper_AvailabilityDebugger::logFilteredTimes($originalTimes, $times, 'Auto-Align Slots Filter');
             }
         }
@@ -652,12 +652,12 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
         $allPossibleTimes = $ah->getTimes($date);
         
         if ($duration) {
-            $allPossibleTimes = Time::filterTimesArrayByDuration($allPossibleTimes, $duration);
+            $allPossibleTimes = $ah->filterTimesArrayByDurationWithBreakAllowance($allPossibleTimes, $duration);
         }
 
         if ($plugin->getSettings()->get('auto_align_slots') && $duration) {
             $originalTimes    = $allPossibleTimes;
-            $allPossibleTimes = $this->filterTimesAlignedToServiceDuration($allPossibleTimes, $duration);
+            $allPossibleTimes = SLN_Func::filterTimesAlignedToServiceDurationSlots($allPossibleTimes, $duration);
             SLN_Helper_AvailabilityDebugger::logFilteredTimes($originalTimes, $allPossibleTimes, 'Auto-Align Slots Filter');
         }
 
@@ -730,56 +730,4 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
         return $availableTimes;
     }
 
-    /**
-     * Filter available times to only show slots aligned with service duration.
-     * Uses SLN_Func::getAutoAlignInterval() for the canonical interval lookup.
-     *
-     * @param array $times    Available time slots (key = "HH:MM" string)
-     * @param Time  $duration Service duration
-     * @return array Filtered times; falls back to original array if nothing qualifies.
-     */
-    private function filterTimesAlignedToServiceDuration(array $times, $duration)
-    {
-        if (empty($times) || !$duration) {
-            return $times;
-        }
-
-        $durationMinutes = SLN_Func::getMinutesFromDuration($duration->toString());
-
-        if ($durationMinutes < 30) {
-            return $times;
-        }
-
-        $alignmentInterval = SLN_Func::getAutoAlignInterval($durationMinutes);
-
-        // The booking interval (in minutes) is used to detect shift boundaries.
-        // A gap between consecutive slots larger than this value signals a new shift,
-        // so the alignment anchor resets to the first slot of that shift.
-        $bookingInterval = (int) SLN_Plugin::getInstance()->getSettings()->get('interval') ?: 15;
-
-        $alignedTimes  = array();
-        $anchorMinutes = null;
-        $prevMinutes   = null;
-
-        foreach ($times as $timeKey => $timeValue) {
-            if (!preg_match('/^(\d{2}):(\d{2})$/', $timeKey, $matches)) {
-                continue;
-            }
-            $totalMinutes = ((int) $matches[1] * 60) + (int) $matches[2];
-
-            // Reset anchor at the start of each shift (gap wider than one booking interval).
-            if ($anchorMinutes === null || ($prevMinutes !== null && ($totalMinutes - $prevMinutes) > $bookingInterval)) {
-                $anchorMinutes = $totalMinutes;
-            }
-
-            $offsetFromAnchor = $totalMinutes - $anchorMinutes;
-            if ($offsetFromAnchor % $alignmentInterval === 0) {
-                $alignedTimes[$timeKey] = $timeValue;
-            }
-
-            $prevMinutes = $totalMinutes;
-        }
-
-        return empty($alignedTimes) ? $times : $alignedTimes;
-    }
 }

@@ -142,6 +142,7 @@ class SLN_PostType_Service extends SLN_PostType_Abstract
     {
         $new_columns = array(
             'cb' => $columns['cb'],
+            'sln_sort_handle' => '<span class="screen-reader-text">' . esc_html__( 'Reorder', 'salon-booking-system' ) . '</span>',
             'ID' => __('Service ID', 'salon-booking-system'),
             'title' => $columns['title'],
             'service_duration' => __('Duration', 'salon-booking-system'),
@@ -158,6 +159,9 @@ class SLN_PostType_Service extends SLN_PostType_Abstract
     {
         $obj = $this->getPlugin()->createService($post_id);
         switch ($column) {
+            case 'sln_sort_handle':
+                echo '<span class="sln-list-sort-handle" title="' . esc_attr__( 'Drag to reorder', 'salon-booking-system' ) . '"><span class="sln-list-sort-handle__grip" aria-hidden="true"></span><span class="screen-reader-text">' . esc_html__( 'Drag to reorder', 'salon-booking-system' ) . '</span></span>';
+                break;
             case 'ID' :
                 echo edit_post_link($post_id, '<p>', '</p>', $post_id);
 		echo '<div class="sln-service-unit" data-value="'.$obj->getUnitPerHour().'"></div>';

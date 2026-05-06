@@ -54,7 +54,11 @@ echo (isset($comments[0]) ? $comments[0]->comment_content : ''); ?>
 <div class='sln-services-tooltip'>
     <?php foreach ($booking->getBookingServices()->getItems() as $bookingService): ?>
         <?php
-        echo esc_attr($bookingService->getService()->getName()) . '<br /><span>' .
+        $svc = $bookingService->getService();
+        if (!($svc instanceof SLN_Wrapper_ServiceInterface)) {
+            continue;
+        }
+        echo esc_attr($svc->getName()) . '<br /><span>' .
             (($attendant = $bookingService->getAttendant()) ?
                 (!is_array($attendant) ?
                     esc_attr($attendant->getName()) :

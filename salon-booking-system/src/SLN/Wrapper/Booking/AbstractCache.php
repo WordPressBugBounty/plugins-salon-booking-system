@@ -96,7 +96,7 @@ class SLN_Wrapper_Booking_AbstractCache
         return $this;
     }
 
-    public function processDate(Date $day)
+    public function processDate(Date $day, $staff_mode = false)
     {
         $ah   = $this->ah;
         $data = array();
@@ -124,9 +124,15 @@ class SLN_Wrapper_Booking_AbstractCache
         // Issue: Was comparing day start (00:00) with $from, blocking days with evening slots
         // Example: Jan 7 at 00:00 < Jan 7 at 20:15 = blocked entire day (wrong!)
         // Solution: Only block if the LAST moment of day (23:59:59) is before $from
+        //
+        // In staff_mode the minimum-advance check ($dayEnd < $from) is skipped so that
+        // staff can view today's schedule regardless of the "advance booking" setting.
+        // The maximum-future check ($d > $to) is always enforced.
         $dayEnd = clone $d;
         $dayEnd->setTime(23, 59, 59);
-        if ($dayEnd < $from || $d > $to) {
+        $before_window_min = !$staff_mode && ( $dayEnd < $from );
+        $after_window_max  = $d > $to;
+        if ($before_window_min || $after_window_max) {
             // Entire day is outside the booking range
             $data['status'] = 'booking_rules';
             $data['free_slots'] = array();

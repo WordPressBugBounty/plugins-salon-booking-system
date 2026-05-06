@@ -66,13 +66,61 @@ class SLN_Admin_Tools extends SLN_Admin_AbstractPage
             }
         }
 
+        $discount_diag_report     = null;
+        $discount_diag_error      = '';
+        $discount_diag_booking_id = isset( $_GET['sln_discount_diag_booking'] ) ? absint( wp_unslash( $_GET['sln_discount_diag_booking'] ) ) : 0;
+
+        $break_av_diag_report      = null;
+        $break_av_diag_error       = '';
+        $break_av_diag_booking_a   = isset( $_GET['sln_break_diag_booking_a'] ) ? absint( wp_unslash( $_GET['sln_break_diag_booking_a'] ) ) : 0;
+        $break_av_diag_booking_b   = isset( $_GET['sln_break_diag_booking_b'] ) ? absint( wp_unslash( $_GET['sln_break_diag_booking_b'] ) ) : 0;
+
+        if ( $break_av_diag_booking_a && isset( $_GET['_wpnonce'] ) ) {
+            if ( ! current_user_can( 'manage_salon_settings' ) ) {
+                $break_av_diag_error = __( 'You do not have permission to run this diagnostic.', 'salon-booking-system' );
+            } elseif ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'sln_break_availability_diag' ) ) {
+                $break_av_diag_error = __( 'Security check failed. Submit the form again.', 'salon-booking-system' );
+            } else {
+                $break_av_diag_report = SLN_Admin_BreakAvailabilityDiagnostics::run(
+                    $this->plugin,
+                    $break_av_diag_booking_a,
+                    $break_av_diag_booking_b
+                );
+                if ( ! empty( $break_av_diag_report['error'] ) ) {
+                    $break_av_diag_error  = $break_av_diag_report['error'];
+                    $break_av_diag_report = null;
+                }
+            }
+        }
+
+        if ( $discount_diag_booking_id && isset( $_GET['_wpnonce'] ) ) {
+            if ( ! current_user_can( 'manage_salon_settings' ) ) {
+                $discount_diag_error = __( 'You do not have permission to run this diagnostic.', 'salon-booking-system' );
+            } elseif ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'sln_booking_discount_diag' ) ) {
+                $discount_diag_error = __( 'Security check failed. Submit the form again.', 'salon-booking-system' );
+            } else {
+                $discount_diag_report = SLN_Admin_BookingDiscountDiagnostics::run( $this->plugin, $discount_diag_booking_id );
+                if ( ! empty( $discount_diag_report['error'] ) ) {
+                    $discount_diag_error      = $discount_diag_report['error'];
+                    $discount_diag_report     = null;
+                }
+            }
+        }
+
         echo $this->plugin->loadView(
             'admin/tools',
             array(
-                'info'              => $info,
-                'versionToRollback' => $versionToRollback,
-                'currentVersion'    => $current_version,
-                'isFree'            => defined('SLN_Plugin::F1'),
+                'info'                     => $info,
+                'versionToRollback'        => $versionToRollback,
+                'currentVersion'           => $current_version,
+                'isFree'                   => defined( 'SLN_Plugin::F1' ),
+                'discount_diag_report'     => $discount_diag_report,
+                'discount_diag_error'      => $discount_diag_error,
+                'discount_diag_booking_id' => $discount_diag_booking_id,
+                'break_av_diag_report'     => $break_av_diag_report,
+                'break_av_diag_error'      => $break_av_diag_error,
+                'break_av_diag_booking_a'  => $break_av_diag_booking_a,
+                'break_av_diag_booking_b'  => $break_av_diag_booking_b,
             )
         );
     }

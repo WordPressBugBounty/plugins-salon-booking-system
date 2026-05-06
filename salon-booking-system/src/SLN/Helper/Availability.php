@@ -130,6 +130,102 @@ class SLN_Helper_Availability
 
         return $ret;
     }
+
+    /**
+     * Filter start times so the whole service duration fits the time grid, while still allowing
+     * nested bookings that span only "missing" steps that fall inside other bookings' breaks.
+     *
+     * Without the nested-break coverage check, a start time could be re-added only because its
+     * first minute was a break slot while later minutes crossed another customer's work segment.
+     *
+     * @param array<string,\DateTimeInterface|mixed> $times Keys are "H:i", values are datetime objects (as from getTimes).
+     * @param Time                                   $duration Service duration (working time, excluding own break).
+     * @return array<string,mixed>
+     */
+    public function filterTimesArrayByDurationWithBreakAllowance(array $times, Time $duration)
+    {
+        if (empty($times) || !$duration) {
+            return $times;
+        }
+
+        $filtered = Time::filterTimesArrayByDuration($times, $duration);
+        $missing  = array_diff_key($times, $filtered);
+        if (empty($missing)) {
+            return $filtered;
+        }
+
+        $dayBookings = $this->getDayBookings();
+        if (!$dayBookings) {
+            return $filtered;
+        }
+
+        $dateYmd = null;
+        foreach ($times as $slotObj) {
+            if ($slotObj instanceof \DateTimeInterface) {
+                $dateYmd = $slotObj->format('Y-m-d');
+                break;
+            }
+        }
+        if (!$dateYmd) {
+            return $filtered;
+        }
+
+        $breakSlots = array();
+        foreach ($missing as $label => $slot) {
+            $slotDt = isset($times[ $label ]) ? $times[ $label ] : null;
+            if ($slotDt instanceof \DateTimeInterface) {
+                $tb = $dayBookings->getTime($slotDt->format('H'), $slotDt->format('i'));
+            } else {
+                $tb = $dayBookings->getTime((int) substr((string) $label, 0, 2), (int) substr((string) $label, 3, 2));
+            }
+            if (!$dayBookings->isBreakSlot($tb)) {
+                continue;
+            }
+            $startT = Time::create($label);
+            if (!$this->durationStepsCoveredByTimesOrNestedBreaks($times, $startT, $duration, $dateYmd)) {
+                continue;
+            }
+            $filtered[ $label ] = $slot;
+            $breakSlots[ $label ] = $slot;
+        }
+
+        if (empty($filtered)) {
+            if (!empty($breakSlots)) {
+                ksort($breakSlots);
+
+                return $breakSlots;
+            }
+
+            return $filtered;
+        }
+
+        ksort($filtered);
+
+        return $filtered;
+    }
+
+    /**
+     * Each step from start (inclusive) to start+duration (exclusive) must exist in $times or be a nested-break slot.
+     */
+    private function durationStepsCoveredByTimesOrNestedBreaks(array $times, Time $startTime, Time $duration, $dateYmd)
+    {
+        $dayBookings = $this->getDayBookings();
+        $end         = Time::increment($startTime, $duration);
+        $time        = Time::create($startTime);
+        while ($time->isLt($end)) {
+            $key = (string) $time;
+            if (!isset($times[ $key ])) {
+                $dt = new SLN_DateTime($dateYmd . ' ' . $key);
+                $tb = $dayBookings->getTime($dt->format('H'), $dt->format('i'));
+                if (!$dayBookings->isBreakSlot($tb)) {
+                    return false;
+                }
+            }
+            $time = Time::increment($time);
+        }
+
+        return true;
+    }
     
     public function getTimes(Date $date)
     {
@@ -184,15 +280,19 @@ class SLN_Helper_Availability
             // Check if this is a break slot (gap inside an existing booking allowing nested bookings).
             $time_obj = $this->getDayBookings()->getTime($d->format('H'), $d->format('i'));
             $isBreakSlot = $this->getDayBookings()->isBreakSlot($time_obj);
-            
+
+            // Allow external code (e.g. Google Calendar slot locker) to mark a slot as unavailable.
+            // Returning false blocks the slot without affecting the other availability checks.
+            $gcalCheck = apply_filters('sln_gcal_time_check', true, $d);
+
             // Break slots intentionally bypass the lower bound of the booking window ($d >= $from).
             // This allows salon staff to fill a break gap in an existing booking even when that
             // break falls inside the "hours before" minimum advance window. Only the upper bound
             // ($d <= $to) is enforced so slots beyond the max-advance limit are still blocked.
             // Regular slots check the full range (both bounds).
-            if ($isBreakSlot && $avCheck && $hCheck && $timeCheck && $d <= $to) {
+            if ($isBreakSlot && $avCheck && $hCheck && $timeCheck && $gcalCheck && $d <= $to) {
                 $ret[$time] = $d;
-            } elseif (!$isBreakSlot && $avCheck && $hCheck && $timeCheck && $rangeCheck) {
+            } elseif (!$isBreakSlot && $avCheck && $hCheck && $timeCheck && $gcalCheck && $rangeCheck) {
                 $ret[$time] = $d;
             }
         }
@@ -359,14 +459,15 @@ class SLN_Helper_Availability
                 )
             );
             
-            // Skip validation if:
-            // 1. Outside the new booking's break period, AND
-            // 2. NOT an existing booking's break slot (where nested bookings are allowed)
-            if ($outsideBreak && !$isExistingBreakSlot) {
+            // Skip validation only when we are inside another booking's real break AND this booking
+            // defines its own break window (nested booking inside someone else's pause).
+            // If this booking has NO break, always validate: otherwise a false "break" slot would skip
+            // attendant busy checks and allow overlap with another customer's work segment.
+            if ($outsideBreak && ($noBreak || !$isExistingBreakSlot)) {
                 if ($ret = $this->validateAttendantOnTime($attendant, $time, $service)) {
                     return $ret;
                 }
-            } elseif ($isExistingBreakSlot) {
+            } elseif ($isExistingBreakSlot && !$noBreak) {
                 SLN_Plugin::addLogVerbose(
                     sprintf(
                         '%s - ✅ Skipping validation for %s (existing break slot with nested bookings)',
@@ -432,8 +533,8 @@ class SLN_Helper_Availability
                 // Check if this slot is a break slot in an EXISTING booking (where nested bookings are allowed)
                 $isExistingBreakSlot = $b->isBreakSlot($bTime);
                 
-                // Skip validation if outside new booking's break AND not an existing break slot
-                if ($outsideBreak && !$isExistingBreakSlot) {
+                // Same rule as validateAttendant(): no-break bookings must not skip on isBreakSlot alone.
+                if ($outsideBreak && ($noBreak || !$isExistingBreakSlot)) {
                     if ($ret = $this->validateAttendantOnTime($attendant, $time, $service)) {
                         return $ret;
                     }
@@ -531,7 +632,7 @@ class SLN_Helper_Availability
     }
 
 
-    public function validateService(SLN_Wrapper_ServiceInterface $service, DateTimeInterface $date = null, DateTimeInterface $duration = null, DateTimeInterface $breakStartsAt = null, DateTimeInterface $breakEndsAt = null, $isLastService = false, $count = 1)
+    public function validateService(SLN_Wrapper_ServiceInterface $service, \DateTimeInterface $date = null, \DateTimeInterface $duration = null, \DateTimeInterface $breakStartsAt = null, \DateTimeInterface $breakEndsAt = null, $isLastService = false, $count = 1)
     {
         $date = empty($date) ? $this->date : $date;
         $totalDuration = $service->getTotalDuration();

@@ -94,41 +94,150 @@ class SLN_GoogleScope {
 
     public function add_script() {
         ?>
+        <style>
+            /* ── GCal sync button – progress states ───────────────────────── */
+            @keyframes sln-gcal-spin {
+                to { transform: rotate(360deg); }
+            }
+            @keyframes sln-gcal-sweep {
+                0%   { left: -55%; }
+                100% { left: 110%; }
+            }
+            @keyframes sln-gcal-fade-out {
+                0%   { opacity: 1; }
+                60%  { opacity: 1; }
+                100% { opacity: 0; }
+            }
+
+            /* Syncing state – applied to the .sln-btn wrapper */
+            #sln-salon--admin .sln-gcal--syncing {
+                pointer-events: none;
+                cursor: not-allowed;
+                opacity: .88;
+            }
+            /* Spinning circle in the left part of the button */
+            #sln-salon--admin .sln-gcal--syncing::before {
+                content: '';
+                position: absolute;
+                top: 50%;
+                left: 1.1rem;
+                width: 1rem;
+                height: 1rem;
+                margin-top: -.5rem;
+                border-radius: 50%;
+                border: 2px solid rgba(255,255,255,.3);
+                border-top-color: rgba(255,255,255,.9);
+                animation: sln-gcal-spin .65s linear infinite;
+                z-index: 5;
+                pointer-events: none;
+            }
+            /* Indeterminate sweep bar at the bottom edge of the button */
+            #sln-salon--admin .sln-gcal--syncing .sln-gcal-bar {
+                position: absolute;
+                bottom: 0;
+                left: -55%;
+                width: 55%;
+                height: 3px;
+                background: rgba(255,255,255,.65);
+                border-radius: 2px 2px 0 0;
+                animation: sln-gcal-sweep 1.4s ease-in-out infinite;
+                pointer-events: none;
+            }
+            /* Success flash – brief green tint */
+            #sln-salon--admin .sln-gcal--success {
+                background-color: #43a047 !important;
+                pointer-events: none;
+                transition: background-color .35s ease !important;
+            }
+            /* Error flash – brief red tint */
+            #sln-salon--admin .sln-gcal--error {
+                background-color: #e53935 !important;
+                pointer-events: none;
+                transition: background-color .35s ease !important;
+            }
+            /* Keep input text white in all states */
+            #sln-salon--admin .sln-gcal--success input,
+            #sln-salon--admin .sln-gcal--success button,
+            #sln-salon--admin .sln-gcal--error input,
+            #sln-salon--admin .sln-gcal--error button {
+                color: #fff !important;
+            }
+        </style>
         <script>
-            jQuery(function () {
-                jQuery('#sln_synch').on('click', function () {
-                    var $button = jQuery(this);
-                    $button.addClass('disabled').after('<div class="load-spinner"><img src="<?php echo get_site_url() . '/wp-admin/images/wpspin_light.gif'; ?>" /></div>');
-                    var ajaxurl = '<?php echo admin_url('admin-ajax.php'); ?>';
-                    var data = <?php echo wp_json_encode(apply_filters('sln.google-scope.ajax-events.synch.data', array('action' => 'startsynch','nonce'=> wp_create_nonce('google_calendar')))) ?>;
-                    jQuery.post(ajaxurl, data, function (response) {
-                        if (response == 'OK') {
-                            alert("<?php echo esc_html__('Operation completed!', 'salon-booking-system'); ?>");
-                        } else {
-                            var tmp = data.split('|');
-                            if (tmp[1])
-                                alert(tmp[1]);
-                        }
-                        $button.removeClass('disabled');
-                        jQuery('.load-spinner').remove();
-                    });
+            jQuery(function ($) {
+                var ajaxurl = '<?php echo esc_url(admin_url('admin-ajax.php')); ?>';
+
+                /**
+                 * Run a GCal AJAX action with modern progress feedback.
+                 *
+                 * @param {jQuery} $btn       The <input type="button"> element
+                 * @param {Object} data       POST data for wp_ajax
+                 * @param {string} labelSync  Button label while running
+                 * @param {string} labelDone  Button label on success
+                 * @param {string} labelError Button label on failure
+                 */
+                function slnGcalAction($btn, data, labelSync, labelDone, labelError) {
+                    var $wrap       = $btn.closest('.sln-btn');
+                    var originalVal = $btn.val();
+
+                    // ── Start ──────────────────────────────────────────────
+                    $btn.val(labelSync);
+                    $wrap.addClass('sln-gcal--syncing')
+                         .append('<span class="sln-gcal-bar"></span>');
+
+                    $.post(ajaxurl, data)
+                        .done(function (response) {
+                            _reset($wrap);
+                            if (response === 'OK') {
+                                _flash($wrap, $btn, 'sln-gcal--success', labelDone,  originalVal, 2400);
+                            } else {
+                                var msg = (response || '').split('|')[1] || labelError;
+                                _flash($wrap, $btn, 'sln-gcal--error',   msg,         originalVal, 3200);
+                            }
+                        })
+                        .fail(function () {
+                            _reset($wrap);
+                            _flash($wrap, $btn, 'sln-gcal--error', labelError, originalVal, 3200);
+                        });
+                }
+
+                function _reset($wrap) {
+                    $wrap.removeClass('sln-gcal--syncing');
+                    $wrap.find('.sln-gcal-bar').remove();
+                }
+
+                function _flash($wrap, $btn, cls, label, restoreVal, duration) {
+                    $btn.val(label);
+                    $wrap.addClass(cls);
+                    setTimeout(function () {
+                        $wrap.css('transition', 'background-color .4s ease');
+                        $wrap.removeClass(cls);
+                        $btn.val(restoreVal);
+                        // Remove inline transition after it completes
+                        setTimeout(function () { $wrap.css('transition', ''); }, 420);
+                    }, duration);
+                }
+
+                // ── Synchronize Bookings ───────────────────────────────────
+                $('#sln_synch').on('click', function () {
+                    slnGcalAction(
+                        $(this),
+                        <?php echo wp_json_encode(apply_filters('sln.google-scope.ajax-events.synch.data', array('action' => 'startsynch', 'nonce' => wp_create_nonce('google_calendar')))); ?>,
+                        '<?php echo esc_js(__('Synchronizing…', 'salon-booking-system')); ?>',
+                        '<?php echo esc_js(__('✓ Synchronization complete', 'salon-booking-system')); ?>',
+                        '<?php echo esc_js(__('✕ Error – please retry', 'salon-booking-system')); ?>'
+                    );
                 });
-                jQuery('#sln_del').on('click', function () {
-                    var $button = jQuery(this);
-                    $button.addClass('disabled').after('<div class="load-spinner"><img src="<?php echo get_site_url() . '/wp-admin/images/wpspin_light.gif'; ?>" /></div>');
-                    var ajaxurl = '<?php echo admin_url('admin-ajax.php'); ?>';
-                    var data = <?php echo wp_json_encode(apply_filters('sln.google-scope.ajax-events.delete.data', array('action' => 'deleteallevents','nonce'=> wp_create_nonce('google_calendar')))) ?>;
-                    jQuery.post(ajaxurl, data, function (response) {
-                        if (response == 'OK') {
-                            alert("<?php echo esc_html__('Operation completed!', 'salon-booking-system'); ?>");
-                        } else {
-                            var tmp = data.split('|');
-                            if (tmp[1])
-                                alert(tmp[1]);
-                        }
-                        $button.removeClass('disabled');
-                        jQuery('.load-spinner').remove();
-                    });
+
+                // ── Delete all Google Calendar Events ─────────────────────
+                $('#sln_del').on('click', function () {
+                    slnGcalAction(
+                        $(this),
+                        <?php echo wp_json_encode(apply_filters('sln.google-scope.ajax-events.delete.data', array('action' => 'deleteallevents', 'nonce' => wp_create_nonce('google_calendar')))); ?>,
+                        '<?php echo esc_js(__('Deleting…', 'salon-booking-system')); ?>',
+                        '<?php echo esc_js(__('✓ Events deleted', 'salon-booking-system')); ?>',
+                        '<?php echo esc_js(__('✕ Error – please retry', 'salon-booking-system')); ?>'
+                    );
                 });
             });
         </script>
@@ -154,6 +263,7 @@ class SLN_GoogleScope {
         $this->check_role();
         if (!$this->is_connected()) {
             echo "KO|" . esc_html__("Google Client is not connected!", 'salon-booking-system');
+            die();
         }
 
         $now = new SLN_DateTime();
@@ -163,12 +273,20 @@ class SLN_GoogleScope {
             $event_id = get_post_meta($post->ID, '_sln_calendar_event_id', true);
             if (!empty($event_id)) {
                 $this->delete_event_from_booking($event_id);
+                // Clear the meta immediately after deletion so the Google Calendar
+                // import cron cannot match this deleted event to the booking and
+                // incorrectly mark it as Cancelled before the event is re-created.
+                update_post_meta($post->ID, '_sln_calendar_event_id', '');
             }
         }
 
         foreach ($bookings as $k => $post) {
             synch_a_booking($booking_handler->createBooking($post->ID), true);
         }
+
+        // Allow extensions to piggyback on the manual sync (e.g. slot locker refresh)
+        do_action('sln.google_calendar.synch_complete', $this);
+
         echo "OK";
         die();
     }

@@ -45,6 +45,11 @@ class AvailabilityStats_Controller extends REST_Controller
                     'type'              => 'string',
                     'required'          => false,
                 ),
+                'staff_mode' => array(
+                    'description' => __('Staff mode: bypasses advance-booking minimum so staff can view today\'s schedule. Requires authenticated user.', 'salon-booking-system'),
+                    'type'        => 'string',
+                    'required'    => false,
+                ),
             )),
             array(
                 'methods'  => WP_REST_Server::READABLE,
@@ -60,6 +65,10 @@ class AvailabilityStats_Controller extends REST_Controller
             // Check if debug mode is enabled
             $debugMode = $request->get_param('debug') === '1';
 
+            // staff_mode bypasses the advance-booking minimum window check so staff
+            // can view today's schedule. Requires an authenticated user.
+            $staff_mode = $request->get_param('staff_mode') === '1' && get_current_user_id() > 0;
+
             do_action('sln_api_availability_stats_get_availability_stats_before', $request);
 
             $from = (new SLN_DateTime)->setTimestamp( strtotime( sanitize_text_field( wp_unslash( $request->get_param('from_date') ) ) ) );
@@ -72,7 +81,7 @@ class AvailabilityStats_Controller extends REST_Controller
             $cache_key  = null;
             if ( ! $debugMode ) {
                 $revision  = (int) get_option( 'sln_pwa_av_stats_revision', 0 );
-                $cache_key = 'sln_pwa_avst_' . md5( $from->format( 'Y-m-d' ) . '|' . $to->format( 'Y-m-d' ) . '|' . $shop_param . '|' . $revision );
+                $cache_key = 'sln_pwa_avst_' . md5( $from->format( 'Y-m-d' ) . '|' . $to->format( 'Y-m-d' ) . '|' . $shop_param . '|' . $revision . ( $staff_mode ? '|staff' : '' ) );
                 $cached    = get_transient( $cache_key );
                 if ( false !== $cached && is_array( $cached ) ) {
                     return $this->success_response( $cached );
@@ -99,7 +108,7 @@ class AvailabilityStats_Controller extends REST_Controller
 
                 $tmp = array('date' => $dd->toString('Y-m-d'), 'available' => true);
 
-                $bc->processDate($dd);
+                $bc->processDate($dd, $staff_mode);
                 $cache = $bc->getDay($dd);
                 if ($cache && $cache['status'] == 'booking_rules') {
                     $tmp['error']		 = array();

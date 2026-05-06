@@ -26,6 +26,18 @@
 			</div>
 		</div>
 	</form>
+
+	<?php
+	echo $plugin->loadView(
+		'admin/_tools_booking_discount_diagnostics',
+		compact( 'discount_diag_report', 'discount_diag_error', 'discount_diag_booking_id' )
+	);
+	echo $plugin->loadView(
+		'admin/_tools_break_availability_diagnostics',
+		compact( 'break_av_diag_report', 'break_av_diag_error', 'break_av_diag_booking_a', 'break_av_diag_booking_b' )
+	);
+	?>
+
 	<form method="post" action="<?php echo admin_url('admin.php?page=' . SLN_Admin_Tools::PAGE)?>">
 		<div class="sln-tab" id="sln-tab-general">
 			<div class="sln-box sln-box--main">

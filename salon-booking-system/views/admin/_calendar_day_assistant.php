@@ -19,8 +19,12 @@ $minutes = ($hoursParts[0] * 60) + $hoursParts[1];
 	<span class="sln-event-header-more-icon sln-event-header-more-icon-vertical" style="margin-left: auto;" data-tooltip-id='<?php echo $booking->getId() ?>' ></span>
 </div>
 <ul class='service_wrapper <?php echo 'duration-' . $minutes; ?>'>
+    <?php
+    $svc = isset($bookingService) ? $bookingService->getService() : null;
+    if ($svc instanceof SLN_Wrapper_ServiceInterface) :
+        ?>
     <li>
-	<span class='day-event-item__service'><?php echo $bookingService->getService()->getName() ?></span>
+	<span class='day-event-item__service'><?php echo $svc->getName() ?></span>
 	<span class='day-event-item__attendant'><span class="day-event-item__attendant_name"><?php
 		echo ($attendant = $bookingService->getAttendant()) ?
 			(!is_array($attendant) ?
@@ -31,4 +35,5 @@ $minutes = ($hoursParts[0] * 60) + $hoursParts[1];
 	<span class='day-event-item__attendant_timing'><?php echo $format->time($bookingService->getStartsAt()) . ' &#8594; ' . $format->time($bookingService->getEndsAt()) ?></span> </span>
 	<span class='day-event-item__resource'><?php echo $bookingService->getResource() ? $bookingService->getResource()->getTitle() : '' ?></span>
     </li>
+    <?php endif; ?>
 </ul>

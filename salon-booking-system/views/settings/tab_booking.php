@@ -1,30 +1,41 @@
 <?php
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 $plugin = SLN_Plugin::getInstance();
+$include_nested_bookings_ui = ($plugin->getSettings()->getAvailabilityMode() === 'highend');
 include $this->plugin->getViewFile('admin/utilities/settings_inpage_navbar');
-sum(
+$booking_settings_nav = array(
 	// link anchor, link text
 	array('#sln-pause_booking_service', __('Pause booking service', 'salon-booking-system')),
 	array('#sln-availability_mode', __('Availability mode', 'salon-booking-system')),
-	array('#sln-nested_bookings', __('Nested bookings', 'salon-booking-system')),
-	array('#sln-customers_per_session', __('Customers per session', 'salon-booking-system')),
-	array('#sln-session_average_duration', __('Session average duration', 'salon-booking-system')),
-	array('#sln-auto_align_slots', __('Auto-align time slots', 'salon-booking-system')),
-	array('#sln-booking_steps_order', __('Booking steps order', 'salon-booking-system')),
-	array('#sln-offset_between_reservations', __('Offset between reservations', 'salon-booking-system')),
-	array('#sln-booking_time_range', __('Booking time range', 'salon-booking-system')),
-	array('#sln-online_booking_available_days', __('On-line booking available days', 'salon-booking-system')),
-	array('.availability-preview-box', __('Opening hours preview', 'salon-booking-system')),
-	array('#sln-holidays_days', __('Holidays days', 'salon-booking-system')),
-	array('#sln-booking_manual_confirmation', __('Booking manual confirmation', 'salon-booking-system')),
-	array('#sln-user_booking_cancellation', __('User booking cancellation', 'salon-booking-system')),
-	array('#sln-booking_rescheduling', __('Booking rescheduling', 'salon-booking-system'))
 );
+if ($include_nested_bookings_ui) {
+	$booking_settings_nav[] = array('#sln-nesting_logic_options', __('Nesting logic options', 'salon-booking-system'));
+}
+$booking_settings_nav = array_merge(
+	$booking_settings_nav,
+	array(
+		array('#sln-customers_per_session', __('Customers per session', 'salon-booking-system')),
+		array('#sln-session_average_duration', __('Session average duration', 'salon-booking-system')),
+		array('#sln-auto_align_slots', __('Auto-align time slots', 'salon-booking-system')),
+		array('#sln-booking_steps_order', __('Booking steps order', 'salon-booking-system')),
+		array('#sln-offset_between_reservations', __('Offset between reservations', 'salon-booking-system')),
+		array('#sln-booking_time_range', __('Booking time range', 'salon-booking-system')),
+		array('#sln-online_booking_available_days', __('On-line booking available days', 'salon-booking-system')),
+		array('.availability-preview-box', __('Opening hours preview', 'salon-booking-system')),
+		array('#sln-holidays_days', __('Holidays days', 'salon-booking-system')),
+		array('#sln-booking_manual_confirmation', __('Booking manual confirmation', 'salon-booking-system')),
+		array('#sln-user_booking_cancellation', __('User booking cancellation', 'salon-booking-system')),
+		array('#sln-booking_rescheduling', __('Booking rescheduling', 'salon-booking-system')),
+	)
+);
+sum(...$booking_settings_nav);
 ?>
 <?php
 echo $plugin->loadView('settings/_tab_booking_status');
 echo $plugin->loadView('settings/_tab_booking_availability');
-echo $plugin->loadView('settings/_tab_booking_nested_bookings');
+if ($include_nested_bookings_ui) {
+	echo $plugin->loadView('settings/_tab_booking_nested_bookings');
+}
 ?>
 <div class="row">
     <div id="sln-customers_per_session" class="col-xs-12 col-sm-6 col-md-6">

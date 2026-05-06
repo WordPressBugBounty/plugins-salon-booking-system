@@ -1,8 +1,21 @@
 "use strict";
-if (jQuery("#toplevel_page_salon").hasClass("wp-menu-open")) {
-	jQuery("#wpbody-content .wrap").addClass("sln-bootstrap");
-	jQuery("#wpbody-content .wrap").attr("id", "sln-salon--admin");
-}
+(function () {
+	var $ = jQuery;
+	var $wrap = $("#wpbody-content .wrap").first();
+	if (!$wrap.length) {
+		return;
+	}
+	// #sln-salon--admin is required so SCSS can force #detailsWrapper visible (opacity: 1 !important).
+	// Do not tie this only to the Salon menu being open: shop managers often land on booking edit
+	// from other menus or deep links, leaving #detailsWrapper at inline opacity:0 (blank screen).
+	var salonMenuOpen = $("#toplevel_page_salon").hasClass("wp-menu-open");
+	var bookingEditScreen =
+		$("body.post-type-sln_booking").length &&
+		($("body.post-php").length || $("body.post-new-php").length);
+	if (salonMenuOpen || bookingEditScreen) {
+		$wrap.addClass("sln-bootstrap").attr("id", "sln-salon--admin");
+	}
+})();
 
 (function (apiKey) {
 	(function (p, e, n, d, o) {

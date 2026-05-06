@@ -46,6 +46,9 @@ class SLN_Action_Ajax_FacebookLogin extends SLN_Action_Ajax_Abstract
 
 		//login
 		$user = get_user_by('id', (int)$userID);
+		if ( ! $user || ! $user->ID ) {
+		    throw new \Exception( esc_html__( 'User not found.', 'salon-booking-system' ) );
+		}
 		wp_set_auth_cookie($user->ID, false);
 		do_action('wp_login', $user->user_login, $user);
 		

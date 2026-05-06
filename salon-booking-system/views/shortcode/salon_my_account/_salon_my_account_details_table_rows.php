@@ -1,4 +1,12 @@
 <?php // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+<?php
+// Resolve rescheduling window in hours; migrate legacy day-based stored values.
+$sln_reschedule_raw          = $plugin->getSettings()->get('days_before_rescheduling');
+$sln_reschedule_legacy_hours = array('1' => 24, '2' => 48, '3' => 72, '7' => 168, '14' => 336);
+$sln_reschedule_hours        = isset($sln_reschedule_legacy_hours[$sln_reschedule_raw])
+	? $sln_reschedule_legacy_hours[$sln_reschedule_raw]
+	: (int) $sln_reschedule_raw;
+?>
 <?php foreach ($data['table_data']['items'] as $item): ?>
         <article id="sln-account__booking--<?php echo $item['id'] ?>" class="sln-account__booking sln-account__card sln-account__list__item">
         <header class="sln-account__card__header">
@@ -77,7 +85,7 @@
                         <?php } ?>
                     <?php } ?>
 
-                    <?php if(!$plugin->getSettings()->get('rescheduling_disabled') && ($booking->getStartsAt()->getTimestamp() - time()) >= ($plugin->getSettings()->get('days_before_rescheduling') * 24 * 3600) && in_array($item['status_code'], array(SLN_Enum_BookingStatus::CONFIRMED, SLN_Enum_BookingStatus::PAY_LATER, SLN_Enum_BookingStatus::PAID,))):
+                    <?php if(!$plugin->getSettings()->get('rescheduling_disabled') && ($booking->getStartsAt()->getTimestamp() - time()) >= ($sln_reschedule_hours * 3600) && in_array($item['status_code'], array(SLN_Enum_BookingStatus::CONFIRMED, SLN_Enum_BookingStatus::PAY_LATER, SLN_Enum_BookingStatus::PAID,))):
                         $date = $plugin->getSettings()->isDisplaySlotsCustomerTimezone() && $data['customer_timezone']
                             ? $booking->getStartsAt()->setTimezone(new DateTimezone($data['customer_timezone']))
                             : $booking->getStartsAt(); ?> 

@@ -35,6 +35,34 @@ sum(
 	)
 );?>
         </div>
+        <div class="col-xs-12 col-sm-4 col-md-4 form-group sln-profeature <?php echo !defined('SLN_VERSION_PAY') ? 'sln-profeature--disabled sln-profeature__tooltip-wrapper' : ''; ?>">
+            <?php echo $this->plugin->loadView(
+	'metabox/_pro_feature_tooltip',
+	array(
+		'trigger'          => 'sln-gcal-lock-slots',
+		'additional_classes' => 'sln-profeature--box',
+	)
+); ?>
+            <div class="sln-switch <?php echo !defined('SLN_VERSION_PAY') ? 'sln-disabled' : ''; ?>">
+                <h6 class="sln-fake-label"><?php esc_html_e('Lock slots for Google Calendar events', 'salon-booking-system'); ?></h6>
+                <input type="hidden" value="0" name="salon_settings[google_calendar_lock_slots]">
+                <?php SLN_Form::fieldCheckbox(
+	'salon_settings[google_calendar_lock_slots]',
+	defined('SLN_VERSION_PAY') ? $this->getOpt('google_calendar_lock_slots') : 0,
+	array(
+		'bigLabelOn'  => __('Enabled', 'salon-booking-system'),
+		'bigLabelOff' => __('Disabled', 'salon-booking-system'),
+	)
+); ?>
+                <label for="salon_settings_google_calendar_lock_slots" class="sln-switch-btn" data-on="On" data-off="Off">
+                    <span data-on="<?php esc_attr_e('Enabled', 'salon-booking-system'); ?>" data-off="<?php esc_attr_e('Disabled', 'salon-booking-system'); ?>"></span>
+                </label>
+                <label class="sln-switch-text" for="salon_settings_google_calendar_lock_slots"
+                       data-on="<?php esc_attr_e('Enabled', 'salon-booking-system'); ?>"
+                       data-off="<?php esc_attr_e('Disabled', 'salon-booking-system'); ?>"></label>
+                <p class="help-block"><?php esc_html_e('When active, non-booking events on the salon\'s Google Calendar will lock the corresponding time slots on the booking form.', 'salon-booking-system'); ?></p>
+            </div>
+        </div>
         <div class="hidden-xs col-md-4 col-sm-4 form-group sln-box-maininfo align-top">
             <p class="sln-box-info"><?php esc_html_e('To use this feature you need to generate an OAuth Client ID on Google Developers Console. Click on "i" icon to get more information on this feature.', 'salon-booking-system');?></p>
         </div>

@@ -1,5 +1,5 @@
 <?php //phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-<label for="<?php echo !$service->isVariableDuration() ? SLN_Form::makeID('sln[services][' . $service->getId() . ']') : '' ?>" class="sln-list__item sln-service sln-service--<?php echo $service->getId(); ?>">
+<div class="sln-list__item sln-service sln-service--<?php echo $service->getId(); ?>">
     
         <?php
             $thumb = has_post_thumbnail($service->getId()) ? get_the_post_thumbnail(
@@ -73,4 +73,4 @@
      */
     do_action( 'sln.shortcode.service_item.after_content', $service, $plugin );
     ?>
-</label>
+</div>

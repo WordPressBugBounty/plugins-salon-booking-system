@@ -24,9 +24,15 @@ $minutes = ($hoursParts[0] * 60) + $hoursParts[1];
     <?php
 $sum = 0;
 foreach ($booking->getBookingServices()->getItems() as $bookingService): ?>
-        <?php if (SLN_Func::getMinutesFromDuration($bookingService->getService()->getDuration()) > 0): ?>
+        <?php
+        $svc = $bookingService->getService();
+        if (!($svc instanceof SLN_Wrapper_ServiceInterface)) {
+            continue;
+        }
+        ?>
+        <?php if (SLN_Func::getMinutesFromDuration($svc->getDuration()) > 0): ?>
             <li>
-                <span class='day-event-item__service'><?php echo $bookingService->getService()->getName() ?></span>
+                <span class='day-event-item__service'><?php echo $svc->getName() ?></span>
                 <span class='day-event-item__attendant'><span class="day-event-item__attendant_name"><?php
                     echo ($attendant = $bookingService->getAttendant()) ?
                             (!is_array($attendant) ?
@@ -40,7 +46,7 @@ foreach ($booking->getBookingServices()->getItems() as $bookingService): ?>
             </li>
         <?php else: ?>
             <li class="service-empty-duration">
-                <span class='day-event-item__service'><?php echo $bookingService->getService()->getName() ?></span> -
+                <span class='day-event-item__service'><?php echo $svc->getName() ?></span> -
                 <span class='day-event-item__attendant'><span class="day-event-item__attendant_name"><?php
                     echo ($attendant = $bookingService->getAttendant()) ?
                             (!is_array($attendant) ?

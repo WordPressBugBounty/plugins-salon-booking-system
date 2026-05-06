@@ -4,7 +4,12 @@
  * @var $helper SLN_Admin_Settings
  */
 // phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
-$daysBeforeRescheduling = $plugin->getSettings()->get('days_before_rescheduling');
+$hoursBeforeRescheduling = $plugin->getSettings()->get('days_before_rescheduling');
+// Migrate legacy day-based stored values to hours on display
+$sln_legacy_to_hours = array('1' => '24', '2' => '48', '3' => '72', '7' => '168', '14' => '336');
+if (isset($sln_legacy_to_hours[$hoursBeforeRescheduling])) {
+	$hoursBeforeRescheduling = $sln_legacy_to_hours[$hoursBeforeRescheduling];
+}
 ?>
 <div id="sln-booking_rescheduling" class="sln-box sln-box--main sln-box--haspanel">
 <h2 class="sln-box-title sln-box__paneltitle"><?php esc_html_e('Booking rescheduling', 'salon-booking-system');?></h2>
@@ -25,17 +30,19 @@ $daysBeforeRescheduling = $plugin->getSettings()->get('days_before_rescheduling'
         echo SLN_Form::fieldSelect(
 	$field,
 	array(
-		'1' => '1 ' . esc_html__('day', 'salon-booking-system'),
-		'2' => '2 ' . esc_html__('days', 'salon-booking-system'),
-		'3' => '3 ' . esc_html__('day', 'salon-booking-system'),
-		'7' => '1 ' . esc_html__('week', 'salon-booking-system'),
-		'14' => '2 ' . esc_html__('weeks', 'salon-booking-system'),
+		'6'   => '6 '  . esc_html__('hours', 'salon-booking-system'),
+		'12'  => '12 ' . esc_html__('hours', 'salon-booking-system'),
+		'24'  => '1 '  . esc_html__('day', 'salon-booking-system'),
+		'48'  => '2 '  . esc_html__('days', 'salon-booking-system'),
+		'72'  => '3 '  . esc_html__('days', 'salon-booking-system'),
+		'168' => '1 '  . esc_html__('week', 'salon-booking-system'),
+		'336' => '2 '  . esc_html__('weeks', 'salon-booking-system'),
 	),
-	esc_attr($daysBeforeRescheduling),
+	esc_attr($hoursBeforeRescheduling),
 	array(),
 	true
 ) ?>
-        <p class="help-block"><?php esc_html_e('How many days before the appointment the rescheduling is still allowed', 'salon-booking-system')?></p>
+        <p class="help-block"><?php esc_html_e('How many hours before the appointment the rescheduling is still allowed', 'salon-booking-system')?></p>
     </div>
     <div class="col-xs-12 col-sm-6 col-md-4 sln-box-maininfo  align-top">
         <p class="sln-box-info"><?php esc_html_e('Users once logged in inside the MY ACCOUNT BOOKING page will be able to see the list of their upcoming confirmed or paid reservations and eventually RESCHEDULE them. An email notification will be sent to you and to the customers.', 'salon-booking-system');?></p>

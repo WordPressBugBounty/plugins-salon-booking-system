@@ -121,6 +121,42 @@ class SLN_Action_Ajax_CheckOverbooking extends SLN_Action_Ajax_Abstract
                     $query_args['post__not_in'] = $exclude_ids;
                 }
                 $posts = get_posts($query_args);
+
+                // When parallels = 1 and no confirmed/paid booking exists yet, also check for
+                // recent DRAFT (auto-draft) bookings created within the last 15 minutes.
+                // DRAFTs are excluded from the standard availability queries, so without this
+                // check two concurrent customers can both pass the availability check and both
+                // reach the summary/confirm step simultaneously, resulting in a double booking.
+                // A 15-minute window matches the typical session lifetime for an in-progress booking;
+                // older DRAFTs are almost certainly abandoned sessions and should not block the slot.
+                if ($parallel <= 1 && empty($posts)) {
+                    $fifteen_min_ago  = gmdate('Y-m-d H:i:s', strtotime('-15 minutes'));
+                    $draft_query_args = [
+                        'post_type'      => 'sln_booking',
+                        'post_status'    => [SLN_Enum_BookingStatus::DRAFT],
+                        'posts_per_page' => 1,
+                        'fields'         => 'ids',
+                        'date_query'     => [
+                            [
+                                'column'    => 'post_date_gmt',
+                                'after'     => $fifteen_min_ago,
+                                'inclusive' => true,
+                            ],
+                        ],
+                        'meta_query'     => [
+                            ['key' => '_sln_booking_date', 'value' => $date_clean],
+                            ['key' => '_sln_booking_time', 'value' => $time_clean],
+                        ],
+                    ];
+                    if (!empty($exclude_ids)) {
+                        $draft_query_args['post__not_in'] = $exclude_ids;
+                    }
+                    $recent_drafts = get_posts($draft_query_args);
+                    if (!empty($recent_drafts)) {
+                        return ['success' => false];
+                    }
+                }
+
                 return ['success' => $parallel <= 1 ? empty($posts) : true];
             }
         } catch (Exception $e) {

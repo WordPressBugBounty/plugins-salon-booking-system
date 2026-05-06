@@ -8,8 +8,6 @@ class SLB_Discount_PostType_Discount extends SLN_PostType_Abstract
     {
         parent::init();
 
-        trigger_error( '[SLB_Discount] PostType init() called. is_admin=' . (is_admin() ? 'true' : 'false'), E_USER_NOTICE );
-
         if (is_admin()) {
             add_action('manage_'.$this->getPostType().'_posts_custom_column', array($this, 'manage_column'), 10, 2);
             add_filter('manage_'.$this->getPostType().'_posts_columns', array($this, 'manage_columns'));

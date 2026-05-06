@@ -58,7 +58,9 @@ class SLN_Action_WeeklyReport
     {
         $p = $this->plugin;
         if (self::EMAIL == $this->mode) {
-            $args = compact('stats');
+            $lifetime = $this->getLifetimeStats();
+            $is_free  = !(defined('SLN_VERSION_PAY') || defined('SLN_VERSION_CODECANYON'));
+            $args     = compact('stats', 'lifetime', 'is_free');
             $p->sendMail('mail/weekly_report', $args);
         } else {
             throw new Exception();
@@ -90,8 +92,9 @@ class SLN_Action_WeeklyReport
             'new_customers' => 0,
             'customers'     => array(),
         );
-        $datetimeEnd = SLN_TimeFunc::currentDateTime();
-        $datetimeStart = $datetimeEnd->modify('last Monday');
+        // Query the last complete Mon–Sun week (same range shown in the email header).
+        $datetimeEnd   = SLN_TimeFunc::currentDateTime()->modify('last Sunday');
+        $datetimeStart = $datetimeEnd->modify('-6 days');
 
         $bookings = $this->getBookings($datetimeStart, $datetimeEnd);
 
@@ -102,7 +105,10 @@ class SLN_Action_WeeklyReport
                 $data['total']['amount'] += $booking->getAmount();
                 //END collect total statistics
 
-                if ($booking->getStatus() === SLN_Enum_BookingStatus::PAID) {
+                if (
+                    $booking->getStatus() === SLN_Enum_BookingStatus::PAID ||
+                    $booking->getStatus() === SLN_Enum_BookingStatus::CONFIRMED
+                ) {
                     $data['paid']['count'] ++;
                     $data['paid']['amount'] += $booking->getAmount();
                 }
@@ -252,6 +258,36 @@ class SLN_Action_WeeklyReport
         $newCustomers          = $this->getCustomers($datetimeStart, $datetimeEnd);
         $data['new_customers'] = count($newCustomers);
 
+        // Build daily chart data in Mon–Sun order (PHP 'w': 0=Sun, 1=Mon … 6=Sat)
+        $day_order  = array(1, 2, 3, 4, 5, 6, 0);
+        $day_labels = array(
+            0 => __('Sun', 'salon-booking-system'),
+            1 => __('Mon', 'salon-booking-system'),
+            2 => __('Tue', 'salon-booking-system'),
+            3 => __('Wed', 'salon-booking-system'),
+            4 => __('Thu', 'salon-booking-system'),
+            5 => __('Fri', 'salon-booking-system'),
+            6 => __('Sat', 'salon-booking-system'),
+        );
+        $max_day_count = 0;
+        foreach ($day_order as $w) {
+            if (isset($data['weekdays'][$w])) {
+                $max_day_count = max($max_day_count, $data['weekdays'][$w]['count']);
+            }
+        }
+        $data['daily'] = array();
+        foreach ($day_order as $w) {
+            $day_count  = isset($data['weekdays'][$w]) ? $data['weekdays'][$w]['count']  : 0;
+            $day_amount = isset($data['weekdays'][$w]) ? $data['weekdays'][$w]['amount'] : 0.0;
+            $pct        = $max_day_count > 0 ? (int)round($day_count / $max_day_count * 100) : 0;
+            $data['daily'][] = array(
+                'label'   => $day_labels[$w],
+                'count'   => $day_count,
+                'revenue' => $day_amount,
+                'pct'     => $pct,
+            );
+        }
+
         return $data;
     }
 
@@ -321,5 +357,64 @@ class SLN_Action_WeeklyReport
         }
 
         return $ret;
+    }
+
+    /**
+     * Returns all-time totals for the lifetime value strip.
+     * Results are cached in a 24-hour transient to avoid heavy queries on every send.
+     *
+     * @return array{ total_bookings: int, revenue: float, loyal_customers: int }
+     */
+    private function getLifetimeStats()
+    {
+        $transient_key = 'sln_weekly_report_lifetime_stats';
+        $cached        = get_transient($transient_key);
+        if (false !== $cached) {
+            return $cached;
+        }
+
+        global $wpdb;
+
+        $post_type     = SLN_Plugin::POST_TYPE_BOOKING;
+        $statuses_raw  = SLN_Enum_BookingStatus::toArray();
+        unset(
+            $statuses_raw[SLN_Enum_BookingStatus::ERROR],
+            $statuses_raw[SLN_Enum_BookingStatus::PENDING],
+            $statuses_raw[SLN_Enum_BookingStatus::PENDING_PAYMENT],
+            $statuses_raw[SLN_Enum_BookingStatus::CANCELED]
+        );
+        $valid_statuses      = array_keys($statuses_raw);
+        $status_placeholders = implode(',', array_fill(0, count($valid_statuses), '%s'));
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+        $row = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT COUNT(p.ID) AS total_bookings,
+                        COALESCE(SUM(CAST(pm.meta_value AS DECIMAL(12,2))), 0) AS total_revenue
+                 FROM {$wpdb->posts} p
+                 LEFT JOIN {$wpdb->postmeta} pm
+                   ON pm.post_id = p.ID AND pm.meta_key = '_sln_booking_amount'
+                 WHERE p.post_type = %s
+                   AND p.post_status IN ({$status_placeholders})",
+                array_merge(array($post_type), $valid_statuses)
+            )
+        );
+
+        $customer_query = new WP_User_Query(array(
+            'role'        => SLN_Plugin::USER_ROLE_CUSTOMER,
+            'fields'      => 'ID',
+            'number'      => -1,
+            'count_total' => true,
+        ));
+
+        $lifetime = array(
+            'total_bookings'  => $row ? (int)$row->total_bookings : 0,
+            'revenue'         => $row ? (float)$row->total_revenue : 0.0,
+            'loyal_customers' => (int)$customer_query->get_total(),
+        );
+
+        set_transient($transient_key, $lifetime, DAY_IN_SECONDS);
+
+        return $lifetime;
     }
 }

@@ -3,7 +3,7 @@
 
 class SLN_Action_InitScripts
 {
-    const ASSETS_VERSION = SLN_VERSION . '-20260318-smart-avail-1';
+    const ASSETS_VERSION = SLN_VERSION . '-20260505-list-sort-handle-mobile-only-2';
 	private static $isInclude = false;
 	private $isAdmin;
 	private $plugin;
@@ -307,9 +307,16 @@ class SLN_Action_InitScripts
     public static function enqueueCustomSliderRange()
     {
         wp_enqueue_script(
+            'jquery-ui-touch-punch',
+            SLN_PLUGIN_URL . '/js/jquery.ui.touch-punch.min.js',
+            array('jquery-ui-slider'),
+            self::ASSETS_VERSION,
+            true
+        );
+        wp_enqueue_script(
             'salon-customSliderRange',
             SLN_PLUGIN_URL . '/js/admin/customSliderRange.js',
-            array('jquery'),
+            array('jquery', 'jquery-ui-touch-punch'),
             self::ASSETS_VERSION,
             true
         );
@@ -363,7 +370,7 @@ class SLN_Action_InitScripts
 		wp_enqueue_script(
 			'salon-customMetaService',
 			SLN_PLUGIN_URL . '/js/admin/customMetaService.js',
-			array('jquery'),
+			array('jquery', 'jquery-ui-sortable'),
 			SLN_Action_InitScripts::ASSETS_VERSION,
 			true
 		);
