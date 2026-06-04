@@ -607,6 +607,16 @@ class SLN_Action_Init
         
         // Cache warmer AJAX endpoint (public, for external cron services)
         new SLN_Action_Ajax_CacheWarmer($this->plugin);
+
+        // Onboarding wizard AJAX handlers. These live on SLN_Admin_Onboarding, which is
+        // only instantiated in initAdmin() — and initAdmin() is skipped during AJAX
+        // (wp_doing_ajax()). Register them here so the wizard's save/upload/complete
+        // endpoints work during admin-ajax.php requests. Guarded by wp_doing_ajax() to
+        // avoid double-registering on normal admin page loads (where initAdmin() already
+        // constructs the class).
+        if (wp_doing_ajax()) {
+            new SLN_Admin_Onboarding($this->plugin);
+        }
     }
 
     private function initSchedules() {

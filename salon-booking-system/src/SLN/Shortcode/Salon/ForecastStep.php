@@ -328,6 +328,49 @@ class SLN_Shortcode_Salon_ForecastStep extends SLN_Shortcode_Salon_AbstractUserS
 		);
 	}
 
+	/**
+	 * Side-effect-free check used by SLN_Shortcode_Salon::getCurrentStep() to
+	 * decide whether the injected forecast step should be the rendered first
+	 * step or skipped over so the wizard advances to the real first step.
+	 *
+	 * This mirrors the NON-submit branch of isValid() but deliberately omits
+	 * dispatchForm() (login / slot-apply / redirect have side effects and must
+	 * never run during step resolution).
+	 *
+	 * Without this, a logged-in user whose forecast resolves to the 'skip'
+	 * state (insufficient history, or no available suggestions) keeps 'forecast'
+	 * as the current step. The reversed dispatch pass then renders that step in
+	 * skip-state — which outputs nothing — producing a blank booking wizard.
+	 *
+	 * @return bool true = render the forecast step, false = skip to next step
+	 */
+	public function shouldDisplayAsFirstStep() {
+		if ( $this->isForecastSkipped() ) {
+			return false;
+		}
+
+		if ( $this->getPlugin()->getBookingBuilder()->get( 'forecast_origin' ) ) {
+			return false;
+		}
+
+		$state = $this->resolveState();
+
+		if ( 'login' === $state ) {
+			return true;
+		}
+
+		if ( 'skip' === $state ) {
+			return false;
+		}
+
+		// 'cards': only render when real suggestions are available.
+		try {
+			return ! empty( $this->getForecastSuggestions() );
+		} catch ( Exception $e ) {
+			return false;
+		}
+	}
+
 	// -------------------------------------------------------------------------
 	// Rendering
 	// -------------------------------------------------------------------------

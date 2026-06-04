@@ -177,7 +177,7 @@ class SLN_Shortcode_Salon
             //
             // A ?sln_reset_forecast=1 URL parameter clears the flag so testers can
             // force the forecast to re-appear.
-            if ( $stepDefault === 'forecast' ) {
+            if ( $stepDefault === 'forecast' && ! isset( $_GET[ self::STEP_KEY ] ) ) {
                 $bb = $this->plugin->getBookingBuilder();
 
                 if ( ! empty( $_GET['sln_reset_forecast'] ) ) {
@@ -188,7 +188,22 @@ class SLN_Shortcode_Salon
                     }
                 }
 
-                if ( ! empty( $bb->get( 'skip_forecast' ) ) ) {
+                // Advance past the forecast step when it was explicitly skipped for
+                // this booking attempt OR when it would not render anything (e.g. a
+                // logged-in customer without enough history, or no available
+                // suggestions). The skip-state path of ForecastStep::isValid() does
+                // not persist the skip flag, so relying on it alone leaves 'forecast'
+                // as the current step and the reversed dispatch pass renders it blank.
+                $skipForecast = ! empty( $bb->get( 'skip_forecast' ) );
+                if ( ! $skipForecast ) {
+                    $forecastObj = $this->getStepObject( 'forecast' );
+                    if ( method_exists( $forecastObj, 'shouldDisplayAsFirstStep' )
+                        && ! $forecastObj->shouldDisplayAsFirstStep() ) {
+                        $skipForecast = true;
+                    }
+                }
+
+                if ( $skipForecast ) {
                     $next = array_shift( $steps );
                     if ( $next ) {
                         $stepDefault = $next;

@@ -371,6 +371,13 @@ class SLN_Settings {
 	 * @return bool True if enabled (default), false if disabled
 	 */
 	public function isAutoAttendantCheckEnabled() {
+		// The auto/smart-attendant availability check only makes sense when assistant
+		// selection is enabled. With assistants disabled there are no assistants to
+		// auto-assign, so this check would reject every slot ("no assistant pair
+		// available") and make the salon completely unbookable.
+		if (!$this->isAttendantsEnabled()) {
+			return false;
+		}
 		// Default to enabled (true) unless explicitly disabled
 		return $this->get('auto_attendant_check_enabled') !== '0';
 	}
