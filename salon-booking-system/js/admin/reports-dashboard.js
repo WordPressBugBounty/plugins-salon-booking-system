@@ -207,6 +207,16 @@
         },
 
         /**
+         * Get One-click Forecast feature adoption statistics
+         */
+        getForecastStats: function(startDate, endDate) {
+            return this.request('/bookings/forecast-stats', {
+                start_date: startDate,
+                end_date: endDate
+            });
+        },
+
+        /**
          * Get no-show statistics
          */
         getNoShowStats: function(startDate, endDate) {
@@ -981,7 +991,11 @@
                     DashboardAPI.getPeakTimes(dates.start, dates.end),
                     DashboardAPI.getCustomerRetention(dates.start, dates.end),
                     DashboardAPI.getFrequencyCLV(dates.start, dates.end),
-                    DashboardAPI.getUtilization(dates.start, dates.end)
+                    DashboardAPI.getUtilization(dates.start, dates.end),
+                    DashboardAPI.getForecastStats(dates.start, dates.end).catch(err => {
+                        console.warn('Forecast stats failed:', err);
+                        return null;
+                    })
                 ];
                 
                 // Only load no-show data on PRO version
@@ -1001,7 +1015,7 @@
                     apiCalls.push(Promise.resolve(null), Promise.resolve(null));
                 }
                 
-                const [stats, services, assistants, customers, peakTimes, retention, frequencyCLV, utilization, noShowStats, noShowRate] = await Promise.all(apiCalls);
+                const [stats, services, assistants, customers, peakTimes, retention, frequencyCLV, utilization, forecastStats, noShowStats, noShowRate] = await Promise.all(apiCalls);
 
                 // Debug: Log fetched data
                 console.log('Dashboard data loaded:', {
@@ -1026,6 +1040,11 @@
                 if (noShowStats) {
                     this.updateNoShowMetrics(noShowStats, noShowRate);
                 } else {
+                }
+
+                // Update forecast feature stats
+                if (forecastStats) {
+                    this.updateForecastKPIs(forecastStats);
                 }
 
                 this.hideLoading();
@@ -1232,6 +1251,22 @@
             
             // Fallback: return as-is
             return dateStr;
+        },
+
+        /**
+         * Update One-click Forecast feature KPI cards
+         */
+        updateForecastKPIs: function(data) {
+            if (!data) return;
+            const bookings    = data.forecast_bookings      || 0;
+            const adoption    = data.adoption_rate          || 0;
+            const optins      = data.opted_in_customers     || 0;
+            const customers   = data.customers_with_history || 0;
+
+            $('#forecast-kpi-bookings-value').text(formatNumber(bookings));
+            $('#forecast-kpi-adoption-value').text(adoption.toFixed(1) + '%');
+            $('#forecast-kpi-optin-value').text(formatNumber(optins));
+            $('#forecast-kpi-customers-value').text(formatNumber(customers));
         },
 
         /**

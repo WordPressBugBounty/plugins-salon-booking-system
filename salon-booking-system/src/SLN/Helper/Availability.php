@@ -149,6 +149,35 @@ class SLN_Helper_Availability
         }
 
         $filtered = Time::filterTimesArrayByDuration($times, $duration);
+
+        // End-time overflow guard: Time::filterTimesArrayByDuration checks that each
+        // booking-interval grid step from start up to (not including) start+duration
+        // exists in $times. When interval >= service duration the loop runs only once
+        // and only the start slot is checked — the service end time is never validated.
+        // Example: 15-min interval, 60-min service, closing 20:00 → 19:45 is shown
+        // because 20:00 is in $times, but 19:45+60min=20:45 exceeds closing.
+        // Fix: use the authoritative isValidDatetimeDuration() (same check used at
+        // booking confirmation) to verify the full [start, start+duration] window.
+        $durationMinutes = \SLN_Func::getMinutesFromDuration($duration->toDateTime());
+        if ($durationMinutes > 0) {
+            $dtDuration = new \DateTime('@' . ($durationMinutes * 60));
+            $avItems    = $this->getItems();
+            $hItems     = $this->getHolidaysItems();
+            $originalFiltered = $filtered;
+            foreach ($filtered as $label => $slotDt) {
+                if (!($slotDt instanceof \DateTimeInterface)) {
+                    continue;
+                }
+                $dt = clone $slotDt;
+                if (!$avItems->isValidDatetimeDuration($dt, $dtDuration)
+                    || !$hItems->isValidDatetimeDuration($dt, $dtDuration)
+                ) {
+                    unset($filtered[$label]);
+                }
+            }
+            \SLN_Helper_AvailabilityDebugger::logFilteredTimes($originalFiltered, $filtered, 'End-time overflow guard');
+        }
+
         $missing  = array_diff_key($times, $filtered);
         if (empty($missing)) {
             return $filtered;
@@ -309,10 +338,15 @@ class SLN_Helper_Availability
             SLN_Plugin::addLog('==================================================');
             SLN_Plugin::addLog('🔍 AVAILABILITY MODE: '.strtoupper($mode));
             SLN_Plugin::addLog('==================================================');
+            // DayBookings must be built against the day boundary (00:00), not the
+            // currently selected time. Passing a time-bearing DateTime (e.g. 15:15)
+            // causes early-day bookings to be clamped and overcounted in timeslots.
+            $dayDate = clone $date;
+            $dayDate->setTime(0, 0, 0);
             
             $obj = SLN_Enum_AvailabilityModeProvider::getService(
                 $mode,
-                $date,
+                $dayDate,
                 $booking
             );
             SLN_Plugin::addLog(__CLASS__.sprintf(' - Started DayBookings class: %s', get_class($obj)));

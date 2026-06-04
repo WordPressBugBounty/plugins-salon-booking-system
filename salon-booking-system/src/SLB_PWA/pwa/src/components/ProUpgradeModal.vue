@@ -85,7 +85,7 @@ export default {
             return this.getLabel('proUpgradeModalCloseLabel')
         },
         pricingUrl() {
-            return window.slnPWA?.pro_pricing_url || 'https://www.salonbookingsystem.com/plugin-pricing/'
+            return window.slnPWA?.pro_pricing_url || 'https://www.salonbookingsystem.com/plugin-pricing-2/'
         },
     },
     methods: {

@@ -53,6 +53,137 @@ function sln_calendarGetTimeFormat() {
   return salon.moment_time_format;
 }
 
+var SlotAuditModal = (function ($) {
+  var $modal = null;
+
+  function init() {
+    if ($modal) return;
+    $modal = $([
+      '<div id="sln-slot-audit-modal" role="dialog" aria-modal="true" aria-labelledby="sln-slot-audit-title">',
+      '  <div class="sln-slot-audit-overlay"></div>',
+      '  <div class="sln-slot-audit-dialog">',
+      '    <div class="sln-slot-audit-header">',
+      '      <div class="sln-slot-audit-header__meta">',
+      '        <h3 id="sln-slot-audit-title" class="sln-slot-audit-title"></h3>',
+      '        <p class="sln-slot-audit-subtitle"></p>',
+      '      </div>',
+      '      <button type="button" class="sln-slot-audit-close" aria-label="Close">&times;</button>',
+      '    </div>',
+      '    <div class="sln-slot-audit-body"></div>',
+      '  </div>',
+      '</div>',
+    ].join("")).appendTo("body");
+
+    $modal.on("click", ".sln-slot-audit-overlay, .sln-slot-audit-close", hide);
+    $(document).on("keydown.slotaudit", function (e) {
+      if (e.key === "Escape") hide();
+    });
+  }
+
+  function show(attId, date, time, shopId) {
+    init();
+    var $body = $modal.find(".sln-slot-audit-body");
+    $modal.find(".sln-slot-audit-title").text("Slot Availability Audit");
+    $modal.find(".sln-slot-audit-subtitle").text(date + "  " + time);
+    $body.html('<div class="sln-slot-audit-loading"><span class="sln-slot-audit-spinner"></span> Loading&hellip;</div>');
+    $modal.addClass("sln-slot-audit-modal--open");
+
+    $.ajax({
+      url: salon.ajax_url + "&action=salon&method=SlotAudit",
+      type: "GET",
+      data: {
+        attendant_id: attId,
+        date: date,
+        time: time,
+        shop_id: shopId || 0,
+      },
+      success: function (data) {
+        if (data && data.error) {
+          $body.html('<p class="sln-slot-audit-error">' + data.error + "</p>");
+          return;
+        }
+        render(data);
+      },
+      error: function () {
+        $body.html('<p class="sln-slot-audit-error">Request failed. Please try again.</p>');
+      },
+    });
+  }
+
+  function hide() {
+    if ($modal) $modal.removeClass("sln-slot-audit-modal--open");
+  }
+
+  function render(data) {
+    var $body = $modal.find(".sln-slot-audit-body");
+
+    var subtitle = data.date + "  \u00b7  " + data.time;
+    if (data.shop) subtitle += "  \u00b7  " + data.shop;
+    $modal.find(".sln-slot-audit-title").text(data.attendant || "Assistant");
+    $modal.find(".sln-slot-audit-subtitle").text(subtitle);
+
+    var statusClass = data.is_available ? "sln-slot-audit-status--pass" : "sln-slot-audit-status--fail";
+    var statusText  = data.is_available ? "\u2714 Available" : "\u2717 Unavailable";
+    var html = '<div class="sln-slot-audit-status ' + statusClass + '">' + statusText + "</div>";
+
+    (data.checks || []).forEach(function (check) {
+      var sectionClass = check.pass ? "sln-slot-audit-section--pass" : "sln-slot-audit-section--fail";
+      var icon = check.pass ? "\u2714" : "\u2717";
+      html += '<div class="sln-slot-audit-section ' + sectionClass + '">';
+      html += '<div class="sln-slot-audit-section__header">';
+      html += '<span class="sln-slot-audit-section__icon">' + icon + "</span>";
+      html += '<strong class="sln-slot-audit-section__label">' + check.label + "</strong>";
+      html += "</div>";
+      if (check.details) {
+        html += '<p class="sln-slot-audit-summary">' + check.details.summary + "</p>";
+        (check.details.rules || []).forEach(function (rule) {
+          var ruleClass = rule.superseded ? "sln-slot-audit-rule--superseded" : (rule.pass ? "sln-slot-audit-rule--pass" : "sln-slot-audit-rule--fail");
+          html += '<div class="sln-slot-audit-rule ' + ruleClass + '">';
+
+          if (check.type === "availability") {
+            html += '<div class="sln-slot-audit-rule__label">' + (rule.label || "") + "</div>";
+            if (!rule.active && rule.superseded) {
+              html += '<div class="sln-slot-audit-rule__superseded">' + (rule.fail_reasons[0] || "") + "</div>";
+            } else {
+              if (rule.shifts && rule.shifts.length) {
+                html += '<div class="sln-slot-audit-rule__shifts">Shifts: ' + rule.shifts.join(", ") + "</div>";
+              }
+              (rule.fail_reasons || []).forEach(function (reason) {
+                html += '<div class="sln-slot-audit-rule__reason">\u26a0 ' + reason + "</div>";
+              });
+            }
+          } else {
+            html += '<div class="sln-slot-audit-rule__label">' + rule.label + "</div>";
+            var tags = [];
+            if (rule.is_manual) tags.push('<span class="sln-slot-audit-tag">Manual lock</span>');
+            if (rule.is_daily)  tags.push('<span class="sln-slot-audit-tag">Daily rule</span>');
+            if (tags.length)    html += '<div class="sln-slot-audit-rule__tags">' + tags.join(" ") + "</div>";
+            if (rule.reason)    html += '<div class="sln-slot-audit-rule__reason">\u26a0 ' + rule.reason + "</div>";
+          }
+
+          html += "</div>"; // .sln-slot-audit-rule
+        });
+      }
+      html += "</div>"; // .sln-slot-audit-section
+    });
+
+    $body.html(html);
+  }
+
+  return {
+    onHighlightClick: function (e) {
+      e.stopPropagation();
+      var $el   = $(e.currentTarget);
+      var attId = $el.data("att-id");
+      var date  = $el.data("date");
+      var time  = $el.data("time");
+      var shopId = $el.data("shop-id") || 0;
+      if (!attId || !date || !time) return;
+      show(attId, date, time, shopId);
+    },
+  };
+})(jQuery);
+
 function sln_initSalonCalendar(
   $,
   ajaxUrl,
@@ -1032,6 +1163,8 @@ function sln_initSalonCalendar(
     DayCalendarHolydays.click,
   );
   $("body").on("click", " .block_date", DayCalendarHolydays.startSelection);
+
+  $("body").on("click", ".att-unavailable-highlight", SlotAuditModal.onHighlightClick);
 
   $('.sln-btn[data-calendar-view="day"] button[data-calendar-nav]').on(
     "click",

@@ -228,7 +228,7 @@ class SLN_TaxonomyType_ServiceCategory extends SLN_TaxonomyType_Abstract
 
 	global $pagenow;
 
-	if(is_admin() && $pagenow == 'edit-tags.php' && $taxonomies[0] == $this->taxonomyType && isset($_GET['orderby']) && $_GET['orderby'] == 'term_id') {
+	if(is_admin() && $pagenow == 'edit-tags.php' && !empty($taxonomies) && $taxonomies[0] == $this->taxonomyType && isset($_GET['orderby']) && $_GET['orderby'] == 'term_id') {
 	    $query['orderby'] = "ORDER BY t.term_id";
 	}
 

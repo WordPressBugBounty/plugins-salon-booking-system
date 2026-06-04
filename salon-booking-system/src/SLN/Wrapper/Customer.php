@@ -5,6 +5,8 @@
 class SLN_Wrapper_Customer {
 
 	private $bookings = array();
+	/** @var array<int, SLN_Wrapper_Booking[]> Per-shop completed booking cache. */
+	private $bookingsByShop = array();
 	private $object;
 	private $countOfBookingsForEstimateNextBooking = 7;
 
@@ -163,6 +165,115 @@ class SLN_Wrapper_Customer {
 		return $favDays;
 	}
 
+	// -------------------------------------------------------------------------
+	// Forecast engine constants
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Decay constant (days) for recency weighting.
+	 * A booking N days ago receives weight exp(-N / RECENCY_DECAY_DAYS).
+	 * At 90 days: ~0.37×; at 180 days: ~0.14×; at 365 days: ~0.02×.
+	 */
+	const RECENCY_DECAY_DAYS = 90;
+
+	/** Maximum number of stored forecast outcomes per customer. */
+	const FORECAST_OUTCOMES_MAX = 50;
+
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Returns the highest-scoring primary service ID using recency-weighted
+	 * frequency. Recent bookings carry exponentially more weight than old ones.
+	 *
+	 * @return int|false  Service post ID, or false if no completed bookings exist.
+	 */
+	public function getFavouriteService() {
+		if ( $this->isEmpty() ) {
+			return false;
+		}
+
+		$bookings = $this->getCompletedBookings();
+		if ( empty( $bookings ) ) {
+			return false;
+		}
+
+		$now    = time();
+		$scores = array();
+
+		foreach ( $bookings as $booking ) {
+			$days_ago = max( 0, ( $now - $booking->getStartsAt()->getTimestamp() ) / DAY_IN_SECONDS );
+			$weight   = exp( -$days_ago / self::RECENCY_DECAY_DAYS );
+
+			foreach ( $booking->getServicesIds() as $service_id ) {
+				$service_id = (int) $service_id;
+				$service    = new SLN_Wrapper_Service( $service_id );
+				if ( $service->isEmpty() || $service->isSecondary() ) {
+					continue;
+				}
+				$scores[ $service_id ] = isset( $scores[ $service_id ] )
+					? $scores[ $service_id ] + $weight
+					: $weight;
+			}
+		}
+
+		if ( empty( $scores ) ) {
+			return false;
+		}
+
+		arsort( $scores );
+		reset( $scores );
+		return key( $scores );
+	}
+
+	/**
+	 * Returns the highest-scoring attendant ID for a given service using
+	 * recency-weighted frequency. Returns false when no preference can be
+	 * inferred.
+	 *
+	 * @param int $service_id  Service post ID.
+	 * @return int|false  Attendant post ID, or false.
+	 */
+	public function getFavouriteAttendantForService( $service_id ) {
+		if ( $this->isEmpty() || empty( $service_id ) ) {
+			return false;
+		}
+
+		$bookings = $this->getCompletedBookings();
+		if ( empty( $bookings ) ) {
+			return false;
+		}
+
+		$now    = time();
+		$scores = array();
+
+		foreach ( $bookings as $booking ) {
+			$attendants_map = $booking->getAttendantsIds();
+			if ( ! isset( $attendants_map[ $service_id ] ) ) {
+				continue;
+			}
+			$att_id = $attendants_map[ $service_id ];
+			// Skip "any" (0) and multi-attendant arrays
+			if ( is_array( $att_id ) || (int) $att_id <= 0 ) {
+				continue;
+			}
+			$att_id   = (int) $att_id;
+			$days_ago = max( 0, ( $now - $booking->getStartsAt()->getTimestamp() ) / DAY_IN_SECONDS );
+			$weight   = exp( -$days_ago / self::RECENCY_DECAY_DAYS );
+
+			$scores[ $att_id ] = isset( $scores[ $att_id ] )
+				? $scores[ $att_id ] + $weight
+				: $weight;
+		}
+
+		if ( empty( $scores ) ) {
+			return false;
+		}
+
+		arsort( $scores );
+		reset( $scores );
+		return key( $scores );
+	}
+
 	/**
 	 * @return array|bool Array of times or false
 	 */
@@ -199,6 +310,43 @@ class SLN_Wrapper_Customer {
 		$bookings            = $this->getBookings($args);
 
 		return $bookings;
+	}
+
+	/**
+	 * Completed bookings scoped to a specific shop (Multi-Shops add-on).
+	 *
+	 * Uses BookingRepository shop criteria so only bookings assigned to the
+	 * given shop (or legacy bookings with no shop meta) are returned.
+	 *
+	 * @param int   $shop_id Shop post ID.
+	 * @param array $args    Optional extra WP_Query args.
+	 * @return SLN_Wrapper_Booking[]
+	 */
+	public function getCompletedBookingsByShop( $shop_id, $args = array() ) {
+		$shop_id = (int) $shop_id;
+		if ( $this->isEmpty() || $shop_id <= 0 ) {
+			return array();
+		}
+
+		if ( ! isset( $this->bookingsByShop[ $shop_id ] ) ) {
+			$args['post_status'] = array(
+				SLN_Enum_BookingStatus::PAY_LATER,
+				SLN_Enum_BookingStatus::PAID,
+				SLN_Enum_BookingStatus::CONFIRMED,
+			);
+			$args['author'] = $this->object->ID;
+
+			$repo = SLN_Plugin::getInstance()->getRepository( SLN_Plugin::POST_TYPE_BOOKING );
+			$this->bookingsByShop[ $shop_id ] = $repo->get(
+				array(
+					'@query'    => '',
+					'@wp_query' => $args,
+					'shop'      => $shop_id,
+				)
+			);
+		}
+
+		return $this->bookingsByShop[ $shop_id ];
 	}
 
 	/**
@@ -272,45 +420,52 @@ class SLN_Wrapper_Customer {
 	}
 
 	/**
-	 * @return string|false 'Y-m-d'
+	 * Predict the next booking date using a recency-weighted average of past
+	 * inter-booking intervals. The most recent gap counts most, older gaps
+	 * decay exponentially (half-weight every ~1.4 intervals, k=0 → weight 1.0).
+	 *
+	 * @return int|false  Unix timestamp of predicted next visit, or false.
 	 */
 	public function calcNextBookingTime() {
 		$lastDate = $this->getLastBookingTime();
-		if (!$lastDate) {
+		if ( ! $lastDate ) {
 			return false;
 		}
-
-		$timestamp = false;
 
 		$args = array(
 			'meta_key' => '_sln_booking_date',
 			'orderby'  => 'meta_value',
 			'order'    => 'DESC',
 		);
-		$bookings = $this->getCompletedBookings($args);
-
-		if (!empty($bookings)) {
-			usort($bookings, array($this, 'sortDescByStartsAt'));
-			/** @var SLN_Wrapper_Booking[] $bookings */
-			$bookings = array_slice($bookings, 0, $this->countOfBookingsForEstimateNextBooking);
-
-			$lastId = count($bookings) - 1;
-			$days = 0;
-			foreach($bookings as $k => $b) {
-				if ($k < $lastId) {
-					// interval in days between bookings
-					$interval = $b->getStartsAt()->diff($bookings[$k+1]->getStartsAt())->days;
-					$interval = $interval > 0 ? $interval : 0;
-					$days    += $interval;
-				}
-			}
-
-			$value = round($days / count($bookings)) + 1;
-
-			$timestamp  = strtotime("+$value days", $lastDate);
+		$bookings = $this->getCompletedBookings( $args );
+		if ( empty( $bookings ) ) {
+			return false;
 		}
 
-		return $timestamp;
+		usort( $bookings, array( $this, 'sortDescByStartsAt' ) );
+		$bookings = array_slice( $bookings, 0, $this->countOfBookingsForEstimateNextBooking );
+
+		$last_id       = count( $bookings ) - 1;
+		$weighted_days = 0.0;
+		$total_weight  = 0.0;
+
+		foreach ( $bookings as $k => $b ) {
+			if ( $k < $last_id ) {
+				$interval = (int) $b->getStartsAt()->diff( $bookings[ $k + 1 ]->getStartsAt() )->days;
+				$interval = $interval > 0 ? $interval : 0;
+				// k=0 is the most-recent pair → highest weight
+				$weight        = exp( -$k * 0.5 );
+				$weighted_days += $interval * $weight;
+				$total_weight  += $weight;
+			}
+		}
+
+		if ( $total_weight < 0.0001 ) {
+			return false;
+		}
+
+		$predicted_interval = (int) round( $weighted_days / $total_weight ) + 1;
+		return strtotime( "+{$predicted_interval} days", $lastDate );
 	}
 
 	/**
@@ -467,6 +622,76 @@ class SLN_Wrapper_Customer {
 
         public function setPhotos($photos) {
             $this->setMeta('photos', $photos);
+	}
+
+	// -------------------------------------------------------------------------
+	// Forecast outcome tracking
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Record whether the forecast suggestion was accepted or rejected.
+	 *
+	 * @param int    $service_id  The service that was suggested.
+	 * @param string $outcome     'accepted' | 'rejected'
+	 */
+	public function recordForecastOutcome( $service_id, $outcome ) {
+		if ( $this->isEmpty() ) {
+			return;
+		}
+		$outcomes = $this->getMeta( 'forecast_outcomes' );
+		if ( ! is_array( $outcomes ) ) {
+			$outcomes = array();
+		}
+
+		array_unshift( $outcomes, array(
+			'service_id' => (int) $service_id,
+			'outcome'    => $outcome,
+			'timestamp'  => time(),
+		) );
+
+		// Keep only the most recent N outcomes
+		$outcomes = array_slice( $outcomes, 0, self::FORECAST_OUTCOMES_MAX );
+		$this->setMeta( 'forecast_outcomes', $outcomes );
+	}
+
+	/**
+	 * Returns the forecast acceptance rate (0.0–1.0) for an optional service.
+	 * Returns null when there is not enough data (fewer than 3 outcomes).
+	 *
+	 * @param int|null $service_id  Scope to a specific service, or null for all.
+	 * @return float|null
+	 */
+	public function getForecastAcceptanceRate( $service_id = null ) {
+		$outcomes = $this->getMeta( 'forecast_outcomes' );
+		if ( empty( $outcomes ) || ! is_array( $outcomes ) ) {
+			return null;
+		}
+
+		if ( null !== $service_id ) {
+			$outcomes = array_values( array_filter( $outcomes, function ( $o ) use ( $service_id ) {
+				return isset( $o['service_id'] ) && (int) $o['service_id'] === (int) $service_id;
+			} ) );
+		}
+
+		if ( count( $outcomes ) < 3 ) {
+			return null; // not enough data
+		}
+
+		$accepted = count( array_filter( $outcomes, function ( $o ) {
+			return isset( $o['outcome'] ) && $o['outcome'] === 'accepted';
+		} ) );
+
+		return (float) $accepted / count( $outcomes );
+	}
+
+	/**
+	 * Returns the raw forecast outcome log.
+	 *
+	 * @return array
+	 */
+	public function getForecastOutcomes() {
+		$outcomes = $this->getMeta( 'forecast_outcomes' );
+		return is_array( $outcomes ) ? $outcomes : array();
 	}
 
 }

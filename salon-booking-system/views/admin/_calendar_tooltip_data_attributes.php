@@ -205,6 +205,8 @@ function generateTooltipDataAttributes($event, $isPro, $eventType = 'bsEvent')
 
   // Shop/Store (optional - multishop add-on feature)
   $shopId = get_post_meta($event->id, '_sln_booking_shop', true);
+  // TEMP DIAGNOSTIC: always output raw stored value so mismatches can be spotted in DevTools
+  $attributes[] = 'data-booking-shop-raw="' . esc_attr(var_export($shopId, true)) . '"';
   if (!empty($shopId)) {
     // Get shop name if possible
     $shopName = get_the_title($shopId);

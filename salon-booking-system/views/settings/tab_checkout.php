@@ -476,7 +476,7 @@ sum(
                     <div class="sln-checkbox <?php //echo !defined("SLN_VERSION_PAY") ? 'sln-customer-fidelity-score-disabled sln-profeature__tooltip-wrapper' : '' 
                                                 ?>">
                         <span class="sln-profeature__tooltip">
-                            <a href="https://www.salonbookingsystem.com/homepage/plugin-pricing/?utm_source=default_status&utm_medium=free-edition-back-end&utm_campaign=unlock_feature&utm_id=GOPRO" target="_blank">
+                            <a href="<?php echo esc_url( defined( 'SLN_PRICING_URL' ) ? SLN_PRICING_URL : 'https://www.salonbookingsystem.com/plugin-pricing-2/' ); ?>" target="_blank">
                                 <?php //echo __('Switch to PRO to unlock this feature', 'salon-booking-system') 
                                 ?>
                             </a>

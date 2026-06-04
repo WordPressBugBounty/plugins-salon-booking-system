@@ -342,6 +342,29 @@ class SLN_Settings {
 	}
 
 	/**
+	 * Whether the one-click booking forecast step is enabled.
+	 * Defaults to true (enabled out of the box).
+	 *
+	 * @return bool
+	 */
+	public function isOneClickBookingEnabled() {
+		$val = $this->get( 'enabled_one_click_booking' );
+		// null means the setting was never saved → default ON
+		return $val === null ? true : (bool) $val;
+	}
+
+	/**
+	 * Minimum number of completed past bookings required before showing the
+	 * forecast step to a returning customer.
+	 *
+	 * @return int
+	 */
+	public function getOneClickMinBookings() {
+		$val = (int) $this->get( 'one_click_min_bookings' );
+		return $val > 0 ? $val : 1;
+	}
+
+	/**
 	 * Check if auto-attendant availability check is enabled
 	 * Feature flag for attendant-aware time slot filtering
 	 * 

@@ -41,7 +41,7 @@
 						<p><button id="tools-rollback-btn" class='sln-btn sln-btn--main sln-btn--big' name="do_rollback_sln" value="true"><?php esc_html_e('Rollback database','salon-booking-system'); ?></button></p>
 					</div>
 					<div class="col-xs-12 col-sm-4 form-group">
-						<p><a href="<?php echo $isFree ? 'https://downloads.wordpress.org/plugin/salon-booking-system.2.3.2.zip' : 'http://salonbookingsystem.com/salon-booking-plugin-pricing/' ?>"
+						<p><a href="<?php echo $isFree ? 'https://downloads.wordpress.org/plugin/salon-booking-system.2.3.2.zip' : ( defined('SLN_PRICING_URL') ? SLN_PRICING_URL : 'https://www.salonbookingsystem.com/plugin-pricing-2/' ) ?>"
 						      class='sln-btn sln-btn--main sln-btn--big'><?php esc_html_e('Download','salon-booking-system'); ?></a></p>
 					</div>
 				</div>

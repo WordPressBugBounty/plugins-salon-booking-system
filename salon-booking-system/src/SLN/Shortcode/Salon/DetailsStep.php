@@ -2,6 +2,41 @@
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 class SLN_Shortcode_Salon_DetailsStep extends SLN_Shortcode_Salon_AbstractUserStep
 {
+    public function isValid()
+    {
+        if (is_user_logged_in() && $this->loggedInUserHasAllRequiredFields()) {
+            wp_get_current_user();
+            $customer_fields = SLN_Enum_CheckoutFields::forRegistration()->appendSmsPrefix();
+            $values = array();
+            if ($customer_fields) {
+                foreach ($customer_fields as $key => $field) {
+                    $values[$key] = $field->getValue(get_current_user_id());
+                }
+            }
+            $this->bindValues($values);
+            $_SESSION['sln_sms_dontcheck'] = true;
+            SLN_Plugin::addLog('[Details Step] Logged-in user has all required fields - auto-skipping step');
+            return true;
+        }
+
+        return parent::isValid();
+    }
+
+    private function loggedInUserHasAllRequiredFields()
+    {
+        $fields = SLN_Enum_CheckoutFields::forDetailsStep();
+        $userId = get_current_user_id();
+        foreach ($fields as $key => $field) {
+            if ($field->isRequiredNotHidden()) {
+                $value = $field->getValue($userId);
+                if (empty($value)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     protected function dispatchForm()
     {
         global $current_user;

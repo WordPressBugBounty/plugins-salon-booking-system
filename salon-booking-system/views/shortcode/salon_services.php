@@ -40,11 +40,29 @@ if ($plugin->getSettings()->isDisabled()) {
 	<?php if ($size == '900') { ?>
 		<div class="row sln-box--main sln-box--flatbottom--phone">
 			<div class="col-xs-12 col-md-8">
+				<div class="sln-service-search sln-input sln-service-search--<?php echo esc_attr($size) ?>"
+					data-no-results="<?php esc_attr_e('No services found for your search.', 'salon-booking-system') ?>">
+					<span class="sln-service-search__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+					<input type="text" id="sln-service-search-input" class="sln-input sln-input--text"
+						placeholder="<?php esc_attr_e('Search services…', 'salon-booking-system') ?>"
+						autocomplete="off" />
+					<button type="button" id="sln-service-search-clear" class="sln-service-search__clear" aria-label="<?php esc_attr_e('Clear search', 'salon-booking-system') ?>">&#x2715;</button>
+				</div>
 				<div id="sln-box--fixed_height" class="sln-box--fixed_height is_scrollable"><?php include "_services.php"; ?></div>
 			</div> <!-- The row closed inside _form_actions.php -->
 	<?php } else {  // IF SIZE 900 // END ?>
 		<div class="row sln-box--main  sln-box--fixed_height">
-			<div class="col-xs-12"><?php include "_services.php"; ?></div>
+			<div class="sln-service-search sln-input sln-service-search--<?php echo esc_attr($size) ?>"
+				data-no-results="<?php esc_attr_e('No services found for your search.', 'salon-booking-system') ?>">
+				<span class="sln-service-search__icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+				<input type="text" id="sln-service-search-input" class="sln-input sln-input--text"
+					placeholder="<?php esc_attr_e('Search services…', 'salon-booking-system') ?>"
+					autocomplete="off" />
+				<button type="button" id="sln-service-search-clear" class="sln-service-search__clear" aria-label="<?php esc_attr_e('Clear search', 'salon-booking-system') ?>">&#x2715;</button>
+			</div>
+			<div class="col-xs-12">
+				<?php include "_services.php"; ?>
+			</div>
 		</div>
 	<?php } // IF SIZE 600 AND 400 // END ?>
 	<?php include "_form_actions.php" ?>

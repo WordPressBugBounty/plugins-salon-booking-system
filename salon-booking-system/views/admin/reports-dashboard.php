@@ -82,17 +82,16 @@
         <?php endif; ?>
         
         <!-- Action Buttons -->
-        <button id="sln-dashboard-refresh" class="button button-secondary" style="margin-left: auto; display: inline-flex; align-items: center; gap: 5px;">
+        <button id="sln-dashboard-refresh" class="button button-secondary sln-btn-icon">
             <span class="dashicons dashicons-update"></span>
             <?php esc_html_e('Refresh', 'salon-booking-system') ?>
         </button>
-        <button id="sln-dashboard-export" class="button button-secondary" style="display: inline-flex; align-items: center; gap: 5px;">
+        <button id="sln-dashboard-export" class="button button-secondary sln-btn-icon">
             <span class="dashicons dashicons-download"></span>
             <?php esc_html_e('Export', 'salon-booking-system') ?>
         </button>
-        <button id="sln-send-weekly-report" class="button button-secondary"
-                data-nonce="<?php echo esc_attr(wp_create_nonce('sln_send_weekly_report')); ?>"
-                style="display: inline-flex; align-items: center; gap: 5px;">
+        <button id="sln-send-weekly-report" class="button button-secondary sln-btn-icon"
+                data-nonce="<?php echo esc_attr(wp_create_nonce('sln_send_weekly_report')); ?>">
             <span class="dashicons dashicons-email-alt"></span>
             <?php esc_html_e('Send weekly report', 'salon-booking-system') ?>
         </button>
@@ -187,6 +186,57 @@
                         <div class="kpi-subtitle">
                             <span id="kpi-rebooking-subtitle">-- of -- customers rebooked</span>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- One-click Forecast Feature Stats -->
+        <div class="sln-chart-container sln-forecast-stats-section">
+            <h2 style="display:flex;align-items:center;gap:8px;">
+                <span class="dashicons dashicons-calendar-alt" style="color:#7c3aed;font-size:22px;width:22px;height:22px;"></span>
+                <?php esc_html_e( 'One-click Booking Forecast', 'salon-booking-system' ) ?>
+                <span style="font-size:12px;font-weight:400;color:#888;margin-left:4px;"><?php esc_html_e( 'selected date range', 'salon-booking-system' ) ?></span>
+            </h2>
+            <div class="sln-forecast-kpi-row" id="sln-forecast-kpis">
+                <div class="sln-forecast-kpi" id="forecast-kpi-bookings">
+                    <div class="forecast-kpi-icon">
+                        <span class="dashicons dashicons-thumbs-up"></span>
+                    </div>
+                    <div class="forecast-kpi-body">
+                        <div class="forecast-kpi-value" id="forecast-kpi-bookings-value">--</div>
+                        <div class="forecast-kpi-label"><?php esc_html_e( 'Forecast Bookings', 'salon-booking-system' ) ?></div>
+                        <div class="forecast-kpi-sub"><?php esc_html_e( 'Booked via one-click', 'salon-booking-system' ) ?></div>
+                    </div>
+                </div>
+                <div class="sln-forecast-kpi" id="forecast-kpi-adoption">
+                    <div class="forecast-kpi-icon">
+                        <span class="dashicons dashicons-chart-pie"></span>
+                    </div>
+                    <div class="forecast-kpi-body">
+                        <div class="forecast-kpi-value" id="forecast-kpi-adoption-value">--%</div>
+                        <div class="forecast-kpi-label"><?php esc_html_e( 'Adoption Rate', 'salon-booking-system' ) ?></div>
+                        <div class="forecast-kpi-sub"><?php esc_html_e( 'Of front-end bookings', 'salon-booking-system' ) ?></div>
+                    </div>
+                </div>
+                <div class="sln-forecast-kpi" id="forecast-kpi-optin">
+                    <div class="forecast-kpi-icon">
+                        <span class="dashicons dashicons-email-alt"></span>
+                    </div>
+                    <div class="forecast-kpi-body">
+                        <div class="forecast-kpi-value" id="forecast-kpi-optin-value">--</div>
+                        <div class="forecast-kpi-label"><?php esc_html_e( 'Email Opt-ins', 'salon-booking-system' ) ?></div>
+                        <div class="forecast-kpi-sub"><?php esc_html_e( 'Notification subscribers', 'salon-booking-system' ) ?></div>
+                    </div>
+                </div>
+                <div class="sln-forecast-kpi" id="forecast-kpi-customers">
+                    <div class="forecast-kpi-icon">
+                        <span class="dashicons dashicons-admin-users"></span>
+                    </div>
+                    <div class="forecast-kpi-body">
+                        <div class="forecast-kpi-value" id="forecast-kpi-customers-value">--</div>
+                        <div class="forecast-kpi-label"><?php esc_html_e( 'Unique Customers', 'salon-booking-system' ) ?></div>
+                        <div class="forecast-kpi-sub"><?php esc_html_e( 'Who ever used forecast', 'salon-booking-system' ) ?></div>
                     </div>
                 </div>
             </div>
@@ -622,6 +672,30 @@
     gap: 10px;
 }
 
+/* Buttons with icon + text */
+.sln-btn-icon {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px;
+}
+
+#sln-dashboard-refresh {
+    margin-left: auto;
+}
+
+/* Align dashicons with button label text */
+.sln-btn-icon .dashicons {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+    line-height: 1;
+    flex-shrink: 0;
+    margin: 0;
+}
+
 .sln-date-range-selector {
     min-width: 200px;
     margin-left: 10px;
@@ -679,6 +753,73 @@
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+/* Forecast Stats Section */
+.sln-forecast-stats-section h2 {
+    margin-bottom: 16px;
+}
+.sln-forecast-kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 6px;
+}
+@media (max-width: 1200px) {
+    .sln-forecast-kpi-row { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 700px) {
+    .sln-forecast-kpi-row { grid-template-columns: 1fr; }
+}
+.sln-forecast-kpi {
+    background: #f5f0ff;
+    border: 1px solid #d8b4fe;
+    border-radius: 8px;
+    padding: 18px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    transition: border-color .15s, box-shadow .15s;
+}
+.sln-forecast-kpi:hover {
+    border-color: #7c3aed;
+    box-shadow: 0 2px 8px rgba(124,58,237,.12);
+}
+.sln-forecast-kpi .forecast-kpi-icon {
+    background: #ede9fe;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.sln-forecast-kpi .forecast-kpi-icon .dashicons {
+    color: #7c3aed;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+}
+.sln-forecast-kpi .forecast-kpi-body {
+    min-width: 0;
+}
+.sln-forecast-kpi .forecast-kpi-value {
+    font-size: 26px;
+    font-weight: 700;
+    color: #4c1d95;
+    line-height: 1.1;
+    margin-bottom: 4px;
+}
+.sln-forecast-kpi .forecast-kpi-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 2px;
+}
+.sln-forecast-kpi .forecast-kpi-sub {
+    font-size: 11px;
+    color: #6b7280;
 }
 
 /* KPI Cards */

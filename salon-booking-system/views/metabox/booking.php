@@ -463,7 +463,7 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                         <?php echo $plugin->loadView(
                             'metabox/_pro_feature_tooltip',
                             array(
-                                'cta_url' => 'https://www.salonbookingsystem.com/homepage/plugin-pricing/?utm_source=noshow_tracking&utm_medium=free-edition-back-end&utm_campaign=unlock_feature&utm_id=GOPRO',
+                                'cta_url' => defined( 'SLN_PRICING_URL' ) ? SLN_PRICING_URL : 'https://www.salonbookingsystem.com/plugin-pricing-2/',
                                 'additional_classes' => 'sln-profeature--button--bare sln-profeature--noshow-tracking',
                                 'trigger' => 'sln-noshow-tracking',
                             )

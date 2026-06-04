@@ -32,9 +32,7 @@ final class SLN_Wrapper_Booking_Service
 
         if(!empty($data['break_duration']))
             $this->data['break_duration'] = new SLN_DateTime('1970-01-01 '.SLN_Func::filter($data['break_duration'], 'time'));
-        
-        $this->data['break_duration_data'] = !empty($data['break_duration_data']) ? $data['break_duration_data'] : array('from' => 0, 'to' => SLN_Func::getMinutesFromDuration($data['break_duration']));
-        
+
         if(!empty($data['duration']) && !empty($data['break_duration']))
             $this->data['total_duration'] = new SLN_DateTime('1970-01-01 '.SLN_Func::convertToHoursMins(SLN_Func::getMinutesFromDuration($data['duration']) + SLN_Func::getMinutesFromDuration($data['break_duration'])));
 
@@ -44,6 +42,41 @@ final class SLN_Wrapper_Booking_Service
         if(!empty($data['exec_order'])) $this->data['exec_order'] = $data['exec_order'];
 
         $this->data['service'] = apply_filters('sln.booking_services.buildService', $this->data['service']);
+
+        $lineBreakMins = SLN_Func::getMinutesFromDuration($data['break_duration']);
+        $hasService    = $this->data['service'] instanceof SLN_Wrapper_ServiceInterface;
+        $svcBdd        = $hasService ? $this->data['service']->getBreakDurationData() : null;
+        $bdd           = (isset($data['break_duration_data']) && is_array($data['break_duration_data']))
+            ? $data['break_duration_data']
+            : null;
+
+        if ($bdd !== null && isset($bdd['from'], $bdd['to']) && intval($bdd['to']) > intval($bdd['from'])) {
+            $bf = intval($bdd['from']);
+            $bt = intval($bdd['to']);
+            // Legacy / admin-save rows often omitted break_duration_data; fallback used from=0 and
+            // to=break length only, so the pause looked like it started at service start. If the
+            // service template defines a later window with the same break length, prefer it.
+            if (
+                $lineBreakMins > 0
+                && $hasService && $svcBdd && isset($svcBdd['from'], $svcBdd['to'])
+                && intval($svcBdd['from']) > 0
+                && intval($svcBdd['to']) > intval($svcBdd['from'])
+                && $bf === 0
+                && ($bt - $bf) === $lineBreakMins
+                && (intval($svcBdd['to']) - intval($svcBdd['from'])) === $lineBreakMins
+            ) {
+                $this->data['break_duration_data'] = $svcBdd;
+            } else {
+                $this->data['break_duration_data'] = array('from' => $bf, 'to' => $bt);
+            }
+        } elseif ($hasService && $svcBdd) {
+            $this->data['break_duration_data'] = $svcBdd;
+        } else {
+            $this->data['break_duration_data'] = array(
+                'from' => 0,
+                'to'   => $lineBreakMins,
+            );
+        }
 
 		if (!empty($data['parallel_exec'])) {
 			$this->data['parallel_exec'] = $data['parallel_exec'];

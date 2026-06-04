@@ -46,7 +46,7 @@ window.SLN_BOOKING_CLIENT = {
                 $current_user = wp_get_current_user();
                 echo ' <a href="' . get_permalink($bookingMyAccountPageId) . '">' . __('Hi', 'salon-booking-system'), ' ', $current_user->display_name  . '</a>';
             } else {
-                echo '<a href="' . get_permalink($bookingMyAccountPageId) . '">' . __('Log-in', 'salon-booking-system') . '</a>';
+                echo '<a href="' . get_permalink($bookingMyAccountPageId) . '">' . __('Your account', 'salon-booking-system') . '</a>';
             }
             echo '</h6></div>';
         } //// $bookingMyAccountPageId  && !$plugin->getSettings()->get('enabled_force_guest_checkout') // END ////

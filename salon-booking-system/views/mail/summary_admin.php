@@ -86,7 +86,8 @@ if(isset($updated) && $updated) {
     $data['to'] = !empty($recipients) ? implode(',', $recipients) : implode(',', $adminEmails);
     
     $data['subject'] = __('New booking for ','salon-booking-system')
-                       . $plugin->format()->date($booking->getDate())
+                       . $booking->getDisplayName()
+                       . ' - ' . $plugin->format()->date($booking->getDate())
                        . ' - ' . $plugin->format()->time($booking->getTime());
 
     $data['subject'] = apply_filters('sln.new_booking.notifications.email.subject', $data['subject'], $booking);

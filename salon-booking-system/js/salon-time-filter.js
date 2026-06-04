@@ -43,6 +43,7 @@
         lastFilterRun: null,
         lastDatesRefresh: null,
         filteredCount: 0,
+        eventsBound: false,
         
         /**
          * Initialize the time filtering system
@@ -50,7 +51,10 @@
         init: function() {
             var self = this;
             
-            // Only initialize on date step
+            // Only initialize on date step. The date step can be loaded dynamically via AJAX
+            // (the wizard swaps step HTML in place), so init() may run multiple times — once
+            // on document.ready and again on each 'sln.booking.step_loaded'. It must therefore
+            // be idempotent.
             if (!$('#salon-step-date').length) {
                 return;
             }
@@ -62,39 +66,61 @@
             
             this.log('Initializing client-side time filter');
             
-            // Run initial filter after page load (short delay to ensure DOM ready)
+            // Bind document-delegated and visibility listeners ONCE. They live on document
+            // (not on the swapped-in step markup), so re-binding on every step load would
+            // stack duplicate handlers and fire filterPastTimeSlots() many times per event.
+            if (!this.eventsBound) {
+                // Filter when date changes
+                $(document).on('change', this.config.dateInputSelector, function() {
+                    self.log('Date changed, filtering times');
+                    self.filterPastTimeSlots();
+                });
+                
+                // Filter when time picker is updated/shown
+                $(document).on('sln:timepicker:updated', function() {
+                    self.log('Time picker updated, filtering times');
+                    self.filterPastTimeSlots();
+                });
+                
+                // Listen for external intervals refresh (from salon.js refreshAvailableDatesOnLoad)
+                $(document).on('sln:intervals:refreshed', function(event, data) {
+                    self.log('External intervals refresh detected, re-filtering times');
+                    self.filterPastTimeSlots();
+                });
+                
+                // Filter when user returns to tab (visibility API)
+                this.setupVisibilityFilter();
+                
+                this.eventsBound = true;
+            }
+            
+            // Per-activation work — safe to repeat on every date-step (re)load.
+            // Run initial filter after load (short delay to ensure DOM ready)
             setTimeout(function() {
                 self.filterPastTimeSlots();
             }, 500);
             
-            // Filter when date changes
-            $(document).on('change', this.config.dateInputSelector, function() {
-                self.log('Date changed, filtering times');
-                self.filterPastTimeSlots();
-            });
-            
-            // Filter when time picker is updated/shown
-            $(document).on('sln:timepicker:updated', function() {
-                self.log('Time picker updated, filtering times');
-                self.filterPastTimeSlots();
-            });
-            
-            // Start periodic refresh for long sessions
+            // Start/restart periodic refreshes (both clear any existing timer first)
             this.startPeriodicFilter();
-            
-            // FIX RISCHIO #2: Start periodic dates refresh (less frequent)
             this.startPeriodicDatesRefresh();
             
-            // Filter when user returns to tab (visibility API)
-            this.setupVisibilityFilter();
-            
-            // Listen for external intervals refresh (from salon.js refreshAvailableDatesOnLoad)
-            $(document).on('sln:intervals:refreshed', function(event, data) {
-                self.log('External intervals refresh detected, re-filtering times');
-                self.filterPastTimeSlots();
-            });
-            
             this.log('Time filter initialized successfully');
+        },
+        
+        /**
+         * Stop periodic timers (e.g. when navigating away from the date step).
+         * Document-delegated listeners are left intact; they simply no-op off the date step.
+         */
+        stop: function() {
+            if (this.filterTimer) {
+                clearInterval(this.filterTimer);
+                this.filterTimer = null;
+            }
+            if (this.datesRefreshTimer) {
+                clearInterval(this.datesRefreshTimer);
+                this.datesRefreshTimer = null;
+            }
+            this.log('Time filter timers stopped');
         },
         
         /**
@@ -472,6 +498,18 @@
     // Initialize when DOM is ready
     $(document).ready(function() {
         SalonTimeFilter.init();
+    });
+    
+    // Re-initialize after each AJAX wizard step swap. On document.ready the date step may not
+    // exist yet (e.g. the wizard starts on services/forecast), so the ready-init above would
+    // no-op; this restarts the filter once the date step is swapped in, and stops the periodic
+    // timers when the user navigates away from it.
+    $(document).on('sln.booking.step_loaded', function() {
+        if ($('#salon-step-date').length) {
+            SalonTimeFilter.init();
+        } else {
+            SalonTimeFilter.stop();
+        }
     });
     
     // Export for external access/testing

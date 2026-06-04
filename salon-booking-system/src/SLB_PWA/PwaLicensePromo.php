@@ -23,8 +23,8 @@ class PwaLicensePromo {
                 $price_id = self::read_price_id( $data );
                 if ( 1 === $price_id ) {
                     $default_href = defined( 'SLN_STORE_URL' )
-                        ? trailingslashit( SLN_STORE_URL ) . 'pricing/'
-                        : 'https://www.salonbookingsystem.com/pricing/';
+                        ? SLN_PRICING_URL
+                        : 'https://www.salonbookingsystem.com/plugin-pricing-2/';
                     $promo = array(
                         'kind' => 'basic_business',
                         'href' => (string) apply_filters( 'sln_pwa_business_plan_upgrade_url', $default_href ),
@@ -42,7 +42,7 @@ class PwaLicensePromo {
                     'kind' => 'free_pro',
                     'href' => (string) apply_filters(
                         'sln_pwa_pro_pricing_url',
-                        'https://www.salonbookingsystem.com/plugin-pricing/'
+                        defined('SLN_PRICING_URL') ? SLN_PRICING_URL : 'https://www.salonbookingsystem.com/plugin-pricing-2/'
                     ),
                 );
             }

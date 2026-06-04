@@ -394,6 +394,11 @@ export default {
         return '';
       },
     },
+    customerPhoneCountryCode: {
+      default: function () {
+        return '';
+      },
+    },
     customerNotes: {
       default: function () {
         return '';
@@ -480,6 +485,7 @@ export default {
   data: function () {
     const originalEmail = this.customerEmail || '';
     const originalPhone = this.customerPhone || '';
+    const originalPhoneCountryCode = this.customerPhoneCountryCode || '';
 
     return {
       shopError: false,
@@ -491,6 +497,8 @@ export default {
       elCustomerPhone: (this.bookingID && this.shouldHidePhone) ? '*******' : originalPhone,
       originalCustomerEmail: originalEmail,
       originalCustomerPhone: originalPhone,
+      elCustomerPhoneCountryCode: originalPhoneCountryCode,
+      originalCustomerPhoneCountryCode: originalPhoneCountryCode,
       elCustomerAddress: this.customerAddress,
       elCustomerNotes: this.customerNotes,
       elCustomerPersonalNotes: this.customerPersonalNotes,
@@ -538,6 +546,16 @@ export default {
     };
   },
   watch: {
+    customerPhone(newVal) {
+      const phone = newVal || '';
+      this.elCustomerPhone = (this.bookingID && this.shouldHidePhone) ? '*******' : phone;
+      this.originalCustomerPhone = phone;
+    },
+    customerPhoneCountryCode(newVal) {
+      const prefix = newVal || '';
+      this.elCustomerPhoneCountryCode = prefix;
+      this.originalCustomerPhoneCountryCode = prefix;
+    },
     elDate() {
       this.loadAvailabilityIntervals()
       this.loadAvailabilityServices()
@@ -765,6 +783,22 @@ export default {
 
       return serviceTimes;
     },
+    calculateServiceTimesFromApi(booking) {
+      // Use actual start_at/end_at from the API response so that parallel services
+      // (same start time, different assistants or concurrent slots) are not mistakenly
+      // treated as sequential. Falls back to catalog-based calculation when times are missing.
+      const hasApiTimes = booking.services.every(s => s.start_at && s.end_at);
+      if (!hasApiTimes) {
+        return this.calculateServiceTimes(booking);
+      }
+      return booking.services.map(service => ({
+        service_id: service.service_id,
+        assistant_id: service.assistant_id,
+        resource_id: service.resource_id,
+        start: this.moment(`${booking.date} ${service.start_at}`, 'YYYY-MM-DD HH:mm'),
+        end:   this.moment(`${booking.date} ${service.end_at}`,   'YYYY-MM-DD HH:mm'),
+      }));
+    },
     async validateAssistantAvailability(booking) {
       try {
         const existingBookings = await this.getExistingBookings(booking.date);
@@ -780,7 +814,7 @@ export default {
           );
 
           for (const existingBooking of relevantBookings) {
-            const existingServiceTimes = this.calculateServiceTimes({
+            const existingServiceTimes = this.calculateServiceTimesFromApi({
               date: existingBooking.date,
               time: existingBooking.time,
               services: existingBooking.services
@@ -868,6 +902,10 @@ export default {
           (this.shouldHidePhone && this.elCustomerPhone === '*******' ? this.originalCustomerPhone : this.elCustomerPhone) :
           this.elCustomerPhone;
 
+      const customerPhoneCountryCode = this.bookingID ?
+          (this.shouldHidePhone && this.elCustomerPhone === '*******' ? this.originalCustomerPhoneCountryCode : this.elCustomerPhoneCountryCode) :
+          this.elCustomerPhoneCountryCode;
+
       const booking = {
         date: this.moment(this.elDate).format('YYYY-MM-DD'),
         time: this.moment(this.elTime, this.getTimeFormat()).format('HH:mm'),
@@ -877,6 +915,7 @@ export default {
         customer_last_name: this.elCustomerLastname,
         customer_email: customerEmail,
         customer_phone: customerPhone,
+        customer_phone_country_code: customerPhoneCountryCode,
         customer_address: this.elCustomerAddress,
         services: this.bookingServices,
         discounts: this.elDiscounts,

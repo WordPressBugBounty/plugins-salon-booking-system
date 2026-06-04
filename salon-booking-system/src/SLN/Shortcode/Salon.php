@@ -47,6 +47,7 @@ class SLN_Shortcode_Salon
     private function dispatchStep($curr)
     {
         $found = false;
+        $obj = null;
         $settings = $this->plugin->getSettings();
         SLN_Plugin::addLog(sprintf('[Wizard] dispatchStep requested="%s"', $curr));
 
@@ -112,6 +113,20 @@ class SLN_Shortcode_Salon
                 SLN_Plugin::addLog(sprintf('[Wizard] unable to resolve step for request "%s"', $curr));
             }
         }
+
+        // SAFETY NET: never return empty output. The loops above only return when a step
+        // needs rendering (its isValid() returned false). If every resolved step validated
+        // and auto-advanced, execution reaches here and the method would otherwise return
+        // null — producing a blank wizard / "0" output. Render the last resolved step (e.g.
+        // the final "thankyou" step) so the user always sees the wizard.
+        if ($obj instanceof SLN_Shortcode_Salon_Step) {
+            SLN_Plugin::addLog(sprintf('[Wizard] dispatchStep safety-net render of resolved step "%s"', $this->currentStep));
+            return $this->render($obj->render());
+        }
+
+        // Last resort: resolve the requested/current step directly.
+        SLN_Plugin::addLog(sprintf('[Wizard] dispatchStep last-resort render for requested "%s"', $curr));
+        return $this->render($this->getStepObject($this->getCurrentStep())->render());
     }
 
     /**
@@ -154,6 +169,33 @@ class SLN_Shortcode_Salon
             if (!$stepDefault) {
                 $stepDefault = self::STEP_DEFAULT;
             }
+
+            // If the first step was skipped for this booking attempt (forecast skip
+            // is stored on the BookingBuilder, not in PHP session), advance the
+            // default to the next step.  This prevents the reversed-steps dispatch
+            // pass from ending without rendering anything.
+            //
+            // A ?sln_reset_forecast=1 URL parameter clears the flag so testers can
+            // force the forecast to re-appear.
+            if ( $stepDefault === 'forecast' ) {
+                $bb = $this->plugin->getBookingBuilder();
+
+                if ( ! empty( $_GET['sln_reset_forecast'] ) ) {
+                    $bb->set( 'skip_forecast', null );
+                    $bb->save();
+                    if ( ! empty( $_SESSION['sln_skip_forecast'] ) ) {
+                        unset( $_SESSION['sln_skip_forecast'] );
+                    }
+                }
+
+                if ( ! empty( $bb->get( 'skip_forecast' ) ) ) {
+                    $next = array_shift( $steps );
+                    if ( $next ) {
+                        $stepDefault = $next;
+                    }
+                }
+            }
+
             $this->currentStep = isset($_GET[self::STEP_KEY]) ? sanitize_text_field(wp_unslash($_GET[self::STEP_KEY])) : $stepDefault;
             unset($steps);
         }

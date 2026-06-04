@@ -57,6 +57,13 @@ class SLB_Discount_Plugin {
 	}
 
 	public function hook_init() {
+		// If the main plugin booted on 'init' (not 'plugins_loaded'), hook_plugins_loaded() will
+		// never have fired because plugins_loaded was already past when this class was instantiated.
+		// Calling hook_plugins_loaded() here is safe: by init priority 10, SLN_Plugin::getInstance()
+		// returns the already-constructed singleton with no circular dependency.
+		if ( is_null( $this->plugin ) ) {
+			$this->hook_plugins_loaded();
+		}
 		$enableDiscountSystem = $this->plugin->getSettings()->get('enable_discount_system');
         if (!$enableDiscountSystem) {
             return;
@@ -124,6 +131,10 @@ class SLB_Discount_Plugin {
 		if (!isset($discounts)) {
 			$discounts = array();
 		}
+		// Remove any 0 values that result from intval("") on an empty "No Discounts" selection.
+		// Without this, empty([0]) = false in PHP, bypassing the clear path below and leaving
+		// _sln_booking_discounts as [] while stale per-coupon _sln_booking_discount_X keys survive.
+		$discounts = array_values(array_filter($discounts, function($id) { return $id > 0; }));
 		$discounts_to_compare = empty($discounts) ? array() : $discounts;
 		// Union canonical _sln_booking_discounts with per-coupon _sln_booking_discount_{id} meta so usage
 		// adjustments and clears stay correct when the list was emptied but stale per-coupon keys remained.
@@ -389,13 +400,13 @@ class SLB_Discount_Plugin {
 		}
 		$old_discounts = SLB_Discount_Helper_Booking::getBookingDiscounts($booking);
 		if(!is_array($discounts)){
-			$discounts = $discounts instanceof SLB_Discount_Wrapper_Discount
-						? array($discounts) 
-						: (
-							intval($discounts) 
-							? array(new SLB_Discount_Wrapper_Discount($discountId))
-							: array()
-						);
+		$discounts = $discounts instanceof SLB_Discount_Wrapper_Discount
+					? array($discounts)
+					: (
+						intval($discounts)
+						? array(new SLB_Discount_Wrapper_Discount(intval($discounts)))
+						: array()
+					);
 		}
 		$discounts = array_map(array($this, 'createDiscount'), $discounts);
 		$dRepo = $this->plugin->getRepository(SLB_Discount_Plugin::POST_TYPE_DISCOUNT);
@@ -425,12 +436,17 @@ class SLB_Discount_Plugin {
 			foreach(['discount', 'discount_amount', 'discount_score'] as $k){
 				delete_post_meta($booking->getId(), '_'.SLN_Plugin::POST_TYPE_BOOKING.'_'.$k);
 			}
-			foreach($discounts_to_decrement as $discount){
-				$discount = $dRepo->create($discount);
+		foreach($discounts_to_decrement as $discount){
+			$discount = $dRepo->create($discount);
+			// Only adjust usage counters for committed bookings. DRAFT bookings are
+			// temporary placeholders; their usage was never counted so must not be
+			// decremented either (that would produce a negative usage count).
+			if ( $booking->getStatus() !== SLN_Enum_BookingStatus::DRAFT ) {
 				$discount->decrementUsagesNumber($booking->getUserId());
 				$discount->decrementTotalUsagesNumber();
-				delete_post_meta($booking->getId(), '_'.SLN_Plugin::POST_TYPE_BOOKING.'_discount_'.$discountId);
 			}
+			delete_post_meta($booking->getId(), '_'.SLN_Plugin::POST_TYPE_BOOKING.'_discount_'.$discount->getId());
+		}
 		}
 		$data = array('discounts' => array());
 		if(!empty($discounts_to_increment)){
@@ -469,8 +485,15 @@ class SLB_Discount_Plugin {
 					}
 					$data["discount_score"] = array_merge(isset($data["discount_score"]) ? $data["discount_score"] : array(), $discountScores);
 				}
-				$discount->incrementUsagesNumber($booking->getUserId());
-				$discount->incrementTotalUsagesNumber();
+				// Only count usage for committed bookings. A DRAFT booking is a
+			// temporary record created while the customer is still in checkout;
+			// counting it here would burn the code before the booking is confirmed
+			// and leave customers with an "already used" error if anything goes
+			// wrong between apply and confirm.
+			if ( $booking->getStatus() !== SLN_Enum_BookingStatus::DRAFT ) {
+					$discount->incrementUsagesNumber($booking->getUserId());
+					$discount->incrementTotalUsagesNumber();
+				}
 			}
 			// Calculate new service price
 			foreach($bookingServices->getItems() as $bookingService){
@@ -595,19 +618,21 @@ class SLB_Discount_Plugin {
 					}
                 }
 
-				$bb->set('services', $items);
-				$bb->set("discount_{$discountId}", true);
-				$bb->set("discount_amount", $discountValues);
-				$bb->set("discounts", array($discountId));
+			$bb->set('services', $items);
+			$bb->set("discount_{$discountId}", true);
+			$bb->set("discount_amount", $discountValues);
+			$bb->set("discounts", array($discountId));
                 $bb->set('discount_score', $discountScores);
 
-				$discount->incrementUsagesNumber(get_current_user_id());
-				$discount->incrementTotalUsagesNumber();
-			}
+			// Do NOT increment usage here: the booking is always DRAFT at this
+			// point. Usage is counted in SummaryStep::dispatchForm() once the
+			// customer actually confirms, preventing orphaned DRAFTs from
+			// consuming a single-use code permanently.
 		}
-
-		$bb->set('discount', null);
 	}
+
+	$bb->set('discount', null);
+}
 
 	/**
 	 * @param SLN_Shortcode_Salon_SummaryStep $step
@@ -714,7 +739,22 @@ class SLB_Discount_Plugin {
 	 */
 	public function hook_booking_setStatus($booking, $oldStatus, $newStatus)
 	{
-		if ($oldStatus !== SLN_Enum_BookingStatus::CANCELED && $newStatus === SLN_Enum_BookingStatus::CANCELED) {
+		// Statuses for which usage was actually counted (i.e. the customer confirmed).
+		// DRAFT is excluded: it is a temporary placeholder and its usage is never
+		// incremented (see hook_api_pre_eval and hook_booking_builder_create guards),
+		// so cancelling a DRAFT must not decrement the counter.
+		$committedStatuses = array(
+			SLN_Enum_BookingStatus::CONFIRMED,
+			SLN_Enum_BookingStatus::PAID,
+			SLN_Enum_BookingStatus::PAY_LATER,
+			SLN_Enum_BookingStatus::PENDING,
+			SLN_Enum_BookingStatus::PENDING_PAYMENT,
+		);
+
+		if ($oldStatus !== SLN_Enum_BookingStatus::CANCELED
+			&& $newStatus === SLN_Enum_BookingStatus::CANCELED
+			&& in_array( $oldStatus, $committedStatuses, true )
+		) {
 			if (SLB_Discount_Helper_Booking::hasAppliedDiscount($booking)) {
 				$pt = $booking->getPostType();
 

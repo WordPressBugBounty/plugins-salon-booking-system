@@ -8,6 +8,23 @@ class SLB_Discount_PostType_Discount extends SLN_PostType_Abstract
     {
         parent::init();
 
+        // Dynamically grant all sln_discount primitive caps to trusted roles at runtime.
+        // This is filter-based (no DB write) and guarantees capability checks inside wp-admin/post.php
+        // succeed even on sites with incomplete role data.
+        // Run late so other plugins cannot strip discount primitives after we merge them in.
+        add_filter( 'user_has_cap', array( $this, 'grant_admin_discount_caps' ), 999, 4 );
+        add_filter( 'get_edit_post_link', array( $this, 'fix_get_edit_post_link' ), 10, 3 );
+
+        // Also repair the administrator role in the DB if any cap is missing.
+        $this->maybe_repair_admin_discount_caps();
+
+        // Belt-and-suspenders: if get_edit_post_link() returned null after save (because a
+        // capability gap made current_user_can() fail inside that function), the WordPress
+        // redirect_post() builds a bare "?message=X" URL that eventually lands on the generic
+        // edit.php.  This filter corrects the redirect to the proper discount edit screen.
+        // Run very late so another plugin cannot replace Location after our fix.
+        add_filter( 'redirect_post_location', array( $this, 'fix_sln_discount_redirect_location' ), 9999999, 2 );
+
         if (is_admin()) {
             add_action('manage_'.$this->getPostType().'_posts_custom_column', array($this, 'manage_column'), 10, 2);
             add_filter('manage_'.$this->getPostType().'_posts_columns', array($this, 'manage_columns'));
@@ -22,6 +39,129 @@ class SLB_Discount_PostType_Discount extends SLN_PostType_Abstract
             add_filter('posts_search', array($this, 'search_where'), 10, 2);
             add_filter('posts_groupby', array($this, 'search_groupby'), 10, 2);
             add_filter('posts_where', array($this, 'restrict_admin_list_statuses'), 10, 2);
+        }
+    }
+
+    /**
+     * Filter callback: merge all sln_discount primitive capabilities when the user is trusted
+     * (WP admin, Salon backend) or already has any edit-* primitive for this CPT. Priority 999
+     * runs after plugins that strip caps from roles.
+     */
+    public function grant_admin_discount_caps( $allcaps, $caps, $args, $user ) {
+        // Merge in every sln_discount primitive when the user is already trusted for Salon / WP admin,
+        // or already holds at least one edit-related primitive for this CPT (role row incomplete).
+        $post_type_obj = get_post_type_object( $this->getPostType() );
+        if ( ! $post_type_obj ) {
+            return $allcaps;
+        }
+        $grant = ! empty( $allcaps['manage_options'] ) || ! empty( $allcaps['manage_salon'] );
+        if ( ! $grant ) {
+            foreach ( (array) $post_type_obj->cap as $primitive ) {
+                if ( ! is_string( $primitive ) || $primitive === '' ) {
+                    continue;
+                }
+                if ( 0 !== strpos( $primitive, 'edit' ) ) {
+                    continue;
+                }
+                if ( ! empty( $allcaps[ $primitive ] ) ) {
+                    $grant = true;
+                    break;
+                }
+            }
+        }
+        if ( ! $grant ) {
+            return $allcaps;
+        }
+        foreach ( $post_type_obj->cap as $cap ) {
+            $allcaps[ $cap ] = true;
+        }
+        return $allcaps;
+    }
+
+    /**
+     * When the CPT has no usable _edit_link, core leaves $link empty after edit_post passes.
+     * redirect_post() then builds a broken Location header; supply the standard post.php URL.
+     */
+    public function fix_get_edit_post_link( $link, $post_id, $context ) {
+        $post_id = (int) $post_id;
+        if ( $post_id < 1 || get_post_type( $post_id ) !== $this->getPostType() ) {
+            return $link;
+        }
+        if ( $link !== null && $link !== false && $link !== '' ) {
+            return $link;
+        }
+        if ( ! current_user_can( 'edit_post', $post_id ) ) {
+            return $link;
+        }
+        if ( 'display' === $context ) {
+            return admin_url( 'post.php?post=' . $post_id . '&amp;action=edit' );
+        }
+        return admin_url( 'post.php?post=' . $post_id . '&action=edit' );
+    }
+
+    /**
+     * Force a canonical admin edit URL after saving a discount.
+     *
+     * WordPress (and other plugins) can still produce a broken or generic Location header
+     * (e.g. bare edit.php) even when caps are fine. Earlier logic only rewrote when the URL
+     * did not "look" correct; other filters or hosts could still leave a bad redirect. For
+     * sln_discount we always normalize to post.php for normal saves from the edit screen.
+     *
+     * @param string $location    Location header value from WordPress.
+     * @param int    $post_id_wp  Saved post ID (WordPress passes this as the second argument).
+     */
+    public function fix_sln_discount_redirect_location( $location, $post_id_wp ) {
+        if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+            return $location;
+        }
+        if ( ! empty( $_POST['wp-preview'] ) && 'dopreview' === $_POST['wp-preview'] ) {
+            return $location;
+        }
+        $post_id = (int) $post_id_wp;
+        if ( $post_id <= 0 && isset( $_POST['post_ID'] ) ) {
+            $post_id = (int) wp_unslash( $_POST['post_ID'] );
+        }
+        if ( $post_id <= 0 || get_post_type( $post_id ) !== $this->getPostType() ) {
+            return $location;
+        }
+        // Only when this request is actually saving this discount from the post editor.
+        if ( empty( $_POST['post_ID'] ) || (int) wp_unslash( $_POST['post_ID'] ) !== $post_id ) {
+            return $location;
+        }
+        $message = 1;
+        $parsed  = is_string( $location ) ? wp_parse_url( $location ) : array();
+        if ( ! empty( $parsed['query'] ) ) {
+            parse_str( $parsed['query'], $q );
+            if ( isset( $q['message'] ) && is_numeric( $q['message'] ) ) {
+                $message = (int) $q['message'];
+            }
+        }
+        return admin_url(
+            add_query_arg(
+                array(
+                    'post'    => $post_id,
+                    'action'  => 'edit',
+                    'message' => $message,
+                ),
+                'post.php'
+            )
+        );
+    }
+
+    /**
+     * Repair the administrator role in the database if any sln_discount capability is missing.
+     * Runs once per request but only writes to the DB when a cap is actually absent.
+     */
+    private function maybe_repair_admin_discount_caps() {
+        $admin_role    = get_role( 'administrator' );
+        $post_type_obj = get_post_type_object( $this->getPostType() );
+        if ( ! $admin_role || ! $post_type_obj ) {
+            return;
+        }
+        foreach ( $post_type_obj->cap as $cap ) {
+            if ( empty( $admin_role->capabilities[ $cap ] ) ) {
+                $admin_role->add_cap( $cap );
+            }
         }
     }
 
@@ -267,8 +407,6 @@ class SLB_Discount_PostType_Discount extends SLN_PostType_Abstract
      */
     public function restrict_admin_list_statuses( $where, $query ) {
         global $pagenow, $wpdb;
-
-        trigger_error( '[SLB_Discount] restrict_admin_list_statuses fired. pagenow=' . $pagenow . ' post_type_get=' . $query->get('post_type') . ' GET_post_type=' . ( isset($_GET['post_type']) ? $_GET['post_type'] : 'N/A' ), E_USER_NOTICE );
 
         if (
             ! is_admin()

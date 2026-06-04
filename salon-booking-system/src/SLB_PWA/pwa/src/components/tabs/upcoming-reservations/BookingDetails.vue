@@ -75,7 +75,10 @@
       <div class="service-row-item" v-for="(service, index) in services" :key="index">
         <div class="service-name-price">
           <span class="service-name">{{ service.service_name }}</span>
-          <span class="service-price" v-html="service.service_price + booking.currency"></span>
+          <div class="service-price-block">
+            <span class="service-duration" v-if="serviceDurationMinutes(service)">{{ formatDuration(serviceDurationMinutes(service)) }}</span>
+            <span class="service-price" v-html="service.service_price + booking.currency"></span>
+          </div>
         </div>
         <div class="service-meta" v-if="service.resource_name || service.assistant_name">
           <span v-if="service.resource_name">{{ service.resource_name }}</span>
@@ -90,7 +93,10 @@
       <p class="section-label">Payment</p>
       <div class="detail-row">
         <span class="detail-label">{{ getLabel('totalTitle') }}</span>
-        <span class="detail-value detail-value--primary" v-html="totalSum"></span>
+        <div class="total-value-block">
+          <span class="total-duration" v-if="totalDuration">{{ totalDuration }}</span>
+          <span class="detail-value detail-value--primary" v-html="totalSum"></span>
+        </div>
       </div>
       <div class="detail-row" v-if="discount !== '-'">
         <span class="detail-label">{{ getLabel('discountTitle') }}</span>
@@ -230,6 +236,12 @@
             hasCustomerProfile() {
                 return !!this.bookingData.customer_id && Number(this.bookingData.customer_id) > 0;
             },
+            totalDuration() {
+                if (this.bookingData.duration) {
+                    return this.formatDuration(this.bookingData.duration);
+                }
+                return null;
+            },
         },
         mounted() {
             this.toggleShow()
@@ -266,6 +278,28 @@
             },
             showCustomerImages() {
                 this.$emit('showCustomerImages', {id: this.bookingData.customer_id, photos: this.photos})
+            },
+            serviceDurationMinutes(service) {
+                if (!service.start_at || !service.end_at) return null;
+                const [sh, sm] = service.start_at.split(':').map(Number);
+                const [eh, em] = service.end_at.split(':').map(Number);
+                const minutes = (eh * 60 + em) - (sh * 60 + sm);
+                return minutes > 0 ? minutes : null;
+            },
+            formatDuration(value) {
+                let totalMinutes;
+                if (typeof value === 'string' && value.includes(':')) {
+                    const [h, m] = value.split(':').map(Number);
+                    totalMinutes = h * 60 + m;
+                } else {
+                    totalMinutes = Number(value);
+                }
+                if (!totalMinutes) return null;
+                const h = Math.floor(totalMinutes / 60);
+                const m = totalMinutes % 60;
+                if (h > 0 && m > 0) return `${h}h ${m}min`;
+                if (h > 0) return `${h}h`;
+                return `${m}min`;
             },
             viewCustomerProfile() {
                 if (!this.hasCustomerProfile) return;
@@ -488,21 +522,49 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
 }
 .service-name {
   font-size: 14px;
   font-weight: 600;
   color: var(--color-text-primary, #0F172A);
+  flex: 1;
+}
+.service-price-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  flex-shrink: 0;
+}
+.service-duration {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--color-text-muted, #94A3B8);
+  line-height: 1.2;
 }
 .service-price {
   font-size: 14px;
   font-weight: 600;
   color: var(--color-primary, #2563EB);
+  line-height: 1.2;
 }
 .service-meta {
   font-size: 12px;
   color: var(--color-text-secondary, #64748B);
   margin-top: 3px;
+}
+.total-value-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+}
+.total-duration {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--color-text-muted, #94A3B8);
+  line-height: 1.2;
 }
 .pay-remaining-wrap { padding-top: 4px; }
 .collapsible-header {

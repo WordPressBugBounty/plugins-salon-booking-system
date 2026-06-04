@@ -1,7 +1,7 @@
 <?php
 if (!defined("SLN_VERSION_PAY")) {
     if (!isset($cta_url) || !$cta_url) {
-        $cta_url = "https://www.salonbookingsystem.com/homepage/plugin-pricing/?utm_source=default_status&utm_medium=free-edition-back-end&utm_campaign=unlock_feature&utm_id=GOPRO";
+        $cta_url = defined( 'SLN_PRICING_URL' ) ? SLN_PRICING_URL : 'https://www.salonbookingsystem.com/plugin-pricing-2/';
     }
     if (!isset($additional_classes) || !$additional_classes) {
         $additional_classes = "";

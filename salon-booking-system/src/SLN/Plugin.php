@@ -747,6 +747,16 @@ class SLN_Plugin
             if (!$post) {
                 throw new Exception('post not found');
             }
+        } elseif (!isset($post->post_type)) {
+            // Third-party wrapper object (e.g. SalonMultishop\Wrapper\Shop) — resolve to WP_Post.
+            $id = isset($post->ID) ? intval($post->ID) : 0;
+            if (!$id) {
+                throw new Exception('post not found');
+            }
+            $post = get_post($id);
+            if (!$post) {
+                throw new Exception('post not found');
+            }
         }
 
         return $this->getRepository($post->post_type)->create($post);
@@ -766,6 +776,9 @@ class SLN_Plugin
      */
     public function getRepository($binding)
     {
+        if (!isset($this->repositories[$binding])) {
+            throw new Exception(sprintf('repository for "%s" not found', $binding));
+        }
         $ret = $this->repositories[$binding];
         if (!$ret) {
             throw new Exception(sprintf('repository for "%s" not found', $binding));
@@ -868,6 +881,16 @@ function sln_cancel_bookings()
 function sln_email_weekly_report()
 {
     $obj = new SLN_Action_WeeklyReport(SLN_Plugin::getInstance());
+    $obj->executeEmail();
+}
+
+function sln_forecast_notify_email()
+{
+    if ( apply_filters( 'sln.scheduled.forecast_notify_email', false ) ) {
+        return;
+    }
+
+    $obj = new SLN_Action_ForecastNotify( SLN_Plugin::getInstance() );
     $obj->executeEmail();
 }
 

@@ -14,7 +14,8 @@
         :customerFirstname="customer ? customer.first_name : ''"
         :customerLastname="customer ? customer.last_name : ''"
         :customerEmail="customer ? customer.email : ''"
-        :customerPhone="customer ? customer.phone : ''"
+        :customerPhone="customer ? getBookingPhoneNumber(customer) : ''"
+        :customerPhoneCountryCode="customer ? getBookingPhoneCountryCode(customer) : ''"
         :customerAddress="customer ? customer.address : ''"
         :customerPersonalNotes="customer ? customer.note : ''"
         status="sln-b-confirmed"
@@ -34,10 +35,11 @@
 <script>
 
 import EditBooking from './../upcoming-reservations/EditBooking.vue'
-
+import mixins from '@/mixin'
 
 export default {
   name: 'AddBookingItem',
+  mixins: [mixins],
   props: {
     date: {
       default: function () {

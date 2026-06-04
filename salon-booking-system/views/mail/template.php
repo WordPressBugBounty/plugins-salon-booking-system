@@ -3,6 +3,9 @@
 if (!isset($forAdmin)) {
 	$forAdmin = false;
 }
+if (!isset($skipBookingDetails)) {
+	$skipBookingDetails = false;
+}
 ?>
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -91,15 +94,16 @@ a[x-apple-data-detectors] {
                 if(empty($remind)){
                     $remind = isset($data['remind']) ? $data['remind'] : false;
                 }
-                if(empty($customer)){
+                if(empty($customer) && !empty($booking)){
                     $customer = $booking->getCustomer();
                 }
                 if(empty($payRemainingAmount)){
                     $payRemainingAmount = isset($data['pay_remaining_amount']) ? $data['pay_remaining_amount'] : false;
                 }
-                echo $plugin->loadView('mail/' . $contentTemplate, compact('booking', 'plugin', 'updated_message', 'customer', 'forAdmin', 'updated', 'remind', 'payRemainingAmount')) ?>
+                echo $plugin->loadView('mail/' . $contentTemplate, compact('booking', 'plugin', 'updated_message', 'customer', 'forAdmin', 'updated', 'remind', 'payRemainingAmount', 'service', 'suggestions')) ?>
               </td>
              </tr>
+             <?php if ( empty( $skipBookingDetails ) ) : ?>
              <tr>
                 <td align="left" style="padding:0;Margin:0;padding-top:20px;padding-left:20px;padding-right:20px;border-radius:10px">
                     <?php echo $plugin->loadView('mail/_booking_info', compact('booking')) ?>
@@ -144,6 +148,7 @@ a[x-apple-data-detectors] {
                     <?php endif ?>
                 </td>
              </tr>
+             <?php endif; ?>
            </table></td>
          </tr>
        </table>

@@ -154,7 +154,7 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
             // where attendant = false (auto-assignment). getAttendantsIds() silently drops
             // those entries, producing an empty array and bypassing the conflict check entirely.
             $errors = $handler->checkDateTimeServicesAndAttendants($bb->getServicesMeta(), $bb->getStartsAt());
-            if(!empty($errors) && !class_exists('\\SalonMultishop\\Addon')){
+            if(!empty($errors)){
                 $this->releaseSlotLock($slotLockKey);
                 $this->addError(self::SLOT_UNAVAILABLE);
                 return false;
@@ -248,7 +248,7 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
             SLN_Plugin::addLog('[SummaryStep] ✅ Slot lock acquired: ' . $slotLockKey);
 
             $errors = $handler->checkDateTimeServicesAndAttendants($bb->getServicesMeta(), $bb->getStartsAt());
-            if(!empty($errors) && !class_exists('\\SalonMultishop\\Addon')){
+            if(!empty($errors)){
                 $this->releaseSlotLock($slotLockKey);
                 $this->addError(self::SLOT_UNAVAILABLE);
                 return false;
@@ -317,33 +317,56 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
                 ));
             }
 
-            // Re-check availability AFTER payment has been processed.
-            // The slot could have become unavailable (another booking, settings change) during
-            // the time the customer was on the external payment page. Because the payment has
-            // already been captured at this point we cannot simply reject the booking — doing
-            // so would leave the customer charged with no appointment. Instead we confirm the
-            // booking but mark it PENDING so the salon owner is alerted and can decide whether
-            // to honour it or issue a refund.
-            // Wrapped in try/catch: a validation exception must never crash the payment flow
-            // after the customer has already been charged.
-            try {
-                $handler->setBooking($bb); // Exclude current booking from slot count to prevent false conflicts
-                $gatewayAvailErrors = $handler->checkDateTimeServicesAndAttendants($bb->getServicesMeta(), $bb->getStartsAt());
-                if ( ! empty($gatewayAvailErrors) && ! class_exists('\\SalonMultishop\\Addon') ) {
-                    SLN_Plugin::addLog(sprintf(
-                        '[SummaryStep] WARNING: Slot unavailable after payment gateway return for booking #%d. Errors: %s',
-                        $bb->getId(),
-                        implode(' | ', array_map(function($e){ return is_array($e) ? reset($e) : $e; }, $gatewayAvailErrors))
-                    ));
-                    // Override status to PENDING so admin is alerted rather than auto-confirming
-                    // an out-of-hours or double-booked slot.
-                    if ( $bb->getStatus() !== SLN_Enum_BookingStatus::PENDING ) {
-                        $bb->setStatus(SLN_Enum_BookingStatus::PENDING);
-                        SLN_Plugin::addLog('[SummaryStep] Booking #' . $bb->getId() . ' forced to PENDING due to post-payment availability conflict.');
+            // PAYMENT INTEGRITY GUARD: only treat this as a completed payment when the
+            // gateway returned NO error AND markPaid() actually promoted the booking to a
+            // paid status. dispatchThankyou() returns an error string when the payment was
+            // NOT completed (cancelled / abandoned / failed); in that case the booking must
+            // stay DRAFT and must NEVER be promoted to a real status (e.g. PENDING). The
+            // post-payment availability re-check below assumed the payment had already been
+            // captured and forced PENDING on a slot conflict — which finalized unpaid
+            // bookings into visible "Pending" appointments.
+            $paymentCompleted = empty($error) && in_array(
+                $bb->getStatus(),
+                array(SLN_Enum_BookingStatus::PAID, SLN_Enum_BookingStatus::CONFIRMED),
+                true
+            );
+
+            if ($paymentCompleted) {
+                // Re-check availability AFTER payment has been captured.
+                // The slot could have become unavailable (another booking, settings change) during
+                // the time the customer was on the external payment page. Because the payment has
+                // already been captured at this point we cannot simply reject the booking — doing
+                // so would leave the customer charged with no appointment. Instead we confirm the
+                // booking but mark it PENDING so the salon owner is alerted and can decide whether
+                // to honour it or issue a refund.
+                // Wrapped in try/catch: a validation exception must never crash the payment flow
+                // after the customer has already been charged.
+                try {
+                    $handler->setBooking($bb); // Exclude current booking from slot count to prevent false conflicts
+                    $gatewayAvailErrors = $handler->checkDateTimeServicesAndAttendants($bb->getServicesMeta(), $bb->getStartsAt());
+                    if ( ! empty($gatewayAvailErrors) ) {
+                        SLN_Plugin::addLog(sprintf(
+                            '[SummaryStep] WARNING: Slot unavailable after payment gateway return for booking #%d. Errors: %s',
+                            $bb->getId(),
+                            implode(' | ', array_map(function($e){ return is_array($e) ? reset($e) : $e; }, $gatewayAvailErrors))
+                        ));
+                        // Override status to PENDING so admin is alerted rather than auto-confirming
+                        // an out-of-hours or double-booked slot.
+                        if ( $bb->getStatus() !== SLN_Enum_BookingStatus::PENDING ) {
+                            $bb->setStatus(SLN_Enum_BookingStatus::PENDING);
+                            SLN_Plugin::addLog('[SummaryStep] Booking #' . $bb->getId() . ' forced to PENDING due to post-payment availability conflict.');
+                        }
                     }
+                } catch (\Exception $e) {
+                    SLN_Plugin::addLog('[SummaryStep] Post-payment availability check threw exception (booking proceeds normally): ' . $e->getMessage());
                 }
-            } catch (\Exception $e) {
-                SLN_Plugin::addLog('[SummaryStep] Post-payment availability check threw exception (booking proceeds normally): ' . $e->getMessage());
+            } else {
+                SLN_Plugin::addLog(sprintf(
+                    '[SummaryStep] Payment NOT completed for booking #%d (status: %s, error: %s) — leaving booking unpromoted; it will not become a real appointment.',
+                    $bb->getId(),
+                    $bb->getStatus(),
+                    !empty($error) ? $error : 'none'
+                ));
             }
         } elseif (!empty($paymentMethod) && $bb->getAmount() > 0.0) {
             // PENDING_PAYMENT / PAY_LATER bookings arriving via email Pay link have no 'mode'
@@ -372,7 +395,21 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
             return false;
         }
         if($bb->getStatus() == SLN_Enum_BookingStatus::DRAFT){
-            $bb->setStatus($bb->getCreateStatus());
+            // PAYMENT INTEGRITY GUARD (defense in depth): when online payment is enabled and
+            // this booking requires payment (amount > 0), it must NOT be promoted out of DRAFT
+            // unless the payment was actually completed. If we still reach here in DRAFT while
+            // a payment was required and errors are present (i.e. the payment was not completed),
+            // keep the booking as DRAFT so an unpaid booking can never leak into a visible
+            // status such as Pending / Confirmed / Paid.
+            $payRequired = $this->getPlugin()->getSettings()->isPayEnabled() && $bb->getAmount() > 0.0;
+            if ($payRequired && $this->hasErrors()) {
+                SLN_Plugin::addLog(sprintf(
+                    '[SummaryStep] PAYMENT INTEGRITY GUARD: booking #%d kept as DRAFT — payment required but not completed.',
+                    $bb->getId()
+                ));
+            } else {
+                $bb->setStatus($bb->getCreateStatus());
+            }
         }
 
         return !$this->hasErrors();

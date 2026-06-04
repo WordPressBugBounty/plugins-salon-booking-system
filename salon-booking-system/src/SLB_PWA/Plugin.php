@@ -122,7 +122,7 @@ class Plugin {
 
         $data = array(
             'is_pro'                           => defined('SLN_VERSION_PAY') && SLN_VERSION_PAY,
-            'pro_pricing_url'                  => apply_filters('sln_pwa_pro_pricing_url', 'https://www.salonbookingsystem.com/plugin-pricing/'),
+            'pro_pricing_url'                  => apply_filters('sln_pwa_pro_pricing_url', defined('SLN_PRICING_URL') ? SLN_PRICING_URL : 'https://www.salonbookingsystem.com/plugin-pricing-2/'),
             'api'                              => home_url('wp-json/salon/api/mobile/v1/'),
             'token'                            => (new TokenHelper())->getUserAccessToken($user->ID),
             'onesignal_app_id'                 => \SLN_Plugin::getInstance()->getSettings()->get('onesignal_app_id'),
@@ -156,7 +156,24 @@ class Plugin {
         $template_source_mtime = file_exists( $app_template_path ) ? (int) filemtime( $app_template_path ) : 0;
 
         // Regenerate if site path changed, cache missing, or plugin shipped a newer webpack template build.
-        if ( $cached_path !== $dist_url_path || $cached_timestamp < $template_source_mtime ) {
+        $needs_regen = $cached_path !== $dist_url_path || $cached_timestamp < $template_source_mtime;
+
+        // Safety valve for cross-environment deployments (e.g. dev → prod): even when the
+        // transient looks valid, verify that app.js on disk actually contains the current
+        // dist URL path. If it has a stale path or still holds the unreplaced placeholder,
+        // force regeneration regardless of the transient state.
+        if ( ! $needs_regen ) {
+            $app_js_on_disk = file_exists( $dist_directory_path . '/js/app.js' )
+                ? (string) file_get_contents( $dist_directory_path . '/js/app.js' )
+                : '';
+            if ( $app_js_on_disk === ''
+                || strpos( $app_js_on_disk, '{SLN_PWA_DIST_PATH}' ) !== false
+                || strpos( $app_js_on_disk, $dist_url_path ) === false ) {
+                $needs_regen = true;
+            }
+        }
+
+        if ( $needs_regen ) {
             $tpl_js    = file_exists( $app_template_path ) ? (string) file_get_contents( $app_template_path ) : '';
             $tpl_sw    = file_exists( $dist_directory_path . '/service-worker.template.js' )
                 ? (string) file_get_contents( $dist_directory_path . '/service-worker.template.js' )

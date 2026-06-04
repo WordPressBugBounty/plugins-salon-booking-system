@@ -23,7 +23,7 @@
     import ImagesList from './customers-address-book/ImagesList.vue'
     import CustomerDetails from "./customers-address-book/CustomerDetails.vue";
     import BookingDetails from './upcoming-reservations/BookingDetails.vue'
-    import EditBookingItem from './upcoming-reservations/EditBooking.vue'
+    import EditBookingItem from './upcoming-reservations/EditBookingItem.vue'
 
     export default {
         name: 'CustomersAddressBookTab',
@@ -97,10 +97,12 @@
                 
                 // Extract customer data from the booking
                 this.bookingCustomer = {
-                    first_name: this.selectedBooking.customer_firstname,
-                    last_name: this.selectedBooking.customer_lastname,
+                    id: this.selectedBooking.customer_id,
+                    first_name: this.selectedBooking.customer_first_name,
+                    last_name: this.selectedBooking.customer_last_name,
                     email: this.selectedBooking.customer_email,
                     phone: this.selectedBooking.customer_phone,
+                    phone_country_code: this.selectedBooking.customer_phone_country_code,
                     address: this.selectedBooking.customer_address,
                 }
                 

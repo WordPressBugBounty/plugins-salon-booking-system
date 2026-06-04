@@ -455,6 +455,21 @@ function sln_func_customBookingUser($) {
 	// Run check on page load
 	checkAndHideNewCustomerOption();
 
+	// Restore "Save as new customer" preference — only when entering a genuinely new customer
+	// (wrapper visible means post_author is 0 and email is empty, i.e. no existing customer)
+	var SLN_SAVE_NEW_CUSTOMER_PREF_KEY = 'sln_save_new_customer_pref';
+	if ($('#sln-save-new-customer-wrapper').is(':visible') &&
+		localStorage.getItem(SLN_SAVE_NEW_CUSTOMER_PREF_KEY) === '1') {
+		$('[name="_sln_booking_createuser"]').prop('checked', true);
+	}
+
+	// Persist the preference whenever the admin manually toggles it
+	// Note: .prop('checked', ...) does NOT fire 'change', so this listener
+	// is exclusively triggered by genuine user interaction
+	$('[name="_sln_booking_createuser"]').on('change', function () {
+		localStorage.setItem(SLN_SAVE_NEW_CUSTOMER_PREF_KEY, $(this).is(':checked') ? '1' : '0');
+	});
+
 	$("#sln-update-user-field").select2({
 		containerCssClass: "sln-select-rendered",
 		dropdownCssClass: "sln-select-dropdown",

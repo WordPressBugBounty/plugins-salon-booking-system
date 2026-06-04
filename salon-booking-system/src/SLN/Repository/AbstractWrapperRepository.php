@@ -81,6 +81,10 @@ abstract class SLN_Repository_AbstractWrapperRepository extends SLN_Repository_A
         $post_type = $args['post_type'];
         $query = new WP_Query();
         $posts = $query->query($args);
+        // TEMP DIAGNOSTIC: capture actual SQL when shop filter is active
+        if (SLN_Plugin::isDebugEnabled() && strpos($query->request, '_sln_booking_shop') !== false) {
+            SLN_Plugin::addLog('[DIAG SQL] ' . $query->request);
+        }
         wp_reset_query();
         wp_reset_postdata();
         $post_type = $tmp;

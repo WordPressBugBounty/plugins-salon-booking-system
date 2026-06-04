@@ -1073,9 +1073,18 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
 
   private function buildBookings()
   {
+    $criteria = $this->getCriteria();
+
+    // TEMP DIAGNOSTIC: log shop criteria and whether booking 85791 is returned
+    $diagShop = isset($criteria['shop']) ? $criteria['shop'] : '(not set)';
+    SLN_Plugin::addLog('[DIAG buildBookings] shop criteria=' . $diagShop);
+
     $this->bookings = $this->plugin
       ->getRepository(SLN_Plugin::POST_TYPE_BOOKING)
-      ->get($this->getCriteria());
+      ->get($criteria);
+
+    $diagIds = array_map(function ($b) { return $b->getId(); }, $this->bookings);
+    SLN_Plugin::addLog('[DIAG buildBookings] fetched ' . count($diagIds) . ' bookings. 85791 present: ' . (in_array(85791, $diagIds) ? 'YES' : 'NO'));
 
     // Prime ALL booking post meta in one SQL query so that every subsequent
     // getMeta() / get_post_meta() call during rendering (firstname, lastname,

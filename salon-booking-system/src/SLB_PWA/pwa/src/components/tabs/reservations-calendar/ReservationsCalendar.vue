@@ -399,16 +399,20 @@ export default {
             return aStart - bStart;
           });
           const firstService = sortedServices[0];
-          const lastService = sortedServices[sortedServices.length - 1];
+          const latestEndService = sortedServices.reduce((latest, s) => {
+            return this.getMinutes(s.end_at || '00:00') > this.getMinutes(latest.end_at || '00:00') ? s : latest;
+          }, sortedServices[0]);
+          const latestEnd = latestEndService.end_at
+            || this.calculateEndTime(latestEndService.start_at || booking.time, this.getDefaultDuration(booking));
           return {
             ...booking,
             services: sortedServices,
             _serviceTime: {
               start: firstService.start_at || booking.time,
-              end: lastService.end_at || this.calculateEndTime(lastService.start_at || booking.time, this.getDefaultDuration(booking))
+              end: latestEnd
             },
             _assistantId: parseInt(assistantId),
-            _isDefaultDuration: !lastService.end_at
+            _isDefaultDuration: !latestEndService.end_at
           };
         });
       });
@@ -1983,9 +1987,10 @@ export default {
       } else {
         startMin = this.getMinutes(booking.time);
         if (booking.services?.length) {
-          const lastService = booking.services[booking.services.length - 1];
-          const endTime = lastService.end_at || booking.time;
-          const realDuration = this.getMinutes(endTime) - startMin;
+          const latestEndMin = Math.max(
+            ...booking.services.map(s => this.getMinutes(s.end_at || booking.time))
+          );
+          const realDuration = latestEndMin - startMin;
           duration = this.getDisplayDuration(booking, realDuration);
           endMin = startMin + duration;
         } else {

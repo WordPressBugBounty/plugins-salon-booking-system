@@ -15,7 +15,8 @@
         :customerFirstname="customer ? customer.first_name : booking.customer_first_name"
         :customerLastname="customer ? customer.last_name : booking.customer_last_name"
         :customerEmail="customer ? customer.email : booking.customer_email"
-        :customerPhone="customer ? customer.phone : booking.customer_phone"
+        :customerPhone="getBookingPhoneNumber(customer && customer.id ? customer : booking)"
+        :customerPhoneCountryCode="getBookingPhoneCountryCode(customer && customer.id ? customer : booking)"
         :customerAddress="customer ? customer.address : booking.customer_address"
         :customerNotes="booking.note"
         :customerPersonalNotes="customer ? customer.note : booking.customer_personal_note"
@@ -39,9 +40,11 @@
 
 <script>
 import EditBooking from './EditBooking.vue'
+import mixins from '@/mixin'
 
 export default {
   name: 'EditBookingItem',
+  mixins: [mixins],
   props: {
     booking: {
       default: function () {

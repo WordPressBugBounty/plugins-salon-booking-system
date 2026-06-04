@@ -175,6 +175,14 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
             $is_modified = true;
         }
 
+        $availabilityErrors = $this->validateAvailabilityBeforeSave($post_id, $_POST['_sln_booking_services']);
+        if (!empty($availabilityErrors)) {
+            foreach ($availabilityErrors as $error) {
+                $this->addError($error);
+            }
+            return;
+        }
+
         $old_booking = $this->getPlugin()->createFromPost($post_id);
         $old_booking_services = $old_booking->getMeta('services');
         parent::save_post($post_id, $post);
@@ -458,6 +466,7 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
                 'price' => $data['price'][$serviceId],
                 'duration' => $duration,
                 'break_duration' => $breakDuration,
+                'break_duration_data' => $service->getBreakDurationData(),
                 'resource' => isset($data['services_resources'][$serviceId]) ? $data['services_resources'][$serviceId] : '',
             );
         }
@@ -523,6 +532,90 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
     protected function addError($message)
     {
         $_SESSION['_sln_booking_user_errors'][] = $message;
+    }
+
+    /**
+     * Checks the current booking's services/attendants against live availability.
+     * Called before parent::save_post() so an overlap blocks the save entirely.
+     * When editing an existing booking, the booking itself is excluded from the check
+     * via the $booking parameter passed to setDate(), preventing false positives.
+     *
+     * @param int   $post_id      The booking post ID (0 when creating a new booking).
+     * @param array $servicesData Processed services from processServicesSubmission().
+     * @return string[]  Array of human-readable error messages (empty = no conflicts).
+     */
+    private function validateAvailabilityBeforeSave($post_id, array $servicesData)
+    {
+        if (empty($_POST['_sln_booking_status'])) {
+            return array();
+        }
+
+        $status = sanitize_text_field(wp_unslash($_POST['_sln_booking_status']));
+        if (in_array($status, SLN_Enum_BookingStatus::$noTimeStatuses, true)) {
+            return array();
+        }
+
+        if (
+            empty($_POST['_sln_booking']['date'])
+            || empty($_POST['_sln_booking']['time'])
+        ) {
+            return array();
+        }
+
+        try {
+            $date = new SLN_DateTime(
+                sanitize_text_field(wp_unslash($_POST['_sln_booking']['date']))
+                . ' '
+                . sanitize_text_field(wp_unslash($_POST['_sln_booking']['time'])),
+                SLN_TimeFunc::getWpTimezone()
+            );
+        } catch (Exception $e) {
+            return array();
+        }
+
+        // When editing an existing booking, pass it to setDate() so that its
+        // own occupied slots are excluded and edits don't block themselves.
+        $currentBooking  = $this->getPlugin()->createBooking((int) $post_id);
+        $bookingServices = SLN_Wrapper_Booking_Services::build(
+            $servicesData,
+            $date,
+            0,
+            $currentBooking->getCountServices()
+        );
+
+        $availability = $this->getPlugin()->getAvailabilityHelper();
+        $availability->setDate($date, $currentBooking);
+
+        $errors = array();
+
+        foreach ($bookingServices->getItems() as $bookingService) {
+            $service = $bookingService->getService();
+            if (!$service || !($service instanceof SLN_Wrapper_ServiceInterface)) {
+                continue;
+            }
+
+            $isLast = $bookingServices->isLast($bookingService);
+
+            $serviceErrors = $availability->validateBookingService($bookingService, $isLast);
+            if (!empty($serviceErrors) && is_array($serviceErrors)) {
+                $errors = array_merge($errors, $serviceErrors);
+            }
+
+            $attendant = $bookingService->getAttendant();
+            if ($attendant && !is_array($attendant)) {
+                $attendantErrors = $availability->validateBookingAttendant($bookingService, $isLast);
+                if (!empty($attendantErrors) && is_array($attendantErrors)) {
+                    $errors = array_merge($errors, $attendantErrors);
+                }
+            } elseif (is_array($attendant) && !empty($attendant)) {
+                $attendantErrors = $availability->validateBookingAttendants($bookingService, $isLast);
+                if (!empty($attendantErrors) && is_array($attendantErrors)) {
+                    $errors = array_merge($errors, $attendantErrors);
+                }
+            }
+        }
+
+        return array_values(array_unique($errors));
     }
 
 

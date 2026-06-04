@@ -3,7 +3,7 @@
 
 class SLN_Action_InitScripts
 {
-    const ASSETS_VERSION = SLN_VERSION . '-20260505-list-sort-handle-mobile-only-2';
+    const ASSETS_VERSION = SLN_VERSION . '-20260603-forecast-guest-first-v39';
 	private static $isInclude = false;
 	private $isAdmin;
 	private $plugin;

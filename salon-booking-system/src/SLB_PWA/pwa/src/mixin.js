@@ -27,7 +27,7 @@ if (process.env.NODE_ENV === 'development' && typeof window.slnPWA === 'undefine
         token: 'dev-token',
         locale: 'en_US',
         is_pro: false,
-        pro_pricing_url: 'https://www.salonbookingsystem.com/plugin-pricing/',
+        pro_pricing_url: 'https://www.salonbookingsystem.com/plugin-pricing-2/',
         is_shops: false,
         /** Match production: assistant filter chips only for admin + shop managers */
         can_use_assistant_filter: true,
@@ -46,7 +46,7 @@ if (process.env.NODE_ENV === 'development' && typeof window.slnPWA === 'undefine
         /** Dev: simulates free edition license promo (prepend). Set null to hide. */
         license_upgrade_promo: {
             kind: 'free_pro',
-            href: 'https://www.salonbookingsystem.com/plugin-pricing/',
+            href: 'https://www.salonbookingsystem.com/plugin-pricing-2/',
         },
         onesignal_app_id: null,
         mock_user: {
@@ -200,6 +200,26 @@ export default {
         },
         getDisplayPhone(phone) {
             return this.shouldHidePhone ? '*******' : phone;
-        }
+        },
+        /** National number from a booking or customer API object. */
+        getBookingPhoneNumber(source) {
+            if (!source || typeof source !== 'object') {
+                return '';
+            }
+            if (source.customer_phone !== undefined && source.customer_phone !== null) {
+                return String(source.customer_phone);
+            }
+            if (source.phone !== undefined && source.phone !== null) {
+                return String(source.phone);
+            }
+            return '';
+        },
+        /** Dial prefix from a booking or customer API object. */
+        getBookingPhoneCountryCode(source) {
+            if (!source || typeof source !== 'object') {
+                return '';
+            }
+            return source.customer_phone_country_code || source.phone_country_code || '';
+        },
     },
 }

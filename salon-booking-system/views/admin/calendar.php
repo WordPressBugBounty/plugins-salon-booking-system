@@ -320,7 +320,7 @@ echo expirePopup();
                                         <li><?php esc_html_e( 'Real-time booking notifications', 'salon-booking-system' ); ?></li>
                                     </ul>
                                     <p class="sln-calendar-carousel__proof"><?php esc_html_e( 'Manage your salon from your phone', 'salon-booking-system' ); ?></p>
-                                    <a href="<?php echo esc_url( SLN_STORE_URL . '/homepage/plugin-pricing/' ); ?>" target="_blank" class="sln-calendar-carousel__cta">
+                                    <a href="<?php echo esc_url( defined( 'SLN_PRICING_URL' ) ? SLN_PRICING_URL : SLN_STORE_URL . '/homepage/plugin-pricing/' ); ?>" target="_blank" class="sln-calendar-carousel__cta">
                                         <?php esc_html_e( 'See All PRO Features', 'salon-booking-system' ); ?>
                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                             <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -480,7 +480,7 @@ echo expirePopup();
                                         ) ?></p>
                                     <p><?php _e('<strong>Renew it before the expiration and get a discounted price.</strong>', 'salon-booking-system') ?></p>
                                 </div>
-                                <a href="https://www.salonbookingsystem.com/homepage/plugin-pricing/?utm_source=plugin-back-end_pro&utm_medium=license-status-notice&utm_campaign=renew-license&utm_id=renew-license" target="_blank" class="sln-notice--plugin_update__action"><?php esc_html_e('Renew for 15% off', 'salon-booking-system') ?></a>
+                                <a href="<?php echo esc_url( defined( 'SLN_PRICING_URL' ) ? SLN_PRICING_URL : 'https://www.salonbookingsystem.com/plugin-pricing-2/' ); ?>" target="_blank" class="sln-notice--plugin_update__action"><?php esc_html_e('Renew your license', 'salon-booking-system') ?></a>
                             </div>
                         </div>
                     </div>
@@ -539,7 +539,7 @@ echo expirePopup();
                                         ) ?></p>
                                     <p><?php _e('<strong>Renew it now and get a discounted price.</strong>', 'salon-booking-system') ?></p>
                                 </div>
-                                <a href="https://www.salonbookingsystem.com/checkout?edd_action=add_to_cart&download_id=64398&edd_options%5Bprice_id%5D=2&discount=GETBACK30&utm_source=plugin-back-end_pro&utm_medium=license-status-notice&utm_campaign=renew-license&utm_id=renew-expired-license" target="_blank" class="sln-notice--plugin_update__action"><?php esc_html_e('Renew for 30% off', 'salon-booking-system') ?></a>
+                                <a href="<?php echo esc_url( defined( 'SLN_PRICING_URL' ) ? SLN_PRICING_URL : 'https://www.salonbookingsystem.com/plugin-pricing-2/' ); ?>" target="_blank" class="sln-notice--plugin_update__action"><?php esc_html_e('Renew your license', 'salon-booking-system') ?></a>
                             </div>
                         </div>
                     </div>
@@ -762,7 +762,7 @@ echo expirePopup();
             $free_pwa_promo_url       = apply_filters('sln_free_mobile_pwa_promo_url', home_url('salon-booking-pwa'));
             $free_pwa_pro_pricing_url = apply_filters(
                 'sln_free_mobile_pwa_pro_pricing_url',
-                'https://www.salonbookingsystem.com/homepage/plugin-pricing/?utm_source=mobile_screen&utm_medium=free-edition-back-end&utm_campaign=mobile_cta&utm_id=GOPRO'
+                defined( 'SLN_PRICING_URL' ) ? SLN_PRICING_URL : 'https://www.salonbookingsystem.com/plugin-pricing-2/'
             );
             ?>
             <script>

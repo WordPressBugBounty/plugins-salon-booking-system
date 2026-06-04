@@ -11,7 +11,7 @@ class SLN_Action_Init
         $this->plugin = $plugin;
         add_action('init',function(){
             $this->initEnum();
-            if (is_admin()) {
+            if (is_admin() && !wp_doing_ajax()) {
                 $this->initAdmin();
             } else {
                 $this->initFrontend();
@@ -552,9 +552,44 @@ class SLN_Action_Init
 	add_action('parse_request', array(new SLN_Action_RescheduleBooking($this->plugin), 'execute'));
 	add_action('parse_request', array(new SLN_Action_CancelBookingLink($this->plugin), 'execute'));
 	add_action('parse_request', array(new SLN_Action_LinkServicesBooking($this->plugin), 'execute'));
+	add_action('parse_request', array(new SLN_Action_ForecastNotifyDeepLink($this->plugin), 'execute'));
+	add_action('parse_request', array(new SLN_Action_ForecastNotifyOptout($this->plugin), 'execute'));
         if (class_exists('SLN_Payment_Stripe')) {
             add_action('parse_request', array(new SLN_Payment_Stripe($this->plugin), 'execute'));
         }
+
+        // One-click booking: inject the forecast step when the feature is enabled
+        if ( $this->plugin->getSettings()->isOneClickBookingEnabled() ) {
+            add_filter( 'sln.shortcode_salon.initSteps', array( $this, 'injectForecastStep' ), 10, 2 );
+            add_filter( 'sln.shortcode_salon.getStepObject', array( $this, 'getForecastStepObject' ), 10, 3 );
+        }
+    }
+
+    /**
+     * Prepend the 'forecast' step as the very first step in the booking wizard.
+     *
+     * @param array $steps
+     * @param array $attrs  Shortcode attributes
+     * @return array
+     */
+    public function injectForecastStep( $steps, $attrs ) {
+        array_unshift( $steps, SLN_Shortcode_Salon_ForecastStep::STEP_NAME );
+        return $steps;
+    }
+
+    /**
+     * Return the ForecastStep class instance when the wizard requests the 'forecast' step.
+     *
+     * @param SLN_Shortcode_Salon_Step|null $obj
+     * @param SLN_Shortcode_Salon           $shortcode
+     * @param string                        $step
+     * @return SLN_Shortcode_Salon_Step|null
+     */
+    public function getForecastStepObject( $obj, $shortcode, $step ) {
+        if ( SLN_Shortcode_Salon_ForecastStep::STEP_NAME === $step ) {
+            return new SLN_Shortcode_Salon_ForecastStep( $this->plugin, $shortcode, $step );
+        }
+        return $obj;
     }
 
     private function initAjax()
@@ -600,6 +635,7 @@ class SLN_Action_Init
         add_action('sln_sms_followup', 'sln_sms_followup');
         add_action('sln_email_followup', 'sln_email_followup');
         add_action('sln_email_feedback', 'sln_email_feedback');
+        add_action('sln_forecast_notify_email', 'sln_forecast_notify_email');
         add_action('sln_cancel_bookings', 'sln_cancel_bookings');
         add_action('sln_email_weekly_report', 'sln_email_weekly_report');
         add_action('sln.helper.calendar_link.remove', array('SLN_Helper_CalendarLink', 'cronUnlinkCall'), 10, 1);
@@ -609,6 +645,10 @@ class SLN_Action_Init
 
 	if ( ! wp_get_schedule('sln_clean_up_database') ) {
 	    wp_schedule_event(time(), 'daily', 'sln_clean_up_database');
+	}
+
+	if ( ! wp_get_schedule( 'sln_forecast_notify_email' ) ) {
+		wp_schedule_event( time(), 'daily', 'sln_forecast_notify_email' );
 	}
 
 	add_action('sln_clean_up_database', 'sln_clean_up_database');

@@ -68,7 +68,7 @@ class SLN_Action_Reminder
     private function sendSms($booking){
         $sms = $this->plugin->sms();
         $sms->clearError();
-        if(!empty($booking->getPhone())){
+        if(!empty($booking->getPhone()) && $booking->getNotifyCustomer()){
             $sms->send(
                 $booking->getPhone(),
                 $this->plugin->loadView('sms/remind', compact('booking')),
@@ -87,6 +87,7 @@ class SLN_Action_Reminder
     }
 
     private function sendEmail($booking){
+        if ( ! $booking->getNotifyCustomer() ) return;
         $this->plugin->addLog('email reminder started to be sent to '.$booking->getId());
         $args = array('booking' => $booking, 'remind' => true);
         $booking->setMeta('email_remind', true);

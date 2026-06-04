@@ -66,7 +66,7 @@ class SLN_Enum_CheckoutFields
         
         self::$settings = $settings ?: $default_fields;
 
-        self::update_wpml($settings);
+        self::ensure_wpml_config_file();
         self::$fields= self::createFields();
     }
 
@@ -78,19 +78,122 @@ class SLN_Enum_CheckoutFields
         self::update_wpml(SLN_Plugin::getInstance()->getSettings()->get('checkout_fields'));
     }
 
+    static protected function get_wpml_config_path(){
+        return SLN_PLUGIN_DIR . '/wpml-config.xml';
+    }
+
+    static protected function get_default_wpml_config_xml(){
+        return '<?xml version="1.0"?>' . "\n"
+            . '<wpml-config>' . "\n"
+            . '  <custom-types>' . "\n"
+            . '     <custom-type translate="1">sln_service</custom-type>' . "\n"
+            . '     <custom-type translate="1">sln_attendant</custom-type>' . "\n"
+            . '     <custom-type translate="0">sln_booking</custom-type>' . "\n"
+            . '  </custom-types>' . "\n"
+            . '  <taxonomies>' . "\n"
+            . '   <taxonomy translate="1">sln_service_category</taxonomy>' . "\n"
+            . '  </taxonomies>' . "\n"
+            . '  <admin-texts>' . "\n"
+            . '    <key name="salon_settings">' . "\n"
+            . '      <key name="email_subject"/>' . "\n"
+            . '      <key name="disabled_message"/>' . "\n"
+            . '      <key name="gen_timetable"/>' . "\n"
+            . '      <key name="gen_address"/>' . "\n"
+            . '      <key name="email_nb_subject"/>' . "\n"
+            . '      <key name="new_booking_message"/>' . "\n"
+            . '      <key name="booking_update_message"/>' . "\n"
+            . '      <key name="feedback_message"/>' . "\n"
+            . '      <key name="last_step_note"/>' . "\n"
+            . '      <key name="checkout_fields">' . "\n"
+            . '        <key name="firstname"><key name="label"/></key>' . "\n"
+            . '        <key name="lastname"><key name="label"/></key>' . "\n"
+            . '        <key name="email"><key name="label"/></key>' . "\n"
+            . '        <key name="phone"><key name="label"/></key>' . "\n"
+            . '        <key name="address"><key name="label"/></key>' . "\n"
+            . '      </key>' . "\n"
+            . '    </key>' . "\n"
+            . '  </admin-texts>' . "\n"
+            . '</wpml-config>' . "\n";
+    }
+
+    static protected function write_wpml_config($xml){
+        return file_put_contents(self::get_wpml_config_path(), $xml, LOCK_EX) !== false;
+    }
+
+    static protected function is_wpml_config_valid($path){
+        if (!is_readable($path)) {
+            return false;
+        }
+
+        $size = filesize($path);
+        if ($size === false || $size === 0) {
+            return false;
+        }
+
+        libxml_use_internal_errors(true);
+        $xml = simplexml_load_file($path);
+        libxml_clear_errors();
+        libxml_use_internal_errors(false);
+
+        return $xml instanceof SimpleXMLElement;
+    }
+
+    static protected function load_wpml_config(){
+        if (!function_exists('simplexml_load_file')) {
+            return false;
+        }
+
+        $path = self::get_wpml_config_path();
+        if (!self::is_wpml_config_valid($path)) {
+            if (!self::write_wpml_config(self::get_default_wpml_config_xml())) {
+                SLN_Plugin::addLog('Cannot restore wpml-config.xml');
+                return false;
+            }
+            SLN_Plugin::addLog('wpml-config.xml was missing or invalid and has been restored.');
+        }
+
+        libxml_use_internal_errors(true);
+        $wpml_file = simplexml_load_file($path);
+        libxml_clear_errors();
+        libxml_use_internal_errors(false);
+
+        if (!$wpml_file) {
+            SLN_Plugin::addLog('Cannot open file wpml-config.xml');
+            return false;
+        }
+
+        return $wpml_file;
+    }
+
+    static function ensure_wpml_config_file(){
+        if (!function_exists('simplexml_load_file')) {
+            return;
+        }
+
+        $path = self::get_wpml_config_path();
+        if (self::is_wpml_config_valid($path)) {
+            return;
+        }
+
+        if (!self::write_wpml_config(self::get_default_wpml_config_xml())) {
+            SLN_Plugin::addLog('Cannot restore wpml-config.xml');
+            return;
+        }
+
+        SLN_Plugin::addLog('wpml-config.xml was missing or invalid and has been restored.');
+    }
+
     static function update_wpml($settings){
-        // Check if SimpleXML extension is available
         if (!function_exists('simplexml_load_file')) {
             SLN_Plugin::addLog('SimpleXML extension not available - WPML config update skipped');
             return;
         }
-        
-        $wpml_file = simplexml_load_file(SLN_PLUGIN_DIR.'/wpml-config.xml');
-        if(!$wpml_file){
-            SLN_Plugin::addLog('Cannot open file wpml-config.xml');
+
+        $wpml_file = self::load_wpml_config();
+        if (!$wpml_file) {
             return;
         }
-        if(empty($settings)){
+        if (empty($settings)) {
             return;
         }
         $has_checkout_fields = false;
@@ -126,7 +229,7 @@ class SLN_Enum_CheckoutFields
                 }
             }
         }
-        if(!$wpml_file->asXML(SLN_PLUGIN_DIR.'/wpml-config.xml')){
+        if (!self::write_wpml_config($wpml_file->asXML())) {
             SLN_Plugin::addLog('Cant update wpml config file.');
         }
     }

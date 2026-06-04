@@ -40,25 +40,34 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
         // CRITICAL FIX: Clear cache on booking meta updates (PWA drag-resize, backend edits)
         // Not just status changes - any booking update should invalidate availability cache
         add_action('updated_post_meta', array($this, 'onBookingMetaUpdate'), 10, 4);
+        add_action('added_post_meta',   array($this, 'onBookingMetaUpdate'), 10, 4);
 
         $this->registerPostStatus();
     }
 
     public function redirect_post_location($link, $post_id){
-        if(isset($_POST['_wp_http_referer'])){
-            parse_str(parse_url($_POST['_wp_http_referer'], PHP_URL_QUERY), $query);
-            if(isset($query['mode']) && $query['mode'] === 'sln_editor'){
-                $link = add_query_arg(array('mode'=> 'sln_editor'), $link);
+        $post_id = (int) $post_id;
+        if ( $post_id < 1 || get_post_type( $post_id ) !== $this->getPostType() ) {
+            return $link;
+        }
+        if ( isset( $_POST['_wp_http_referer'] ) ) {
+            $qstring = parse_url( (string) wp_unslash( $_POST['_wp_http_referer'] ), PHP_URL_QUERY );
+            $query   = array();
+            if ( is_string( $qstring ) && $qstring !== '' ) {
+                parse_str( $qstring, $query );
             }
-            if(isset($query['sln_editor_popup'])){
-                $link = add_query_arg(array('sln_editor_popup'=> $query['sln_editor_popup']), $link);
+            if ( isset( $query['mode'] ) && $query['mode'] === 'sln_editor' ) {
+                $link = add_query_arg( array( 'mode' => 'sln_editor' ), $link );
             }
-            if(isset($_POST['post_status']) &&  $_POST['post_status'] === SLN_Enum_BookingStatus::PENDING){
-                if(isset($_POST['_sln_booking_status'])){
-                    if($_POST['_sln_booking_status'] === SLN_Enum_BookingStatus::CONFIRMED){
-                        $link = add_query_arg(array('message' => '2'), $link);
-                    }else if($_POST['_sln_booking_status'] === SLN_Enum_BookingStatus::CANCELED){
-                        $link = add_query_arg(array('message' => '3'), $link);
+            if ( isset( $query['sln_editor_popup'] ) ) {
+                $link = add_query_arg( array( 'sln_editor_popup' => $query['sln_editor_popup'] ), $link );
+            }
+            if ( isset( $_POST['post_status'] ) && $_POST['post_status'] === SLN_Enum_BookingStatus::PENDING ) {
+                if ( isset( $_POST['_sln_booking_status'] ) ) {
+                    if ( $_POST['_sln_booking_status'] === SLN_Enum_BookingStatus::CONFIRMED ) {
+                        $link = add_query_arg( array( 'message' => '2' ), $link );
+                    } elseif ( $_POST['_sln_booking_status'] === SLN_Enum_BookingStatus::CANCELED ) {
+                        $link = add_query_arg( array( 'message' => '3' ), $link );
                     }
                 }
             }
@@ -533,7 +542,7 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
                         $title = !defined("SLN_VERSION_PAY") ? __('Switch to PRO to unlock the "Quick approval"', 'salon-booking-system') : '';
                         echo '<div class="sln-booking-confirmation '. ( !defined("SLN_VERSION_PAY") ? 'sln-booking-confirmation-disabled' : '') .'">';
                             echo '<div class="sln-booking-confirmation-alert-loading"></div>';
-                            echo '<div class="sln-booking-confirmation-tooltip"><a href="https://www.salonbookingsystem.com/homepage/plugin-pricing/?utm_source=quick_confirm_booking&utm_medium=free-edition-back-end&utm_campaign=unlock_feature&utm_id=GOPRO" target="_blank">'. esc_html($title) .'</a></div>';
+                            echo '<div class="sln-booking-confirmation-tooltip"><a href="' . esc_url( defined('SLN_PRICING_URL') ? SLN_PRICING_URL : 'https://www.salonbookingsystem.com/plugin-pricing-2/' ) . '" target="_blank">'. esc_html($title) .'</a></div>';
                             echo '<div class="sln-booking-confirmation-success" data-status="' . SLN_Enum_BookingStatus::CONFIRMED . '" data-booking-id="' . $obj->getId() . '" title="' . ( esc_attr($title) ? '' : esc_html__('Accept', 'salon-booking-system') ) . '" data-class="success"></div>';
                             echo '<div class="sln-booking-confirmation-error" data-status="' . SLN_Enum_BookingStatus::CANCELED . '" data-booking-id="' . $obj->getId() . '" title="' . ( esc_attr($title) ? '' : esc_html__('Refuse', 'salon-booking-system') ) . '" data-class="danger"></div>';
                         echo '</div>';
@@ -709,6 +718,7 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
         }
         add_action('transition_post_status', array($this, 'transitionPostStatus'), 10, 3);
         add_action('sln.booking_builder.new_booking_ready', array($this, 'clearNewBookingCaches'), 10, 1);
+        add_action('sln.booking.setStatus', array($this, 'onBookingSetStatus'), 10, 3);
     }
 
     public function transitionPostStatus($new_status, $old_status, $post)
@@ -734,13 +744,19 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
             $p->messages()->sendByStatus($booking, $new_status);
             do_action('sln.booking_builder.create.booking_created', $booking);
             
-            // PERFORMANCE OPTIMIZATION: Clear availability cache when booking changes
-            // Reference: PERFORMANCE_OPTIMIZATION_ANALYSIS.md - Issue #2
             if ($booking && $booking->getDate()) {
                 SLN_Helper_Availability_Cache::clearDateCache($booking->getDate());
-                
-                // PERFORMANCE: Clear intervals cache (Issue #8)
                 $this->clearIntervalsCache($booking);
+
+                // When a booking is cancelled/errored via any WP-native path (Quick Edit,
+                // wp_update_post, WP-CLI, etc.) the per-request booking cache and the
+                // persisted salon_cache must be refreshed so the freed slot is immediately
+                // visible. Clear the repo cache first so processBooking() re-queries the DB.
+                if (in_array($new_status, SLN_Enum_BookingStatus::$noTimeStatuses)) {
+                    $repo = $p->getRepository(SLN_Plugin::POST_TYPE_BOOKING);
+                    $repo->clearBookingCache();
+                    $p->getBookingCache()->processBooking($booking);
+                }
             }
         }
     }
@@ -754,9 +770,54 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
         if ($booking && $booking->getDate()) {
             SLN_Helper_Availability_Cache::clearDateCache($booking->getDate());
             $this->clearIntervalsCache($booking);
+
+            // Invalidate the one-click forecast cache for this customer so
+            // the next forecast page load rebuilds suggestions from scratch.
+            $user_id = $booking->getUserId();
+            if ($user_id) {
+                $shop_id = (int) $booking->getMeta('shop');
+                SLN_Helper_BookingForecaster::bustCache($user_id, $shop_id);
+            }
         }
     }
-    
+
+    /**
+     * Fired on sln.booking.setStatus for every status change, including the
+     * direct-DB fallback path that bypasses transition_post_status.
+     * Guarantees caches are always flushed when a booking is cancelled/errored
+     * so the freed slot is immediately visible to the next availability check.
+     *
+     * @param SLN_Wrapper_Booking $booking
+     * @param string              $oldStatus
+     * @param string              $newStatus
+     */
+    public function onBookingSetStatus($booking, $oldStatus, $newStatus)
+    {
+        if (!in_array($newStatus, SLN_Enum_BookingStatus::$noTimeStatuses)) {
+            return;
+        }
+
+        if (!($booking instanceof SLN_Wrapper_Booking) || !$booking->getDate()) {
+            return;
+        }
+
+        // Clear per-date in-memory availability cache.
+        SLN_Helper_Availability_Cache::clearDateCache($booking->getDate());
+
+        // Clear interval step transients (_transient_sln_*).
+        $this->clearIntervalsCache($booking);
+
+        // MUST clear the per-request booking list BEFORE rebuilding salon_cache.
+        // processBooking() calls getForAvailabilityBookings() internally; if $bookingCache
+        // was populated earlier in this request (before the cancellation), it still holds
+        // the pre-cancel post objects and processBooking() would re-mark the day as 'full'.
+        $repo = $this->getPlugin()->getRepository(SLN_Plugin::POST_TYPE_BOOKING);
+        $repo->clearBookingCache();
+
+        // Rebuild the persisted day cache (salon_cache option) against fresh DB data.
+        $this->getPlugin()->getBookingCache()->processBooking($booking);
+    }
+
     /**
      * Clear intervals cache when bookings change
      * 
@@ -809,6 +870,21 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
         // Only process booking post type
         if (get_post_type($post_id) !== SLN_Plugin::POST_TYPE_BOOKING) {
             return;
+        }
+
+        // Sanitize shop ID: the Multi-Shops addon can write the value with a leading/trailing
+        // space (e.g. ' 62111'), which causes MySQL '=' comparisons to silently fail.
+        // Fix it immediately after write using a direct DB update to avoid recursion.
+        if ($meta_key === '_sln_booking_shop' && is_string($meta_value) && $meta_value !== trim($meta_value)) {
+            global $wpdb;
+            $wpdb->update(
+                $wpdb->postmeta,
+                array('meta_value' => trim($meta_value)),
+                array('meta_id'    => $meta_id),
+                array('%s'),
+                array('%d')
+            );
+            wp_cache_delete($post_id, 'post_meta');
         }
 
         // Clear cache when services are updated (includes duration changes from PWA drag-resize)

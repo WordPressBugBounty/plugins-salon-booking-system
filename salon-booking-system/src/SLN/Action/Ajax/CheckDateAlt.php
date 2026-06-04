@@ -211,6 +211,15 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
         } else {
             $times = $ah->getCachedTimes(Date::create($tmpDate), $this->duration);
 
+            // Remove slots whose full service duration would overflow past closing hours.
+            // getCachedTimes() only validates start times; without this filter a slot like
+            // 19:45 for a 1-hour service would survive even when the shop closes at 20:00.
+            if ($this->duration) {
+                $beforeFilter = $times;
+                $times = $ah->filterTimesArrayByDurationWithBreakAllowance($times, $this->duration);
+                SLN_Helper_AvailabilityDebugger::logFilteredTimes($beforeFilter, $times, 'Duration overflow guard (CheckDateAlt non-smart)');
+            }
+
             // Apply auto-align for non-smart path (smart path applies it inside getAllAttendantsAvailableTimes)
             if (SLN_Plugin::getInstance()->getSettings()->get('auto_align_slots') && $this->duration) {
                 $originalTimes = $times;
@@ -418,14 +427,10 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
             if ($bookingServices->isLast($bookingService) && $bookingOffsetEnabled) {
                 $offsetStart   = $bookingService->getEndsAt();
                 $offsetEnd     = $bookingService->getEndsAt()->modify('+'.$bookingOffset.' minutes');
-                if(!class_exists('\SalonMultishop\Addon')){
-                    $serviceErrors = $ah->validateTimePeriod($offsetStart, $offsetEnd);
-                }
+                $serviceErrors = $ah->validateTimePeriod($offsetStart, $offsetEnd);
             }
             if (empty($serviceErrors)) {
-                if(!class_exists('\SalonMultishop\Addon')){
-                    $serviceErrors = $ah->validateBookingService($bookingService, $bookingServices->isLast($bookingService));
-                }
+                $serviceErrors = $ah->validateBookingService($bookingService, $bookingServices->isLast($bookingService));
             }
             if (!empty($serviceErrors)) {
                 $errors[] = $serviceErrors[0];

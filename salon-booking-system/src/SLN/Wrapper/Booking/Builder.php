@@ -813,6 +813,22 @@ class SLN_Wrapper_Booking_Builder
         return $this->data;
     }
 
+    /**
+     * Overwrite the in-memory booking data wholesale.
+     *
+     * Used to restore a previously captured snapshot (e.g. after a read-only
+     * process such as the forecast engine borrows the builder as scratch space).
+     * Call save() afterwards to persist.
+     *
+     * @param array $data
+     * @return $this
+     */
+    public function setData(array $data) {
+        $this->data = $data;
+
+        return $this;
+    }
+
     public function removeResources()
     {
         $this->set('services_resources', array());

@@ -100,6 +100,68 @@ function sln_init($) {
             window.location.pathname + request_args.join("&")
         );
         sln_serviceTotal($);
+
+        // Live service search filter
+        if ($("#salon-step-services").length) {
+            var $searchInput = $("#sln-service-search-input");
+            if ($searchInput.length) {
+                var $list = $("#salon-step-services .sln-service-list");
+                var noResultsMsg = $("#salon-step-services .sln-service-search").data("no-results") || "";
+
+                $searchInput.val("");
+
+                $searchInput.on("input.slnSearch", function () {
+                    var q = $(this).val().toLowerCase().trim();
+                    var $items = $list.find(".sln-list__item.sln-service");
+                    var $clearBtn = $("#sln-service-search-clear");
+
+                    $clearBtn.toggleClass("sln-service-search__clear--visible", q.length > 0);
+                    $list.find(".sln-service-search__noresults").remove();
+
+                    if (!q) {
+                        $items.removeClass("sln-service--hidden");
+                        $list.find(".sln-panel").each(function () {
+                            if (!$(this).hasClass("sln-panel--search-forced")) return;
+                            $(this).removeClass("sln-panel--search-forced");
+                        });
+                        return;
+                    }
+
+                    var totalVisible = 0;
+                    $items.each(function () {
+                        var name = $(this).find(".sln-list__item__name").text().toLowerCase();
+                        var isChecked = $(this).find('input[type="checkbox"]').prop("checked");
+                        var matches = name.indexOf(q) !== -1 || isChecked;
+                        $(this).toggleClass("sln-service--hidden", !matches);
+                        if (matches) totalVisible++;
+                    });
+
+                    // Auto-expand panels with matches, collapse panels with no matches
+                    $list.find(".sln-panel").each(function () {
+                        var $panel = $(this);
+                        var $content = $panel.find(".sln-panel-content");
+                        var $heading = $panel.find(".sln-panel-heading");
+                        var visibleInPanel = $panel.find(".sln-list__item.sln-service:not(.sln-service--hidden)").length;
+                        $panel.addClass("sln-panel--search-forced");
+                        if (visibleInPanel > 0) {
+                            $content.addClass("in").css("height", "");
+                            $heading.removeClass("collapsed");
+                        } else {
+                            $content.removeClass("in").css("height", "0px");
+                            $heading.addClass("collapsed");
+                        }
+                    });
+
+                    if (totalVisible === 0 && noResultsMsg) {
+                        $list.append('<div class="sln-service-search__noresults">' + noResultsMsg + "</div>");
+                    }
+                });
+
+                $("#sln-service-search-clear").on("click.slnSearch", function () {
+                    $searchInput.val("").trigger("input.slnSearch").focus();
+                });
+            }
+        }
     }
     let discount_request_arg = window.location.search
         .replace("?", "")
@@ -165,17 +227,20 @@ function sln_init($) {
                 timeTable.css("position", "relative").css("opacity", "1");
             }
         }
-        $(window).bind("load", function () {
+        // Namespaced + .off() first: these are bound to persistent window/document targets
+        // and sln_init() re-runs on every AJAX step swap. Without de-duping, each swap added
+        // another ajaxComplete handler that fired sln_timeScroll() on every site-wide AJAX.
+        $(window).off("load.slnTimeScroll").on("load.slnTimeScroll", function () {
             setTimeout(function () {
                 sln_timeScroll();
             }, 200);
         });
-        $(window).resize(function () {
+        $(window).off("resize.slnTimeScroll").on("resize.slnTimeScroll", function () {
             setTimeout(function () {
                 sln_timeScroll();
             }, 200);
         });
-        $(document).ajaxComplete(function (event, request, settings) {
+        $(document).off("ajaxComplete.slnTimeScroll").on("ajaxComplete.slnTimeScroll", function (event, request, settings) {
             setTimeout(function () {
                 sln_timeScroll();
             }, 200);
@@ -185,7 +250,9 @@ function sln_init($) {
         }, 200);
     }
     box_fixed_height();
-    $(document).on("shown.bs.tab", 'a[data-toggle="tab"]', function (e) {
+    // Namespaced + .off() first: sln_init() runs on every AJAX step swap; document is
+    // persistent, so a plain delegated .on() would stack duplicate handlers.
+    $(document).off("shown.bs.tab.slnBoxHeight").on("shown.bs.tab.slnBoxHeight", 'a[data-toggle="tab"]', function (e) {
         // e.target // newly activated tab
         // e.relatedTarget // previous active tab
         box_fixed_height();
@@ -255,7 +322,9 @@ function sln_init($) {
     }
     bottombar_sticky();
     var window_width = $(window).width();
-    $(window).resize((event) => {
+    // Namespaced + .off() first: window is persistent and sln_init() re-runs on every step
+    // swap, so a plain .resize() would stack duplicate handlers.
+    $(window).off("resize.slnBottombar").on("resize.slnBottombar", (event) => {
         if ($(window).width() != window_width) {
             bottombar_sticky();
         }
@@ -310,6 +379,10 @@ function sln_init($) {
         });
     }
     step_description();
+
+    if ($("#salon-step-forecast").length) {
+        sln_stepForecast($);
+    }
 
     if ($("#salon-step-date").length) {
         sln_stepDate($);
@@ -398,6 +471,13 @@ function sln_init($) {
                             form.serialize() + "&" + $(this).data("salon-data");
                     }
 
+                    // Lock the submit button immediately so a rapid second click cannot
+                    // queue a duplicate submission (works together with the in-flight guard
+                    // inside sln_loadStep). Cleared in sln_loadStep's AJAX "complete".
+                    $(this)
+                        .attr("disabled", true)
+                        .parent()
+                        .addClass("sln-btn--disabled");
                     sln_loadStep($, form_data);
                 } else {
                     $(
@@ -1398,7 +1478,132 @@ function sln_getRecaptchaToken(action) {
     });
 }
 
+/**
+ * One-click booking forecast step behaviours:
+ *
+ *  1. Toggle the inline login form when the "Login" button is clicked.
+ *  2. On slot card selection, update the hidden date/time/service/attendant
+ *     inputs so the correct choice is submitted with the form.
+ *  3. Activate the skip hidden-input when the "Continue as guest" /
+ *     "I want different options" link is clicked, so the step class can
+ *     detect the skip request.
+ */
+function sln_stepForecast($) {
+    var $step = $('#salon-step-forecast');
+    if (!$step.length) return;
+
+    // --- 1. Slot card selection ----------------------------------------------
+
+    /**
+     * Sync the hidden inputs and the button's data-salon-data with the
+     * currently selected card so the AJAX request carries all slot values.
+     */
+    function sln_updateForecastSlotData($step) {
+        var $selected = $step.find('.js-sln-forecast-slot:checked');
+        if (!$selected.length) return;
+
+        var date        = $selected.data('date');
+        var time        = $selected.data('time');
+        var serviceId   = $selected.data('service-id');
+        var attendantId = $selected.data('attendant-id');
+
+        $step.find('#sln-forecast-date-input').val(date);
+        $step.find('#sln-forecast-time-input').val(time);
+        $step.find('#sln-forecast-service-input').val(serviceId);
+        $step.find('#sln-forecast-attendant-input').val(attendantId);
+
+        // Rebuild data-salon-data so the AJAX call carries all slot fields
+        var $btn    = $step.find('#sln-forecast-submit');
+        var current = $btn.closest('form').find('[name^="submit_"]').first().attr('name');
+        var stepName = current ? current.replace('submit_', '') : 'forecast';
+
+        var slotParams = 'sln_forecast_date='        + encodeURIComponent(date)
+                       + '&sln_forecast_time='        + encodeURIComponent(time)
+                       + '&sln_forecast_service_id='  + encodeURIComponent(serviceId)
+                       + '&sln_forecast_attendant_id=' + encodeURIComponent(attendantId);
+
+        $btn.attr('data-salon-data',
+            'sln_step_page=' + stepName
+            + '&submit_' + stepName + '=next'
+            + '&' + slotParams
+        );
+    }
+
+    // Initialise with the pre-selected (first) card on page load
+    sln_updateForecastSlotData($step);
+
+    $step.on('change', '.js-sln-forecast-slot', function () {
+        var $card = $(this);
+        // Highlight the selected card
+        $step.find('.sln-forecast-cards__slot').removeClass('is-selected');
+        $card.closest('.sln-forecast-cards__slot').addClass('is-selected');
+
+        sln_updateForecastSlotData($step);
+    });
+
+    // --- 3. Skip button – enable the hidden skip input before submit ----------
+    $step.on('click', '.js-sln-forecast-skip', function () {
+        $step.find('.js-sln-forecast-skip-input').prop('disabled', false);
+    });
+
+    // --- 4. Enter key in the login fields should log in, not skip -------------
+    // The prominent "Continue to booking" (guest) button is the first submit in
+    // the form, so a bare Enter press would otherwise trigger the guest skip.
+    // Route Enter from the login inputs to the Log In button instead.
+    $step.on('keydown', '#sln_login_name, #sln_login_password', function (e) {
+        if (e.key === 'Enter' || e.keyCode === 13) {
+            e.preventDefault();
+            $step.find('.sln-forecast-login__submit button').first().trigger('click');
+        }
+    });
+
+    // --- 5. Progressive disclosure for the returning-customer login -----------
+    // The login panel is visible by default (so it works without JS). Once
+    // enhanced, collapse it behind the quiet "Returning customer? Log in" toggle
+    // — unless there are login errors to show, in which case keep it open.
+    var $login = $step.find('.sln-forecast-login');
+    if ($login.length) {
+        $login.addClass('is-enhanced');
+
+        var $panel = $login.find('.sln-forecast-login__panel');
+        var hasLoginError = $step.find('.sln-forecast__errors').length > 0;
+
+        if (hasLoginError) {
+            $login.addClass('is-login-open');
+            $login.find('.js-sln-forecast-login-toggle').attr('aria-expanded', 'true');
+        } else {
+            $panel.hide();
+        }
+    }
+
+    $step.on('click', '.js-sln-forecast-login-toggle', function () {
+        var $container = $(this).closest('.sln-forecast-login');
+        var $loginPanel = $container.find('.sln-forecast-login__panel');
+        var willOpen = !$container.hasClass('is-login-open');
+
+        $container.toggleClass('is-login-open', willOpen);
+        $(this).attr('aria-expanded', willOpen ? 'true' : 'false');
+
+        $loginPanel.stop(true, true).slideToggle(180, function () {
+            if (willOpen) {
+                $container.find('#sln_login_name').trigger('focus');
+            }
+        });
+    });
+}
+
+var sln_stepLoadingInFlight = false;
 function sln_loadStep($, data) {
+    // IN-FLIGHT GUARD: ignore overlapping step submissions. Without this, a double-click on
+    // "Next" / "Pay later" / "Back" (or a discount re-bind) fires parallel salonStep requests
+    // whose responses race each other — risking duplicate bookings and corrupted wizard state.
+    // The flag is cleared in the AJAX "complete" handler below (covers success, error, abort).
+    if (sln_stepLoadingInFlight) {
+        sln_debugLog("\u23f3 sln_loadStep ignored — a step request is already in progress");
+        return;
+    }
+    sln_stepLoadingInFlight = true;
+
     var loadingMessage =
         '<div class="sln-loader-wrapper"><div class="sln-loader">Loading...</div></div>';
     let request_arr = {
@@ -1504,6 +1709,16 @@ function sln_loadStep($, data) {
                 },
                 500
             );
+        },
+        complete: function () {
+            // Release the in-flight guard and make sure no submit/pay button is left stuck
+            // in a loading/disabled state, regardless of success, error, or timeout.
+            sln_stepLoadingInFlight = false;
+            $(".sln-pay-btn--loading").removeClass("sln-pay-btn--loading");
+            $("#sln-step-submit")
+                .attr("disabled", false)
+                .parent()
+                .removeClass("sln-btn--disabled");
         },
     };
     if (data instanceof FormData) {
@@ -1786,8 +2001,10 @@ function sln_stepDate($) {
     });
     var func = debounce(updateFunc, 200);
     func();
-    $("body").on("sln_date", func);
-    $("body").on("sln_date", function () {
+    // Namespaced + .off() first: sln_stepDate() re-runs on every AJAX date-step load, so a
+    // plain .on() would stack duplicate handlers and fire checkDate multiple times per event.
+    $("body").off("sln_date.slnDateFunc").on("sln_date.slnDateFunc", func);
+    $("body").off("sln_date.slnDateDayClick").on("sln_date.slnDateDayClick", function () {
         setTimeout(function () {
             $(".datetimepicker-days table tr td.day").on("click", function () {
                 if ($(this).hasClass("disabled")) {
@@ -2023,6 +2240,12 @@ function sln_stepDate($) {
                     .html("")
                     .addClass("sln-notifications--active")
                     .append(alertBox);
+                // Re-enable the submit button so the user can retry after a transient
+                // network / 429 failure (previously it stayed disabled = stuck).
+                $("#sln-step-submit")
+                    .attr("disabled", false)
+                    .parent()
+                    .removeClass("sln-btn--disabled");
                 isValid = false;
             },
             complete: function (xhr, status) {
@@ -2155,7 +2378,8 @@ function sln_stepDate($) {
         }
     }
     dateStepResize();
-    $(window).resize(function () {
+    // Namespaced + .off() first: sln_stepDate() re-runs on every AJAX date-step load.
+    $(window).off("resize.slnDateStep").on("resize.slnDateStep", function () {
         dateStepResize();
     });
     $("#sln_time").css("position", "absolute").css("opacity", "0");
@@ -2179,17 +2403,20 @@ function sln_stepDate($) {
             timeTable.css("position", "relative").css("opacity", "1");
         }
     }
-    $(window).bind("load", function () {
+    // Namespaced + .off() first: these are bound to persistent window/document targets and
+    // sln_stepDate() re-runs on every AJAX date-step load. Without de-duping, each visit added
+    // another ajaxComplete handler that fired sln_timeScroll() on every site-wide AJAX.
+    $(window).off("load.slnTimeScroll").on("load.slnTimeScroll", function () {
         setTimeout(function () {
             sln_timeScroll();
         }, 200);
     });
-    $(window).resize(function () {
+    $(window).off("resize.slnTimeScroll").on("resize.slnTimeScroll", function () {
         setTimeout(function () {
             sln_timeScroll();
         }, 200);
     });
-    $(document).ajaxComplete(function (event, request, settings) {
+    $(document).off("ajaxComplete.slnTimeScroll").on("ajaxComplete.slnTimeScroll", function (event, request, settings) {
         setTimeout(function () {
             sln_timeScroll();
         }, 200);
@@ -2241,6 +2468,7 @@ function sln_serviceTotal($) {
     var $totalbox = $("#services-total");
     function evalTot() {
         var tot = 0;
+        var checkedCount = 0;
         $checkboxes.each(function () {
             var count =
                 $(this)
@@ -2249,6 +2477,7 @@ function sln_serviceTotal($) {
                     .val() || 1;
             if ($(this).is(":checked")) {
                 tot += $(this).data("price") * count;
+                checkedCount++;
             }
         });
         var decimals = parseFloat(tot) === parseFloat(parseInt(tot)) ? 0 : 2;
@@ -2263,6 +2492,13 @@ function sln_serviceTotal($) {
             ($totalbox.data("symbol-right") !== "" ? " " : "") +
             $totalbox.data("symbol-right")
         );
+        if ($("#salon-step-services").length) {
+            if (checkedCount > 0) {
+                $("#sln-step-submit").parent().removeClass("sln-btn--disabled");
+            } else {
+                $("#sln-step-submit").parent().addClass("sln-btn--disabled");
+            }
+        }
     }
 
     function checkServices($) {
@@ -2861,26 +3097,18 @@ function sln_initTimepickers($, data) {
 })(jQuery);
 
 +(function ($) {
-    function sln_tabsFrontEnd() {
-        $(".sln-content__tabs__nav__item a, .sln-account__nav__item a").each(
-            function () {
-                $(this).click(function (e) {
-                    e.preventDefault();
-                    $(this).tab("show");
-                    $(".sln-content__tabs__nav__item").removeClass("current");
-                    $(this).parent().addClass("current");
-                });
-            }
-        );
-    }
-    if ($(".sln-content__tabs__nav").length) {
-        sln_tabsFrontEnd();
-    }
-    setTimeout(function () {
-        if ($(".sln-account__nav").length) {
-            sln_tabsFrontEnd();
+    // Use event delegation so tab clicks work for both static (container.php)
+    // and dynamically AJAX-loaded tabs (e.g. the booking details step).
+    $(document).on(
+        "click",
+        ".sln-content__tabs__nav__item a, .sln-account__nav__item a",
+        function (e) {
+            e.preventDefault();
+            $(this).tab("show");
+            $(".sln-content__tabs__nav__item").removeClass("current");
+            $(this).parent().addClass("current");
         }
-    }, 500);
+    );
 })(jQuery);
 
 function sln_facebookInit() {
@@ -3260,7 +3488,9 @@ function sln_renderAvailableTimeslots($, data, changeMinute = false) {
         var hours = parseInt(time, 10) || 0;
         var minutes = parseInt(time.substr(time.indexOf(":") + 1), 10) || 0;
 
-        datetimepicker.element.on("changeDate", function () {
+        // Namespaced + .off() first: this runs on every minute-cell click, so a plain .on()
+        // would accumulate one changeDate handler per click on the persistent picker element.
+        datetimepicker.element.off("changeDate.slnMinute").on("changeDate.slnMinute", function () {
             datetimepicker.viewDate.setUTCHours(hours);
             datetimepicker.viewDate.setUTCMinutes(minutes);
         });
@@ -3275,10 +3505,12 @@ function sln_renderAvailableTimeslots($, data, changeMinute = false) {
     });
 
     setTimeout(() => {
-        $(".datetimepicker-days table tr th.next").on("click", function () {
+        // Namespaced + .off() first: sln_renderAvailableTimeslots() runs on every validate(),
+        // so a plain .on() would stack duplicate calendar-navigation handlers.
+        $(".datetimepicker-days table tr th.next").off("click.slnCalNav").on("click.slnCalNav", function () {
             $("body").trigger("sln_date");
         });
-        $(".datetimepicker-days table tr th.prev").on("click", function () {
+        $(".datetimepicker-days table tr th.prev").off("click.slnCalNav").on("click.slnCalNav", function () {
             $("body").trigger("sln_date");
         });
     }, 0);

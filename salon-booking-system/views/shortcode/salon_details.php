@@ -20,13 +20,35 @@ $additional_errors = !empty($additional_errors)? $additional_errors : $step->get
 $errors = !empty($errors) ? $errors : $step->getErrors();
 include '_errors.php';
 include '_additional_errors.php';
+
+// When the guest reached this step via the forecast "Continue to booking"
+// action, they already declined to log in — so default to the "New customer"
+// (checkout form) tab instead of the log-in tab. The forecast skip flag on the
+// BookingBuilder is the signal for that path.
+$preferNewCustomerTab = !empty($bb->get('skip_forecast'));
 ?>
 <?php if (!is_user_logged_in()): ?>
     <?php if (!$plugin->getSettings()->get('enabled_force_guest_checkout')): ?>
+        <ul class="nav nav-tabs sln-content__tabs__nav">
+            <li class="sln-content__tabs__nav__item<?php echo $preferNewCustomerTab ? '' : ' current' ?>">
+                <a href="#sln-details-tab--login" data-target="#sln-details-tab--login" data-toggle="tab" role="tab">
+                    <?php esc_html_e('Returning user? Log-in', 'salon-booking-system') ?>
+                </a>
+            </li>
+            <li class="sln-content__tabs__nav__item<?php echo $preferNewCustomerTab ? ' current' : '' ?>">
+                <a href="#sln-details-tab--new" data-target="#sln-details-tab--new" data-toggle="tab" role="tab">
+                    <?php esc_html_e('New customer? Fill out the form', 'salon-booking-system') ?>
+                </a>
+            </li>
+        </ul>
+        <div class="tab-content">
+        <div id="sln-details-tab--login" class="tab-pane<?php echo $preferNewCustomerTab ? '' : ' active' ?>">
         <form method="post" action="<?php echo esc_html($formAction) ?>" role="form" enctype="multipart/form-data" id="salon-step-details">
             <?php 
             include '_salon_detail_login.php'; ?>
         </form>
+        </div>
+        <div id="sln-details-tab--new" class="tab-pane<?php echo $preferNewCustomerTab ? ' active' : '' ?>">
     <?php endif; ?>
     <form method="post" action="<?php echo esc_html($formAction) ?>" role="form" enctype="multipart/form-data" id="salon-step-details-new">
         <div class="row">
@@ -96,6 +118,10 @@ include '_additional_errors.php';
     } ?>
     <?php include "_form_actions.php" ?>
     </form>
+    <?php if (!$plugin->getSettings()->get('enabled_force_guest_checkout')): ?>
+        </div><!-- #sln-details-tab--new -->
+        </div><!-- .tab-content -->
+    <?php endif; ?>
 <?php else: ?>
 
     <form method="post" action="<?php echo esc_html($formAction) ?>" role="form" enctype="multipart/form-data">

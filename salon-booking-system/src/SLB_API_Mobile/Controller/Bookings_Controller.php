@@ -1033,6 +1033,7 @@ class Bookings_Controller extends REST_Controller
             'customer_first_name' => $user->user_firstname,
             'customer_last_name'  => $user->user_lastname,
             'customer_email'      => $user->user_email,
+            'customer_phone_country_code' => get_user_meta($user->ID, '_sln_sms_prefix', true),
             'customer_phone'      => get_user_meta($user->ID, '_sln_phone', true),
             'customer_address'    => get_user_meta($user->ID, '_sln_address', true),
         );
@@ -1074,6 +1075,10 @@ class Bookings_Controller extends REST_Controller
             '_sln_phone'    => $request->get_param('customer_phone'),
             '_sln_address'  => $request->get_param('customer_address'),
         );
+
+        if ($request->get_param('customer_phone_country_code') !== null) {
+            $meta['_sln_sms_prefix'] = $request->get_param('customer_phone_country_code');
+        }
 
         foreach ($meta as $key => $value) {
             update_user_meta($id, $key, $value);
@@ -1230,6 +1235,9 @@ class Bookings_Controller extends REST_Controller
         $bb->set('lastname', $request->get_param('customer_last_name'));
         $bb->set('email', $request->get_param('customer_email'));
         $bb->set('phone', $request->get_param('customer_phone'));
+        if ($request->get_param('customer_phone_country_code') !== null) {
+            $bb->set('sms_prefix', $request->get_param('customer_phone_country_code'));
+        }
         $bb->set('address', $request->get_param('customer_address'));
         $bb->set('discounts', $request->get_param('discounts'));
         $bb->set('note', $request->get_param('note'));
@@ -1308,6 +1316,9 @@ class Bookings_Controller extends REST_Controller
 	    // Track the WordPress user who created the booking (admin/staff, not customer)
 	    add_post_meta($booking->getId(), '_'.SLN_Plugin::POST_TYPE_BOOKING.'_created_by_user_id', get_current_user_id());
 
+        $this->persist_booking_phone_meta($booking->getId(), $request);
+        $this->sync_customer_contact_meta($customer_id, $request);
+
         return array(
 	    'id'	  => $booking->getId(),
 	    'customer_id' => $booking->getUserId(),
@@ -1375,6 +1386,7 @@ class Bookings_Controller extends REST_Controller
             '_sln_booking_lastname'  => $request->get_param('customer_last_name'),
             '_sln_booking_email'     => $request->get_param('customer_email'),
             '_sln_booking_phone'     => $request->get_param('customer_phone'),
+            '_sln_booking_sms_prefix' => $request->get_param('customer_phone_country_code'),
             '_sln_booking_address'   => $request->get_param('customer_address'),
             '_sln_booking_services'  => $bb->getBookingServices()->toArrayRecursive(),
             '_sln_booking_services_resources' => $bb->getResources(),
@@ -1430,6 +1442,9 @@ class Bookings_Controller extends REST_Controller
         if ( $admin_note_value !== null ) {
             update_post_meta( $id, '_sln_booking_admin_note', $admin_note_value );
         }
+
+        $this->persist_booking_phone_meta($id, $request);
+        $this->sync_customer_contact_meta($customer_id, $request);
 
         $booking = $this->prepare_item_for_response($id, $request);
 
@@ -1501,6 +1516,48 @@ class Bookings_Controller extends REST_Controller
 	    'id'	  => $booking->getId(),
 	    'customer_id' => $booking->getUserId(),
 	);
+    }
+
+    /**
+     * Persist booking phone fields explicitly (meta_input can be stripped by filters).
+     *
+     * @param int             $booking_id
+     * @param WP_REST_Request $request
+     */
+    protected function persist_booking_phone_meta($booking_id, $request)
+    {
+        $phone = $request->get_param('customer_phone');
+        if ($phone !== null) {
+            update_post_meta($booking_id, '_sln_booking_phone', $phone);
+        }
+
+        $prefix = $request->get_param('customer_phone_country_code');
+        if ($prefix !== null) {
+            update_post_meta($booking_id, '_sln_booking_sms_prefix', $prefix);
+        }
+    }
+
+    /**
+     * Keep linked customer profile phone aligned with booking edits (admin parity).
+     *
+     * @param int             $customer_id
+     * @param WP_REST_Request $request
+     */
+    protected function sync_customer_contact_meta($customer_id, $request)
+    {
+        if (!$customer_id) {
+            return;
+        }
+
+        $phone = $request->get_param('customer_phone');
+        if ($phone !== null) {
+            update_user_meta($customer_id, '_sln_phone', $phone);
+        }
+
+        $prefix = $request->get_param('customer_phone_country_code');
+        if ($prefix !== null) {
+            update_user_meta($customer_id, '_sln_sms_prefix', $prefix);
+        }
     }
 
 
@@ -1634,6 +1691,15 @@ class Bookings_Controller extends REST_Controller
                 ),
                 'customer_phone' => array(
                     'description' => __( 'The customer phone for the resource.', 'salon-booking-system' ),
+                    'type'        => 'string',
+                    'context'     => array( 'view', 'edit' ),
+                    'arg_options' => array(
+                        'sanitize_callback' => 'sanitize_text_field',
+                        'default'           => '',
+                    ),
+                ),
+                'customer_phone_country_code' => array(
+                    'description' => __( 'The customer phone country code for the resource.', 'salon-booking-system' ),
                     'type'        => 'string',
                     'context'     => array( 'view', 'edit' ),
                     'arg_options' => array(

@@ -137,6 +137,7 @@ class SLN_Action_Ajax_CalcBookingTotal extends SLN_Action_Ajax_Abstract
                 'attendant' => $attendant,
                 'duration' => $duration,
                 'break_duration' => $breakDuration,
+                'break_duration_data' => $service->getBreakDurationData(),
             );
 	}
 

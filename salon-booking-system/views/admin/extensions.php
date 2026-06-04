@@ -417,7 +417,7 @@ foreach ( $products as $product ) {
         $btn_state         = 'purchase';
         $btn_label         = __( 'Upgrade to Pro', 'salon-booking-system' );
         $btn_action        = '';
-        $btn_href          = defined( 'SLN_STORE_URL' ) ? SLN_STORE_URL . '/pricing/' : $info->permalink;
+        $btn_href          = defined( 'SLN_PRICING_URL' ) ? SLN_PRICING_URL : ( defined( 'SLN_STORE_URL' ) ? SLN_STORE_URL . '/pricing/' : $info->permalink );
         $availability      = 'not-included';
         $availability_text = __( 'Requires Pro plan', 'salon-booking-system' );
 
@@ -525,7 +525,7 @@ $loader_svg = '<svg class="ext-loader-icon" xmlns="http://www.w3.org/2000/svg" v
                             <div class="ext-banner__plan-period"><?php esc_html_e( '/year', 'salon-booking-system' ); ?></div>
                         </div>
                     </div>
-                    <a href="<?php echo esc_url( SLN_STORE_URL . '/pricing/' ); ?>" target="_blank" class="ext-banner__plan-btn">
+                    <a href="<?php echo esc_url( defined( 'SLN_PRICING_URL' ) ? SLN_PRICING_URL : SLN_STORE_URL . '/pricing/' ); ?>" target="_blank" class="ext-banner__plan-btn">
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         <?php esc_html_e( 'Select Basic', 'salon-booking-system' ); ?>
                     </a>
@@ -541,7 +541,7 @@ $loader_svg = '<svg class="ext-loader-icon" xmlns="http://www.w3.org/2000/svg" v
                             <div class="ext-banner__plan-period"><?php esc_html_e( '/year', 'salon-booking-system' ); ?></div>
                         </div>
                     </div>
-                    <a href="<?php echo esc_url( SLN_STORE_URL . '/pricing/' ); ?>" target="_blank" class="ext-banner__plan-btn">
+                    <a href="<?php echo esc_url( defined( 'SLN_PRICING_URL' ) ? SLN_PRICING_URL : SLN_STORE_URL . '/pricing/' ); ?>" target="_blank" class="ext-banner__plan-btn">
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         <?php esc_html_e( 'Select Business Plan', 'salon-booking-system' ); ?>
                     </a>

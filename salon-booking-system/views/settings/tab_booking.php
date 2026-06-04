@@ -117,6 +117,7 @@ echo $plugin->loadView('settings/_tab_booking_confirmation', array('helper' => $
 echo $plugin->loadView('settings/_tab_booking_cancellation', array('helper' => $this));
 echo $plugin->loadView('settings/_tab_booking_rescheduling', array('helper' => $this));
 echo $plugin->loadView('settings/_tab_booking_resources', array('helper' => $this));
+echo $plugin->loadView('settings/_tab_booking_one_click', array('helper' => $this));
 ?>
 
 

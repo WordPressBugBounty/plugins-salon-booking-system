@@ -76,7 +76,7 @@ sum(
                 <?php esc_html_e('Switch to PRO version today, and get access to all available features.', 'salon-booking-system') ?>
                 <br/>
                 <br/>
-                <a href="https://www.salonbookingsystem.com/homepage/plugin-pricing/?utm_source=Payments%20settings&utm_medium=Plugin&utm_campaign=Go%20PRO" target="_blank">
+                <a href="<?php echo esc_url( defined( 'SLN_PRICING_URL' ) ? SLN_PRICING_URL : 'https://www.salonbookingsystem.com/plugin-pricing-2/' ); ?>" target="_blank">
 
                     <?php esc_html_e('OK, I need this..', 'salon-booking-system')?>
                 </a>

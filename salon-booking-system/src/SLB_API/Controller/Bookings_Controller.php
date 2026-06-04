@@ -210,6 +210,35 @@ class Bookings_Controller extends REST_Controller
             ),
         ) );
 
+        register_rest_route( $this->namespace, '/' . $this->rest_base . '/forecast-stats', array(
+            array(
+                'methods'             => WP_REST_Server::READABLE,
+                'callback'            => array( $this, 'get_forecast_stats' ),
+                'permission_callback' => array( $this, 'get_items_permissions_check' ),
+                'args' => array(
+                    'start_date' => array(
+                        'description'       => __( 'Start date.', 'salon-booking-system' ),
+                        'type'              => 'string',
+                        'format'            => 'YYYY-MM-DD',
+                        'required'          => true,
+                        'validate_callback' => array( $this, 'rest_validate_request_arg' ),
+                    ),
+                    'end_date' => array(
+                        'description'       => __( 'End date.', 'salon-booking-system' ),
+                        'type'              => 'string',
+                        'format'            => 'YYYY-MM-DD',
+                        'required'          => true,
+                        'validate_callback' => array( $this, 'rest_validate_request_arg' ),
+                    ),
+                    'shop' => array(
+                        'description' => __( 'Shop ID for multi-shop filtering (0 = all shops).', 'salon-booking-system' ),
+                        'type'        => 'integer',
+                        'default'     => 0,
+                    ),
+                ),
+            ),
+        ) );
+
         register_rest_route( $this->namespace, '/' . $this->rest_base . '/utilization', array(
             array(
                 'methods'             => WP_REST_Server::READABLE,
@@ -939,6 +968,7 @@ class Bookings_Controller extends REST_Controller
             'customer_first_name' => $user->user_firstname,
             'customer_last_name'  => $user->user_lastname,
             'customer_email'      => $user->user_email,
+            'customer_phone_country_code' => get_user_meta($user->ID, '_sln_sms_prefix', true),
             'customer_phone'      => get_user_meta($user->ID, '_sln_phone', true),
             'customer_address'    => get_user_meta($user->ID, '_sln_address', true),
         );
@@ -980,6 +1010,10 @@ class Bookings_Controller extends REST_Controller
             '_sln_phone'    => $request->get_param('customer_phone'),
             '_sln_address'  => $request->get_param('customer_address'),
         );
+
+        if ($request->get_param('customer_phone_country_code') !== null) {
+            $meta['_sln_sms_prefix'] = $request->get_param('customer_phone_country_code');
+        }
 
         foreach ($meta as $key => $value) {
             update_user_meta($id, $key, $value);
@@ -1105,6 +1139,9 @@ class Bookings_Controller extends REST_Controller
         $bb->set('lastname', $request->get_param('customer_last_name'));
         $bb->set('email', $request->get_param('customer_email'));
         $bb->set('phone', $request->get_param('customer_phone'));
+        if ($request->get_param('customer_phone_country_code') !== null) {
+            $bb->set('sms_prefix', $request->get_param('customer_phone_country_code'));
+        }
         $bb->set('address', $request->get_param('customer_address'));
         $bb->set('discounts', $request->get_param('discounts'));
         $bb->set('note', $request->get_param('note'));
@@ -1138,6 +1175,9 @@ class Bookings_Controller extends REST_Controller
 	remove_filter( 'sln.booking_builder.create.getPostArgs', array( $this, 'get_booking_create_get_post_args' ));
 
 	$booking = $bb->getLastBooking();
+
+        $this->persist_booking_phone_meta($booking->getId(), $request);
+        $this->sync_customer_contact_meta($customer_id, $request);
 
         return array(
 	    'id'	  => $booking->getId(),
@@ -1202,6 +1242,7 @@ class Bookings_Controller extends REST_Controller
             '_sln_booking_lastname'  => $request->get_param('customer_last_name'),
             '_sln_booking_email'     => $request->get_param('customer_email'),
             '_sln_booking_phone'     => $request->get_param('customer_phone'),
+            '_sln_booking_sms_prefix' => $request->get_param('customer_phone_country_code'),
             '_sln_booking_address'   => $request->get_param('customer_address'),
             '_sln_booking_services'  => $bb->getBookingServices()->toArrayRecursive(),
             '_sln_booking_discounts' => $request->get_param('discounts'),
@@ -1237,6 +1278,9 @@ class Bookings_Controller extends REST_Controller
         if ( $admin_note_value !== null ) {
             update_post_meta( $id, '_sln_booking_admin_note', $admin_note_value );
         }
+
+        $this->persist_booking_phone_meta($id, $request);
+        $this->sync_customer_contact_meta($customer_id, $request);
 
         $booking = $this->prepare_item_for_response($id, $request);
 
@@ -1331,6 +1375,48 @@ class Bookings_Controller extends REST_Controller
 	    'id'	  => $booking->getId(),
 	    'customer_id' => $booking->getUserId(),
 	);
+    }
+
+    /**
+     * Persist booking phone fields explicitly (meta_input can be stripped by filters).
+     *
+     * @param int             $booking_id
+     * @param WP_REST_Request $request
+     */
+    protected function persist_booking_phone_meta($booking_id, $request)
+    {
+        $phone = $request->get_param('customer_phone');
+        if ($phone !== null) {
+            update_post_meta($booking_id, '_sln_booking_phone', $phone);
+        }
+
+        $prefix = $request->get_param('customer_phone_country_code');
+        if ($prefix !== null) {
+            update_post_meta($booking_id, '_sln_booking_sms_prefix', $prefix);
+        }
+    }
+
+    /**
+     * Keep linked customer profile phone aligned with booking edits (admin parity).
+     *
+     * @param int             $customer_id
+     * @param WP_REST_Request $request
+     */
+    protected function sync_customer_contact_meta($customer_id, $request)
+    {
+        if (!$customer_id) {
+            return;
+        }
+
+        $phone = $request->get_param('customer_phone');
+        if ($phone !== null) {
+            update_user_meta($customer_id, '_sln_phone', $phone);
+        }
+
+        $prefix = $request->get_param('customer_phone_country_code');
+        if ($prefix !== null) {
+            update_user_meta($customer_id, '_sln_sms_prefix', $prefix);
+        }
     }
 
 
@@ -1466,6 +1552,15 @@ class Bookings_Controller extends REST_Controller
                 ),
                 'customer_phone' => array(
                     'description' => __( 'The customer phone for the resource.', 'salon-booking-system' ),
+                    'type'        => 'string',
+                    'context'     => array( 'view', 'edit' ),
+                    'arg_options' => array(
+                        'sanitize_callback' => 'sanitize_text_field',
+                        'default'           => '',
+                    ),
+                ),
+                'customer_phone_country_code' => array(
+                    'description' => __( 'The customer phone country code for the resource.', 'salon-booking-system' ),
                     'type'        => 'string',
                     'context'     => array( 'view', 'edit' ),
                     'arg_options' => array(
@@ -1651,6 +1746,147 @@ class Bookings_Controller extends REST_Controller
         );
 
         return apply_filters('sln_api_bookings_get_item_schema', $schema);
+    }
+
+    /**
+     * Get One-click Forecast feature adoption statistics.
+     *
+     * Returns:
+     *   - forecast_bookings        : total bookings with origin_source = 'Forecast' in period
+     *   - total_bookings           : all front-end bookings in the same period
+     *   - adoption_rate            : forecast_bookings / total_bookings (0–100 %)
+     *   - opted_in_customers       : total customers with forecast_notify_optin = 1 (all time)
+     *   - customers_with_history   : customers who completed ≥ 1 forecast booking (all time)
+     *
+     * @param \WP_REST_Request $request
+     * @return \WP_REST_Response
+     */
+    public function get_forecast_stats( $request )
+    {
+        $start_date = sanitize_text_field( $request->get_param( 'start_date' ) );
+        $end_date   = sanitize_text_field( $request->get_param( 'end_date' ) );
+
+        $active_statuses = array(
+            \SLN_Enum_BookingStatus::CONFIRMED,
+            \SLN_Enum_BookingStatus::PAID,
+            \SLN_Enum_BookingStatus::PAY_LATER,
+            \SLN_Enum_BookingStatus::PENDING,
+            \SLN_Enum_BookingStatus::PENDING_PAYMENT,
+        );
+
+        // --- Forecast bookings in the selected period ---
+        $forecast_args = array(
+            'post_type'      => self::POST_TYPE,
+            'post_status'    => $active_statuses,
+            'nopaging'       => true,
+            'fields'         => 'ids',
+            'meta_query'     => array(
+                array(
+                    'key'     => '_sln_booking_date',
+                    'value'   => array( $start_date, $end_date ),
+                    'compare' => 'BETWEEN',
+                    'type'    => 'DATE',
+                ),
+                array(
+                    'key'     => '_sln_booking_origin_source',
+                    'value'   => \SLN_Enum_BookingOrigin::ORIGIN_FORECAST,
+                    'compare' => '=',
+                ),
+            ),
+        );
+
+        // Shop manager restriction
+        $shop_id = $this->apply_shop_manager_filter( $request );
+        if ( $shop_id === -1 ) {
+            return $this->success_response( array(
+                'forecast_bookings'      => 0,
+                'total_bookings'         => 0,
+                'adoption_rate'          => 0.0,
+                'opted_in_customers'     => 0,
+                'customers_with_history' => 0,
+            ) );
+        }
+        if ( $shop_id > 0 && class_exists( '\SalonMultishop\Addon' ) ) {
+            $forecast_args['meta_query'][] = array(
+                'key'     => '_sln_booking_shop',
+                'value'   => $shop_id,
+                'compare' => '=',
+            );
+        }
+
+        $forecast_query    = new \WP_Query( $forecast_args );
+        $forecast_bookings = $forecast_query->found_posts;
+
+        // --- All front-end + forecast bookings in the same period (denominator) ---
+        $total_args                                = $forecast_args;
+        $total_args['meta_query']                  = array_filter(
+            $forecast_args['meta_query'],
+            function ( $clause ) {
+                return ! isset( $clause['key'] ) || $clause['key'] !== '_sln_booking_origin_source';
+            }
+        );
+        $total_args['meta_query'][]                = array(
+            'key'     => '_sln_booking_origin_source',
+            'value'   => array( \SLN_Enum_BookingOrigin::ORIGIN_DIRECT, \SLN_Enum_BookingOrigin::ORIGIN_FORECAST ),
+            'compare' => 'IN',
+        );
+        $total_query    = new \WP_Query( $total_args );
+        $total_bookings = $total_query->found_posts;
+
+        $adoption_rate = $total_bookings > 0
+            ? round( ( $forecast_bookings / $total_bookings ) * 100, 1 )
+            : 0.0;
+
+        // --- Opted-in customers (all time, not date-filtered) ---
+        $opted_in_query = new \WP_User_Query( array(
+            'meta_key'    => '_sln_forecast_notify_optin',
+            'meta_value'  => '1',
+            'count_total' => true,
+            'number'      => 0,
+        ) );
+        $opted_in_customers = (int) $opted_in_query->get_total();
+
+        // --- Unique customers who ever completed a forecast booking (all time) ---
+        $history_args = array(
+            'post_type'   => self::POST_TYPE,
+            'post_status' => $active_statuses,
+            'nopaging'    => true,
+            'fields'      => 'ids',
+            'meta_query'  => array(
+                array(
+                    'key'     => '_sln_booking_origin_source',
+                    'value'   => \SLN_Enum_BookingOrigin::ORIGIN_FORECAST,
+                    'compare' => '=',
+                ),
+            ),
+        );
+        $history_query = new \WP_Query( $history_args );
+        $booking_ids   = $history_query->posts;
+
+        $customers_with_history = 0;
+        if ( ! empty( $booking_ids ) ) {
+            global $wpdb;
+            $placeholders = implode( ',', array_fill( 0, count( $booking_ids ), '%d' ) );
+            // post_author holds the WP user ID for each booking.
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+            $customers_with_history = (int) $wpdb->get_var(
+                $wpdb->prepare(
+                    // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+                    "SELECT COUNT(DISTINCT post_author) FROM {$wpdb->posts}
+                     WHERE ID IN ($placeholders)
+                     AND post_author > 0",
+                    ...$booking_ids
+                )
+            );
+        }
+
+        return $this->success_response( array(
+            'forecast_bookings'      => $forecast_bookings,
+            'total_bookings'         => $total_bookings,
+            'adoption_rate'          => $adoption_rate,
+            'opted_in_customers'     => $opted_in_customers,
+            'customers_with_history' => $customers_with_history,
+        ) );
     }
 
     /**

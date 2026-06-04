@@ -3,7 +3,7 @@
 /*
 Plugin Name: Salon Booking System - Free Version
 Description: Let your customers book you services through your website. Perfect for hairdressing salons, barber shops and beauty centers.
-Version: 10.30.27
+Version: 10.30.29
 Plugin URI: http://salonbookingsystem.com/
 Author: Salon Booking System
 Author URI: http://salonbookingsystem.com/
@@ -45,8 +45,9 @@ if (defined('SLN_PLUGIN_BASENAME')) {
 define('SLN_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('SLN_PLUGIN_DIR', untrailingslashit(dirname(__FILE__)));
 define('SLN_PLUGIN_URL', untrailingslashit(plugins_url('', __FILE__)));
-define('SLN_VERSION', '10.30.27');
+define('SLN_VERSION', '10.30.29');
 define('SLN_STORE_URL', 'https://salonbookingsystem.com');
+define('SLN_PRICING_URL', 'https://www.salonbookingsystem.com/plugin-pricing-2/');
 define('SLN_AUTHOR', 'Salon Booking');
 define('SLN_UPLOADS_DIR', wp_upload_dir()['basedir'] . '/sln_uploads/');
 define('SLN_UPLOADS_URL', wp_upload_dir()['baseurl'] . '/sln_uploads/');
@@ -155,17 +156,12 @@ add_action("in_plugin_update_message-" . plugin_basename(__FILE__), function ($p
 
 spl_autoload_register($sln_autoload);
 
-// WP 6.7+: load translations and boot the main plugin on init (not plugins_loaded) to avoid
-// _load_textdomain_just_in_time notices and accidental output before session_start().
+// WP 6.7+: load translations on 'init' to avoid _load_textdomain_just_in_time notices.
+// Translations are kept separate from the plugin bootstrap so that sub-modules (e.g.
+// SLB_Discount_Plugin) can still rely on 'plugins_loaded' to receive the SLN_Plugin instance.
 add_action(
 	'init',
 	function () {
-		static $sln_bootstrapped = false;
-		if ( $sln_bootstrapped ) {
-			return;
-		}
-		$sln_bootstrapped = true;
-
 		add_filter(
 			'plugin_locale',
 			function ( $locale, $domain ) {
@@ -179,12 +175,22 @@ add_action(
 		);
 
 		load_plugin_textdomain( 'salon-booking-system', false, basename( SLN_PLUGIN_DIR ) . '/languages' );
+	},
+	0
+);
 
+// Bootstrap the main plugin on 'plugins_loaded' (original timing).
+// This ensures that any module registering a 'plugins_loaded' hook inside its constructor
+// (e.g. SLB_Discount_Plugin) still receives the callback because WordPress will dispatch
+// higher-priority 'plugins_loaded' callbacks that were added during a lower-priority callback.
+add_action(
+	'plugins_loaded',
+	function () {
 		global $sln_plugin;
 		$sln_plugin = SLN_Plugin::getInstance();
 		do_action( 'sln.init', $sln_plugin );
 	},
-	0
+	1
 );
 // phpcs:ignoreFile WordPress.Security.NonceVerification.Missing
 // phpcs:ignoreFile WordPress.Security.NonceVerification.Recommended

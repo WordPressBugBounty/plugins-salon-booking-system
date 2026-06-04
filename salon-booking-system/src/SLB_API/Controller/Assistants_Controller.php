@@ -802,6 +802,9 @@ class Assistants_Controller extends REST_Controller
                     // This handles older bookings where individual service prices weren't stored
                     if (empty($service_price) || $service_price == 0) {
                         $service = $bookingService->getService();
+                        if ( null === $service || $service->isEmpty() ) {
+                            continue;
+                        }
                         
                         // Get variable price by attendant if enabled, otherwise use base price
                         $attendant_id = is_array($attendant) ? (isset($attendant[0]) ? $attendant[0]->getId() : null) : $attendant->getId();
@@ -836,7 +839,8 @@ class Assistants_Controller extends REST_Controller
                             }
                             
                             // Revenue deduplication: one revenue share per service per assistant
-                            $service_key = $att_id . '_' . $bookingService->getService()->getId();
+                            $bs_service = $bookingService->getService();
+                            $service_key = $att_id . '_' . ( ( $bs_service && ! $bs_service->isEmpty() ) ? $bs_service->getId() : 'deleted' );
                             if (!in_array($service_key, $processed_assistants)) {
                                 $assistants_stats[$att_id]['total_revenue'] += $revenue_share;
                                 $processed_assistants[] = $service_key;

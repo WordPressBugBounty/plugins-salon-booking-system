@@ -279,32 +279,39 @@ export default {
     getLabel(labelKey) {
       return this.$root.labels ? this.$root.labels[labelKey] : labelKey
     },
+    timeToMinutes(time) {
+      if (!time) return 0;
+      const [h, m] = time.split(':').map(Number);
+      return h * 60 + m;
+    },
     getBookingDuration() {
-      const service = this.booking.services && this.booking.services[0];
-      if (!service) return 30;
-      
-      // Try to get duration from service.duration first (if set during resize)
-      if (service.duration) {
-        const [hours, mins] = service.duration.split(':').map(Number);
-        return hours * 60 + mins;
+      // Mirror ReservationsCalendar.getBookingStyle() exactly so the resize
+      // baseline always matches the visible block height.
+
+      // Attendant view: parent sets _serviceTime = { start: firstService.start_at, end: lastService.end_at }
+      if (this.booking._serviceTime?.start && this.booking._serviceTime?.end) {
+        const diff = this.timeToMinutes(this.booking._serviceTime.end)
+                   - this.timeToMinutes(this.booking._serviceTime.start);
+        if (diff > 0) return diff;
       }
-      
-      // Calculate duration from start_at and end_at (backend response format)
-      if (service.start_at && service.end_at) {
-        const [startH, startM] = service.start_at.split(':').map(Number);
-        const [endH, endM] = service.end_at.split(':').map(Number);
-        const startMinutes = startH * 60 + startM;
-        const endMinutes = endH * 60 + endM;
-        return endMinutes - startMinutes;
+
+      // Non-attendant view: booking.time → last service end_at (same as calendar)
+      const services = this.booking.services;
+      if (services?.length) {
+        const lastService = services[services.length - 1];
+        if (this.booking.time && lastService.end_at) {
+          const diff = this.timeToMinutes(lastService.end_at)
+                     - this.timeToMinutes(this.booking.time);
+          if (diff > 0) return diff;
+        }
       }
-      
-      // Fallback: use booking.duration if available (top-level field)
+
+      // Fallback: top-level booking.duration (H:i string from API)
       if (this.booking.duration) {
-        const [hours, mins] = this.booking.duration.split(':').map(Number);
-        return hours * 60 + mins;
+        const mins = this.timeToMinutes(this.booking.duration);
+        if (mins > 0) return mins;
       }
-      
-      // Default fallback
+
       return 30;
     },
     calculateEndTime(startTime, durationMinutes) {

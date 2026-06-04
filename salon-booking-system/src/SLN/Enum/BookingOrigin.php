@@ -2,9 +2,10 @@
 
 class SLN_Enum_BookingOrigin extends SLN_Enum_AbstractEnum
 {
-	const ORIGIN_MOBILE = 'Web app';
-	const ORIGIN_ADMIN = 'Back-end';
-	const ORIGIN_DIRECT = 'Front-end';
+	const ORIGIN_MOBILE    = 'Web app';
+	const ORIGIN_ADMIN     = 'Back-end';
+	const ORIGIN_DIRECT    = 'Front-end';
+	const ORIGIN_FORECAST  = 'Forecast';
 
 	/**
 	 * Get display label for origin (converts old labels to new ones)
@@ -14,15 +15,14 @@ class SLN_Enum_BookingOrigin extends SLN_Enum_AbstractEnum
 	 */
 	public static function getLabel($origin)
 	{
-		// Map old labels to new labels for backward compatibility
 		$labelMap = array(
 			'Mobile App' => 'Web app',
-			'Web admin' => 'Back-end',
-			'Direct' => 'Front-end',
-			// Also map the new values to themselves
-			'Web app' => 'Web app',
-			'Back-end' => 'Back-end',
-			'Front-end' => 'Front-end',
+			'Web admin'  => 'Back-end',
+			'Direct'     => 'Front-end',
+			'Web app'    => 'Web app',
+			'Back-end'   => 'Back-end',
+			'Front-end'  => 'Front-end',
+			'Forecast'   => 'Forecast',
 		);
 
 		return isset($labelMap[$origin]) ? $labelMap[$origin] : $origin;

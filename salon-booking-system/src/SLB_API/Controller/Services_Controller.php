@@ -876,6 +876,9 @@ class Services_Controller extends REST_Controller
             
             foreach ($booking->getBookingServices()->getItems() as $bookingService) {
                 $service = $bookingService->getService();
+                if ( null === $service || $service->isEmpty() ) {
+                    continue;
+                }
                 $service_id = $service->getId();
                 
                 if (isset($services_stats[$service_id])) {

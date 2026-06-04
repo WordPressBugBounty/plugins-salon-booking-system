@@ -94,7 +94,12 @@ $isPro = defined('SLN_VERSION_PAY') && SLN_VERSION_PAY;
                             </div>
                             <?php if ($calendar->isTimeUnavailable($line, $att['unavailable_times'])): ?>
                                 <div style="margin-left: <?php echo ($attCol + 1) * 200; ?>px; top: <?php echo $line * 100; ?>px;"
-                                    class="att-unavailable-highlight"></div>
+                                    class="att-unavailable-highlight"
+                                    data-att-id="<?php echo esc_attr($att['id']); ?>"
+                                    data-date="<?php echo esc_attr($start->format('Y-m-d')); ?>"
+                                    data-time="<?php echo esc_attr($calendar->getTimeByLine($line)); ?>"
+                                    data-shop-id="<?php echo intval(isset($_GET['shop']) ? $_GET['shop'] : 0); ?>"
+                                    title="<?php esc_attr_e('Click to diagnose why this slot is unavailable', 'salon-booking-system'); ?>"></div>
                             <?php endif; ?>
             <?php endfor;
                     }
@@ -144,7 +149,7 @@ $isPro = defined('SLN_VERSION_PAY') && SLN_VERSION_PAY;
                                             <span class="amount_value"><?php echo $isPro ? $bsEvent->due : '- -'; ?></span>
                                         </li>
                                         <?php if (!$isPro): ?>
-                                            <a href="https://www.salonbookingsystem.com/homepage/plugin-pricing/?utm_source=free%20version&utm_medium=booking%20details&utm_campaign=go_pro"
+                                            <a href="https://www.salonbookingsystem.com/plugin-pricing-2/"
                                                 class="booking_tool_item_promolink"
                                                 target="_blank"><?php esc_html_e('unlock this feature for', 'salon-booking-system'); ?>
                                                 <strong>
@@ -159,7 +164,7 @@ $isPro = defined('SLN_VERSION_PAY') && SLN_VERSION_PAY;
                                             <a href="#"><i class="sln-btn--icon sln-icon-trash"
                                                     style="--font-weight: 800;"></i></a>
                                             <?php if (!$isPro): ?>
-                                                <a href="https://www.salonbookingsystem.com/homepage/plugin-pricing/?utm_source=free%20version&utm_medium=booking%20details&utm_campaign=go_pro"
+                                                <a href="https://www.salonbookingsystem.com/plugin-pricing-2/"
                                                     class="booking_tool_item_promolink"
                                                     target="_blank"><?php esc_html_e('unlock this feature for', 'salon-booking-system'); ?>
                                                     <strong>
@@ -172,7 +177,7 @@ $isPro = defined('SLN_VERSION_PAY') && SLN_VERSION_PAY;
                                                     class="sln-btn--icon sln-icon--copy"
                                                     style="--font-weight: 800;"></i></a>
                                             <?php if (!$isPro): ?>
-                                                <a href="https://www.salonbookingsystem.com/homepage/plugin-pricing/?utm_source=free%20version&utm_medium=booking%20details&utm_campaign=go_pro"
+                                                <a href="https://www.salonbookingsystem.com/plugin-pricing-2/"
                                                     class="booking_tool_item_promolink"
                                                     target="_blank"><?php esc_html_e('unlock this feature for', 'salon-booking-system'); ?>
                                                     <strong>
@@ -182,7 +187,7 @@ $isPro = defined('SLN_VERSION_PAY') && SLN_VERSION_PAY;
                                         <div class="booking_tools_item <?php echo $isPro ? '' : 'disabled'; ?>">
                                             <a href="#"><i class="sln-btn--icon sln-icon--user-check"></i></a>
                                             <?php if (!$isPro): ?>
-                                                <a href="https://www.salonbookingsystem.com/homepage/plugin-pricing/?utm_source=free%20version&utm_medium=booking%20details&utm_campaign=go_pro"
+                                                <a href="https://www.salonbookingsystem.com/plugin-pricing-2/"
                                                     class="booking_tool_item_promolink"
                                                     target="_blank"><?php esc_html_e('unlock this feature for', 'salon-booking-system'); ?>
                                                     <strong>
@@ -190,7 +195,7 @@ $isPro = defined('SLN_VERSION_PAY') && SLN_VERSION_PAY;
                                             <?php endif; ?>
                                         </div>
                                         <?php if (!$isPro): ?>
-                                            <a href="https://www.salonbookingsystem.com/homepage/plugin-pricing/?utm_source=free%20version&utm_medium=booking%20details_mobile_device&utm_campaign=go_pro"
+                                            <a href="https://www.salonbookingsystem.com/plugin-pricing-2/"
                                                 class="more_details_promolink" target="_blank"><span><?php esc_html_e('unlock this feature', 'salon-booking-system'); ?> </span>
                                                 <strong><?php esc_html_e('buy pro', 'salon-booking-system'); ?></strong></a>
                                         <?php endif; ?>

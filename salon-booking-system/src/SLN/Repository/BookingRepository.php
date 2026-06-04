@@ -11,6 +11,17 @@ class SLN_Repository_BookingRepository extends SLN_Repository_AbstractWrapperRep
 {
     protected $bookingCache = array();
 
+    /**
+     * Discard the per-request booking list so the next availability query
+     * re-reads from the database. Call this after any booking status change
+     * so cancelled bookings are no longer counted as occupying a slot within
+     * the same PHP request.
+     */
+    public function clearBookingCache()
+    {
+        $this->bookingCache = array();
+    }
+
     public function getWrapperClass()
     {
         return SLN_Wrapper_Booking::_CLASS;

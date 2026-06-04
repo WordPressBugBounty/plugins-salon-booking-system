@@ -101,6 +101,7 @@ class SLN_Action_Feedback
     }
 
     private function sendSms( $booking ) {
+        if ( ! $booking->getNotifyCustomer() ) return;
         $p = $this->plugin;
         $p->sms()->send(
             $booking->getPhone(),
@@ -109,6 +110,7 @@ class SLN_Action_Feedback
     }
 
     private function sendMail( $booking ) {
+        if ( ! $booking->getNotifyCustomer() ) return;
         $p = $this->plugin;
         $p->sendMail('mail/feedback', compact('booking'));
     }

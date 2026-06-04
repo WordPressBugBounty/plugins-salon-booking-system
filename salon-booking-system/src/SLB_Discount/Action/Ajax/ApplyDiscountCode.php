@@ -70,11 +70,14 @@ class SLB_Discount_Action_Ajax_ApplyDiscountCode extends SLN_Action_Ajax_Abstrac
 					);
 				}
 			} else {
-				// Create the booking now so we can apply the discount to it.
-				// create() returns void; lastId is set inside create — same pattern as SummaryStep::dispatchForm().
-				try {
-					$bookingBuilder->create(SLN_Enum_BookingStatus::DRAFT);
-					$bb = $bookingBuilder->getLastBooking();
+			// Create the booking now so we can apply the discount to it.
+			// create() returns void; lastId is set inside create — same pattern as SummaryStep::dispatchForm().
+			// Pass $clear = false so the builder session data (services, date, time, etc.)
+			// is kept after the DRAFT post is created. Clearing it here would leave the
+			// customer with an empty builder and force them to restart the booking form.
+			try {
+				$bookingBuilder->create(SLN_Enum_BookingStatus::DRAFT, false);
+				$bb = $bookingBuilder->getLastBooking();
 				} catch (Exception $e) {
 					$this->addError(__('Unable to process discount. Please try again.', 'salon-booking-system'));
 					return array(

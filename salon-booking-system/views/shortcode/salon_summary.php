@@ -86,9 +86,9 @@ if($bb->getAmount() <= 0.0){
 
 $additional_errors = !empty($additional_errors)? $additional_errors : $step->getAddtitionalErrors();
 $errors = !empty($errors) ? $errors : $step->getErrors();
-if ($errors && in_array(SLN_Shortcode_Salon_SummaryStep::SLOT_UNAVAILABLE, $errors)){
+if ($errors && in_array(SLN_Shortcode_Salon_SummaryStep::SLOT_UNAVAILABLE, $errors, true)){
     echo $plugin->loadView('shortcode/_unavailable', array('step' => $step));
-}else if ($errors && in_array(SLN_Shortcode_Salon_SummaryStep::SERVICES_DATA_EMPTY, $errors)){
+}else if ($errors && in_array(SLN_Shortcode_Salon_SummaryStep::SERVICES_DATA_EMPTY, $errors, true)){
     echo $plugin->loadView('shortcode/_services_data_empty', array('step' => $step));
 }else{
 ?>

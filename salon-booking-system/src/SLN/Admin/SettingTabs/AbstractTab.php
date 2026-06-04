@@ -59,8 +59,12 @@ abstract class SLN_Admin_SettingTabs_AbstractTab {
 		$this->validate();
 		apply_filters('sln.settings.' . $this->slug . '.validate', $this->submitted, $this);
 		$this->saveSettings();
-		$this->postProcess();
-		apply_filters('sln.settings.' . $this->slug . '.post_process', $this->submitted, $this);
+		try {
+			$this->postProcess();
+			apply_filters('sln.settings.' . $this->slug . '.post_process', $this->submitted, $this);
+		} catch ( Exception $e ) {
+			SLN_Plugin::addLog( 'Settings postProcess error: ' . $e->getMessage() );
+		}
 		$this->showAlert(
 			'success',
 			__('' . $this->label . ' settings are updated', 'salon-booking-system'),
@@ -70,8 +74,12 @@ abstract class SLN_Admin_SettingTabs_AbstractTab {
 
     public function processReset() {
         $this->resetSettings();
-        $this->postProcess();
-        apply_filters('sln.settings.' . $this->slug . '.post_process', $this->submitted, $this);
+        try {
+            $this->postProcess();
+            apply_filters('sln.settings.' . $this->slug . '.post_process', $this->submitted, $this);
+        } catch ( Exception $e ) {
+            SLN_Plugin::addLog( 'Settings postProcess error: ' . $e->getMessage() );
+        }
         $this->showAlert(
             'success',
             __('' . $this->label . ' settings are reset', 'salon-booking-system'),
@@ -104,6 +112,28 @@ abstract class SLN_Admin_SettingTabs_AbstractTab {
 			$this->settings->set($k, $data);
 		}
 		$this->settings->save();
+
+		// When SalonMultishop is active, also write submitted values to the current
+		// shop's per-shop meta so that the sln.settings.get shop-override is updated.
+		// Without this, the shop's stored meta would keep "winning" over the newly
+		// saved global value, making the change appear to have no effect.
+		if ( class_exists( '\SalonMultishop\Addon' ) ) {
+			try {
+				$addon = \SalonMultishop\Addon::getInstance();
+				if ( $addon && method_exists( $addon, 'getCurrentShop' ) ) {
+					$shop = $addon->getCurrentShop();
+					if ( $shop && method_exists( $shop, 'setMeta' ) ) {
+						foreach ( $submitted as $k => $data ) {
+							if ( ! is_null( $data ) ) {
+								$shop->setMeta( $k, $data );
+							}
+						}
+					}
+				}
+			} catch ( \Exception $e ) {
+				SLN_Plugin::addLog( 'Settings: shop-specific save failed: ' . $e->getMessage() );
+			}
+		}
 
 		do_action('sln.settings.save.after');
 	}

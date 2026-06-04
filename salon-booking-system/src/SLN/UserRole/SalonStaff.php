@@ -93,6 +93,7 @@ class SLN_UserRole_SalonStaff
             SLN_Plugin::POST_TYPE_ATTENDANT,
             SLN_Plugin::POST_TYPE_SERVICE,
             SLN_Plugin::POST_TYPE_BOOKING,
+            SLB_Discount_Plugin::POST_TYPE_DISCOUNT,
             SLN_Plugin::POST_TYPE_RESOURCE,
         ) as $k) {
             $postTypeObj = get_post_type_object($k);
