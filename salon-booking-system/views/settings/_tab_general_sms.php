@@ -54,7 +54,11 @@
                     </div>
                     <div class="row">
                         <div class="col-xs-12 col-sm-3 form-group sln-input--simple">
-                            <?php $helper->row_input_text('sms_prefix', __('Country code', 'salon-booking-system'), array('attrs' => array('readonly' => 'readonly'))); ?>
+                            <?php // No 'readonly' attr: intl-tel-input refuses to open its country
+                            // dropdown on a readonly input (SBP-2419 regression). Manual typing is
+                            // instead blocked in JS (sln_initCountryCodeSelector), so the value still
+                            // changes only via the flag selector. ?>
+                            <?php $helper->row_input_text('sms_prefix', __('Country code', 'salon-booking-system')); ?>
                         </div>
                         <div class="col-xs-12 col-sm-6 form-group sln-input--simple">
                             <?php $helper->row_input_text('sms_from', __('Sender\'s number', 'salon-booking-system')); ?>

@@ -4,7 +4,7 @@ Tags: booking, reservations, scheduling, booking calendar, appointment calendar
 Requires at least: 4.1
 Tested up to: 6.9
 Requires PHP: 7.4.8
-Stable tag: 10.30.30
+Stable tag: 10.30.31
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -407,6 +407,12 @@ FREE version doesn't have the online payments options, no mobile app access, no 
 
 
 == Changelog ==
+
+12.06.2026 - 10.30.31
+
+* Added "Forecasted booking options" new screen
+* Added "Skip checkout for logged-in customers"
+* Minor improvements
 
 04.06.2026 - 10.30.29
 

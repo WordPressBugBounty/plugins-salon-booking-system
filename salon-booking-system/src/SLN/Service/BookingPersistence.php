@@ -5,6 +5,13 @@ class SLN_Service_BookingPersistence
     const TRANSIENT_PREFIX = 'sln_booking_builder_';
     const TRANSIENT_TTL    = 3 * HOUR_IN_SECONDS; // Extended to 3 hours to prevent premature expiration
 
+    // Server-side recovery anchor: the active client_id is mirrored into the PHP session so the
+    // booking can be recovered when the client-managed client_id channel (localStorage / JS cookie /
+    // hidden field) drops or changes between steps. On iOS/Safari ITP the JS-writable channels are
+    // capped/partitioned, while the server-set PHPSESSID (HttpOnly, first-party) is frequently more
+    // durable — making the session a stronger independent recovery channel.
+    const SESSION_ANCHOR_KEY = 'sln_active_client_id';
+
     /** @var string|null */
     private $clientId;
 
@@ -52,7 +59,29 @@ class SLN_Service_BookingPersistence
             if ($payload !== false) {
                 $this->useTransient = true;
                 $this->clientId     = $clientId;
+                $this->rememberSessionAnchor($clientId);
                 SLN_Plugin::addLog(sprintf('[Storage] Using transient storage (existing data found), client_id=%s', $clientId));
+                return;
+            }
+        }
+
+        // RECOVERY (Option 1): the incoming client_id has no stored data. On iOS/Safari the
+        // client-managed client_id round-trip (localStorage / JS cookie / hidden field) can drop or
+        // change between steps, which would otherwise resolve to an EMPTY transient and silently reset
+        // the booking (services lost -> SummaryStep bounces back to the services step). Fall back to the
+        // server-side session anchor, which is an independent channel (PHPSESSID) that frequently
+        // survives when the client_id channel does not.
+        $anchorId = $this->getSessionAnchorClientId();
+        if (!empty($anchorId) && $anchorId !== $clientId) {
+            $anchorPayload = get_transient($this->buildTransientKey($anchorId));
+            if ($anchorPayload !== false) {
+                $this->useTransient = true;
+                $this->clientId     = $anchorId;
+                SLN_Plugin::addLog(sprintf(
+                    '[Storage] RECOVERED via session anchor - request_client_id=%s, recovered_client_id=%s',
+                    $clientId ? $clientId : 'NULL',
+                    $anchorId
+                ));
                 return;
             }
         }
@@ -63,6 +92,7 @@ class SLN_Service_BookingPersistence
         if ($this->isSafariBrowser()) {
             $this->useTransient = true;
             $this->clientId     = $clientId;
+            $this->rememberSessionAnchor($clientId);
             SLN_Plugin::addLog(sprintf('[Storage] Safari browser detected, using transient storage, client_id=%s', $clientId));
             return;
         }
@@ -73,6 +103,7 @@ class SLN_Service_BookingPersistence
         if (!empty($clientId) && $this->isSessionCookieBlocked()) {
             $this->useTransient = true;
             $this->clientId     = $clientId;
+            $this->rememberSessionAnchor($clientId);
             SLN_Plugin::addLog(sprintf('[Storage] Session cookie blocked detected, using transient storage, client_id=%s', $clientId));
             return;
         }
@@ -82,6 +113,7 @@ class SLN_Service_BookingPersistence
         if ($sessionWorking) {
             $this->useTransient = false;
             $this->clientId     = $clientId; // Now guaranteed to have a value
+            $this->rememberSessionAnchor($clientId);
             SLN_Plugin::addLog(sprintf('[Storage] Using session storage, client_id=%s, session_id=%s', $clientId, session_id()));
             return;
         }
@@ -89,6 +121,7 @@ class SLN_Service_BookingPersistence
         // Fallback to transients if sessions don't work
         $this->useTransient = true;
         $this->clientId     = $clientId; // Already generated above
+        $this->rememberSessionAnchor($clientId);
         SLN_Plugin::addLog(sprintf('[Storage] Fallback to transient storage (session test failed), client_id=%s', $clientId));
     }
 
@@ -179,6 +212,9 @@ class SLN_Service_BookingPersistence
                 ),
                 self::TRANSIENT_TTL
             );
+
+            // Keep the server-side recovery anchor in sync with the active transient.
+            $this->rememberSessionAnchor($this->clientId);
             
             return;
         }
@@ -205,6 +241,7 @@ class SLN_Service_BookingPersistence
                 self::TRANSIENT_TTL
             );
             SLN_Plugin::addLog(sprintf('[BookingPersistence] SAVE TRANSIENT MIRROR (session mode) - key=%s, client_id=%s', $transientKey, $this->clientId));
+            $this->rememberSessionAnchor($this->clientId);
         }
     }
 
@@ -379,6 +416,44 @@ class SLN_Service_BookingPersistence
         unset($_SESSION[$testKey]);
 
         return $works;
+    }
+
+    /**
+     * Read the server-side recovery anchor (the last active client_id stored in the PHP session).
+     *
+     * @return string|null
+     */
+    private function getSessionAnchorClientId()
+    {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            return null;
+        }
+
+        if (empty($_SESSION[self::SESSION_ANCHOR_KEY])) {
+            return null;
+        }
+
+        return $_SESSION[self::SESSION_ANCHOR_KEY];
+    }
+
+    /**
+     * Mirror the active client_id into the PHP session as a recovery anchor.
+     * Best-effort: silently no-ops when there is no active session.
+     *
+     * @param string|null $clientId
+     * @return void
+     */
+    private function rememberSessionAnchor($clientId)
+    {
+        if (empty($clientId)) {
+            return;
+        }
+
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            return;
+        }
+
+        $_SESSION[self::SESSION_ANCHOR_KEY] = $clientId;
     }
 
     /**

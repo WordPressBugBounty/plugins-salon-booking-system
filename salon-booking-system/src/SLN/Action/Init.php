@@ -559,21 +559,49 @@ class SLN_Action_Init
         }
 
         // One-click booking: inject the forecast step when the feature is enabled
-        if ( $this->plugin->getSettings()->isOneClickBookingEnabled() ) {
-            add_filter( 'sln.shortcode_salon.initSteps', array( $this, 'injectForecastStep' ), 10, 2 );
+        // and the "Disable bookings forecast screen" option (Settings → Style) is
+        // off. When disabled, the step is never injected so the wizard starts from
+        // its usual first step (services if the alt order is on, otherwise date).
+        //
+        // Priority 20: must run AFTER the SalonMultishop add-on's initSteps filter
+        // (priority 10) so the 'shop' step is already in the array and the forecast
+        // can be placed after it (see injectForecastStep).
+        if ( $this->plugin->getSettings()->isOneClickBookingEnabled()
+            && ! $this->plugin->getSettings()->isForecastScreenDisabled() ) {
+            add_filter( 'sln.shortcode_salon.initSteps', array( $this, 'injectForecastStep' ), 20, 2 );
             add_filter( 'sln.shortcode_salon.getStepObject', array( $this, 'getForecastStepObject' ), 10, 3 );
         }
     }
 
     /**
-     * Prepend the 'forecast' step as the very first step in the booking wizard.
+     * Inject the 'forecast' step into the booking wizard.
+     *
+     * Single-shop installs: prepended as the very first step.
+     *
+     * Multi-shop installs (SalonMultishop add-on): inserted right AFTER the
+     * 'shop' step. The forecast availability scan must run with the shop
+     * context resolved — attendant schedules and opening hours are shop-scoped
+     * (ShopAttendant via the sln.booking_services.buildAttendant filter).
+     * Running the forecast before shop selection made every availability check
+     * fall back to the attendants' GLOBAL profiles (often empty = "always
+     * available"), suggesting days/times the attendant does not actually work
+     * at the customer's location.
+     *
+     * When the shortcode carries a fixed shop_id attribute the add-on does not
+     * add a 'shop' step but sets the current shop in its own priority-10
+     * filter, which runs before this one — so prepending is safe there too.
      *
      * @param array $steps
      * @param array $attrs  Shortcode attributes
      * @return array
      */
     public function injectForecastStep( $steps, $attrs ) {
-        array_unshift( $steps, SLN_Shortcode_Salon_ForecastStep::STEP_NAME );
+        $shop_pos = array_search( 'shop', $steps, true );
+        if ( false !== $shop_pos ) {
+            array_splice( $steps, $shop_pos + 1, 0, array( SLN_Shortcode_Salon_ForecastStep::STEP_NAME ) );
+        } else {
+            array_unshift( $steps, SLN_Shortcode_Salon_ForecastStep::STEP_NAME );
+        }
         return $steps;
     }
 
@@ -719,10 +747,10 @@ class SLN_Action_Init
         if ($page === 'salon-onboarding') {
             return;
         }
-        // Allow access to Settings page even when wizard is active
-        if ($page === 'salon-settings') {
-            return;
-        }
+        // NOTE: Settings (salon-settings) is intentionally NOT exempted here. Until the
+        // wizard is completed with the minimum required fields, every Salon plugin page
+        // - Settings included - redirects to the onboarding wizard. The completion gate
+        // itself (minimum fields) is enforced server-side in SLN_Admin_Onboarding.
         // On first activation: redirect to onboarding from anywhere in admin (plugins page, dashboard, etc.)
         if (get_transient('sln_redirect_to_onboarding')) {
             delete_transient('sln_redirect_to_onboarding');

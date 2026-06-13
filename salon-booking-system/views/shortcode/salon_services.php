@@ -21,7 +21,33 @@ if ($plugin->getSettings()->isDisabled()) {
 	$services = $step->getServices();
 	$additional_errors = !empty($additional_errors)? $additional_errors : $step->getAddtitionalErrors();
 	$errors = !empty($errors) ? $errors : $step->getErrors();
+
+	// "Returning customer? Log in" tab — replaces the dedicated forecast login
+	// screen when the services step opens the wizard (steps alt order). See
+	// ForecastStep::resolveState() for the matching skip logic.
+	$showLoginTab   = !is_user_logged_in()
+		&& !$plugin->getSettings()->get('enabled_force_guest_checkout')
+		&& $plugin->getSettings()->isFormStepsAltOrder();
+	// Keep the login tab active after a failed login attempt so the customer
+	// sees the error next to the form they just used.
+	$loginTabActive = $showLoginTab && isset($_POST['login_name']);
 	?>
+	<?php if ($showLoginTab): ?>
+	<ul class="nav nav-tabs sln-content__tabs__nav sln-services-tabs__nav">
+		<li class="sln-content__tabs__nav__item<?php echo $loginTabActive ? '' : ' current' ?>">
+			<a href="#sln-services-tab--book" data-target="#sln-services-tab--book" data-toggle="tab" role="tab">
+				<?php esc_html_e('Book an appointment', 'salon-booking-system') ?>
+			</a>
+		</li>
+		<li class="sln-content__tabs__nav__item<?php echo $loginTabActive ? ' current' : '' ?>">
+			<a href="#sln-services-tab--login" data-target="#sln-services-tab--login" data-toggle="tab" role="tab">
+				<?php esc_html_e('Returning customer? Log in', 'salon-booking-system') ?>
+			</a>
+		</li>
+	</ul>
+	<div class="tab-content sln-services-tabs__content">
+	<div id="sln-services-tab--book" class="tab-pane<?php echo $loginTabActive ? '' : ' active' ?>">
+	<?php endif; ?>
 	<form id="salon-step-services" method="post" action="<?php echo esc_html($formAction) ?>" role="form"
 		<?php if (isset($_GET['sln_step_page']) && $_GET['sln_step_page'] === 'services'): ?>data-sln-direct-nav="1"<?php endif; ?>>
 	<?php
@@ -68,7 +94,16 @@ if ($plugin->getSettings()->isDisabled()) {
 	<?php include "_form_actions.php" ?>
         <input type="hidden" name="sln[customer_timezone]" value="<?php echo esc_html($bb->get('customer_timezone')) ?>">
 	</form>
-	
+	<?php if ($showLoginTab): ?>
+	</div><!-- /#sln-services-tab--book -->
+	<div id="sln-services-tab--login" class="tab-pane<?php echo $loginTabActive ? ' active' : '' ?>">
+		<form id="salon-step-services-login" method="post" action="<?php echo esc_html($formAction) ?>" role="form">
+			<?php include '_services_login_tab.php'; ?>
+		</form>
+	</div>
+	</div><!-- /.sln-services-tabs__content -->
+	<?php endif; ?>
+
 	<script>
 	jQuery(document).ready(function($) {
 		// Check if cookies are enabled in the browser

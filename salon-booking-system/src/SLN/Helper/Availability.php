@@ -22,12 +22,28 @@ class SLN_Helper_Availability
     private $holidayItems;
     private $offset;
     protected $initialDate;
+    private $excludeHiddenFromFrontend = false;
 
     public function __construct(SLN_Plugin $plugin)
     {
         $this->settings = $plugin->getSettings();
         $this->initialDate = $plugin->getBookingBuilder()->getEmptyValue();
         $this->attendantsEnabled = $this->settings->isAttendantsEnabled();
+    }
+
+    /**
+     * When enabled, attendants flagged "Hide on front-end" are excluded from
+     * attendant availability/auto-assignment. Front-end booking flows opt in;
+     * back-end and API leave this off so hidden attendants stay fully usable.
+     *
+     * @param bool $value
+     * @return $this
+     */
+    public function setExcludeHiddenFromFrontend($value)
+    {
+        $this->excludeHiddenFromFrontend = (bool) $value;
+
+        return $this;
     }
 
     public function getHoursBeforeHelper()
@@ -1098,6 +1114,14 @@ class SLN_Helper_Availability
         $endAt->modify('+'.SLN_Func::getMinutesFromDuration($duration).'minutes');
 
         $attendants = apply_filters('sln.availability.getAvailableAttsIdsForServiceOnTime.attendants', $service->getAttendants());
+        if ($this->excludeHiddenFromFrontend) {
+            $attendants = array_filter($attendants, function ($attendant) {
+                // Guard with is_callable: add-ons (e.g. Multi-Shops) may pass
+                // shop-wrapped attendant objects through this filter. is_callable
+                // covers both real methods and decorators delegating via __call.
+                return !(is_callable(array($attendant, 'isHideOnFrontend')) && $attendant->isHideOnFrontend());
+            });
+        }
         $times = SLN_Func::filterTimes($this->getMinutesIntervals(), $startAt, $endAt);
         foreach ($times as $time) {
             foreach ($attendants as $k => $attendant) {

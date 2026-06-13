@@ -24,6 +24,31 @@ class SLN_Service_Messages
         $this->disabled = $bool;
     }
 
+    /**
+     * TEMP DIAGNOSTIC: trace "Do not notify customer" behaviour.
+     * Logs the raw meta, the resolved getNotifyCustomer() gate, the disabled
+     * flag and the current status so we can see exactly why a customer message
+     * is (or isn't) being sent. Remove once the issue is confirmed fixed.
+     */
+    private function logDontNotifyDiag($where, $booking)
+    {
+        if (!($booking instanceof SLN_Wrapper_Booking)) {
+            return;
+        }
+        $bookingId = $booking->getId();
+        SLN_Plugin::addLog(sprintf(
+            '[DONT_NOTIFY_DIAG] %s | booking #%s | disabled=%s | raw_meta(_sln_booking_dont_notify_customer)=%s | getNotifyCustomer=%s | sendToCustomer(prop)=%s | status=%s | phone=%s',
+            $where,
+            $bookingId,
+            $this->disabled ? '1' : '0',
+            var_export($bookingId ? get_post_meta($bookingId, '_sln_booking_dont_notify_customer', true) : null, true),
+            $booking->getNotifyCustomer() ? 'true' : 'false',
+            $this->sendToCustomer ? 'true' : 'false',
+            $booking->getStatus(),
+            $booking->getPhone()
+        ));
+    }
+
     public function setSendToAdmin($bool)
     {
         $this->sendToAdmin = $bool;
@@ -36,7 +61,9 @@ class SLN_Service_Messages
 
     public function sendByStatus(SLN_Wrapper_Booking $booking, $status)
     {
+        $this->logDontNotifyDiag('sendByStatus() ENTER status=' . $status, $booking);
         if ($this->disabled) {
+            SLN_Plugin::addLog('[DONT_NOTIFY_DIAG] sendByStatus() ABORTED: messages service disabled | booking #' . $booking->getId());
             return;
         }
 
@@ -53,6 +80,7 @@ class SLN_Service_Messages
             $this->sendBookingConfirmed($booking, $sendToAdmin, $sendToCustomer);
         } elseif ($status == SLN_Enum_BookingStatus::CANCELED) {
             if($booking->getNotifyCustomer() && $sendToCustomer) {
+                SLN_Plugin::addLog('[DONT_NOTIFY_DIAG] >>> CUSTOMER EMAIL SENT (mail/status_canceled) | booking #' . $booking->getId());
                 $p->sendMail('mail/status_canceled', compact('booking'));
             }
             $forAdmin = true;
@@ -61,6 +89,7 @@ class SLN_Service_Messages
         } elseif ($status == SLN_Enum_BookingStatus::PENDING_PAYMENT && $booking->getNotifyCustomer() && $sendToCustomer) {
             $settings = $this->plugin->getSettings();
             if (!$settings->get('disable_first_pending_payment_email_to_customer')) {
+                SLN_Plugin::addLog('[DONT_NOTIFY_DIAG] >>> CUSTOMER EMAIL SENT (mail/status_pending_payment) | booking #' . $booking->getId());
                 $p->sendMail('mail/status_pending_payment', compact('booking'));
             }
         } elseif (in_array($status, self::$statusForSummary)) {
@@ -84,6 +113,7 @@ class SLN_Service_Messages
     {
         if ($this->plugin->getSettings()->get('confirmation')) {
             if ($booking->getNotifyCustomer() && $sendToCustomer) {
+                SLN_Plugin::addLog('[DONT_NOTIFY_DIAG] >>> CUSTOMER EMAIL SENT (mail/status_confirmed) | booking #' . $booking->getId());
                 $this->plugin->sendMail('mail/status_confirmed', compact('booking', 'sendToCustomer'));
             }
             if ($sendToAdmin) {
@@ -97,6 +127,7 @@ class SLN_Service_Messages
     }
 
     public function sendBookingModified(SLN_Wrapper_Booking $booking) {
+        $this->logDontNotifyDiag('sendBookingModified() ENTER', $booking);
         $this->sendSmsModifiedBooking($booking);
         $this->sendSummaryModifiedMail($booking);
     }
@@ -118,6 +149,7 @@ class SLN_Service_Messages
 
             $phone = $booking->getPhone();
             if ($phone && $booking->getNotifyCustomer() && $sendToCustomer) {
+                SLN_Plugin::addLog('[DONT_NOTIFY_DIAG] >>> CUSTOMER SMS SENT (sms/summary or sms/pending) | booking #' . $booking->getId() . ' | phone=' . $phone);
                 if($booking->getStatus() == SLN_Enum_BookingStatus::PENDING && $s->get('confirmation')){
                     $sms->send($phone, $p->loadView('sms/pending', compact('booking')), $booking->getsmsPrefix());
                 }else{
@@ -172,6 +204,7 @@ class SLN_Service_Messages
 
             $phone = $booking->getPhone();
             if ($phone && $booking->getNotifyCustomer()) {
+                SLN_Plugin::addLog('[DONT_NOTIFY_DIAG] >>> CUSTOMER SMS SENT (sms/summary_modified) | booking #' . $booking->getId() . ' | phone=' . $phone);
                 $sms->send($phone, $p->loadView('sms/summary_modified', compact('booking')), $booking->getSmsPrefix());
             }
         }
@@ -222,6 +255,7 @@ class SLN_Service_Messages
 
             $phone = $booking->getPhone();
             if ($phone && $booking->getNotifyCustomer()) {
+                SLN_Plugin::addLog('[DONT_NOTIFY_DIAG] >>> CUSTOMER SMS SENT (sms/status_canceled) | booking #' . $booking->getId() . ' | phone=' . $phone);
                 $sms->send($phone, $p->loadView('sms/status_canceled', compact('booking')), $booking->getSmsPrefix());
             }
         }
@@ -283,6 +317,7 @@ class SLN_Service_Messages
 
         $p = $this->plugin;
         if($booking->getNotifyCustomer() && $sendToCustomer) {
+            SLN_Plugin::addLog('[DONT_NOTIFY_DIAG] >>> CUSTOMER EMAIL SENT (mail/summary) | booking #' . $booking->getId());
             $p->sendMail('mail/summary', compact('booking', 'sendToCustomer', 'updated', 'rescheduled'));
         }
         $p->sendMail('mail/summary_admin', compact('booking', 'sendToAdmin', 'updated', 'rescheduled'));
@@ -298,6 +333,7 @@ class SLN_Service_Messages
         $sendToAdmin = true;
         $sendToCustomer = $booking->getNotifyCustomer();
         if($booking->getNotifyCustomer()) {
+            SLN_Plugin::addLog('[DONT_NOTIFY_DIAG] >>> CUSTOMER EMAIL SENT (mail/summary, modified) | booking #' . $booking->getId());
             $p->sendMail('mail/summary', compact('booking', 'sendToCustomer', 'updated', 'rescheduled'));
         }
         $p->sendMail('mail/summary_admin', compact('booking', 'sendToAdmin', 'updated', 'rescheduled'));

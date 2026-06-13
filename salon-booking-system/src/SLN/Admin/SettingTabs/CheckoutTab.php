@@ -3,6 +3,7 @@ class SLN_Admin_SettingTabs_CheckoutTab extends SLN_Admin_SettingTabs_AbstractTa
 	protected $fields = array(
 		'enabled_guest_checkout',
 		'enabled_force_guest_checkout',
+		'skip_checkout_if_logged_in',
 		'enabled_fb_login',
 		'fb_app_id',
 		'fb_app_secret',

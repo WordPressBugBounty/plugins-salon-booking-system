@@ -354,6 +354,17 @@ class SLN_Settings {
 	}
 
 	/**
+	 * Whether the booking forecast screen has been explicitly disabled from
+	 * Settings → Style. When true the forecast step is never injected into the
+	 * wizard, which starts from its usual first step (services or date).
+	 *
+	 * @return bool
+	 */
+	public function isForecastScreenDisabled() {
+		return $this->get( 'disable_forecast_screen' ) ? true : false;
+	}
+
+	/**
 	 * Minimum number of completed past bookings required before showing the
 	 * forecast step to a returning customer.
 	 *

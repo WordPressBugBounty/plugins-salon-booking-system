@@ -172,6 +172,14 @@ class SLN_Wrapper_Attendant extends SLN_Wrapper_Abstract implements SLN_Wrapper_
         return $this->getMeta('multiple_customers');
     }
 
+    public function isHideOnFrontend()
+    {
+        $ret = $this->getMeta('hide_on_frontend');
+        $ret = empty($ret) ? false : ($ret ? true : false);
+
+        return $ret;
+    }
+
     public function __toString()
     {
         return $this->getName();

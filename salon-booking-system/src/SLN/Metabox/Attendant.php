@@ -14,6 +14,7 @@ class SLN_Metabox_Attendant extends SLN_Metabox_Abstract {
 		'limit_staff_member_to_backend_calendar_only' => 'bool',
         'display_phone_inside_booking_notification' => 'bool',
         'sms_prefix' => 'text',
+        'hide_on_frontend' => 'bool',
 	);
 
 	protected function init() {

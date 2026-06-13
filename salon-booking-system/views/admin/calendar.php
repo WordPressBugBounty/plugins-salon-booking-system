@@ -89,9 +89,13 @@ function expirePopup() {
     error_log('[Salon Subscription Banner] Seven days passed since reminder: ' . ($seven_days_passed ? 'yes' : 'no'));
     error_log('[Salon Subscription Banner] Will show banner: ' . (((($is_cancelled && $is_expiring) || $is_expired) && $seven_days_passed) ? 'YES' : 'NO'));
 
-    // ((the subscription is cancelled and will expires soon) OR subscription has already expired) AND More than 7 days have passed since the user clicked 'Remind me in 7 days'
-    if ((($is_cancelled && $is_expiring) || $is_expired) && $seven_days_passed) {
-        $link = "https://www.salonbookingsystem.com/checkout?edd_license_key=" . $sln_license->get('license_key') . "&download_id=697772"; ?>
+    $is_worker = function_exists('wp_get_current_user') && in_array(SLN_Plugin::USER_ROLE_WORKER, (array) wp_get_current_user()->roles, true);
+    error_log('[Salon Subscription Banner] Is worker: ' . ($is_worker ? 'yes' : 'no'));
+
+    // Show when: (subscription cancelled and expiring soon) OR subscription/license expired,
+    // the 7-day reminder has elapsed, and the current user is not a worker.
+    if ((($is_cancelled && $is_expiring) || $is_expired) && $seven_days_passed && !$is_worker) {
+        $link = defined('SLN_PRICING_URL') ? SLN_PRICING_URL : 'https://www.salonbookingsystem.com/plugin-pricing-2/'; ?>
 
         <div id="sln-wrap-popup" class="wrap-popup">
             <section class="card" role="alertdialog" aria-labelledby="dlg-title" aria-describedby="dlg-desc">
@@ -99,7 +103,7 @@ function expirePopup() {
             <h1 id="dlg-title" class="title">Your subscription is expired</h1>
             <p id="dlg-desc" class="subtitle">Don’t lose your access to our product updates and email customers support.</p>
             <div class="actions" role="group" aria-label="Actions">
-                <a class="btn btn-primary" href="<?php echo $link ?>">Renew now</a>
+                <a class="btn btn-primary" href="<?php echo esc_url($link) ?>" target="_blank" rel="noopener">Renew now</a>
                 <a class="link" href="<?php echo esc_url(add_query_arg($param, 1)); ?>">Remind me in seven days</a>
             </div>
             </section>
@@ -116,10 +120,13 @@ function expirePopup() {
             }
 
             .wrap-popup {
+                position: fixed;
+                inset: 0;
                 display: grid;
                 place-items: center;
-                min-height: 100vh;
                 padding: 24px;
+                background: rgba(15, 23, 42, 0.55);
+                z-index: 100000;
             }
 
             .wrap-popup .card {
@@ -520,7 +527,11 @@ echo expirePopup();
 
                 <?php elseif ($subscription_status['status'] === 'expired'): ?>
                     <?php
-                    $expire_days = ceil((strtotime($sln_license->get('license_data')->expires) - current_time('timestamp')) / (24 * 3600));
+                    $exp_license_data = $sln_license->get('license_data');
+                    $exp_raw = (is_object($exp_license_data) && isset($exp_license_data->expires))
+                        ? $exp_license_data->expires
+                        : (isset($subscription_status['expiration']) ? $subscription_status['expiration'] : null);
+                    $expire_days = $exp_raw ? ceil((strtotime($exp_raw) - current_time('timestamp')) / (24 * 3600)) : 0;
                     $expire = sprintf(
                         // translators: %s the name of the expire days
                         _n('%s day', '%s days', $expire_days, 'salon-booking-system'),
@@ -562,7 +573,6 @@ echo expirePopup();
         font-size: 1rem !important;
         line-height: 1rem !important;
     }
-    #sln-wrap-popup,
     #sln-pageloading,
     #sln-viewloading,
     #sln-modalloading {
@@ -611,7 +621,6 @@ echo expirePopup();
         left: 0;
         background-color: rgba(231, 237, 241, 0.75);
     }
-    #sln-wrap-popup img,
     #sln-pageloading img,
     #sln-viewloading img,
     #sln-modalloading img {
@@ -628,8 +637,6 @@ echo expirePopup();
         font-size: 1.5em;
     }
 
-    #sln-wrap-popup img,
-    #sln-wrap-popup h1,
     #sln-pageloading img,
     #sln-pageloading h1,
     #sln-viewloading img,

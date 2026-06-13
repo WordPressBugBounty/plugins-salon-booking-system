@@ -547,7 +547,19 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
         }else{
             SLN_Plugin::addLog('SummaryStep::render() - Path C: Fallback (ERROR PATH)');
             if(empty($bb->get('services'))){
-                SLN_Plugin::addLog('SummaryStep::render() - ERROR: No services data, redirecting to services step');
+                // Option 2 safety net: capture rich diagnostics before bouncing so the (mobile/iOS-only)
+                // failure can be confirmed directly from log.txt without depending on the on-page debug
+                // panel, which disappears on the redirect. This records WHICH recovery channel was missing.
+                $sessionHasBuilderData = isset($_SESSION['SLN_Wrapper_Booking_Builder']) && !empty($_SESSION['SLN_Wrapper_Booking_Builder']);
+                SLN_Plugin::addLog(sprintf(
+                    'SummaryStep::render() - ERROR: No services data, redirecting to services step | client_id=%s, using_transient=%s, session_id=%s, session_has_builder_data=%s, session_anchor=%s, request_keys=%s',
+                    method_exists($bb, 'getClientId') ? $bb->getClientId() : 'n/a',
+                    (method_exists($bb, 'isUsingTransient') && $bb->isUsingTransient()) ? 'YES' : 'NO',
+                    session_id(),
+                    $sessionHasBuilderData ? 'YES' : 'NO',
+                    isset($_SESSION[SLN_Service_BookingPersistence::SESSION_ANCHOR_KEY]) ? $_SESSION[SLN_Service_BookingPersistence::SESSION_ANCHOR_KEY] : 'NONE',
+                    implode(',', array_keys($this->getSanitizedRequestArgs()))
+                ));
                 $this->addError(self::SERVICES_DATA_EMPTY);
                 // Must pass explicit booking page URL: during DOING_AJAX, add_query_arg() alone uses
                 // REQUEST_URI (admin-ajax.php), which yields a broken URL and WordPress responds with "0".
@@ -557,6 +569,9 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
                 if (isset($requestArgs['lang'])) {
                     $servicesUrl = add_query_arg('lang', $requestArgs['lang'], $servicesUrl);
                 }
+                // Tag the bounce so the services step (or analytics) can explain the reset to the
+                // customer instead of silently dropping them at the top of the funnel.
+                $servicesUrl = add_query_arg('sln_booking_expired', '1', $servicesUrl);
                 $this->redirect(add_query_arg(array('sln_step_page' => 'services'), $servicesUrl));
                 return parent::render(); // Return content after redirect for AJAX
             }else{

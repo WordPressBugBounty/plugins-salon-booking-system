@@ -7724,6 +7724,25 @@ body.modal-open {
   text-decoration: underline;
 }
 
+.sln-services-login {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 1.25em 0 2em;
+}
+.sln-services-login__hint {
+  text-align: center;
+  color: #666;
+  font-size: 0.9em;
+  margin: 0 0 1.2em;
+}
+.sln-services-login .sln-forecast-login__form {
+  padding-bottom: 1.8em;
+}
+
+.sln-services-tabs__content {
+  padding-top: 1.25em;
+}
+
 .sln-forecast-cards__header {
   margin-bottom: 1.5em;
 }

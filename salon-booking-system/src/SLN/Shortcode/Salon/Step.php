@@ -144,6 +144,7 @@ abstract class SLN_Shortcode_Salon_Step
         if ($this->getPlugin()->getSettings()->isAutoAttendantCheckEnabled()) {
             try {
                 $ah = $this->getPlugin()->getAvailabilityHelper();
+                $ah->setExcludeHiddenFromFrontend(true);
                 $ah->setDate($bb->getDateTime());
                 $bookingServices = $bb->getBookingServices();
                 

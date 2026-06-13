@@ -21,11 +21,15 @@ $errors = !empty($errors) ? $errors : $step->getErrors();
 include '_errors.php';
 include '_additional_errors.php';
 
-// When the guest reached this step via the forecast "Continue to booking"
-// action, they already declined to log in — so default to the "New customer"
-// (checkout form) tab instead of the log-in tab. The forecast skip flag on the
-// BookingBuilder is the signal for that path.
-$preferNewCustomerTab = !empty($bb->get('skip_forecast'));
+// When the guest already had a log-in opportunity earlier in the wizard and
+// declined it, default to the "New customer" (checkout form) tab instead of
+// the log-in tab. Two signals cover that:
+// - the forecast "Continue to booking" action sets the skip flag on the
+//   BookingBuilder;
+// - with the steps alt order, the services step opened the wizard with its own
+//   "Returning customer? Log in" tab (see salon_services.php).
+$preferNewCustomerTab = !empty($bb->get('skip_forecast'))
+	|| $plugin->getSettings()->isFormStepsAltOrder();
 ?>
 <?php if (!is_user_logged_in()): ?>
     <?php if (!$plugin->getSettings()->get('enabled_force_guest_checkout')): ?>

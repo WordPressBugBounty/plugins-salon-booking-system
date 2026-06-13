@@ -72,6 +72,13 @@ usort($services, function ($service1, $service2) {
     </div>
 </div>
 <div class="row sln-service-price-time">
+    <div class="col-xs-12 col-md-6 form-group sln-checkbox">
+        <?php SLN_Form::fieldCheckbox('_sln_attendant_hide_on_frontend', $attendant->isHideOnFrontend(), array())?>
+        <label for="_sln_attendant_hide_on_frontend"><?php esc_html_e('Hide on front-end', 'salon-booking-system');?></label>
+        <p><?php esc_html_e('If checked, this assistant is hidden from the front-end booking form and is never auto-assigned, but can still be selected for bookings added from the back-end.', 'salon-booking-system');?></p>
+    </div>
+</div>
+<div class="row sln-service-price-time">
     <div class="col-xs-12 col-md-6 form-group sln-checkbox sln-staff-member-assigned-bookings-only <?php echo $attendant->getMeta('staff_member_id') ? '' : 'hide' ?>">
 	<?php if (defined("SLN_VERSION_PAY")): ?>
 	    <div>

@@ -92,42 +92,17 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
             $dayServicesOk = $this->checkDayServicesAndAttendants($bservices, $tmpDate);
             $dateTimeLog->addDateLog( $dateLog, $dayServicesOk, __( 'The attendant is unavailable on this day', 'salon-booking-system' ) );
             if ($dayServicesOk) {
-	            $ah->setDate($tmpDate, $this->booking);
-	            
-	            if ($isSmartAvailability) {
-	                // Accurate date-availability check: verify at least one attendant is
-	                // genuinely available (not on holiday, has the service, works this day).
-	                // earlyExit=true stops scanning as soon as any valid slot is found, keeping
-	                // per-date cost low even over large booking windows.
-	                $dayTimes = $this->getAllAttendantsAvailableTimes(Date::create($tmpDate), $bservices, $this->duration, true);
-	                $available = !empty($dayTimes);
-	            } else {
-	                // Non-smart path: use booking cache free_slots (legacy behaviour).
-	                // PHP 8+ compatibility: Safely access array elements
-	                $dayData = $bc->getDay(Date::create($tmpDate));
-	                // Double-check that free_slots is actually an array, not a string
-	                $times = (is_array($dayData) && isset($dayData['free_slots']) && is_array($dayData['free_slots'])) ? $dayData['free_slots'] : array();
-	                
-	                foreach ($times as $timeKey => $timeValue) {
-	                    // Handle both formats: cache returns strings, objects have time keys
-	                    if (is_object($timeValue)) {
-	                        $time = $timeKey;
-	                    } else {
-	                        $time = $timeValue;
-	                    }
-	                    
-	                    $d = $v->getDateTime()->format('Y-m-d');
-	                    $tmpDateTime = new SLN_DateTime("$d $time");
-	                    if (!$hb->check($tmpDateTime)) {
-	                        continue;
-	                    }
-	                    $errors = $this->checkDateTimeServicesAndAttendants($bservices, $tmpDateTime);
-	                    if (empty($errors)) {
-	                        $available = true;
-	                        break;
-	                    }
-	                }
-	            }
+	            // A day must be shown as available ONLY if it has at least one slot that
+	            // is genuinely bookable for the selected service(s) — i.e. a slot that
+	            // survives the SAME strict validation the time picker applies below
+	            // (checkDateTimeServicesAndAttendants with check_duration=true, plus the
+	            // duration/auto-align filters). Previously the day-scan used a looser
+	            // check (no duration, and for smart mode no final resource/attendant
+	            // validation), so fully-constrained days (e.g. all fitting rooms booked)
+	            // showed in the calendar but had an empty time picker — which silently
+	            // bounced the user to another date. Keeping the day decision and the
+	            // time list in lock-step removes those "visible but unbookable" days.
+	            $available = $this->dateHasBookableSlot($tmpDate, $bservices, $isSmartAvailability);
             }
             $dateTimeLog->addDateLog( $dateLog, $available, __( 'There are no free time slots on this day', 'salon-booking-system' ) );
 
@@ -568,6 +543,7 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
 
             // Get available attendants for this service at this time
             $ah = $this->plugin->getAvailabilityHelper();
+            $ah->setExcludeHiddenFromFrontend(true);
             $availableAttendants = $ah->getAvailableAttsIdsForBookingService($bookingService);
             
             // Safety: Handle null/false returns
@@ -708,6 +684,7 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
                     }
                     
                     // Use the optimized method that checks all attendants at once
+                    $ah->setExcludeHiddenFromFrontend(true);
                     $ah->setDate($tmpDateTime);
                     $availableAttendants = $ah->getAvailableAttsIdsForBookingService($bookingService);
                     
@@ -733,6 +710,75 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
             SLN_Plugin::addLog('[getAllAttendantsAvailableTimes] SLOW | date=' . $date->toString() . ' | found=' . count($availableTimes) . ' | earlyExit=' . ($earlyExit ? 'yes' : 'no') . ' | ' . $elapsed . 'ms');
         }
         return $availableTimes;
+    }
+
+    /**
+     * Decide whether a day has at least one slot that is actually bookable for the
+     * currently selected service(s)/attendant(s)/resources.
+     *
+     * This deliberately mirrors the time-list pipeline used later in
+     * getIntervalsArray() for the suggested date:
+     *   1. Build the candidate slots the SAME way the time picker does
+     *      (smart: getAllAttendantsAvailableTimes; non-smart: getCachedTimes +
+     *      duration + auto-align filters).
+     *   2. Accept the day as soon as ONE candidate passes the strict
+     *      checkDateTimeServicesAndAttendants() validation WITH $check_duration=true.
+     *
+     * Keeping the day decision identical to the time-list logic guarantees the
+     * calendar never offers a day whose time picker would come back empty. We break
+     * on the first valid slot, so bookable days stay cheap; only fully-unavailable
+     * days (the ones we want to hide) pay the full per-slot scan.
+     *
+     * We deliberately do NOT re-apply the hours-before window check here: the
+     * candidate sources already exclude out-of-window times (getTimes() enforces
+     * $d >= from && $d <= to for regular slots and only the upper bound for break
+     * slots), and the time picker below validates the very same candidate set
+     * WITHOUT an extra hb->check. Re-adding it would make the day-scan stricter than
+     * the picker and could hide a day whose only bookable slot is an in-window break
+     * slot — a false negative the picker would not produce.
+     *
+     * @param SLN_DateTime $date
+     * @param array        $bservices           services => attendant map from the builder
+     * @param bool         $isSmartAvailability "Choose assistant for me" mode flag
+     * @return bool
+     */
+    private function dateHasBookableSlot(SLN_DateTime $date, $bservices, $isSmartAvailability)
+    {
+        $ah = $this->plugin->getAvailabilityHelper();
+        $ah->setDate($date, $this->booking);
+        $dateStr = $date->format('Y-m-d');
+
+        if ($isSmartAvailability) {
+            // Same source the time list uses (no earlyExit: we need real candidates
+            // to validate, not just "any attendant free" — resource checks happen below).
+            $candidateTimes = $this->getAllAttendantsAvailableTimes(Date::create($date), $bservices, $this->duration);
+        } else {
+            $candidateTimes = $ah->getCachedTimes(Date::create($date), $this->duration);
+            if ($this->duration) {
+                $candidateTimes = $ah->filterTimesArrayByDurationWithBreakAllowance($candidateTimes, $this->duration);
+            }
+            if (SLN_Plugin::getInstance()->getSettings()->get('auto_align_slots') && $this->duration) {
+                $candidateTimes = SLN_Func::filterTimesAlignedToServiceDurationSlots($candidateTimes, $this->duration);
+            }
+        }
+
+        if (!is_array($candidateTimes)) {
+            return false;
+        }
+
+        foreach ($candidateTimes as $timeObj) {
+            if (!is_object($timeObj) || !method_exists($timeObj, 'format')) {
+                continue;
+            }
+            $tmpDateTime = new SLN_DateTime($dateStr . ' ' . $timeObj->format('H:i'));
+            $ah->setDate($tmpDateTime, $this->booking);
+            $errors = $this->checkDateTimeServicesAndAttendants($bservices, $tmpDateTime, true);
+            if (empty($errors)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 }

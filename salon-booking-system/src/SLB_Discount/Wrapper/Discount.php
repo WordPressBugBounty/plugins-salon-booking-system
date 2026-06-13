@@ -398,7 +398,17 @@ class SLB_Discount_Wrapper_Discount extends SLN_Wrapper_Abstract
         foreach ($bookingServices->getItems() as $bookingService) {
             if(!empty($attendants)){
                 $atts = $bookingService->getAttendant();
-                $atts = is_array($atts)? array_map(array('SLB_Discount_Wrapper_Discount', 'wrapperToID'), $atts) : $atts->getId();
+                // getAttendant() returns SLN_Wrapper_Attendant|array|false. Guard the false
+                // case: a service with no attendant assigned cannot match an attendant-restricted
+                // discount, and calling getId() on false throws a fatal (seen via the
+                // "Update totals" AJAX / get_services_calc_booking_total path).
+                if (is_array($atts)) {
+                    $atts = array_map(array('SLB_Discount_Wrapper_Discount', 'wrapperToID'), $atts);
+                } elseif (is_object($atts)) {
+                    $atts = $atts->getId();
+                } else {
+                    $atts = 0;
+                }
                 $check_att = !is_array($atts) ? 
                                 !in_array($atts, $attendants) :
                                 !empty(array_intersect($atts, $attendants));

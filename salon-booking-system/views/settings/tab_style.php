@@ -10,8 +10,8 @@ sum(
 	// link anchor, link text
 	array('#sln-booking_form_layout', __('Select booking form layout', 'salon-booking-system')),
 	array('#sln-custom_colors', __('Custom colors', 'salon-booking-system')),
-	array('#sln-ajax_steps', __('Ajax steps', 'salon-booking-system')),
-	array('#sln-disable_bootstrap_assets', __('Bootstrap assets', 'salon-booking-system'))
+	array('#sln-booking_flow', __('Booking flow & display', 'salon-booking-system')),
+	array('#sln-theme_compatibility', __('Theme compatibility & privacy', 'salon-booking-system'))
 );
 // phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 ?>
@@ -131,55 +131,22 @@ sum(
         </div>
     </div>
 </div>
-    <div class="row">
-    <div class="col-xs-12 col-sm-8 col-md-4">
-    <div id="sln-ajax_steps" class="sln-box sln-box--main sln-box--main--small">
-    <h2 class="sln-box-title">
-        <?php
-        // phpcs:ignore WordPress.Security.EscapeOutput.UnsafePrintingFunction
-        _e('Ajax steps <span>This allows loading steps via ajax</span>', 'salon-booking-system')?>
-    </h2>
-    <div class="row">
-            <div class="col-xs-12">
-                <div class="sln-checkbox">
-            <?php $this->row_input_checkbox('ajax_enabled', __('Enable ajax steps', 'salon-booking-system'));?>
-            </div>
-            <div class="sln-box-maininfo">
-                <p class="sln-box-info"><?php esc_html_e('This allows loading steps via ajax for a more smooth booking form transition.', 'salon-booking-system')?></p>
-            </div>
-            </div>
-        </div>
-    </div>
-    </div>
-    <div class="col-xs-12 col-sm-8 col-md-8">
-    <div id="sln-disable_bootstrap_assets" class="sln-box sln-box--main sln-box--main--small">
-    <h2 class="sln-box-title"><?php esc_html_e('Disable bootstrap assets', 'salon-booking-system')?></h2>
-    <div class="row">
-            <div class="col-xs-12 col-md-6">
-                <div class="sln-checkbox">
-                <?php $this->row_input_checkbox('no_bootstrap', __('CSS on front-end', 'salon-booking-system'));?>
-                </div>
-                <div class="sln-box-maininfo">
-                    <p class="sln-box-info"><?php esc_html_e('Use it in case of conflicts with your theme', 'salon-booking-system')?></p>
-                </div>
-            </div>
-            <div class="col-xs-12 col-md-6">
-                <div class="sln-checkbox">
-                <?php $this->row_input_checkbox('no_bootstrap_js', __('JS on front-end', 'salon-booking-system'));?>
-                </div>
-                <div class="sln-box-maininfo">
-                    <p class="sln-box-info"><?php esc_html_e('Use it in case of conflicts with your theme', 'salon-booking-system')?></p>
-                </div>
-            </div>
-        </div>
-    </div>
-    </div>
-</div>
-<div class="row">
-    <div class="col-xs-12 col-sm-8 col-md-4">
-        <div id="sln-booking-modal" class="sln-box sln-box--main">
+    <div id="sln-booking_flow" class="sln-box sln-box--main sln-box--haspanel">
+        <h2 class="sln-box-title sln-box__paneltitle">
+            <?php esc_html_e('Booking flow & display', 'salon-booking-system');?>
+            <span><?php esc_html_e('Control the steps, screens and details your customers see', 'salon-booking-system');?></span>
+        </h2>
+        <div class="collapse sln-box__panelcollapse">
             <div class="row">
-                <div class="col-xs-12">
+                <div class="col-xs-12 col-sm-6 col-md-3">
+                    <div class="sln-checkbox">
+                        <?php $this->row_input_checkbox('disable_forecast_screen', __('Disable bookings forecast screen', 'salon-booking-system'));?>
+                    </div>
+                    <div class="sln-box-maininfo">
+                        <p class="sln-box-info"><?php esc_html_e('When enabled, the one-click booking forecast screen is skipped and the wizard starts from the usual first step (services or date).', 'salon-booking-system')?></p>
+                    </div>
+                </div>
+                <div class="col-xs-12 col-sm-6 col-md-3">
                     <div class="sln-checkbox">
                         <?php $this->row_input_checkbox('replace_booking_modal_with_popup', __('Replace booking modal window with a pop-up', 'salon-booking-system'));?>
                     </div>
@@ -187,13 +154,50 @@ sum(
                         <p class="sln-box-info"><?php esc_html_e('This allows replace booking modal window with a pop-up.', 'salon-booking-system')?></p>
                     </div>
                 </div>
+                <div class="col-xs-12 col-sm-6 col-md-3">
+                    <div class="sln-checkbox">
+                        <?php $this->row_input_checkbox('hide_service_duration', __('Hide service duration', 'salon-booking-system'));?>
+                    </div>
+                    <div class="sln-box-maininfo">
+                        <p class="sln-box-info"><?php esc_html_e('When enabled, service duration will be hidden on booking form and email notification', 'salon-booking-system')?></p>
+                    </div>
+                </div>
+                <div class="col-xs-12 col-sm-6 col-md-3">
+                    <div class="sln-checkbox">
+                        <?php $this->row_input_checkbox('ajax_enabled', __('Enable ajax steps', 'salon-booking-system'));?>
+                    </div>
+                    <div class="sln-box-maininfo">
+                        <p class="sln-box-info"><?php esc_html_e('This allows loading steps via ajax for a more smooth booking form transition.', 'salon-booking-system')?></p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-xs-12 col-sm-8 col-md-4">
-        <div id="sln-booking-modal" class="sln-box sln-box--main">
+
+    <div id="sln-theme_compatibility" class="sln-box sln-box--main sln-box--haspanel">
+        <h2 class="sln-box-title sln-box__paneltitle">
+            <?php esc_html_e('Theme compatibility & privacy', 'salon-booking-system');?>
+            <span><?php esc_html_e('Resolve conflicts with your theme and meet GDPR requirements', 'salon-booking-system');?></span>
+        </h2>
+        <div class="collapse sln-box__panelcollapse">
             <div class="row">
-                <div class="col-xs-12">
+                <div class="col-xs-12 col-sm-6 col-md-4">
+                    <div class="sln-checkbox">
+                        <?php $this->row_input_checkbox('no_bootstrap', __('Disable bootstrap CSS on front-end', 'salon-booking-system'));?>
+                    </div>
+                    <div class="sln-box-maininfo">
+                        <p class="sln-box-info"><?php esc_html_e('Use it in case of conflicts with your theme', 'salon-booking-system')?></p>
+                    </div>
+                </div>
+                <div class="col-xs-12 col-sm-6 col-md-4">
+                    <div class="sln-checkbox">
+                        <?php $this->row_input_checkbox('no_bootstrap_js', __('Disable bootstrap JS on front-end', 'salon-booking-system'));?>
+                    </div>
+                    <div class="sln-box-maininfo">
+                        <p class="sln-box-info"><?php esc_html_e('Use it in case of conflicts with your theme', 'salon-booking-system')?></p>
+                    </div>
+                </div>
+                <div class="col-xs-12 col-sm-6 col-md-4">
                     <div class="sln-checkbox">
                         <?php $this->row_input_checkbox('disable_google_fonts', __('Disable Google fonts', 'salon-booking-system'));?>
                     </div>
@@ -204,20 +208,5 @@ sum(
             </div>
         </div>
     </div>
-    <div class="col-xs-12 col-sm-8 col-md-4">
-        <div id="sln-booking-modal" class="sln-box sln-box--main">
-            <div class="row">
-                <div class="col-xs-12">
-                    <div class="sln-checkbox">
-                        <?php $this->row_input_checkbox('hide_service_duration', __('Hide service duration', 'salon-booking-system'));?>
-                    </div>
-                    <div class="sln-box-maininfo">
-                        <p class="sln-box-info"><?php esc_html_e('When enabled, service duration will be hidden on booking form and email notification', 'salon-booking-system')?></p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
 

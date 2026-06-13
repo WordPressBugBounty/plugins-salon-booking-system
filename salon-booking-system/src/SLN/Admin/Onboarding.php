@@ -63,8 +63,14 @@ class SLN_Admin_Onboarding extends SLN_Admin_AbstractPage
             '1' === $_GET['sln_complete'] &&
             current_user_can($this->getCapability())
         ) {
-            update_option('_sln_onboarding_completed', 1);
-            wp_safe_redirect(admin_url('admin.php?page=salon'));
+            // Manual completion shortcut still has to satisfy the minimum required
+            // fields - otherwise it would be an easy bypass of the onboarding gate.
+            if (empty($this->getOnboardingMinimumErrors())) {
+                update_option('_sln_onboarding_completed', 1);
+                wp_safe_redirect(admin_url('admin.php?page=salon'));
+                exit();
+            }
+            wp_safe_redirect(admin_url('admin.php?page=salon-onboarding'));
             exit();
         }
 
@@ -468,6 +474,61 @@ class SLN_Admin_Onboarding extends SLN_Admin_AbstractPage
         return '09:00';
     }
 
+    /**
+     * Validate the minimum required onboarding fields against persisted state.
+     *
+     * The minimum to consider onboarding "complete" is: business type, business name,
+     * business email, at least one available day, and at least one published service.
+     * Returns a list of missing keys (empty array = minimum satisfied).
+     *
+     * @return string[]
+     */
+    private function getOnboardingMinimumErrors()
+    {
+        $settings = $this->plugin->getSettings();
+        $errors = array();
+
+        if (trim((string) get_option('_sln_usage_goal', '')) === '') {
+            $errors[] = 'usage_goal';
+        }
+        if (trim((string) $settings->get('gen_name')) === '') {
+            $errors[] = 'gen_name';
+        }
+        if (trim((string) $settings->get('gen_email')) === '') {
+            $errors[] = 'gen_email';
+        }
+
+        $availabilities = $settings->get('availabilities');
+        $hasDay = false;
+        if (is_array($availabilities)) {
+            foreach ($availabilities as $availability) {
+                if (!empty($availability['days']) && is_array($availability['days'])) {
+                    foreach ($availability['days'] as $enabled) {
+                        if ($enabled) {
+                            $hasDay = true;
+                            break 2;
+                        }
+                    }
+                }
+            }
+        }
+        if (!$hasDay) {
+            $errors[] = 'availability';
+        }
+
+        $services = get_posts(array(
+            'post_type'      => SLN_Plugin::POST_TYPE_SERVICE,
+            'post_status'    => 'publish',
+            'posts_per_page' => 1,
+            'fields'         => 'ids',
+        ));
+        if (empty($services)) {
+            $errors[] = 'service';
+        }
+
+        return $errors;
+    }
+
     public function ajaxComplete()
     {
         if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'sln_onboarding')) {
@@ -497,6 +558,27 @@ class SLN_Admin_Onboarding extends SLN_Admin_AbstractPage
                     $data['services'] = $decoded;
                 }
             }
+        }
+
+        // Enforce the minimum required setup server-side before anything is marked
+        // complete. The wizard UI already gates these, but a hand-crafted request (or a
+        // manual #/complete navigation) must not be able to skip them. Services that are
+        // about to be created in this same request count, so they are excluded from the
+        // persisted-state check below.
+        $errors = $this->getOnboardingMinimumErrors();
+        if (in_array('service', $errors, true) && !empty($data['services']) && is_array($data['services'])) {
+            foreach ($data['services'] as $s) {
+                if (!empty($s['name'])) {
+                    $errors = array_values(array_diff($errors, array('service')));
+                    break;
+                }
+            }
+        }
+        if (!empty($errors)) {
+            wp_send_json_error(array(
+                'message' => __('Please complete the required setup steps before finishing.', 'salon-booking-system'),
+                'missing' => $errors,
+            ));
         }
 
         if (isset($data['assistantSelectionEnabled'])) {

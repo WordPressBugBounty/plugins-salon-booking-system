@@ -2069,6 +2069,94 @@ function sln_stepDate($) {
     // triggered by the user tapping a date — show the full loading UI.
     var isInitialLoad = true;
 
+    // Returns the date-calendar's datetimepicker instance (inline div, with an
+    // input fallback for non-inline layouts).
+    function slnGetDatePicker() {
+        var dp = $(".sln_datepicker div").data("datetimepicker");
+        return dp === undefined
+            ? $(".sln_datepicker input").data("datetimepicker")
+            : dp;
+    }
+
+    // Converts a hidden-field date value to canonical "Y-m-d".
+    // The hidden field holds a LOCALIZED string (e.g. "19 Cze 2026"), while the
+    // server returns availability dates as "2026-06-19". Comparing the two raw
+    // strings is always unequal, so any code that needs to match the selected
+    // day against server dates must normalize through here first.
+    function slnDateToYmd(dateStr) {
+        if (!dateStr) return "";
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+        var dp = slnGetDatePicker();
+        if (!dp) return dateStr;
+        try {
+            var d = $.fn.datetimepicker.DPGlobal.parseDate(
+                dateStr,
+                dp.format,
+                dp.language,
+                dp.formatType
+            );
+            var m = d.getUTCMonth() + 1;
+            var day = d.getUTCDate();
+            return (
+                d.getUTCFullYear() +
+                "-" +
+                (m < 10 ? "0" + m : m) +
+                "-" +
+                (day < 10 ? "0" + day : day)
+            );
+        } catch (e) {
+            return dateStr;
+        }
+    }
+
+    // Applies a canonical "Y-m-d" date to the WHOLE date UI at once: the hidden
+    // sln[date] field, the calendar's active day, and the human-readable label.
+    // Used when code changes the selected day programmatically (e.g. auto-retry)
+    // so the visible calendar can never disagree with the value that is actually
+    // submitted to the server.
+    function slnApplyDateToUI(ymd) {
+        if (!ymd) return;
+        var parts = ymd.split("-");
+        if (parts.length !== 3) return;
+        var dateObj = new Date(
+            Date.UTC(
+                parseInt(parts[0], 10),
+                parseInt(parts[1], 10) - 1,
+                parseInt(parts[2], 10)
+            )
+        );
+        var dp = slnGetDatePicker();
+        if (!dp) return;
+        // Hidden field stays in the picker's localized display format, exactly
+        // like a manual day selection — keeps the value consistent everywhere.
+        $("input[name='sln[date]']").val(
+            $.fn.datetimepicker.DPGlobal.formatDate(
+                dateObj,
+                dp.format,
+                dp.language,
+                dp.formatType
+            )
+        );
+        // Move the calendar's selected/active day. setUTCDate() re-renders the
+        // calendar but does NOT fire changeDay, so this won't re-trigger validate().
+        dp.setUTCDate(dateObj);
+        // Refresh the label's date portion, preserving the existing time portion.
+        var dateString = dateObj.toLocaleDateString(
+            dp.language.replace("_", "-"),
+            {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+                timeZone: "UTC",
+            }
+        );
+        var existing = $("#sln_timepicker_viewdate").text();
+        var timePart =
+            existing.indexOf("|") !== -1 ? " |" + existing.split("|")[1] : "";
+        $("#sln_timepicker_viewdate").text(dateString + timePart);
+    }
+
     function validate(obj, autosubmit) {
         // Apply the loading overlay immediately on every user-triggered call so
         // the calendar is grayed out the instant the day is clicked. Without
@@ -2192,16 +2280,58 @@ function sln_stepDate($) {
                         intervalDates.length > 0 &&
                         intervalTimes.length === 0
                     ) {
-                        autoRetryEmptyTimes = true;
-                        // Skip dates with no available times. When the current date has no
-                        // attendants/slots (e.g. it's late in the day and duration exceeds
-                        // closing time), retry with the first date that differs from today.
-                        var currentDate = $("input[name='sln[date]']").val();
-                        var retryDate = intervalDates.find(function(d) { return d !== currentDate; });
-                        if (!retryDate) { retryDate = intervalDates[0]; }
-                        $("input[name='sln[date]']").val(retryDate);
+                        if (silentLoad) {
+                            // INITIAL automatic load only: open the form on a day that
+                            // actually has bookable slots instead of an empty time
+                            // picker. We deliberately do NOT do this for an explicit
+                            // user click — auto-jumping would hijack the day the
+                            // customer just selected (and trap them, unable to inspect
+                            // or keep that day).
+                            autoRetryEmptyTimes = true;
+                            // intervalDates are canonical "Y-m-d" but the hidden field
+                            // is a localized string ("19 Cze 2026"), so normalize before
+                            // comparing — otherwise the "skip current day" check never
+                            // matches and we could bounce to an arbitrary day.
+                            var currentYmd = slnDateToYmd($("input[name='sln[date]']").val());
+                            var retryDate = intervalDates.find(function(d) { return d !== currentYmd; });
+                            if (!retryDate) { retryDate = intervalDates[0]; }
+                            // Move the calendar, label AND hidden field together so the
+                            // visible date always matches what is submitted.
+                            slnApplyDateToUI(retryDate);
+                            $("input[name='sln[time]']").val("");
+                            validateImmediate(obj, false);
+                            return;
+                        }
+                        // USER explicitly picked this day and it has no bookable slots.
+                        // Respect the choice: stay on the selected day and show a clear
+                        // notice, rather than silently jumping to a different date.
+                        autoRetryEmptyTimes = false;
+                        var noSlotsMsg =
+                            typeof salon !== "undefined" && salon.txt_no_slots_for_day
+                                ? salon.txt_no_slots_for_day
+                                : "No available time slots for this day. Please choose another date.";
+                        var noSlotsBox = $(
+                            '<div class="sln-alert sln-alert--problem"></div>'
+                        ).text(noSlotsMsg);
+                        $("#sln-notifications")
+                            .html("")
+                            .addClass("sln-notifications--active")
+                            .append(noSlotsBox);
+                        $("#sln-debug-notifications")
+                            .html("")
+                            .addClass("sln-notifications--active")
+                            .append(noSlotsBox.clone());
+                        // No time can be selected, so block advancing to the next step.
+                        $("#sln-step-submit")
+                            .attr("disabled", true)
+                            .parent()
+                            .addClass("sln-btn--disabled");
+                        isValid = false;
+                        // Render the (empty) time list for the chosen day so the UI
+                        // reflects reality while the calendar stays on the clicked date.
+                        sln_renderAvailableTimeslots($, data);
+                        $("body").trigger("sln_date");
                         $("input[name='sln[time]']").val("");
-                        validateImmediate(obj, false);
                         return;
                     }
                     autoRetryEmptyTimes = false;

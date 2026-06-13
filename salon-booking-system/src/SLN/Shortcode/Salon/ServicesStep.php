@@ -1,12 +1,34 @@
 <?php
 // phpcs:ignoreFile WordPress.Security.NonceVerification.Recommended
 
-class SLN_Shortcode_Salon_ServicesStep extends SLN_Shortcode_Salon_Step
+class SLN_Shortcode_Salon_ServicesStep extends SLN_Shortcode_Salon_AbstractUserStep
 {
     private $services;
 
+    /**
+     * Keep the plain Step::isValid() behavior.
+     *
+     * AbstractUserStep::isValid() (the new parent, extended only to inherit
+     * dispatchAuth() for the "Returning customer? Log in" tab) re-binds the
+     * logged-in user's profile values onto the BookingBuilder on every
+     * validation pass. On the services step that runs in the wizard's reversed
+     * dispatch passes too, where it could overwrite checkout values the
+     * customer edited later in the flow — so it is deliberately skipped here.
+     */
+    public function isValid()
+    {
+        return (isset($_POST['submit_' . $this->getStep()]) || isset($_GET['submit_' . $this->getStep()])) && $this->dispatchForm();
+    }
+
     protected function dispatchForm()
     {
+        // --- "Returning customer? Log in" tab ---------------------------------
+        // Only treated as a login attempt when credentials were actually typed:
+        // the services tab submit does not carry a login_name value.
+        if (!is_user_logged_in() && !empty($_POST['login_name'])) {
+            return $this->dispatchLoginTab();
+        }
+
         $bb = $this->getPlugin()->getBookingBuilder();
         
         // DEBUG: Log received POST data for services
@@ -47,6 +69,55 @@ class SLN_Shortcode_Salon_ServicesStep extends SLN_Shortcode_Salon_Step
 	}
 
         return true;
+    }
+
+    /**
+     * Authenticate from the services-step login tab, then restart the wizard.
+     *
+     * On success the customer is redirected to the booking page with no step
+     * parameter: the wizard then resolves its default step naturally — the
+     * forecast cards when the customer has booking history, or back to the
+     * services step otherwise. Mirrors what the old forecast login screen did.
+     *
+     * @return bool false re-renders the services step with login errors.
+     */
+    private function dispatchLoginTab()
+    {
+        $username = sanitize_text_field(wp_unslash($_POST['login_name']));
+        $password = isset($_POST['login_password']) ? wp_unslash($_POST['login_password']) : '';
+
+        if (!$this->dispatchAuth($username, $password)) {
+            return false;
+        }
+
+        // Bust the forecast cache so the cards are built from live availability
+        // (covers both single-shop and current-shop cache keys).
+        $shop_id = isset($_GET['shop']) ? (int) $_GET['shop'] : 0;
+        SLN_Helper_BookingForecaster::bustCache(get_current_user_id(), $shop_id);
+
+        // dispatchAuth() preserved the BookingBuilder via transient + client id;
+        // propagate the client id in the redirect so the new session picks it up.
+        $client_id = $this->getPlugin()->getBookingBuilder()->getClientId();
+
+        $booking_page_id = $this->getPlugin()->getSettings()->getPayPageId();
+        $base_url        = ($booking_page_id && get_post_status($booking_page_id))
+            ? get_permalink($booking_page_id)
+            : home_url('/');
+
+        // Prefer the referer when it points at the same booking page, so custom
+        // page setups (translated slugs, query-built pages) keep working.
+        if (!empty($_SERVER['HTTP_REFERER'])) {
+            $referer      = wp_sanitize_redirect(wp_unslash($_SERVER['HTTP_REFERER']));
+            $referer_base = strtok($referer, '?');
+            if ($referer_base && (!$booking_page_id || untrailingslashit($referer_base) === untrailingslashit($base_url))) {
+                $base_url = $referer_base;
+            }
+        }
+
+        $redirect_url = add_query_arg(array('sln_client_id' => $client_id), $base_url);
+
+        $this->redirect($redirect_url); // throws for AJAX requests
+        exit;
     }
 
     /**

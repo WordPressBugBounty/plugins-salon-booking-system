@@ -234,10 +234,14 @@ function sln_initCountryCodeSelector($, $providerSection) {
     
     var input = $input[0];
     
-    // Destroy existing intlTelInput instance if any
-    if (input.intlTelInput) {
+    // Destroy existing intlTelInput instance if any.
+    // We enqueue the VANILLA build (intlTelInput.min.js), not the jQuery plugin,
+    // so the previous $(input).intlTelInput("destroy") call always threw and was
+    // swallowed - leaving a stale instance bound to a detached node. Use the
+    // instance's own destroy() (stored on the element below as input.intlTelInput).
+    if (input.intlTelInput && typeof input.intlTelInput.destroy === "function") {
         try {
-            $(input).intlTelInput("destroy");
+            input.intlTelInput.destroy();
         } catch(e) {
             // Ignore if destroy fails
         }
@@ -271,6 +275,21 @@ function sln_initCountryCodeSelector($, $providerSection) {
             $(input).val('+' + iti.getSelectedCountryData().dialCode);
         }
     });
+
+    // Block manual typing/paste so the dial code only changes via the flag
+    // selector (preserves SBP-2419's intent now that we can't use readonly).
+    // Tab is allowed so keyboard navigation still works.
+    $input
+        .off("keydown.slnCountryCode paste.slnCountryCode drop.slnCountryCode")
+        .on("keydown.slnCountryCode", function(e) {
+            if (e.key === "Tab" || e.keyCode === 9) {
+                return;
+            }
+            e.preventDefault();
+        })
+        .on("paste.slnCountryCode drop.slnCountryCode", function(e) {
+            e.preventDefault();
+        });
 }
 
 function sln_settingsGeneral($) {

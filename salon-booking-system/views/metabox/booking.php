@@ -805,14 +805,39 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                 $enableDiscountSystem = $plugin->getSettings()->get('enable_discount_system');
                 if ($enableDiscountSystem) {
                     $coupons = $plugin->getRepository(SLB_Discount_Plugin::POST_TYPE_DISCOUNT)->getAll();
-                    if ($coupons) {
-                        $couponArr = array();
-                        foreach ($coupons as $coupon) {
-                            $couponArr[$coupon->getId()] = $coupon->getTitle();
-                        }
-                        $discount_helper = new SLB_Discount_Helper_Booking();
+                    $discount_helper = new SLB_Discount_Helper_Booking();
+                    $discounts = $discount_helper->getBookingDiscountIds($booking);
 
-                        $discounts = $discount_helper->getBookingDiscountIds($booking);
+                    // Render the discount field when there are selectable coupons OR the booking
+                    // already has applied discounts. The second case matters on multi-shop sites:
+                    // getAll() is filtered to the current shop and may not return a coupon already
+                    // applied to this booking (e.g. an "all shops" coupon or a coupon from another
+                    // shop). Without this the field would render "No Discounts" even though a
+                    // discount is applied, and the next save would silently drop it.
+                    if ($coupons || !empty($discounts)) {
+                        // Timestamp used to decide whether a coupon is still active (within its
+                        // from/to window and under its total usage limit). Use the booking date so
+                        // date-bound coupons are evaluated against when the appointment happens.
+                        $discountCheckTs    = $booking->getDate() ? $booking->getDate()->getTimestamp() : (new SLN_DateTime())->getTimestamp();
+                        $appliedDiscountIds = array_map('intval', is_array($discounts) ? $discounts : array());
+
+                        $couponArr = array();
+                        if ($coupons) {
+                            foreach ($coupons as $coupon) {
+                                $couponId = (int) $coupon->getId();
+                                // Hide coupons that are no longer active (expired / out of date
+                                // window or total usage limit reached) so staff only pick valid
+                                // ones. A coupon already applied to THIS booking is always kept,
+                                // regardless of its current status, so it never disappears.
+                                if (!in_array($couponId, $appliedDiscountIds, true)) {
+                                    $couponErrors = $coupon->validateDiscount($discountCheckTs);
+                                    if (!empty($couponErrors)) {
+                                        continue;
+                                    }
+                                }
+                                $couponArr[$couponId] = $coupon->getTitle();
+                            }
+                        }
 
                         $tmpCoupons = array();
 
@@ -820,6 +845,18 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                             if (!empty($couponArr[$discountID])) {
                                 $tmpCoupons[$discountID] = $couponArr[$discountID];
                                 unset($couponArr[$discountID]);
+                            } else {
+                                // Applied coupon missing from the (shop-filtered) catalog: pull its
+                                // title directly so it still renders as a selected option and is
+                                // submitted back on save instead of being cleared.
+                                $appliedTitle = get_the_title($discountID);
+                                $tmpCoupons[$discountID] = (is_string($appliedTitle) && '' !== $appliedTitle)
+                                    ? $appliedTitle
+                                    : sprintf(
+                                        /* translators: %d: discount coupon post ID */
+                                        __('Discount #%d', 'salon-booking-system'),
+                                        (int) $discountID
+                                    );
                             }
                         }
 

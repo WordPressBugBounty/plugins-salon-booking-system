@@ -3,7 +3,7 @@
 
 class SLN_Action_InitScripts
 {
-    const ASSETS_VERSION = SLN_VERSION . '-20260604-forecast-dynamic-colors-v40';
+    const ASSETS_VERSION = SLN_VERSION . '-20260613-onboarding-gate-v43';
 	private static $isInclude = false;
 	private $isAdmin;
 	private $plugin;
@@ -167,6 +167,7 @@ class SLN_Action_InitScripts
 			'checkout_field_placeholder' => __('fill this field', 'salon-booking-system'),
 			'txt_close' => __('Close', 'salon-booking-system'),
 			'txt_overbooking' => __('This slot is already booked. Please choose a different time.', 'salon-booking-system'),
+			'txt_no_slots_for_day' => __('No available time slots for this day. Please choose another date.', 'salon-booking-system'),
 			'debug' => $s->get('debug') ? '1' : '0',
 		);
 
@@ -292,7 +293,14 @@ class SLN_Action_InitScripts
 		}
 		//Rtl support
 		wp_style_add_data('salon', 'rtl', 'replace');
-		if (SLN_Plugin::getInstance()->getSettings()->get('style_colors_enabled')) {
+		$settings = SLN_Plugin::getInstance()->getSettings();
+		if ($settings->get('style_colors_enabled')) {
+			// Rebuild uploads/sln-colors.css if it is missing or older than the
+			// shipped template (e.g. right after a plugin update). This keeps the
+			// custom palette in sync with new token rules without requiring a
+			// manual Style settings re-save on every site.
+			SLN_Helper_CustomColorsCss::maybeRegenerate($settings);
+
 			$dir = wp_upload_dir();
 			$dir = $dir['baseurl'];
 			if (is_ssl()) {

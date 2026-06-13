@@ -19,6 +19,7 @@ class SLN_Shortcode_Salon_AttendantStep extends SLN_Shortcode_Salon_Step
         $isMultipleAttSelection = $this->getPlugin()->getSettings()->isMultipleAttendantsEnabled();
         $bb                     = $this->getPlugin()->getBookingBuilder();
         $ah                     = $this->getPlugin()->getAvailabilityHelper();
+        $ah->setExcludeHiddenFromFrontend(true);
         $ah->setDate($bb->getDateTime());
         $bb->removeAttendants();
 
@@ -270,8 +271,13 @@ class SLN_Shortcode_Salon_AttendantStep extends SLN_Shortcode_Salon_Step
         if (!isset($this->attendants)) {
             /** @var SLN_Repository_AttendantRepository $repo */
             $repo             = $this->getPlugin()->getRepository(SLN_Plugin::POST_TYPE_ATTENDANT);
-            $this->attendants = $repo->sortByPos($repo->getAll());
-            $this->attendants = apply_filters('sln.shortcode.salon.AttendantStep.getAttendants', $this->attendants);
+            $attendants       = $repo->sortByPos($repo->getAll());
+            $attendants       = array_values(array_filter($attendants, function ($attendant) {
+                // Guard with is_callable for add-on compatibility (e.g. Multi-Shops
+                // may decorate attendant objects).
+                return !(is_callable(array($attendant, 'isHideOnFrontend')) && $attendant->isHideOnFrontend());
+            }));
+            $this->attendants = apply_filters('sln.shortcode.salon.AttendantStep.getAttendants', $attendants);
         }
 
         return $this->attendants;
@@ -291,6 +297,7 @@ class SLN_Shortcode_Salon_AttendantStep extends SLN_Shortcode_Salon_Step
     protected function isSkipAttendants($attendants){
         $bb = $this->getPlugin()->getBookingBuilder();
         $ah = $this->getPlugin()->getAvailabilityHelper();
+        $ah->setExcludeHiddenFromFrontend(true);
         $ah->setDate($this->getPlugin()->getBookingBuilder()->getDateTime());
         $bookingServices = SLN_Wrapper_Booking_Services::build($bb->getAttendantsIds(), $bb->getDateTime(), 0, $bb->getCountServices());
         $validAttendants = array();

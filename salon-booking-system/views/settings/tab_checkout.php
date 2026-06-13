@@ -33,6 +33,16 @@ sum(
                 </div>
             </div>
         </div>
+        <div class="row">
+            <div class="col-xs-12 col-md-6 ">
+                <div class="sln-checkbox">
+                    <?php $this->row_input_checkbox('skip_checkout_if_logged_in', __('Skip the checkout form if user is logged-in', 'salon-booking-system'), array('default' => 1)); ?>
+                </div>
+                <div class="sln-box-maininfo">
+                    <p class="sln-box-info"><?php esc_html_e('If enabled, logged-in customers whose profile already contains all the required checkout fields will skip the checkout form step. Disable it to always show the checkout form to logged-in customers.', 'salon-booking-system') ?></p>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 <div id="sln-facebook_login" class="sln-box sln-box--main sln-box--haspanel">

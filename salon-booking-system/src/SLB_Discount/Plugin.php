@@ -120,6 +120,17 @@ class SLB_Discount_Plugin {
 	public function hook_metabox_pre_eval($booking){
 		$enableDiscountSystem = $this->plugin->getSettings()->get('enable_discount_system');
 		if(!$enableDiscountSystem) return;
+
+		// Defense-in-depth: only touch stored discounts when the discount field was actually
+		// part of this submission. If the booking edit form could not render the discount
+		// dropdown at all (e.g. multi-shop catalog filtering hid the applied coupon and no
+		// other coupons exist for the current shop), the field is absent from POST. In that
+		// case do nothing rather than clearing the applied discount, decrementing its usage
+		// counters and restoring the full (undiscounted) price.
+		if ( ! array_key_exists( '_' . SLN_Plugin::POST_TYPE_BOOKING . '_discounts', $_POST ) ) {
+			return;
+		}
+
 		$old_discounts = SLB_Discount_Helper_Booking::getBookingDiscountIds($booking);
 		$data = array();
 		$items = $booking->getServicesMeta();
@@ -191,7 +202,6 @@ class SLB_Discount_Plugin {
 		$data["discounts"] = array();
 		$discountValues = 0;
 		$first = true;
-		$bookingTimestamp = $booking->getDate() ? $booking->getDate()->getTimestamp() : (new SLN_DateTime())->getTimestamp();
 		foreach ($discounts as $discountId) {
 			$discount = $this->get_discount_wrapper_or_null( $dRepo, $discountId );
 			if ( ! $discount ) {
@@ -199,13 +209,19 @@ class SLB_Discount_Plugin {
 				continue;
 			}
 
-			// Skip expired or otherwise invalid discounts.
-			$discountErrors = $discount->validateDiscount($bookingTimestamp);
-			if (!empty($discountErrors)) {
-				SLN_Plugin::addLog(sprintf('[Discount] Skipping invalid discount %d (admin path) for booking %d: %s', $discountId, $booking->getId(), implode(', ', $discountErrors)));
-				continue;
-			}
-
+			// Honor the admin's explicit selection. The back-end booking editor is an
+			// authoritative context: when staff manually pick a discount it must be
+			// applied and stored even if it is expired or has reached its usage limit
+			// (e.g. a single-use coupon that THIS booking already consumed).
+			//
+			// Gating this on validateDiscount() (added in 22d743ca7, Apr 2026) caused the
+			// coupon to be silently dropped from _sln_booking_discounts on save: the loop
+			// hit `continue`, so the canonical list was written back as [] while the
+			// discounted price (discount_amount) was left in place. Multi-shop made it
+			// reproducible on every booking because it saves a second time right after
+			// creation — by then the freshly-applied single-use coupon already failed
+			// validation. Usage/expiry limits are enforced on the customer-facing path;
+			// they must not strip an admin-chosen discount here.
 			$discountValues  = $discount->applyDiscountToBookingServices($bookingServices, true,  $booking->getAttendantsIds());
 
 			$data["discounts"][] = $discountId;

@@ -1356,7 +1356,8 @@
   color: {color-text-a};
 }
 #sln-salon.sln-customcolors .sln-forecast-login__subtitle,
-#sln-salon.sln-customcolors .sln-forecast-login__primary-hint {
+#sln-salon.sln-customcolors .sln-forecast-login__primary-hint,
+#sln-salon.sln-customcolors .sln-services-login__hint {
   color: {color-text-c};
 }
 #sln-salon.sln-customcolors .sln-forecast-login__toggle {

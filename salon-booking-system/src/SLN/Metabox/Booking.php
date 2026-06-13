@@ -311,7 +311,22 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
         $booking->reload();
         $m = $this->getPlugin()->messages();
         $status_changed = ($this->prevStatus != $booking->getStatus());
-        
+
+        // TEMP DIAGNOSTIC: trace "Do not notify customer" on admin save.
+        // Shows what was POSTed, what got persisted, and the resolved gate so we
+        // can tell whether the meta is being saved and honoured. Remove once fixed.
+        SLN_Plugin::addLog(sprintf(
+            '[DONT_NOTIFY_DIAG] Metabox save_post | booking #%d | POST(_sln_booking_dont_notify_customer)=%s | raw_meta=%s | getNotifyCustomer=%s | prevStatus=%s | newStatus=%s | status_changed=%s | is_modified=%s',
+            $post_id,
+            isset($_POST['_sln_booking_dont_notify_customer']) ? var_export($_POST['_sln_booking_dont_notify_customer'], true) : 'NOT_SET',
+            var_export(get_post_meta($post_id, '_sln_booking_dont_notify_customer', true), true),
+            $booking->getNotifyCustomer() ? 'true' : 'false',
+            $this->prevStatus,
+            $booking->getStatus(),
+            $status_changed ? 'true' : 'false',
+            $is_modified ? 'true' : 'false'
+        ));
+
         if ($status_changed) {
             if($this->prevStatus != 'auto-draft' && in_array($booking->getStatus(), $m->getStatusForSummary())) {
                 $is_modified = true; //if booking status was changed to PAID or PAY_LATER from backend, send booking modified notification

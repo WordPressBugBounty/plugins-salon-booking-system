@@ -36,7 +36,7 @@
 		<?php foreach($_additional_fields as $field):
 			if($field['type'] === 'file'){continue;} ?>
         <tr>
-        <td align="left" style="Margin:0;padding-top:10px;padding-bottom:10px;padding-left:25px;padding-right:25px"><p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:'source sans pro', 'helvetica neue', helvetica, arial, sans-serif;line-height:24px;color:#525252;font-size:16px"><?php echo esc_html__( sprintf('%s', $field['label']), 'salon-booking-system') ?>:&nbsp; <strong><?php echo esc_attr($field['value']) ?></strong></p></td>
+        <td align="left" style="Margin:0;padding-top:10px;padding-bottom:10px;padding-left:25px;padding-right:25px"><p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:'source sans pro', 'helvetica neue', helvetica, arial, sans-serif;line-height:24px;color:#525252;font-size:16px"><?php echo esc_html__( sprintf('%s', $field['label']), 'salon-booking-system') ?>:&nbsp; <strong><?php echo wp_kses_post( wp_unslash( $field['value'] ) ) ?></strong></p></td>
         </tr>
 		<?php endforeach; ?>
     </table></td>

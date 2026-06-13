@@ -4,7 +4,7 @@ class SLN_Shortcode_Salon_DetailsStep extends SLN_Shortcode_Salon_AbstractUserSt
 {
     public function isValid()
     {
-        if (is_user_logged_in() && $this->loggedInUserHasAllRequiredFields()) {
+        if ($this->isSkipCheckoutWhenLoggedInEnabled() && is_user_logged_in() && $this->loggedInUserHasAllRequiredFields()) {
             wp_get_current_user();
             $customer_fields = SLN_Enum_CheckoutFields::forRegistration()->appendSmsPrefix();
             $values = array();
@@ -20,6 +20,23 @@ class SLN_Shortcode_Salon_DetailsStep extends SLN_Shortcode_Salon_AbstractUserSt
         }
 
         return parent::isValid();
+    }
+
+    /**
+     * Whether the "Skip the checkout form if user is logged-in" checkout option
+     * is enabled.
+     *
+     * Backward compatibility: before this option existed the checkout step was
+     * always auto-skipped for logged-in users with complete profiles, so a value
+     * that was never saved (null) is treated as enabled.
+     *
+     * @return bool
+     */
+    private function isSkipCheckoutWhenLoggedInEnabled()
+    {
+        $value = $this->getPlugin()->getSettings()->get('skip_checkout_if_logged_in');
+
+        return $value === null ? true : (bool) $value;
     }
 
     private function loggedInUserHasAllRequiredFields()

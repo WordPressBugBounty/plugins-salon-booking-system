@@ -12,6 +12,7 @@ class SLN_Admin_SettingTabs_StyleTab extends SLN_Admin_SettingTabs_AbstractTab {
 		'replace_booking_modal_with_popup',
 		'disable_google_fonts',
 		'hide_service_duration',
+		'disable_forecast_screen',
 	);
 
 	protected function postProcess() {
@@ -22,17 +23,11 @@ class SLN_Admin_SettingTabs_StyleTab extends SLN_Admin_SettingTabs_AbstractTab {
 	}
 
 	protected function saveCustomCss() {
-		$css = file_get_contents(SLN_PLUGIN_DIR . '/css/sln-colors--custom.css');
-		$colors = $this->settings->get('style_colors');
-
-		if ($colors) {
-			foreach ($colors as $k => $v) {
-				$css = str_replace("{color-$k}", $v, $css);
-			}
-		}
-		$dir = wp_upload_dir();
-		$dir = $dir['basedir'];
-		file_put_contents($dir . '/sln-colors.css', $css);
+		// Single source of truth for generating uploads/sln-colors.css.
+		// SLN_Helper_CustomColorsCss also rebuilds it automatically when the
+		// shipped template changes, so a manual Style re-save is no longer the
+		// only way to pick up new token rules after a plugin update.
+		SLN_Helper_CustomColorsCss::regenerate($this->settings);
 	}
 }
 ?>

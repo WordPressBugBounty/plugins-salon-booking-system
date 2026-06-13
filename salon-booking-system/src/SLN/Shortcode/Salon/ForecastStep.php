@@ -468,11 +468,21 @@ class SLN_Shortcode_Salon_ForecastStep extends SLN_Shortcode_Salon_AbstractUserS
 	/**
 	 * Resolve which of the three render states applies right now.
 	 *
+	 * Guests: when the services step is the wizard's first regular step (the
+	 * "change steps order" setting), the dedicated login screen is replaced by
+	 * a "Returning customer? Log in" tab on the services step itself (see
+	 * salon_services.php / _services_login_tab.php) — so the forecast resolves
+	 * to 'skip' and the wizard starts one step earlier. After logging in from
+	 * that tab, customers with history are routed back here ('cards' state).
+	 *
+	 * With the default step order (date first) there is no services screen to
+	 * host the login tab as the opening step, so the login state is kept.
+	 *
 	 * @return string 'login' | 'cards' | 'skip'
 	 */
 	private function resolveState() {
 		if ( ! is_user_logged_in() ) {
-			return 'login';
+			return $this->getPlugin()->getSettings()->isFormStepsAltOrder() ? 'skip' : 'login';
 		}
 		if ( $this->customerHasSufficientHistory() ) {
 			return 'cards';
