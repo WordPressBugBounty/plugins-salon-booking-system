@@ -34,7 +34,6 @@ function sln_customSliderRange($, $elements) {
 
         labelFrom.html(inputFrom.val());
         labelTo.html(inputTo.val());
-        console.log(inputFrom.val());
         $(this).slider({
             range: true,
             min: 0,

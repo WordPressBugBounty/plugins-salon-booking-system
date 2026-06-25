@@ -293,6 +293,44 @@ if (!String.prototype.formatNum) {
     return url;
   }
 
+  // Multi-Shop support: resolve the currently selected shop so the calendar
+  // AJAX request loads (and counts) only bookings for that shop. The admin
+  // shop switcher reloads the page with ?shops=ID; the Reports dashboard and
+  // PWA also persist the selection in localStorage as sln_selected_shop.
+  // Returns 0 when no shop is selected (all shops).
+  function getSelectedShopId() {
+    try {
+      var search = window.location.search || "";
+      var match = search.match(/[?&]shops?=(\d+)/);
+      if (match && parseInt(match[1], 10) > 0) {
+        return parseInt(match[1], 10);
+      }
+
+      if (typeof localStorage !== "undefined") {
+        var saved = localStorage.getItem("sln_selected_shop");
+        if (saved) {
+          var id = parseInt(saved, 10);
+          if (isNaN(id)) {
+            try {
+              var parsed = JSON.parse(saved);
+              if (parsed && parsed.id) {
+                id = parseInt(parsed.id, 10);
+              }
+            } catch (e) {
+              id = 0;
+            }
+          }
+          if (id > 0) {
+            return id;
+          }
+        }
+      }
+    } catch (e) {
+      // Ignore and fall through to "all shops".
+    }
+    return 0;
+  }
+
   function getExtentedOption(cal, option_name) {
     var fromOptions =
       cal.options[option_name] != null ? cal.options[option_name] : null;
@@ -811,6 +849,10 @@ if (!String.prototype.formatNum) {
       if (browser_timezone.length) {
         params.browser_timezone = browser_timezone;
       }
+      var selectedShopId = getSelectedShopId();
+      if (selectedShopId > 0) {
+        params.shop = selectedShopId;
+      }
       self._pendingLoadCount = (self._pendingLoadCount || 0) + 1;
       var $title = $(".current-view--title");
       if ($title.length) {
@@ -1284,13 +1326,12 @@ if (!String.prototype.formatNum) {
       if (window.slnTooltipManager) {
         window.slnTooltipManager.hideTooltip();
       }
-      $("[data-action=clone-edited-booking]").text(
-        $("[data-action=clone-edited-booking]").data("clone"),
-      );
-      $("[data-action=clone-edited-booking]").removeClass("confirm");
+      $("[data-action=clone-edited-booking]")
+        .removeClass("confirm sln-btn--nu--highemph")
+        .addClass("sln-btn--nu--lowhemph");
       $('[data-dismiss="modal"]').removeClass("hide-important");
       $('[data-action="delete-edited-booking"]').removeClass("hide-important");
-      $(".clone-info").hide();
+      $(".sln-clone-popover").prop("hidden", true);
       event.preventDefault();
 
       $("[data-action=duplicate-edited-booking]").show();
@@ -1463,11 +1504,18 @@ if (!String.prototype.formatNum) {
     function onShowModal() {
       calendar.pauseAutoRefresh("modal");
       launchLoadingSpinner();
-      $("[data-action=clone-edited-booking]").text("Clone");
-      $("[data-action=clone-edited-booking]").removeClass("confirm");
       $('[data-dismiss="modal"]').removeClass("hide-important");
       $('[data-action="delete-edited-booking"]').removeClass("hide-important");
-      $(".clone-info").hide();
+      $("[data-action=clone-edited-booking]")
+        .removeClass("confirm sln-btn--nu--highemph")
+        .addClass("sln-btn--nu--lowhemph");
+      var $clonePop = $(".sln-clone-popover");
+      $clonePop.prop("hidden", true);
+      $clonePop.find("[name=clone_mode][value=repeat]").prop("checked", true);
+      $clonePop.find("[data-clone-panel=repeat]").prop("hidden", false);
+      $clonePop.find("[data-clone-panel=specific]").prop("hidden", true);
+      $clonePop.find("select[name=week_time]").val("1");
+      $clonePop.find("[name=unit_times_input]").val("1");
       var $editor = $(".booking-editor");
       $editor
         .off("load.dismiss_spinner")
@@ -1507,8 +1555,28 @@ if (!String.prototype.formatNum) {
         .on("click", onClickDuplicateEditedBooking);
       $("[data-action=clone-edited-booking]")
         .off("click")
-        .on("click", onClickCloneEditedBooking);
-      $("[name=unit_times_input]").off("click").on("click", onChangeTimes);
+        .on("click", onClickCloneTrigger);
+      $(
+        ".sln-clone-popover [name=unit_times_input], .sln-clone-popover select[name=week_time]",
+      )
+        .off("change.clone keyup.clone")
+        .on("change.clone keyup.clone", onChangeTimes);
+      $(".sln-clone-popover [name=clone_mode]")
+        .off("change.clone")
+        .on("change.clone", onChangeCloneMode);
+      $(".sln-clone-popover [data-clone-close]")
+        .off("click.clone")
+        .on("click.clone", onClickCloneClose);
+      $(".sln-clone-popover [data-clone-confirm]")
+        .off("click.clone")
+        .on("click.clone", onClickCloneConfirm);
+      $(document)
+        .off("click.clonepop")
+        .on("click.clonepop", function (e) {
+          if (!$(e.target).closest(".sln-clone-control").length) {
+            $(".sln-clone-popover").prop("hidden", true);
+          }
+        });
     }
 
     function onHideModal() {
@@ -1609,184 +1677,164 @@ if (!String.prototype.formatNum) {
         });
       }
     }
-    function onChangeTimes(event) {
-      var times = parseInt($(this).val());
-
-      let dateStr = $("#_sln_booking_date", window.frames[0].document)
-        .data("value")
-        .replace("00:00:00", "")
-        .trim(); // '08/07/2025'
-
-      function parseFlexibleDate(dateStr) {
-        let parts;
-
-        if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
-          parts = dateStr.split("/");
-          return new Date(parts[2], parts[1] - 1, parts[0]); // yyyy, mm, dd
-        }
-
-        if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-          parts = dateStr.split("-");
-          return new Date(parts[0], parts[1] - 1, parts[2]); // yyyy, mm, dd
-        }
-
-        if (/^\d{2}-\d{2}-\d{4}$/.test(dateStr)) {
-          parts = dateStr.split("-");
-          return new Date(parts[2], parts[0] - 1, parts[1]); // yyyy, mm, dd
-        }
-        if (/^\d{2} [A-Za-z]{3} \d{4}$/.test(dateStr)) {
-          parts = dateStr.split(" ");
-          const monthMap = {
-            Jan: 0,
-            Feb: 1,
-            Mar: 2,
-            Apr: 3,
-            May: 4,
-            Jun: 5,
-            Jul: 6,
-            Aug: 7,
-            Sep: 8,
-            Oct: 9,
-            Nov: 10,
-            Dec: 11,
-          };
-          let day = parseInt(parts[0]);
-          let month = monthMap[parts[1]];
-          let year = parseInt(parts[2]);
-          return new Date(year, month, day);
-        }
-        return null;
+    function clone_parseFlexibleDate(dateStr) {
+      var parts;
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
+        parts = dateStr.split("/");
+        return new Date(parts[2], parts[1] - 1, parts[0]);
       }
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        parts = dateStr.split("-");
+        return new Date(parts[0], parts[1] - 1, parts[2]);
+      }
+      if (/^\d{2}-\d{2}-\d{4}$/.test(dateStr)) {
+        parts = dateStr.split("-");
+        return new Date(parts[2], parts[0] - 1, parts[1]);
+      }
+      if (/^\d{2} [A-Za-z]{3} \d{4}$/.test(dateStr)) {
+        parts = dateStr.split(" ");
+        var monthMap = {
+          Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
+          Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11,
+        };
+        return new Date(parseInt(parts[2]), monthMap[parts[1]], parseInt(parts[0]));
+      }
+      return null;
+    }
 
-      let date = parseFlexibleDate(dateStr);
+    // Refresh the "Last copy" preview inside the clone popover. The booking date
+    // lives inside the editor iframe; the popover controls live in the parent.
+    function onChangeTimes() {
+      var $pop = $(".sln-clone-popover");
+      var times = parseInt($pop.find("[name=unit_times_input]").val(), 10) || 1;
+      var weekTime = parseInt($pop.find("select[name=week_time]").val(), 10) || 1;
+      $pop
+        .find(".times")
+        .text(
+          times === 1
+            ? $pop.find(".times").data("text_s")
+            : $pop.find(".times").data("text_m"),
+        );
 
+      var $dateEl = $("#_sln_booking_date", window.frames[0].document);
+      if (!$dateEl.length || !$dateEl.data("value")) {
+        return;
+      }
+      var dateStr = $dateEl.data("value").replace("00:00:00", "").trim();
+      var date = clone_parseFlexibleDate(dateStr);
       if (date && !isNaN(date)) {
-        date.setDate(date.getDate() + 7 * times);
-
-        var newDateStr =
-          String(date.getDate()).padStart(2, "0") +
-          "/" +
-          String(date.getMonth() + 1).padStart(2, "0") +
-          "/" +
-          date.getFullYear();
-
-        $(".time_until .time_date").text(newDateStr);
-      } else {
-        console.error("wrong date: " + dateStr);
+        date.setDate(date.getDate() + 7 * weekTime * times);
+        $pop
+          .find(".time_until .time_date")
+          .text(
+            String(date.getDate()).padStart(2, "0") +
+              "/" +
+              String(date.getMonth() + 1).padStart(2, "0") +
+              "/" +
+              date.getFullYear(),
+          );
       }
     }
-    function onClickCloneEditedBooking() {
+
+    function onChangeCloneMode() {
+      var mode = $(".sln-clone-popover [name=clone_mode]:checked").val();
+      $(".sln-clone-popover [data-clone-panel=repeat]").prop(
+        "hidden",
+        mode !== "repeat",
+      );
+      $(".sln-clone-popover [data-clone-panel=specific]").prop(
+        "hidden",
+        mode !== "specific",
+      );
+      if (mode === "repeat") {
+        onChangeTimes();
+      }
+    }
+
+    function onClickCloneClose() {
+      $(".sln-clone-popover").prop("hidden", true);
+      return false;
+    }
+
+    // The footer Clone button toggles the popover open/closed.
+    function onClickCloneTrigger() {
       if ($(this).closest(".sln-duplicate-booking--disabled").length > 0) {
         return false;
       }
-      if ($("[data-action=clone-edited-booking].confirm").length == 0) {
-        let dateStr = $("#_sln_booking_date", window.frames[0].document)
-          .data("value")
-          .replace("00:00:00", "")
-          .trim(); // '08/07/2025'
+      var $pop = $(".sln-clone-popover");
+      var willOpen = $pop.prop("hidden");
+      if (willOpen) {
+        $pop.find("[name=clone_mode][value=repeat]").prop("checked", true);
+        onChangeCloneMode();
+      }
+      $pop.prop("hidden", !willOpen);
+      return false;
+    }
 
-        function parseFlexibleDate(dateStr) {
-          let parts;
+    // The primary action inside the popover.
+    function onClickCloneConfirm() {
+      var $editor = $(".booking-editor");
+      bookingId = $("#post_ID", window.frames[0].document).val();
+      var mode = $(".sln-clone-popover [name=clone_mode]:checked").val();
 
-          if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
-            parts = dateStr.split("/");
-            return new Date(parts[2], parts[1] - 1, parts[0]); // yyyy, mm, dd
-          }
-
-          if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-            parts = dateStr.split("-");
-            return new Date(parts[0], parts[1] - 1, parts[2]); // yyyy, mm, dd
-          }
-
-          if (/^\d{2}-\d{2}-\d{4}$/.test(dateStr)) {
-            parts = dateStr.split("-");
-            return new Date(parts[2], parts[0] - 1, parts[1]); // yyyy, mm, dd
-          }
-          if (/^\d{2} [A-Za-z]{3} \d{4}$/.test(dateStr)) {
-            parts = dateStr.split(" ");
-            const monthMap = {
-              Jan: 0,
-              Feb: 1,
-              Mar: 2,
-              Apr: 3,
-              May: 4,
-              Jun: 5,
-              Jul: 6,
-              Aug: 7,
-              Sep: 8,
-              Oct: 9,
-              Nov: 10,
-              Dec: 11,
-            };
-            let day = parseInt(parts[0]);
-            let month = monthMap[parts[1]];
-            let year = parseInt(parts[2]);
-            return new Date(year, month, day);
-          }
-          return null;
-        }
-
-        let date = parseFlexibleDate(dateStr);
-
-        if (date && !isNaN(date)) {
-          date.setDate(date.getDate() + 7);
-
-          var newDateStr =
-            String(date.getDate()).padStart(2, "0") +
-            "/" +
-            String(date.getMonth() + 1).padStart(2, "0") +
-            "/" +
-            date.getFullYear();
-
-          $(".time_until .time_date").text(newDateStr);
-        } else {
-          console.error("wrong date: " + dateStr);
-        }
-
-        $("[data-action=clone-edited-booking]").text(
-          $("[data-action=clone-edited-booking]").data("confirm"),
-        );
-        $("[data-action=clone-edited-booking]").addClass("confirm");
-        $('[data-dismiss="modal"]').addClass("hide-important");
-        $('[data-action="delete-edited-booking"]').addClass("hide-important");
-        $(".clone-info").show();
+      var validateBooking;
+      try {
+        validateBooking = window.frames[0].sln_validateBooking;
+      } catch (e) {
+        validateBooking = window.frames[1].sln_validateBooking;
+      }
+      if (!validateBooking()) {
         return false;
       }
 
-      var $editor = $(".booking-editor");
+      if (mode === "specific") {
+        // Open an editable copy (duplicate) pre-filled from this booking, landing on
+        // the Date tab (handled by the sln_clone_specific flag), so the admin can pick
+        // the new date & time using the availability-aware pickers. The original
+        // booking is not changed because nothing is saved on it.
+        var dupTpl = $editor.data("src-template-duplicate-booking");
+        if (dupTpl) {
+          var dupUrl = dupTpl.replace("%id", bookingId) + "&sln_clone_specific=1";
+          $(".sln-clone-popover").prop("hidden", true);
+          launchLoadingSpinner();
+          $editor.off("load.hide_modal");
+          $editor
+            .off("load.dismiss_spinner")
+            .on("load.dismiss_spinner", onLoadDismissSpinner);
+          $editor.attr("src", dupUrl);
+        }
+        return false;
+      }
+
       bookingCopy = "duplicate";
-      bookingId = $("#post_ID", window.frames[0].document).val();
-      var unit_times = $(".clone-info input").val();
       $editor.off("load.hide_modal").on("load.hide_modal", onLoadAfterSubmit);
       $editor
         .off("load.dismiss_spinner")
         .on("load.dismiss_spinner", onLoadDismissSpinner);
 
-      try {
-        var validateBooking = window.frames[0].sln_validateBooking;
-      } catch (e) {
-        var validateBooking = window.frames[1].sln_validateBooking;
-      }
+      var unit_times = $(".sln-clone-popover input[name=unit_times_input]").val();
+      var week_time = $(".sln-clone-popover select[name=week_time]").val();
+      var data =
+        "&action=salon&method=DuplicateClone&bookingId=" +
+        bookingId +
+        "&unit=" +
+        unit_times +
+        "&week_time=" +
+        week_time +
+        "&security=" +
+        salon.ajax_nonce;
 
-      if (validateBooking()) {
-        var data =
-          "&action=salon&method=DuplicateClone&bookingId=" +
-          bookingId +
-          "&unit=" +
-          unit_times +
-          "&security=" +
-          salon.ajax_nonce;
-        launchLoadingSpinner();
-        $.ajax({
-          url: salon.ajax_url,
-          data: data,
-          method: "POST",
-          dataType: "json",
-          success: function (data) {
-            location.reload();
-          },
-        });
-      }
+      $(".sln-clone-popover").prop("hidden", true);
+      launchLoadingSpinner();
+      $.ajax({
+        url: salon.ajax_url,
+        data: data,
+        method: "POST",
+        dataType: "json",
+        success: function (data) {
+          location.reload();
+        },
+      });
     }
 
     function onLoadDismissSpinner() {
@@ -2021,15 +2069,14 @@ if (!String.prototype.formatNum) {
         var bookingid = $(this).data("bookingid");
 
         // Reset modal state
-        $("[data-action=clone-edited-booking]").text(
-          $("[data-action=clone-edited-booking]").data("clone"),
-        );
-        $("[data-action=clone-edited-booking]").removeClass("confirm");
+        $("[data-action=clone-edited-booking]")
+          .removeClass("confirm sln-btn--nu--highemph")
+          .addClass("sln-btn--nu--lowhemph");
         $('[data-action="save-edited-booking"]').removeClass("hide-important");
         $('[data-action="delete-edited-booking"]').removeClass(
           "hide-important",
         );
-        $(".clone-info").hide();
+        $(".sln-clone-popover").prop("hidden", true);
         $("[data-action=duplicate-edited-booking]").show();
 
         // Set booking ID and open modal

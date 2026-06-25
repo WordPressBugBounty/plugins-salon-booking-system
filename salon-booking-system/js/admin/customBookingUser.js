@@ -318,6 +318,19 @@ function sln_validateBooking() {
 	$(".sln-error").remove();
 	var hasErrors = false;
 
+	// Multi-Shop: a shop must be selected to create/save a booking. The shop
+	// <select> is only present when the Multi-Shops add-on is active, so this
+	// gracefully no-ops otherwise.
+	var $shopField = $("#_sln_booking_shop");
+	if ($shopField.length && !$shopField.val()) {
+		$shopField
+			.addClass("sln-invalid")
+			.closest(".form-group")
+			.append('<div class="sln-error error">This field is required</div>');
+		$shopField.trigger("focus");
+		hasErrors = true;
+	}
+
 	var toValidate = ['select[data-selection="service-selected"]'];
 	sln_customer_fields =
 		sln_customer_fields !== undefined
@@ -391,6 +404,13 @@ function sln_validateBooking_dym() {
 	$(".sln-invalid").removeClass("sln-invalid");
 	$(".sln-error").remove();
 	var hasErrors = false;
+
+	// Multi-Shop: a shop must be selected to create/save a booking (no-ops when
+	// the Multi-Shops shop selector is not present).
+	var $shopFieldDym = $("#_sln_booking_shop");
+	if ($shopFieldDym.length && !$shopFieldDym.val()) {
+		hasErrors = true;
+	}
 
 	var toValidate = ['select[data-selection="service-selected"]'];
 	sln_customer_fields =
@@ -2070,13 +2090,10 @@ function sln_booking_header_status() {
 		"data-booking_status"
 	);
 	function updateStatusMessage(v) {
-		console.log(v);
 		if (v === default_status) {
 			status_wrapper.addClass("selected_is_default");
-			console.log(v + " uguale e def " + default_status);
 		} else {
 			status_wrapper.removeClass("selected_is_default");
-			console.log(v + " NON uguale e def" + default_status);
 		}
 	}
 	updateStatusMessage(booking_status);
@@ -2084,7 +2101,6 @@ function sln_booking_header_status() {
 		let selected_status = e.params.data.id;
 		updateStatusMessage(selected_status);
 	});
-	console.log("sln_booking_header_status " + default_status);
 }
 sln_booking_header_status();
 function sln_booking_list_view() {
@@ -2103,11 +2119,6 @@ function sln_booking_list_view() {
 			$bookingEditorViewLabel.toggleClass(
 				"sln-switch--on__label",
 				!isChecked
-			);
-			console.log(
-				isChecked
-					? "Booking editor view enabled."
-					: "Booking editor view disabled."
 			);
 		};
 		function getCookie(name) {
@@ -2169,8 +2180,6 @@ sln_booking_list_view();
 				security: nonce
 			},
 			success: function(response) {
-				console.log('No-show AJAX response:', response);
-				
 				// Handle WordPress error response format
 				if (!response.success) {
 					console.error('No-show toggle error:', response.data);
@@ -2186,10 +2195,8 @@ sln_booking_list_view();
 					
 					if (data.noShow == 1) {
 						$button.addClass('active');
-						console.log('Added active class - icon should be red');
 					} else {
 						$button.removeClass('active');
-						console.log('Removed active class - icon should be blue');
 					}
 					
 					// Update customer no-show count if we have customer info
@@ -2199,7 +2206,6 @@ sln_booking_list_view();
 						var currentCount = parseInt($countElement.text()) || 0;
 						var newCount = data.noShow == 1 ? currentCount + 1 : Math.max(0, currentCount - 1);
 						$countElement.text(newCount);
-						console.log('Updated count from', currentCount, 'to', newCount);
 					}
 				}
 			},

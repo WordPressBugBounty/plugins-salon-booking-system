@@ -627,6 +627,13 @@ export default {
 
   },
   computed: {
+    // Multi-Shops: the reliable flag is the PWA bootstrap value (set from the
+    // sln_is_shops_enabled filter). The settings API exposes it as
+    // `multishop_enabled` (NOT `shops_enabled`), used here as a fallback.
+    isMultishopEnabled() {
+      return !!(window.slnPWA && window.slnPWA.is_shops)
+        || !!(this.$root.settings && this.$root.settings.multishop_enabled);
+    },
     statusesList() {
       var statuses = [];
       for (var key in this.$root.statusesList) {
@@ -885,7 +892,7 @@ export default {
     async save() {
       this.isValid = this.validate();
       if (!this.isValid) {
-        if (this.requiredFields.includes('shop') && this.$root.settings.shops_enabled) {
+        if (this.requiredFields.includes('shop') && this.isMultishopEnabled) {
           this.$emit('error', {
             message: this.getLabel('selectShopFirstMessage'),
             type: 'shop'
@@ -1233,7 +1240,7 @@ export default {
       this.requiredFields = [];
       this.shopError = false;
 
-      if (this.$root.settings.shops_enabled) {
+      if (this.isMultishopEnabled) {
         if (!this.shop || !this.shop.id) {
           this.requiredFields.push('shop');
           this.shopError = true;

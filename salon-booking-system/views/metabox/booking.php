@@ -355,7 +355,7 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                             </div>
                             <?php if ($current_rating <= 0): ?>
                                 <div class="sln-rating__notice">
-                                    <small class="description"><?php esc_html_e('Not rated yet', 'salon-booking-system'); ?> &middot; 
+                                    <small class="description">
                                         <?php if (defined('SLN_VERSION_PAY') && SLN_VERSION_PAY): ?>
                                             <a href="#" id="sln-request-feedback" data-booking-id="<?php echo (int) $booking->getId(); ?>" data-nonce="<?php echo esc_attr(wp_create_nonce('sln_send_feedback_' . (int) $booking->getId())); ?>"><?php esc_html_e('Request a feedback from customer by email', 'salon-booking-system'); ?></a>
                                         <?php else: ?>
@@ -458,8 +458,16 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                     }
                     ?>
 
-                    <!-- No-Show Tracking Section - 70% CTA Wrapper -->
-                    <div class="col-xs-12 col-sm-8 col-xl-6 sln-noshow-wrapper sln-profeature <?php echo !defined("SLN_VERSION_PAY") ? 'sln-profeature--disabled sln-profeature__tooltip-wrapper' : '' ?>">
+                    <!-- No-Show Tracking Section -->
+                    <?php
+                    $sln_rg_attendance_on = class_exists( 'SLB_RevenueGuard_License' ) && SLB_RevenueGuard_License::isAttendanceEnabled();
+                    $sln_noshow_col       = $sln_rg_attendance_on ? 'col-xs-12 col-sm-4' : 'col-xs-12 col-sm-8 col-xl-6';
+                    if ( $sln_rg_attendance_on ) :
+                    ?>
+                    </div>
+                    <div class="row sln-box__row--flex sln-rg-attendance-row">
+                    <?php endif; ?>
+                    <div class="<?php echo esc_attr( $sln_noshow_col ); ?> sln-noshow-wrapper<?php echo $sln_rg_attendance_on ? ' sln-noshow-wrapper--rg' : ''; ?> sln-profeature <?php echo !defined("SLN_VERSION_PAY") ? 'sln-profeature--disabled sln-profeature__tooltip-wrapper' : '' ?>">
                         <?php echo $plugin->loadView(
                             'metabox/_pro_feature_tooltip',
                             array(
@@ -475,6 +483,7 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                             <div class="sln-noshow-count">
                                 <span class="sln-noshow-count__value"><?php echo esc_html($customerNoShowCount); ?></span>
                             </div>
+                            <?php if ( ! $sln_rg_attendance_on ) : ?>
                             <div class="sln-noshow-toggle">
                                 <a href="#" 
                                    id="sln-noshow-toggle-btn"
@@ -486,10 +495,12 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                                     <i class="sln-icon sln-icon--no-show"></i>
                                 </a>
                             </div>
+                            <?php endif; ?>
                         </div>
                         <!-- Hidden field to persist no-show state on form submit -->
                         <input type="hidden" id="_sln_booking_no_show" name="_sln_booking_no_show" value="<?php echo $isNoShow ? '1' : ''; ?>" />
                     </div>
+                    <?php if ( ! $sln_rg_attendance_on ) : ?>
                     <script type="text/javascript">
                     jQuery(document).ready(function($) {
                         $('#sln-noshow-toggle-btn').on('click', function(e) {
@@ -525,6 +536,46 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                         });
                     });
                     </script>
+                    <?php endif; ?>
+
+                    <?php
+                    if ( class_exists( 'SLB_RevenueGuard_License' ) && SLB_RevenueGuard_License::isAttendanceEnabled() ) :
+                        $attendanceStatus = get_post_meta( $bookingId, SLB_RevenueGuard_Enum_AttendanceStatus::META_KEY, true );
+                        if ( ! $attendanceStatus && (int) $isNoShow === 1 ) {
+                            $attendanceStatus = SLB_RevenueGuard_Enum_AttendanceStatus::NO_SHOW;
+                        }
+                        $rgService = new SLB_RevenueGuard_Service_AttendanceService( $plugin );
+                        $canResolve = $rgService->isEligibleForResolution( $booking ) || SLB_RevenueGuard_Enum_AttendanceStatus::isResolved( $attendanceStatus );
+                        echo $plugin->loadView(
+                            'metabox/_revenue_guard_attendance',
+                            compact( 'plugin', 'booking', 'bookingId', 'attendanceStatus', 'canResolve' )
+                        );
+                    ?>
+                    <script type="text/javascript">
+                    jQuery(document).ready(function($) {
+                        var $block = $('#sln-rg-metabox-attendance');
+                        if (!$block.length) {
+                            return;
+                        }
+
+                        $block.on('change', 'input[name="sln_rg_attendance"]', function() {
+                            var $input = $(this);
+                            var $item = $input.closest('.sln-rg-attendance__item');
+
+                            $block.find('.sln-rg-attendance__item').addClass('is-processing');
+
+                            $.post(ajaxurl, {
+                                action: 'sln_revenue_guard_resolve',
+                                security: '<?php echo esc_js( wp_create_nonce( 'ajax_post_validation' ) ); ?>',
+                                booking_id: $input.data('booking-id'),
+                                status: $input.val()
+                            }).always(function() {
+                                $block.find('.sln-rg-attendance__item').removeClass('is-processing');
+                            });
+                        });
+                    });
+                    </script>
+                    <?php endif; ?>
 
                 </div>
                 <div class="row">
@@ -639,6 +690,20 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
             </div>
         </div><!-- salon-step-date // END -->
 
+        <script>
+            jQuery(function ($) {
+                try {
+                    var qp = new URLSearchParams(window.location.search);
+                    if (qp.get('sln_clone_specific') === '1') {
+                        var $dateTab = $('a[data-target="#salon-step-date"]');
+                        if ($dateTab.length) {
+                            $dateTab.trigger('click');
+                        }
+                    }
+                } catch (e) {}
+            });
+        </script>
+
         <div id="sln-booking__services" role="tabpanel" class="sln-box sln-box--main tab-pane sln-admin__tabpanel sln-admin__tabpanel--services <?php echo in_array(SLN_Plugin::USER_ROLE_WORKER,  wp_get_current_user()->roles) ? 'sln-disabled' : '' ?>">
             <h4 class="sln-box-title--nu--sec"><?php esc_html_e('Service', 'salon-booking-system'); ?></h4>
             <?php echo $plugin->loadView('metabox/_booking_services', compact('booking')); ?>
@@ -713,10 +778,13 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                     $sln_pm_first_txn   = $sln_pm_txn_ids[0];
                     $sln_pm_txn_url     = '';
                     if ($sln_pm_is_stripe) {
-                        if (strpos($sln_pm_first_txn, 'txn_') === 0) {
-                            $sln_pm_txn_url = 'https://dashboard.stripe.com/' . $sln_pm_stripe_prefix . 'balance/history/' . $sln_pm_first_txn;
-                        } elseif (strpos($sln_pm_first_txn, 'ch_') === 0 || strpos($sln_pm_first_txn, 'pi_') === 0) {
+                        if (strpos($sln_pm_first_txn, 'ch_') === 0 || strpos($sln_pm_first_txn, 'pi_') === 0) {
+                            // Charge / PaymentIntent ids resolve directly to the payment detail page.
                             $sln_pm_txn_url = 'https://dashboard.stripe.com/' . $sln_pm_stripe_prefix . 'payments/' . $sln_pm_first_txn;
+                        } else {
+                            // Legacy balance-transaction ids (txn_) have no dashboard detail page;
+                            // fall back to Dashboard search so the reference is still clickable.
+                            $sln_pm_txn_url = 'https://dashboard.stripe.com/' . $sln_pm_stripe_prefix . 'search?query=' . rawurlencode($sln_pm_first_txn);
                         }
                     } elseif ($sln_pm_is_paypal) {
                         $sln_pm_txn_url = 'https://www.paypal.com/activity/payment/' . $sln_pm_first_txn;
@@ -1175,142 +1243,105 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                     }
                 });
 
-                jQuery("[name=week_time]").on("change", function() {
-                    $("[name=unit_times_input]").trigger('click')
-                })
-                jQuery("[name=unit_times_input]").on("click", function() {
-                        var times = parseInt($(this).val());
-                        var week_time = parseInt($('select[name="week_time"]').val());
-			            var label = times === 1 ? $('.times').data('text_s') : $('.times').data('text_m');
-                        let dateStr = $('#_sln_booking_date').data('value').replace('00:00:00','').trim(); // '08/07/2025'
+                function clone_parseFlexibleDate(dateStr) {
+                    var parts;
+                    if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) { parts = dateStr.split('/'); return new Date(parts[2], parts[1] - 1, parts[0]); }
+                    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) { parts = dateStr.split('-'); return new Date(parts[0], parts[1] - 1, parts[2]); }
+                    if (/^\d{2}-\d{2}-\d{4}$/.test(dateStr)) { parts = dateStr.split('-'); return new Date(parts[2], parts[0] - 1, parts[1]); }
+                    if (/^\d{2} [A-Za-z]{3} \d{4}$/.test(dateStr)) {
+                        parts = dateStr.split(' ');
+                        var monthMap = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
+                        return new Date(parseInt(parts[2]), monthMap[parts[1]], parseInt(parts[0]));
+                    }
+                    return null;
+                }
 
-                        function parseFlexibleDate(dateStr) {
-                            let parts;
+                function clone_updatePreview() {
+                    var $pop = $('.sln-clone-popover');
+                    var times = parseInt($pop.find('[name=unit_times_input]').val(), 10) || 1;
+                    var weekTime = parseInt($pop.find('select[name=week_time]').val(), 10) || 1;
+                    $pop.find('.times').text(times === 1 ? $pop.find('.times').data('text_s') : $pop.find('.times').data('text_m'));
+                    var $dateEl = $('#_sln_booking_date');
+                    if (!$dateEl.length || !$dateEl.data('value')) { return; }
+                    var dateStr = String($dateEl.data('value')).replace('00:00:00', '').trim();
+                    var date = clone_parseFlexibleDate(dateStr);
+                    if (date && !isNaN(date)) {
+                        date.setDate(date.getDate() + 7 * weekTime * times);
+                        $pop.find('.time_until .time_date').text(
+                            String(date.getDate()).padStart(2, '0') + '/' +
+                            String(date.getMonth() + 1).padStart(2, '0') + '/' +
+                            date.getFullYear()
+                        );
+                    }
+                }
 
-                        if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
-                            parts = dateStr.split('/');
-                            return new Date(parts[2], parts[1] - 1, parts[0]); // yyyy, mm, dd
-                        }
+                function clone_setMode(mode) {
+                    var $pop = $('.sln-clone-popover');
+                    $pop.find('[data-clone-panel=repeat]').prop('hidden', mode !== 'repeat');
+                    $pop.find('[data-clone-panel=specific]').prop('hidden', mode !== 'specific');
+                    if (mode === 'repeat') { clone_updatePreview(); }
+                }
 
-                        if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-                            parts = dateStr.split('-');
-                            return new Date(parts[0], parts[1] - 1, parts[2]); // yyyy, mm, dd
-                        }
+                function clone_closePopover() {
+                    $('.sln-clone-popover').prop('hidden', true);
+                }
 
-                        if (/^\d{2}-\d{2}-\d{4}$/.test(dateStr)) {
-                            parts = dateStr.split('-');
-                            return new Date(parts[2], parts[0] - 1, parts[1]); // yyyy, mm, dd
-                        }
-                        if (/^\d{2} [A-Za-z]{3} \d{4}$/.test(dateStr)) {
-                            parts = dateStr.split(' ');
-                            const monthMap = {
-                                Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
-                                Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11
-                            };
-                            let day = parseInt(parts[0]);
-                            let month = monthMap[parts[1]];
-                            let year = parseInt(parts[2]);
-                            return new Date(year, month, day);
-                        }
-                            return null;
-                        }
-
-                        let date = parseFlexibleDate(dateStr);
-
-                        if (date && !isNaN(date)) {
-                        date.setDate(date.getDate() + 7 * week_time *times);
-
-                        var newDateStr =
-                        String(date.getDate()).padStart(2, '0') + '/' +
-                        String(date.getMonth() + 1).padStart(2, '0') + '/' +
-                        date.getFullYear();
-
-                        $('.time_until .time_date').text(newDateStr);
-                        $('.clone-info .times').text(label);
-                        } else {
-                        console.error("wrong date1: " + dateStr);
-                        }
+                jQuery('[name=unit_times_input], [name=week_time]').on('change keyup', clone_updatePreview);
+                jQuery('[name=clone_mode]').on('change', function () { clone_setMode($(this).val()); });
+                jQuery('[data-clone-close]').on('click', function () { clone_closePopover(); return false; });
+                jQuery('[data-action=clone-edited-booking]').on('click', function () {
+                    if ($(this).closest('.sln-duplicate-booking--disabled').length > 0) { return false; }
+                    var $pop = $('.sln-clone-popover');
+                    var willOpen = $pop.prop('hidden');
+                    if (willOpen) {
+                        $pop.find('[name=clone_mode][value=repeat]').prop('checked', true);
+                        clone_setMode('repeat');
+                    }
+                    $pop.prop('hidden', !willOpen);
+                    return false;
                 });
 
-                jQuery("[data-action=clone-edited-booking]").on("click", function() {
+                jQuery('[data-clone-confirm]').on('click', function () {
+                    var mode = $('.sln-clone-popover [name=clone_mode]:checked').val();
 
-
-                    if(($('[data-action=clone-edited-booking].confirm').length == 0)){
-
-
-                        let dateStr =$('#_sln_booking_date').data('value').replace('00:00:00','').trim();
-
-                        function parseFlexibleDate(dateStr) {
-                            let parts;
-
-                            if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
-                                parts = dateStr.split('/');
-                                return new Date(parts[2], parts[1] - 1, parts[0]); // yyyy, mm, dd
-                            }
-
-                            if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-                                parts = dateStr.split('-');
-                                return new Date(parts[0], parts[1] - 1, parts[2]); // yyyy, mm, dd
-                            }
-
-                            if (/^\d{2}-\d{2}-\d{4}$/.test(dateStr)) {
-                                parts = dateStr.split('-');
-                                return new Date(parts[2], parts[0] - 1, parts[1]); // yyyy, mm, dd
-                            }
-                            if (/^\d{2} [A-Za-z]{3} \d{4}$/.test(dateStr)) {
-                                parts = dateStr.split(' ');
-                                const monthMap = {
-                                    Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
-                                    Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11
-                                };
-                                let day = parseInt(parts[0]);
-                                let month = monthMap[parts[1]];
-                                let year = parseInt(parts[2]);
-                                return new Date(year, month, day);
-                            }
-                            return null;
+                    if (mode === 'specific') {
+                        // Open an editable copy (duplicate) pre-filled from this booking,
+                        // landing on the Date tab so the admin can pick the new date & time
+                        // using the availability-aware pickers. The original is not changed.
+                        if (sln_validateBooking()) {
+                            var dupHref = '<?php echo admin_url('/post-new.php?post_type=sln_booking&action=duplicate&post=%id&mode=sln_editor&sln_editor_popup=1&sln_clone_specific=1') ?>';
+                            dupHref = dupHref.replace('%id', $('#post_ID').val());
+                            window.location.href = dupHref;
                         }
+                        return false;
+                    }
 
-                        let date = parseFlexibleDate(dateStr);
+                    if (sln_validateBooking()) {
+                        var bookingId = $('#post_ID').val();
+                        var unit_times = $('.sln-clone-popover input[name=unit_times_input]').val();
+                        var week_time = $('.sln-clone-popover select[name=week_time]').val();
+                        var data = "&action=salon&method=DuplicateClone&bookingId=" + bookingId + "&unit=" + unit_times + "&week_time=" + week_time + "&security=" + salon.ajax_nonce;
 
-                            if (date && !isNaN(date)) {
-                                date.setDate(date.getDate() + 7);
+                        $.ajax({
+                            url: salon.ajax_url,
+                            data: data,
+                            method: "POST",
+                            dataType: "json",
+                            success: function (data) {
+                                if (window.opener) {
+                                    window.opener.location.reload();
+                                }
+                                window.close();
+                            },
+                        });
+                    }
+                    return false;
+                });
 
-                                var newDateStr =
-                                    String(date.getDate()).padStart(2, '0') + '/' +
-                                    String(date.getMonth() + 1).padStart(2, '0') + '/' +
-                                    date.getFullYear();
-
-                                $('.time_until .time_date').text(newDateStr);
-                            } else {
-                                console.error("wrong date: " + dateStr);
-                            }
-
-                            $("[data-action=clone-edited-booking]").text($("[data-action=clone-edited-booking]").data('confirm'));
-                            $("[data-action=clone-edited-booking]").addClass('confirm');
-                            $('[data-action="delete-edited-booking"]').addClass('hide-important');
-                            $('[data-action="save-edited-booking"]').addClass('hide-important');
-                            $('.clone-info').show();
-                            return false;
-                           }
-                            if (sln_validateBooking()) {
-                                var bookingId = $('#post_ID').val();
-                                var unit_times = $('.clone-info input').val();
-                                var week_time = $('.clone-info select').val();
-                                var data = "&action=salon&method=DuplicateClone&bookingId="+bookingId+"&unit="+unit_times+"&week_time="+week_time+"&security=" + salon.ajax_nonce;
-                                $.ajax({
-                                    url: salon.ajax_url,
-                                    data: data,
-                                    method: "POST",
-                                    dataType: "json",
-                                    success: function (data) {
-                                        if (window.opener) {
-                                            window.opener.location.reload();
-                                        }
-                                        window.close();
-                                    },
-                                });
-                            }
+                jQuery(document).on('click', function (e) {
+                    if (!$(e.target).closest('.sln-clone-control').length) {
+                        clone_closePopover();
+                    }
                 });
             })
         </script>
@@ -1320,19 +1351,10 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                 <button type="button" class="sln-btn sln-btn--nu sln-btn--nu--highemph sln-btn--big" aria-hidden="true" data-action="save-edited-booking">
                     <?php esc_html_e('Save', 'salon-booking-system') ?>
                 </button>
-                <div class="clone-info" style="font-family: 'Open Sans';display:none;">
-                    <?php esc_html_e('Clone this booking', 'salon-booking-system') ?>
-                    <input type="number" name="unit_times_input" min="1" value="1" style="width: 50px;"/>
-                    <span class="times" data-text_s="<?php esc_html_e('time', 'salon-booking-system') ?>" data-text_m="<?php esc_html_e('times', 'salon-booking-system') ?>"><?php esc_html_e('time', 'salon-booking-system') ?></span>
-                    <select name="week_time" >
-                    <option value="1"><?php esc_html_e('every week', 'salon-booking-system') ?> </option>
-                    <option value="2"><?php esc_html_e('every two weeks', 'salon-booking-system') ?> </option>
-                    <option value="3"><?php esc_html_e('every three week', 'salon-booking-system') ?> </option>
-                    <option value="4"><?php esc_html_e('every four week', 'salon-booking-system') ?> </option>
-                    </select>
-                    <span class="time_until" style="margin-left: 10px;font-size:13px;" ><?php esc_html_e('until', 'salon-booking-system') ?> <span class="time_date">%date</span></span>
+                <div class="sln-clone-control">
+                    <button type="button" class="sln-btn sln-btn--nu sln-btn--nu--lowhemph sln-btn--big" aria-hidden="true" data-action="clone-edited-booking"><?php esc_html_e('Clone', 'salon-booking-system') ?></button>
+                    <?php echo $plugin->loadView('metabox/_clone_popover'); ?>
                 </div>
-                <button type="button" class="sln-btn sln-btn--nu sln-btn--nu--lowhemph sln-btn--big" aria-hidden="true" data-confirm="<?php esc_html_e('Confirm', 'salon-booking-system') ?>" data-action="clone-edited-booking"><?php esc_html_e('Clone', 'salon-booking-system') ?></button>
                 <button type="button" class="sln-btn sln-btn--nu sln-btn--nu--lowhemph sln-btn--big" aria-hidden="true" data-action="delete-edited-booking">
                     <?php esc_html_e('Delete', 'salon-booking-system') ?>
                 </button>

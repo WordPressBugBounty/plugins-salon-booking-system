@@ -17,13 +17,13 @@ class SLN_Shortcode_Salon_ThankyouStep extends SLN_Shortcode_Salon_Step
     }
 
     public function render(){
-        $plugin = $this->getPlugin();
-        if($plugin->getSettings()->get('disable_summary_skip_countdown')){
-            if($this->isAjax()){
-                wp_send_json(array('redirect' => $this->getThankyou())); die;
-            }
-            wp_redirect($this->getThankyou());die;
-        }
+        // Always render the booking confirmation step so the customer sees the
+        // booking number/status and the salonBookingComplete analytics event fires.
+        // The "Disable countdown on booking completion" option only suppresses the
+        // auto-redirect countdown (see getViewData()/salon_thankyou views); it must
+        // NOT skip this step, otherwise the customer was bounced straight to the
+        // Thank You page — or, when no Thank You page is configured, back to the
+        // booking page's first (forecast) step.
         return $this->getPlugin()->loadView('shortcode/salon_' . $this->getStep(), $this->getViewData());
     }
 
@@ -40,6 +40,7 @@ class SLN_Shortcode_Salon_ThankyouStep extends SLN_Shortcode_Salon_Step
 	    add_post_meta( $booking->getId(), '_' . SLN_Plugin::POST_TYPE_BOOKING . '_origin_source', $origin, true );
         $ret['booking'] = $booking;
         $ret['goToThankyou'] = $this->getThankyou();
+        $ret['disableCountdown'] = (bool) $this->getPlugin()->getSettings()->get('disable_summary_skip_countdown');
         return $ret;
     }
 

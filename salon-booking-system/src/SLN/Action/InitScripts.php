@@ -3,7 +3,7 @@
 
 class SLN_Action_InitScripts
 {
-    const ASSETS_VERSION = SLN_VERSION . '-20260613-onboarding-gate-v43';
+    const ASSETS_VERSION = SLN_VERSION . '-20260624-revenue-guard-banner-v44';
 	private static $isInclude = false;
 	private $isAdmin;
 	private $plugin;

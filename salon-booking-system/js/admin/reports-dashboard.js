@@ -249,6 +249,20 @@
         },
 
         /**
+         * Revenue Guard — attendance coverage & lost revenue
+         */
+        getRevenueGuardStats: function(startDate, endDate, shopId) {
+            const params = {
+                start_date: startDate,
+                end_date: endDate
+            };
+            if (shopId) {
+                params.shop = shopId;
+            }
+            return this.request('/revenue-guard/stats', params);
+        },
+
+        /**
          * Get cancellation analytics
          */
         getCancellations: function(startDate, endDate) {
@@ -870,9 +884,7 @@
             // Date range selector
             $('#sln-date-range').on('change', (e) => {
                 const rangeKey = $(e.target).val();
-                
-                console.log('Date range changed to:', rangeKey);
-                
+
                 if (rangeKey === 'custom') {
                     // Show custom date picker
                     $('#sln-custom-date-range').show();
@@ -891,7 +903,6 @@
                     $('#sln-date-range-display').show();
                     
                     const newDates = DateRangeManager.setRange(rangeKey);
-                    console.log('New date range set:', newDates);
                     this.updateDateRangeDisplay();
                     this.loadDashboard();
                 }
@@ -901,9 +912,7 @@
             $('#sln-apply-custom-range').on('click', () => {
                 const startDate = $('#sln-start-date').val();
                 const endDate = $('#sln-end-date').val();
-                
-                console.log('Applying custom date range:', startDate, 'to', endDate);
-                
+
                 if (!startDate || !endDate) {
                     alert(__('Please select both start and end dates', 'salon-booking-system'));
                     return;
@@ -995,6 +1004,14 @@
                     DashboardAPI.getForecastStats(dates.start, dates.end).catch(err => {
                         console.warn('Forecast stats failed:', err);
                         return null;
+                    }),
+                    DashboardAPI.getRevenueGuardStats(
+                        dates.start,
+                        dates.end,
+                        settings.managerShopId || 0
+                    ).catch(err => {
+                        console.warn('Revenue Guard stats failed:', err);
+                        return null;
                     })
                 ];
                 
@@ -1015,15 +1032,7 @@
                     apiCalls.push(Promise.resolve(null), Promise.resolve(null));
                 }
                 
-                const [stats, services, assistants, customers, peakTimes, retention, frequencyCLV, utilization, forecastStats, noShowStats, noShowRate] = await Promise.all(apiCalls);
-
-                // Debug: Log fetched data
-                console.log('Dashboard data loaded:', {
-                    stats: stats,
-                    services: services,
-                    assistants: assistants,
-                    dateRange: dates
-                });
+                const [stats, services, assistants, customers, peakTimes, retention, frequencyCLV, utilization, forecastStats, revenueGuardStats, noShowStats, noShowRate] = await Promise.all(apiCalls);
 
                 // Update UI components
                 this.updateKPICards(stats, retention, customers);
@@ -1039,7 +1048,10 @@
                 // Update no-show metrics if data is available
                 if (noShowStats) {
                     this.updateNoShowMetrics(noShowStats, noShowRate);
-                } else {
+                }
+
+                if (revenueGuardStats) {
+                    this.updateRevenueGuardMetrics(revenueGuardStats);
                 }
 
                 // Update forecast feature stats
@@ -1493,9 +1505,6 @@
         updateServicesTable: function(services) {
             const tbody = $('#services-table tbody');
             tbody.empty();
-            
-            // Debug: Log the data being displayed
-            console.log('Updating services table with data:', services);
 
             services.items.forEach(service => {
                 const row = $('<tr>')
@@ -1516,10 +1525,7 @@
         updateServicePieCharts: function(services) {
             const settings = window.salonDashboard || {};
             const currencySymbol = settings.currencySymbol || '$';
-            
-            // Debug: Log service data being charted
-            console.log('Updating service charts with data:', services);
-            
+
             // Prepare data for charts
             const bookingsLabels = [];
             const bookingsData = [];
@@ -1693,10 +1699,7 @@
         updateAssistantPieCharts: function(assistants) {
             const settings = window.salonDashboard || {};
             const currencySymbol = settings.currencySymbol || '$';
-            
-            // Debug: Log assistant data being charted
-            console.log('Updating assistant charts with data:', assistants);
-            
+
             // Prepare data for hours chart
             const hoursLabels = [];
             const hoursData = [];
@@ -2199,6 +2202,37 @@
 
             // Update trend chart
             this.updateNoShowTrendChart(rateData);
+        },
+
+        /**
+         * Update Revenue Guard KPIs (coverage + lost revenue)
+         */
+        updateRevenueGuardMetrics: function(data) {
+            if (!data || !$('#sln-rg-reports-section').length) {
+                return;
+            }
+
+            const coverage = data.coverage || {};
+            const settings = window.salonDashboard || {};
+            const symbol = settings.currencySymbol || '€';
+
+            $('#rg-unresolved-count').text(data.unresolved_count != null ? data.unresolved_count : '--');
+            $('#rg-coverage-rate').text(
+                coverage.coverage_rate != null ? coverage.coverage_rate + '%' : '--'
+            );
+            $('#rg-no-show-rate').text(
+                data.no_show_rate != null ? data.no_show_rate + '%' : '--'
+            );
+
+            if (data.show_monetary_kpis && data.lost_revenue != null) {
+                $('#rg-lost-revenue').text(symbol + parseFloat(data.lost_revenue).toFixed(2));
+                $('#rg-coverage-warning').hide();
+            } else if (!data.show_monetary_kpis) {
+                $('#rg-lost-revenue').text('--');
+                if (coverage.coverage_rate != null && coverage.coverage_rate < (data.coverage_threshold || 80)) {
+                    $('#rg-coverage-warning').show();
+                }
+            }
         },
 
         /**

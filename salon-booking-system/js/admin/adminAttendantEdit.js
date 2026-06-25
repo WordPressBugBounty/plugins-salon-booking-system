@@ -44,12 +44,10 @@ jQuery(function($) {
 		$(".sln-service__collapse").each(function() {
 			var parent = $(this),
 				trigger = $(this).next(".sln-service__collapsetrigger");
-			console.log(trigger.text());
 			trigger.on("click", function(e) {
 				parent.toggleClass("open");
 				parent.toggleClass("closed");
 				$(this).toggleClass("less");
-				console.log(trigger.text());
 				e.preventDefault();
 			});
 		});

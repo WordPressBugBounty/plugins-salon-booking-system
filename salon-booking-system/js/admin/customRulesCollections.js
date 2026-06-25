@@ -13,12 +13,10 @@ jQuery(function () {
 			jQuery(this).is(":checked") ? false : true
 		);
 		if (jQuery(this).is(":checked")) {
-			console.log("checked");
 			jQuery(jQuery(this).data("unhide")).removeClass(
 				"sln-box--appeared"
 			);
 		} else {
-			console.log("not checked");
 			jQuery(jQuery(this).data("unhide")).addClass("sln-box--appeared");
 		}
 	});
@@ -568,19 +566,6 @@ function sln_initSelectSpecificService(e) {
 						.data("resources")
 						.split(",")
 						.includes(String(current_resource));
-					console.log(
-						available_services.length &&
-							available_services.includes(val.value) &&
-							current_resource &&
-							has_curr_res,
-						available_services.length &&
-							!current_resource &&
-							available_services.includes(val.value),
-						!available_services.length &&
-							current_resource &&
-							has_curr_res,
-						!available_services.length && !current_resource
-					);
 					if (
 						(available_services.length &&
 							available_services.includes(val.value) &&
@@ -620,7 +605,6 @@ function sln_initSelectSpecificService(e) {
 							val,
 							li_el
 						);
-						console.log("enable", val.value);
 					} else {
 						val.setAttribute("disabled", "disabled");
 						setTimeout(
@@ -648,7 +632,6 @@ function sln_initSelectSpecificService(e) {
 							val,
 							li_el
 						);
-						console.log("disable", val.value);
 					}
 				});
 			jQuery(this).trigger("change");

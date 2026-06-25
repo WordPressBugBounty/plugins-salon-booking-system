@@ -656,8 +656,6 @@ function sln_initSalonCalendar(
         "Add",
         function (data) {
           if (data.rules === undefined) {
-            if (data.rules !== errors)
-              console.log(data.errors, DayCalendarHolydays.selection.data);
             DayCalendarHolydays.selection.forEach(function (e) {
               e.removeClass("selected");
             });

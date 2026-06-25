@@ -288,6 +288,23 @@ class SLN_Action_WeeklyReport
             );
         }
 
+        if ( class_exists( 'SLB_RevenueGuard_Service_LostRevenueCalculator' ) && SLB_RevenueGuard_License::isAttendanceEnabled() ) {
+            $datetimeEndStr   = $datetimeEnd->format( 'Y-m-d' );
+            $datetimeStartStr = $datetimeStart->format( 'Y-m-d' );
+            $rg_stats         = ( new SLB_RevenueGuard_Service_LostRevenueCalculator( $p ) )->getPeriodStats(
+                $datetimeStartStr,
+                $datetimeEndStr
+            );
+            $data['revenue_guard'] = array(
+                'unresolved_count'   => $rg_stats['unresolved_count'],
+                'coverage_rate'      => $rg_stats['coverage']['coverage_rate'],
+                'no_show_count'      => $rg_stats['no_show_count'],
+                'no_show_rate'       => $rg_stats['no_show_rate'],
+                'lost_revenue'       => $rg_stats['lost_revenue'],
+                'show_monetary_kpis' => $rg_stats['show_monetary_kpis'],
+            );
+        }
+
         return $data;
     }
 

@@ -33,15 +33,10 @@ function expirePopup() {
     
     // Use centralized subscription status method (handles both status locations and fallback logic)
     $subscription_status_data = $sln_license->getSubscriptionStatus();
-    
-    error_log('[Salon Subscription Banner] Subscription status data: ' . print_r($subscription_status_data, true));
-    
+
     // Extract status and expiration
     $subscription_status = isset($subscription_status_data['status']) ? $subscription_status_data['status'] : null;
     $subscription_expiration = isset($subscription_status_data['expiration']) ? $subscription_status_data['expiration'] : null;
-    
-    error_log('[Salon Subscription Banner] Subscription status: ' . ($subscription_status ?? 'null'));
-    error_log('[Salon Subscription Banner] Subscription expiration: ' . ($subscription_expiration ?? 'null'));
 
     // Calculate expire days based on subscription status
     if ($subscription_expiration && $subscription_expiration !== 'lifetime') {
@@ -56,19 +51,12 @@ function expirePopup() {
         }
     }
 
-    error_log('[Salon Subscription Banner] Expire days: ' . $expire_days);
-
     $is_active = $subscription_status === 'active';
     $is_cancelled = $subscription_status === 'cancelled';
     $is_expired = $subscription_status === 'expired';
 
-    error_log('[Salon Subscription Banner] Is active: ' . ($is_active ? 'yes' : 'no'));
-    error_log('[Salon Subscription Banner] Is cancelled: ' . ($is_cancelled ? 'yes' : 'no'));
-    error_log('[Salon Subscription Banner] Is expired: ' . ($is_expired ? 'yes' : 'no'));
-
     // NEVER show banner if subscription is active
     if ($is_active) {
-        error_log('[Salon Subscription Banner] Subscription is ACTIVE - banner will NOT show');
         return $html;
     }
 
@@ -85,12 +73,7 @@ function expirePopup() {
     $remind_timestamp = isset($_COOKIE[$cookie_name]) ? (int)$_COOKIE[$cookie_name] : 0;
     $seven_days_passed = ($timestamp - $remind_timestamp) > 7 * $day_in_seconds;
 
-    error_log('[Salon Subscription Banner] Is expiring (<=10 days): ' . ($is_expiring ? 'yes' : 'no'));
-    error_log('[Salon Subscription Banner] Seven days passed since reminder: ' . ($seven_days_passed ? 'yes' : 'no'));
-    error_log('[Salon Subscription Banner] Will show banner: ' . (((($is_cancelled && $is_expiring) || $is_expired) && $seven_days_passed) ? 'YES' : 'NO'));
-
     $is_worker = function_exists('wp_get_current_user') && in_array(SLN_Plugin::USER_ROLE_WORKER, (array) wp_get_current_user()->roles, true);
-    error_log('[Salon Subscription Banner] Is worker: ' . ($is_worker ? 'yes' : 'no'));
 
     // Show when: (subscription cancelled and expiring soon) OR subscription/license expired,
     // the 7-day reminder has elapsed, and the current user is not a worker.
@@ -657,6 +640,7 @@ echo expirePopup();
         }
     }
 </style>
+<?php do_action( 'sln.admin.calendar.before' ); ?>
 <div id="sln-pageloading" class="sln-pageloading">
     <img
         src="<?php echo SLN_PLUGIN_URL . '/img/admin-loading.png'; ?>"
@@ -666,6 +650,8 @@ echo expirePopup();
 </div>
 <div class="container-fluid sln-calendar--wrapper sln-calendar--wrapper--loading--">
     <div class="sln-calendar--wrapper--sub" style="opacity: 0;">
+
+        <?php do_action( 'sln.admin.calendar.notices' ); ?>
 
         <?php
         // Performance Indexes Notice
@@ -1021,19 +1007,7 @@ echo expirePopup();
                         <!-- <div class="booking-last-edit-div pull-left-"></div>-->
                         <div class="pull-right- modal-footer__actions">
                             <button type="button" class="sln-btn sln-btn--nu sln-btn--nu--highemph sln-btn--big" aria-hidden="true" data-action="save-edited-booking"><?php esc_html_e('Save', 'salon-booking-system') ?></button>
-                            <div class="clone-info" style="font-family: 'Open Sans';display:none;">
-                                <?php esc_html_e('Clone this booking', 'salon-booking-system') ?>
-                                <input type="number" name="unit_times_input" min="1" value="1" style="width: 50px;" />
-                                <span class="times" data-text_s="<?php esc_html_e('time', 'salon-booking-system') ?>" data-text_m="<?php esc_html_e('times', 'salon-booking-system') ?>"><?php esc_html_e('time', 'salon-booking-system') ?></span>
-                                <select name="week_time" style="margin-bottom: 5px;">
-                                    <option value="1"><?php esc_html_e('every week', 'salon-booking-system') ?> </option>
-                                    <option value="2"><?php esc_html_e('every two weeks', 'salon-booking-system') ?> </option>
-                                    <option value="3"><?php esc_html_e('every three week', 'salon-booking-system') ?> </option>
-                                    <option value="4"><?php esc_html_e('every four week', 'salon-booking-system') ?> </option>
-                                </select>
-                                <span class="time_until" style="margin-left: 10px;font-size:13px;"><?php esc_html_e('until', 'salon-booking-system') ?> <span class="time_date">%date</span></span>
-                            </div>
-                            <div class=" sln-profeature sln-duplicate-booking <?php echo !defined("SLN_VERSION_PAY")  ? 'sln-duplicate-booking--disabled sln-profeature--disabled sln-profeature__tooltip-wrapper' : '' ?>">
+                            <div class="sln-clone-control sln-profeature sln-duplicate-booking <?php echo !defined("SLN_VERSION_PAY")  ? 'sln-duplicate-booking--disabled sln-profeature--disabled sln-profeature__tooltip-wrapper' : '' ?>">
                                 <?php echo $plugin->loadView(
                                     'metabox/_pro_feature_tooltip',
                                     array(
@@ -1042,7 +1016,8 @@ echo expirePopup();
                                         'additional_classes' => 'sln-profeature--button--bare sln-profeature--modal-footer__actions',
                                     )
                                 ); ?>
-                                <button type="button" class="sln-btn sln-btn--nu sln-btn--nu--lowhemph sln-btn--big" aria-hidden="true" data-confirm="<?php esc_html_e('Confirm', 'salon-booking-system') ?>" data-confirm="<?php esc_html_e('Clone', 'salon-booking-system') ?>" data-action="clone-edited-booking"><?php esc_html_e('Clone', 'salon-booking-system') ?></button>
+                                <button type="button" class="sln-btn sln-btn--nu sln-btn--nu--lowhemph sln-btn--big" aria-hidden="true" data-action="clone-edited-booking"><?php esc_html_e('Clone', 'salon-booking-system') ?></button>
+                                <?php echo $plugin->loadView('metabox/_clone_popover'); ?>
                             </div>
 
                             <button type="button" class="sln-btn sln-btn--nu sln-btn--nu--lowhemph sln-btn--big" aria-hidden="true" data-action="delete-edited-booking"><?php esc_html_e('Delete', 'salon-booking-system') ?></button>
@@ -1139,3 +1114,4 @@ echo expirePopup();
         </div>
     </div>
 </div>
+<?php do_action( 'sln.admin.calendar.footer' ); ?>

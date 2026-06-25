@@ -58,7 +58,6 @@ function sln_settingsLogo($) {
 
     // File input change
     $input.on('change', function() {
-        console.log('File input changed:', this.files);
         if (this.files && this.files.length > 0) {
             handleFile(this.files[0]);
         }
@@ -107,8 +106,6 @@ function sln_settingsLogo($) {
             $dropzone.addClass('hide');
             $progress.hide();
             $progressBar.css('width', '0%');
-            
-            console.log('File loaded successfully. Input files:', $input[0].files);
         };
 
         reader.onerror = function() {
@@ -410,18 +407,12 @@ function sln_settingsGeneral($) {
     // Test Email Functionality
     $('#sln-test-email').on('click', function(e) {
         e.preventDefault();
-        
-        console.log('Test Email button clicked');
-        
+
         var $btn = $(this);
         var $result = $('#sln-bulk-feedback-result');
         var nonce = $btn.data('nonce');
         var originalText = $btn.text();
-        
-        console.log('Button:', $btn);
-        console.log('Nonce:', nonce);
-        console.log('ajaxurl:', typeof ajaxurl !== 'undefined' ? ajaxurl : 'UNDEFINED');
-        
+
         if (typeof ajaxurl === 'undefined') {
             alert('Error: ajaxurl is not defined. This is a WordPress configuration issue.');
             return;

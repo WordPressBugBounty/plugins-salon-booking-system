@@ -27,6 +27,13 @@ if ($today->format('dY-m-d') == $start->format('dY-m-d')) {
 	<?php 
 		$cancelledCount = 0;
 		$pendingCount = 0;
+		// Multi-Shop: when a shop is selected, fall back to its name for bookings
+		// that have no explicit shop assignment (legacy/primary-shop bookings are
+		// included via the repository NOT EXISTS rule and carry no shop meta).
+		$selectedShopName = '';
+		if (class_exists('\SalonMultishop\Addon') && isset($_GET['shop']) && intval($_GET['shop']) > 0) {
+			$selectedShopName = get_the_title(intval($_GET['shop']));
+		}
 		if (count($booking)): 
 			$bookingData = array();
 			foreach ($booking as $item) {
@@ -51,6 +58,8 @@ if ($today->format('dY-m-d') == $start->format('dY-m-d')) {
 							$shopId = get_post_meta($b->getId(), '_sln_booking_shop', true);
 							if (!empty($shopId)) {
 								$shopName = get_the_title($shopId);
+							} elseif ($selectedShopName !== '') {
+								$shopName = $selectedShopName;
 							}
 						}
 						

@@ -213,6 +213,22 @@ var sln_myAccount = {
                 items.intervals = data.intervals;
                 items.booking_id = data.booking_id;
 
+                // Preserve the user's current time selection if it is still a valid
+                // slot in the freshly validated times. Captured here BEFORE any branch
+                // overwrites _sln_booking_time. Without this, a checkDate response that
+                // completes after the user clicked a slot resets the selection back to
+                // the first available slot. Falls back to the first available slot when
+                // there is no valid current selection.
+                var availableTimes = Object.values(data.intervals.times || {});
+                var currentTimeValue = form
+                  .find('input[name="_sln_booking_time"]')
+                  .val();
+                var preservedTimeValue =
+                  currentTimeValue &&
+                  availableTimes.indexOf(currentTimeValue) !== -1
+                    ? currentTimeValue
+                    : null;
+
                 func();
 
                 if (!data.success) {
@@ -244,7 +260,7 @@ var sln_myAccount = {
 
                   datetimepicker.setUTCDate(suggestedDate);
 
-                  var timeValue = Object.values(data.intervals.times)[0] || "";
+                  var timeValue = preservedTimeValue || availableTimes[0] || "";
                   var hours = parseInt(timeValue, 10) || 0;
                   var datetimepicker = form
                     .find(".sln_timepicker div")
@@ -277,7 +293,7 @@ var sln_myAccount = {
                     .html("")
                     .removeClass("sln-notifications--active");
 
-                  var timeValue = Object.values(data.intervals.times)[0] || "";
+                  var timeValue = preservedTimeValue || availableTimes[0] || "";
                   var hours = parseInt(timeValue, 10) || 0;
                   var datetimepicker = form
                     .find(".sln_timepicker div")

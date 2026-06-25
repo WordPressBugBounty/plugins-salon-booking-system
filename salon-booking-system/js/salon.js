@@ -2335,7 +2335,18 @@ function sln_stepDate($) {
                         return;
                     }
                     autoRetryEmptyTimes = false;
-                    var timeValue = Object.values(data.intervals.times)[0] || "";
+                    // Preserve the user's current time selection if it is still a
+                    // valid slot in the freshly validated times. Without this, the
+                    // initial (silent) checkDate response would race the user's first
+                    // click and force the selection back to the first available slot.
+                    // Fall back to the first available slot only when there is no
+                    // valid current selection.
+                    var availableTimes = Object.values(data.intervals.times);
+                    var currentTimeValue = $("input[name='sln[time]']").val();
+                    var timeValue =
+                        currentTimeValue && availableTimes.indexOf(currentTimeValue) !== -1
+                            ? currentTimeValue
+                            : availableTimes[0] || "";
                     var hours = parseInt(timeValue, 10) || 0;
                     var datetimepicker = $(".sln_timepicker div").data(
                         "datetimepicker"

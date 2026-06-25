@@ -791,10 +791,6 @@ class Bookings_Controller extends REST_Controller
         $tmp_services = $booking->getBookingServices();
         $tmp_services = $tmp_services ? $tmp_services->getItems() : array();
         $services     = array();
-        
-        // DEBUG: Log what we're working with
-        error_log('🔍 prepare_response_for_collection for booking #' . $booking->getId());
-        error_log('📦 Wrapper services count: ' . count($tmp_services));
 
         foreach ($tmp_services as $service) {
             if($attendant = $service->getAttendant()){
@@ -816,9 +812,7 @@ class Bookings_Controller extends REST_Controller
             // The wrapper was built from meta, so it already has the custom duration if it exists
             $duration = $service->getDuration();
             $duration_string = $duration ? $duration->format('H:i') : null;
-            
-            error_log('📤 Service #' . $service_id . ': start=' . $service->getStartsAt()->format('H:i') . ', end=' . $service->getEndsAt()->format('H:i') . ', duration=' . $duration_string);
-            
+
             $services[] = array(
                 'start_at'       => $service->getStartsAt()->format('H:i'),
                 'end_at'         => $service->getEndsAt()->format('H:i'),
@@ -1297,14 +1291,11 @@ class Bookings_Controller extends REST_Controller
         // IMPORTANT: This must happen AFTER evalDuration() to prevent it from being overwritten
         if ($has_custom_durations) {
             $booking_services = $booking->getMeta('services');
-            error_log('🔍 BEFORE update - services meta: ' . print_r($booking_services, true));
-            error_log('🔍 Custom durations to apply: ' . print_r($services_durations, true));
-            
+
             if (is_array($booking_services)) {
                 foreach ($booking_services as &$booking_service) {
                     $service_id = isset($booking_service['service']) ? $booking_service['service'] : null;
                     if ($service_id && isset($services_durations[$service_id])) {
-                        $old_duration = isset($booking_service['duration']) ? $booking_service['duration'] : 'null';
                         $booking_service['duration'] = $services_durations[$service_id];
                         // CRITICAL: Set break_duration to '00:00' so constructor CALCULATES total_duration
                         // The Service constructor ONLY sets total_duration if BOTH duration and break_duration exist
@@ -1314,27 +1305,22 @@ class Bookings_Controller extends REST_Controller
                         $booking_service['break_duration_data'] = array('from' => 0, 'to' => 0);
                         // Don't set total_duration in meta - let constructor calculate it from duration + 00:00
                         unset($booking_service['total_duration']);
-                        error_log('✏️  Service #' . $service_id . ': ' . $old_duration . ' → ' . $services_durations[$service_id] . ' (break: 00:00)');
                     }
                 }
                 // Unset reference to avoid issues
                 unset($booking_service);
-                
-                error_log('🔧 AFTER update - services meta: ' . print_r($booking_services, true));
-                
+
                 // Save the modified services array to database
                 // This persists the custom duration for the PWA drag-to-resize feature
                 update_post_meta($id, '_sln_booking_services', $booking_services);
-                error_log('💾 Saved custom durations to database');
-                
+
                 // CRITICAL: Clear WordPress post meta cache to ensure fresh read
                 wp_cache_delete($id, 'post_meta');
                 clean_post_cache($id);
-                
+
                 // CRITICAL: Reload booking from database to get fresh meta
                 $booking = $this->prepare_item_for_response($id, $request);
-                error_log('🔄 Reloaded booking from database');
-                
+
                 // Manually calculate and set the booking duration from custom service durations
                 $total_minutes = 0;
                 foreach ($services_durations as $custom_duration) {
@@ -1343,7 +1329,6 @@ class Bookings_Controller extends REST_Controller
                 }
                 $duration_string = sprintf('%02d:%02d', floor($total_minutes / 60), $total_minutes % 60);
                 $booking->setMeta('duration', $duration_string);
-                error_log('✅ Set booking duration to: ' . $duration_string);
             }
         }
         

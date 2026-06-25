@@ -115,5 +115,9 @@ class SLN_Admin_Calendar extends SLN_Admin_AbstractPage
             'confirm_title' =>  __('Are you sure?', 'salon-booking-system'),
             'delete_title' =>  __('Yes, delete.', 'salon-booking-system'),
         ));
+
+        if ( class_exists( 'SLB_RevenueGuard_Plugin' ) ) {
+            SLB_RevenueGuard_Plugin::enqueueQueueScripts( 'salon_page_salon' );
+        }
     }
 }

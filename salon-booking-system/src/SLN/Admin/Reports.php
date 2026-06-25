@@ -108,6 +108,10 @@ class SLN_Admin_Reports extends SLN_Admin_AbstractPage
             SLN_VERSION,
             true
         );
+
+        if ( class_exists( 'SLB_RevenueGuard_License' ) && SLB_RevenueGuard_License::isAttendanceEnabled() ) {
+            SLB_RevenueGuard_Plugin::enqueueQueueScripts( 'salon_page_salon-reports' );
+        }
         
         // Set up translations for JavaScript
         wp_set_script_translations(
@@ -162,6 +166,8 @@ class SLN_Admin_Reports extends SLN_Admin_AbstractPage
             'restUrl'         => rest_url('salon/api/v1/'),
             'isDebug'         => defined('WP_DEBUG') && WP_DEBUG,
             'isPro'           => defined('SLN_VERSION_PAY') || defined('SLN_VERSION_CODECANYON'),
+            'revenueGuard'    => class_exists('SLB_RevenueGuard_License') && SLB_RevenueGuard_License::isAttendanceEnabled(),
+            'canViewRgMoney'  => class_exists('SLB_RevenueGuard_License') && SLB_RevenueGuard_License::canViewMonetaryKpis(),
             'managerShopId'   => $manager_shop_id,   // Default shop ID for manager
             'managerShopIds'  => !empty($manager_shop_ids) ? $manager_shop_ids : array(), // All assigned shop IDs
         ));

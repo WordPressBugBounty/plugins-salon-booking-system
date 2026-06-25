@@ -40,8 +40,25 @@ class SLN_Action_Ajax_OnNoShow extends SLN_Action_Ajax_Abstract
             return;
         }
 
-        // Toggle the value
-        if ($noShow === 0) {
+        // Toggle the value — sync with Revenue Guard attendance when module is active.
+        if ( class_exists( 'SLB_RevenueGuard_Service_AttendanceService' ) && SLB_RevenueGuard_License::isAttendanceEnabled() ) {
+            $service = new SLB_RevenueGuard_Service_AttendanceService( SLN_Plugin::getInstance() );
+            $mark_no_show = ( $noShow === 0 );
+            $result = $service->applyLegacyNoShowToggle( $bookingId, $mark_no_show, $currentUserId );
+
+            if ( is_wp_error( $result ) ) {
+                wp_send_json_error( array( 'error' => $result->get_error_message() ) );
+            }
+
+            $noShow = $mark_no_show ? 1 : 0;
+
+            if ( $mark_no_show ) {
+                $isWalkIn = get_post_meta( $bookingId, '_' . SLN_Plugin::POST_TYPE_BOOKING . '_is_walkin', true );
+                if ( $isWalkIn ) {
+                    do_action( 'sbs_walkin_notify_next_customer', $bookingId );
+                }
+            }
+        } elseif ( $noShow === 0 ) {
             $noShow = 1;
             
             // Store metadata when marking as no-show

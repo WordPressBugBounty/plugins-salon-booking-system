@@ -353,6 +353,17 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
       // multiple today's bookings share the same shop.
       $shopNameCache = array();
 
+      // Multi-Shop: when a shop is selected, fall back to its name for bookings
+      // with no explicit shop assignment (legacy/primary-shop bookings carry no
+      // shop meta but are included via the repository NOT EXISTS rule).
+      $selectedShopName = '';
+      if (class_exists('\SalonMultishop\Addon')) {
+        $selectedShopId = $this->getCurrentShopId();
+        if ($selectedShopId > 0) {
+          $selectedShopName = get_the_title($selectedShopId);
+        }
+      }
+
       foreach ($this->bookings as $booking) {
         if ($booking && method_exists($booking, 'getDate') && method_exists($booking, 'getStatus') && method_exists($booking, 'getStartsAt')) {
           $bookingDate = $booking->getDate();
@@ -375,6 +386,8 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
                     $shopNameCache[$shopId] = get_the_title($shopId);
                   }
                   $shopName = $shopNameCache[$shopId];
+                } elseif ($selectedShopName !== '') {
+                  $shopName = $selectedShopName;
                 }
               }
               

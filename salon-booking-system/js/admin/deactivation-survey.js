@@ -107,8 +107,6 @@
                 },
                 success: function(response) {
                     if (response.success) {
-                        console.log('✅ Deactivation survey submitted successfully');
-                        
                         // Show brief thank you message
                         $('.sln-survey-loading').html(
                             '<div style="text-align: center; padding: 30px;">' +
@@ -166,11 +164,6 @@
                 proceedWithDeactivation();
             }
         });
-
-        console.log('📊 SLN Deactivation Survey loaded');
-        console.log('📍 Days active:', slnDeactivationSurvey.days_active);
-        console.log('📈 Setup progress:', slnDeactivationSurvey.setup_progress + '%');
-        console.log('✅ First booking:', slnDeactivationSurvey.completed_first_booking ? 'Yes' : 'No');
     });
 
 })(jQuery);

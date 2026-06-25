@@ -76,7 +76,9 @@ class SLN_Action_Ajax_RefreshPaymentStatus extends SLN_Action_Ajax_Abstract
                     // Prefer latest_charge (current Stripe API); fall back to the
                     // deprecated charges list for older API versions.
                     $charge        = $paymentIntent->latest_charge ?? ( $paymentIntent->charges->data[0] ?? null );
-                    $transactionId = $charge ? $charge->balance_transaction : $paymentIntent->id;
+                    // Store the charge (ch_) or PaymentIntent (pi_) id, not the balance
+                    // transaction (txn_): only ch_/pi_ resolve to a dashboard payments/:id page.
+                    $transactionId = $charge ? $charge->id : $paymentIntent->id;
 
                     // ---- Build and cache rich payment details ----
                     $paymentDetails = $this->extractStripePaymentDetails( $paymentIntent, $charge );

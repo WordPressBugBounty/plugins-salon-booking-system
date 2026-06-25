@@ -191,6 +191,8 @@
             </div>
         </div>
 
+        <?php do_action( 'sln.admin.reports.after_kpis' ); ?>
+
         <!-- One-click Forecast Feature Stats -->
         <div class="sln-chart-container sln-forecast-stats-section">
             <h2 style="display:flex;align-items:center;gap:8px;">
@@ -610,6 +612,7 @@
     <?php endif; // End: if empty($warning_message) ?>
 
 </div>
+<?php do_action( 'sln.admin.reports.footer' ); ?>
 
 <style>
 /* Basic Dashboard Styles */
@@ -1525,6 +1528,76 @@
     height: 28px;
     flex-shrink: 0;
     display: block;
+}
+
+/* Revenue Guard — Revenue at Risk */
+.sln-rg-reports-section {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 25px;
+    margin-bottom: 30px;
+}
+.sln-rg-reports-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+.sln-rg-kpi {
+    background: #f8f9fb;
+    border-radius: 8px;
+    padding: 16px;
+}
+.sln-rg-kpi__label {
+    font-size: 12px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.sln-rg-kpi__value {
+    font-size: 28px;
+    font-weight: 700;
+    color: #333;
+    margin-top: 6px;
+}
+.sln-rg-coverage-warning {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: #fff8e1;
+    border-left: 4px solid #ff9800;
+    border-radius: 4px;
+}
+.sln-rg-modal__backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 100000;
+}
+.sln-rg-modal__dialog {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 720px;
+    max-height: 80vh;
+    overflow: auto;
+    z-index: 100001;
+    padding: 20px;
+}
+.sln-rg-queue-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.sln-rg-banner {
+    margin: 12px 0;
 }
 
 /* No-Show Tracking Section */

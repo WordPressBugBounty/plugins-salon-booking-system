@@ -7501,41 +7501,65 @@ body.modal-open {
   text-align: right;
 }
 
+#sln-salon-booking__content {
+  position: relative;
+}
+
+.sln-salon-title {
+  padding-right: 2.75em;
+}
+
 .sln-topbar,
 #sln-salon .sln-topbar {
+  position: absolute;
+  top: 1em;
+  right: 1em;
+  z-index: 3;
   display: flex;
   justify-content: end;
   align-items: center;
-  margin-bottom: 1em;
 }
-.sln-topbar h6,
-#sln-salon .sln-topbar h6 {
-  color: rgb(80, 80, 80);
-}
-.sln-topbar h6::before,
-#sln-salon .sln-topbar h6::before {
-  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13.693' height='15.155' viewBox='0 0 13.693 15.155'%3E%3Cpath id='Unione_1' data-name='Unione 1' d='M-1986.017,1870.731v-1.461a1.925,1.925,0,0,0-1.923-1.923h-5.846a1.912,1.912,0,0,0-1.36.563,1.916,1.916,0,0,0-.563,1.361v1.461a1,1,0,0,1-1,1,1,1,0,0,1-1-1v-1.461a3.9,3.9,0,0,1,1.149-2.775,3.9,3.9,0,0,1,2.774-1.149h5.846a3.928,3.928,0,0,1,3.923,3.924v1.461a1,1,0,0,1-1,1A1,1,0,0,1-1986.017,1870.731Zm-8.77-10.23a3.928,3.928,0,0,1,3.923-3.924,3.928,3.928,0,0,1,3.923,3.924,3.928,3.928,0,0,1-3.923,3.923A3.928,3.928,0,0,1-1994.786,1860.5Zm2,0a1.925,1.925,0,0,0,1.923,1.922,1.925,1.925,0,0,0,1.923-1.922,1.925,1.925,0,0,0-1.923-1.923A1.925,1.925,0,0,0-1992.786,1860.5Z' transform='translate(1997.709 -1856.577)' fill='rgb(80, 80, 80)'/%3E%3C/svg%3E%0A");
-  margin-right: 0.5em;
-}
-.sln-topbar a,
-#sln-salon .sln-topbar a {
+.sln-topbar .sln-topbar__account,
+#sln-salon .sln-topbar .sln-topbar__account {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1em;
+  line-height: 1.1;
+  text-align: center;
   color: rgb(9, 120, 189);
-  border-bottom: 1px solid;
-  border-bottom-color: transparent;
+  border-bottom: 0;
 }
-.sln-topbar a,
-#sln-salon .sln-topbar a {
-  -webkit-transition: border-bottom-color 250ms;
-  -moz-transition: border-bottom-color 250ms;
-  -o-transition: border-bottom-color 250ms;
-  transition: border-bottom-color 250ms;
+.sln-topbar .sln-topbar__account,
+#sln-salon .sln-topbar .sln-topbar__account {
+  -webkit-transition: opacity 250ms;
+  -moz-transition: opacity 250ms;
+  -o-transition: opacity 250ms;
+  transition: opacity 250ms;
 }
 @media (hover: hover) {
-  .sln-topbar a:hover,
-  #sln-salon .sln-topbar a:hover {
+  .sln-topbar .sln-topbar__account:hover,
+  #sln-salon .sln-topbar .sln-topbar__account:hover {
     text-decoration: none;
-    border-bottom-color: currentColor;
+    opacity: 0.75;
   }
+}
+.sln-topbar .sln-topbar__name,
+#sln-salon .sln-topbar .sln-topbar__name {
+  display: block;
+  max-width: 7em;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 0.75em;
+  color: rgb(80, 80, 80);
+}
+.sln-topbar .sln-topbar__icon,
+#sln-salon .sln-topbar .sln-topbar__icon {
+  display: block;
+  width: 1.9em;
+  height: 1.9em;
+  fill: currentColor;
 }
 
 #sln-salon #sln-salon-my-account.mobile-version .sln-salon-booking-calendar.table tr {

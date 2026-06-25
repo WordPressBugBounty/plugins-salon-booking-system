@@ -87,6 +87,7 @@ class SLN_Action_Init
         new SLN_Action_InitScripts($this->plugin, is_admin());
         $this->initPolylangSupport();
         SLB_Discount_Plugin::getInstance();
+        SLB_RevenueGuard_Plugin::getInstance();
 
         add_action('init', array($this, 'hook_action_init'));
         if (!SLN_Action_Install::isInstalled()) {

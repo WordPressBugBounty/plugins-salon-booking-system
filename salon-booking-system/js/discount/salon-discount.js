@@ -90,6 +90,12 @@ function sln_applyDiscountCode() {
                 if(data.button != undefined){
                     $('.sln-btn.sln-btn--fullwidth.sln-btn--nextstep').html(data.button);
                     $('#sln-step-submit-complete').hide();
+                    if (data.booking_id) {
+                        var $bookingIdInput = $('input[name="sln_booking_id"]');
+                        if ($bookingIdInput.length) {
+                            $bookingIdInput.val(data.booking_id);
+                        }
+                    }
                     sln_discountCodeInitButton();
                 }
             } else {

@@ -6,6 +6,7 @@
             <?php if (in_array($booking->getStatus(), array(SLN_Enum_BookingStatus::PAID))): ?>
                 <?php include '_salon_thankyou_alert_paid.php' ?>
             <?php endif; ?>
+            <?php if (empty($disableCountdown)): ?>
             <div class="col-xs-12-- sln-input--action sln-form-actions-- sln-payment-actions--">
                 <p><?php echo sprintf(
                         // translators: %s will be replaced by the number of seconds
@@ -14,6 +15,7 @@
                     ) ?></p>
                 <a id="sln-go-to-thankyou" href="<?php echo esc_html($goToThankyou); ?>" class="sln-btn sln-btn--emphasis sln-btn--medium sln-btn--fullwidth hide"></a>
             </div>
+            <?php endif; ?>
             <?php
             $bookingMyAccountPageId = $plugin->getSettings()->getBookingmyaccountPageId();
             if ($bookingMyAccountPageId && !$plugin->getSettings()->get('enabled_force_guest_checkout') && is_user_logged_in()) {

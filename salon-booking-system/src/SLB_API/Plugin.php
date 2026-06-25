@@ -62,6 +62,7 @@ class Plugin {
             '\\SLB_API\\Controller\\App_Controller',
             '\\SLB_API\\Controller\\Shops_Controller',
             '\\SLB_API\\Controller\\NoShow_Controller',
+            '\\SLB_API\\Controller\\RevenueGuard_Controller',
         );
 
         foreach ( $controllers as $controller ) {

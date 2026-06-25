@@ -4,7 +4,7 @@ Tags: booking, reservations, scheduling, booking calendar, appointment calendar
 Requires at least: 4.1
 Tested up to: 6.9
 Requires PHP: 7.4.8
-Stable tag: 10.30.31
+Stable tag: 10.30.32
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -407,6 +407,11 @@ FREE version doesn't have the online payments options, no mobile app access, no 
 
 
 == Changelog ==
+
+25.06.2026 - 10.30.32
+
+* New booking attendance tracking
+* Minor improvements
 
 12.06.2026 - 10.30.31
 

@@ -145,7 +145,14 @@ class SLB_Discount_Action_Ajax_ApplyDiscountCode extends SLN_Action_Ajax_Abstrac
 				)
 			);
 			if ($totalToPay <= 0.0) {
-				$ret['button'] = $plugin->loadView('shortcode/_salon_summary_next_button', array('plugin' => $plugin));
+				$ret['button']     = $plugin->loadView(
+					'shortcode/_salon_summary_next_button',
+					array(
+						'plugin'  => $plugin,
+						'booking' => $bb,
+					)
+				);
+				$ret['booking_id'] = $bb->getId();
 			}
 		}
 

@@ -41,14 +41,16 @@ window.SLN_BOOKING_CLIENT = {
     <div id="sln-salon-booking__content" class="<?php echo $class_salon_content ?>">
         <?php
         if ($bookingMyAccountPageId && !$plugin->getSettings()->get('enabled_force_guest_checkout')) {
-            echo '<div class="sln-topbar"><h6>';
-            if (is_user_logged_in()) {
-                $current_user = wp_get_current_user();
-                echo ' <a href="' . get_permalink($bookingMyAccountPageId) . '">' . __('Hi', 'salon-booking-system'), ' ', $current_user->display_name  . '</a>';
-            } else {
-                echo '<a href="' . get_permalink($bookingMyAccountPageId) . '">' . __('Your account', 'salon-booking-system') . '</a>';
-            }
-            echo '</h6></div>';
+            $accountUrl  = get_permalink($bookingMyAccountPageId);
+            $accountIcon = '<svg class="sln-topbar__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="M16,2A14,14,0,1,0,30,16,14,14,0,0,0,16,2ZM10,26.39a6,6,0,0,1,11.94,0,11.87,11.87,0,0,1-11.94,0Zm13.74-1.26a8,8,0,0,0-15.54,0,12,12,0,1,1,15.54,0ZM16,8a5,5,0,1,0,5,5A5,5,0,0,0,16,8Zm0,8a3,3,0,1,1,3-3A3,3,0,0,1,16,16Z"></path></svg>';
+            $accountLabel = is_user_logged_in()
+                ? wp_get_current_user()->display_name
+                : __('Your account', 'salon-booking-system');
+            echo '<div class="sln-topbar">';
+            echo '<a class="sln-topbar__account" href="' . esc_url($accountUrl) . '" title="' . esc_attr($accountLabel) . '" aria-label="' . esc_attr($accountLabel) . '">';
+            echo $accountIcon;
+            echo '</a>';
+            echo '</div>';
         } //// $bookingMyAccountPageId  && !$plugin->getSettings()->get('enabled_force_guest_checkout') // END ////
         $args = array(
             'key' => 'Book an appointment',

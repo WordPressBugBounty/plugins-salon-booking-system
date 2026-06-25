@@ -168,6 +168,41 @@ $_badge = static function ($rank) {
                           </tr>
                         </table>
 
+                        <?php if ( ! empty( $stats['revenue_guard'] ) ) :
+                            $rg = $stats['revenue_guard'];
+                        ?>
+                        <!-- Revenue at Risk -->
+                        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top:8px;">
+                          <tr>
+                            <td style="background-color:#5A3D6B; border-radius:6px; padding:11px 14px;">
+                              <p style="font-family:'Montserrat',Arial,sans-serif; font-size:9px; font-weight:400; color:#E8D4F0; text-transform:uppercase; letter-spacing:1.5px; margin:0 0 3px 0;"><?php esc_html_e('Revenue at Risk', 'salon-booking-system') ?></p>
+                              <p style="font-family:'Montserrat',Arial,sans-serif; font-size:14px; font-weight:700; color:#FFFFFF; margin:0; line-height:1.4;">
+                                <?php
+                                printf(
+                                    /* translators: 1: unresolved count, 2: no-show count, 3: coverage percent */
+                                    esc_html__( '%1$d unresolved · %2$d no-shows · %3$s%% coverage', 'salon-booking-system' ),
+                                    (int) $rg['unresolved_count'],
+                                    (int) $rg['no_show_count'],
+                                    esc_html( $rg['coverage_rate'] )
+                                );
+                                ?>
+                              </p>
+                              <?php if ( ! empty( $rg['show_monetary_kpis'] ) && null !== $rg['lost_revenue'] ) : ?>
+                              <p style="font-family:'Montserrat',Arial,sans-serif; font-size:12px; font-weight:600; color:#F5D0FF; margin:6px 0 0 0;">
+                                <?php
+                                printf(
+                                    /* translators: %s: lost revenue amount */
+                                    esc_html__( 'Lost revenue: %s', 'salon-booking-system' ),
+                                    $plugin->format()->money( $rg['lost_revenue'], false, false, true, false, true )
+                                );
+                                ?>
+                              </p>
+                              <?php endif; ?>
+                            </td>
+                          </tr>
+                        </table>
+                        <?php endif; ?>
+
                       </td>
                     </tr>
                   </table>
