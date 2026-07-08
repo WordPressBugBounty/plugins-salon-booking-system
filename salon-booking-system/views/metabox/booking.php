@@ -174,7 +174,19 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
     $hide_email = $user_role_helper->is_hide_customer_email();
 
     $intervalDate = clone $selectedDate;
-    $intervals = $plugin->getIntervals($intervalDate);
+    // Pass the booking's current duration so the initial (page-render) time
+    // picker is filtered the same way the AJAX refresh (CheckDate) is: start
+    // times where the whole service would not fit are excluded. Without this the
+    // first paint shows unbookable slots until the first AJAX validate() runs.
+    $intervalDuration = null;
+    $bookingDuration  = $booking->getDuration();
+    if ($bookingDuration) {
+        $durationStr = $bookingDuration->format('H:i');
+        if ($durationStr !== '00:00') {
+            $intervalDuration = new \Salon\Util\Time($durationStr);
+        }
+    }
+    $intervals = $plugin->getIntervals($intervalDate, $intervalDuration);
 
     $edit_last_author = get_userdata(get_post_meta($booking->getId(), '_edit_last', true));
     ?>

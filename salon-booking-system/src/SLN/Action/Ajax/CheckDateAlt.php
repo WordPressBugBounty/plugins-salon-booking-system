@@ -85,6 +85,9 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
         $dateCount = count($dates);
         SLN_Plugin::addLog('[CheckDateAlt] Scanning ' . $dateCount . ' dates | smartAvail=' . ($isSmartAvailability ? 'yes' : 'no'));
 
+        // Phase timer: whole per-day availability scan (admin+debug only).
+        $perf = SLN_Helper_Availability::$perfEnabled;
+        $dateLoopStart = $perf ? microtime(true) : 0;
         foreach($dates as $k => $v) {
             $available = false;
             $tmpDate   = new SLN_DateTime($v->getDateTime());
@@ -111,6 +114,9 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
             } else {
                 $intervalsArray['dates'][$k] = $v;
             }
+        }
+        if ($perf) {
+            SLN_Helper_Availability::$perf['dateloop_ms'] += (microtime(true) - $dateLoopStart) * 1000;
         }
 
         // PHP 8+ compatibility: Check if dates is an array and not empty
@@ -214,6 +220,8 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
         //for SLB_API_Mobile purposes
         $customTimeFormat = $_GET['time_format'] ?? false;
 
+        // Phase timer: suggested-day time-list validation (admin+debug only).
+        $timeListStart = $perf ? microtime(true) : 0;
         foreach ($times as $k => $t) {
             // Handle both string keys and numeric keys
             if (is_object($t) && method_exists($t, 'format')) {
@@ -236,6 +244,9 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
                 SLN_Helper_AvailabilityDebugger::logSlotValidation($t, false, $errorMsg);
                 $dateTimeLog->addArrayErrors( $t->format('H:i'), $errors );
             }
+        }
+        if ($perf) {
+            SLN_Helper_Availability::$perf['timelist_ms'] += (microtime(true) - $timeListStart) * 1000;
         }
         
         // Log final frontend response
@@ -380,6 +391,7 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
 
     public function checkDateTimeServicesAndAttendants($services, $date, $check_duration = false, $skipAutoAttendantCheck = false) {
         $errors = array();
+        if (SLN_Helper_Availability::$perfEnabled) { SLN_Helper_Availability::$perf['checkSlot_calls']++; }
 
         $plugin = $this->plugin;
         $ah     = $plugin->getAvailabilityHelper();
@@ -629,8 +641,13 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
         $ah = $plugin->getAvailabilityHelper();
         $availableTimes = array();
         
-        // Get all possible times from opening hours (not limited by attendants)
-        $allPossibleTimes = $ah->getTimes($date);
+        // Get all possible times from opening hours (not limited by attendants).
+        // Use getCachedTimes() so that, on a warm cache, future days reuse the
+        // day's persisted free_slots instead of re-running the expensive getTimes()
+        // engine. This mirrors the non-smart path and keeps the Smart Availability
+        // per-day scan cheap across the whole booking window (same result set:
+        // getCachedTimes returns exactly the getTimes() slots for bookable days).
+        $allPossibleTimes = $ah->getCachedTimes($date, $duration);
         
         if ($duration) {
             $allPossibleTimes = $ah->filterTimesArrayByDurationWithBreakAllowance($allPossibleTimes, $duration);
@@ -747,6 +764,7 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
         $ah = $this->plugin->getAvailabilityHelper();
         $ah->setDate($date, $this->booking);
         $dateStr = $date->format('Y-m-d');
+        if (SLN_Helper_Availability::$perfEnabled) { SLN_Helper_Availability::$perf['dateHasBookableSlot_calls']++; }
 
         if ($isSmartAvailability) {
             // Same source the time list uses (no earlyExit: we need real candidates
@@ -766,10 +784,12 @@ class SLN_Action_Ajax_CheckDateAlt extends SLN_Action_Ajax_CheckDate
             return false;
         }
 
+        $perfOn = SLN_Helper_Availability::$perfEnabled;
         foreach ($candidateTimes as $timeObj) {
             if (!is_object($timeObj) || !method_exists($timeObj, 'format')) {
                 continue;
             }
+            if ($perfOn) { SLN_Helper_Availability::$perf['candidateSlots_scanned']++; }
             $tmpDateTime = new SLN_DateTime($dateStr . ' ' . $timeObj->format('H:i'));
             $ah->setDate($tmpDateTime, $this->booking);
             $errors = $this->checkDateTimeServicesAndAttendants($bservices, $tmpDateTime, true);

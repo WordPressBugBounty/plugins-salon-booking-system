@@ -157,7 +157,7 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
             return;
         }
 
-        $_POST['_sln_booking_services'] = $this->processServicesSubmission($_POST['_sln_booking']);
+        $_POST['_sln_booking_services'] = $this->processServicesSubmission(isset($_POST['_sln_booking']) ? $_POST['_sln_booking'] : array());
         $_POST['_sln_booking_services_resources'] = isset($_POST['_sln_booking']['services_resources']) ? $_POST['_sln_booking']['services_resources'] : array();
         if(count($_POST['_sln_booking_services']) == 0){
             wp_delete_post($post_id, true);
@@ -456,7 +456,7 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
     private function processServicesSubmission($data)
     {
         $services = array();
-        $services_ids = array_map('intval',$data['services']);
+        $services_ids = array_map('intval', isset($data['services']) ? (array) $data['services'] : array());
         if($services_ids)
         foreach ($services_ids as $key => $serviceId) {
             if($serviceId == 0){

@@ -22,7 +22,19 @@ foreach($fields as $key => $field){
         <?php if($type == 'html'){
             echo $field['default_value'];
         }else{ ?>
-            <label for="<?php echo SLN_Form::makeID("sln[{$key}]")?>"><?php esc_html_e(sprintf('%s', $field['label']), 'salon-booking-system'); ?></label>
+            <label for="<?php echo SLN_Form::makeID("sln[{$key}]")?>"><?php
+                // Allow safe inline HTML (e.g. GDPR consent links) inside custom field labels.
+                echo wp_kses(
+                    __(sprintf('%s', $field['label']), 'salon-booking-system'),
+                    array(
+                        'a'      => array('href' => array(), 'target' => array(), 'rel' => array(), 'title' => array(), 'class' => array()),
+                        'strong' => array(),
+                        'em'     => array(),
+                        'br'     => array(),
+                        'span'   => array('class' => array()),
+                        'abbr'   => array('title' => array()),
+                    )
+                ); ?></label>
             <?php switch($key){
                 case 'password_confirm':
                 case 'password':

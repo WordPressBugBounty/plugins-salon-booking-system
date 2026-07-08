@@ -202,9 +202,11 @@ class SLN_Action_Init
                     remove_submenu_page( 'salon', 'edit.php?post_type=' . SLB_Discount_Plugin::POST_TYPE_DISCOUNT); // Salon Discounts
                     remove_submenu_page( 'salon', 'edit.php?post_type=' . SLN_Plugin::POST_TYPE_SERVICE); // Salon Services
                     remove_submenu_page( 'salon', 'edit-tags.php?taxonomy=' . SLN_Plugin::TAXONOMY_SERVICE_CATEGORY . '&post_type=' . SLN_Plugin::POST_TYPE_SERVICE); // Salon Services Categories
+                    remove_submenu_page( 'salon', 'edit.php?post_type=' . SLN_Plugin::POST_TYPE_RESOURCE ); // Salon Resources
                     remove_submenu_page( 'salon', SLN_Admin_Customers::PAGE ); // Salon Customers
                     remove_submenu_page( 'salon', SLN_Admin_Reports::PAGE); // Salon Reports
                     remove_submenu_page( 'salon', SLN_Admin_Tools::PAGE); // Salon Tools
+                    remove_submenu_page( 'salon', SLN_Admin_Extensions::PAGE); // Salon Extensions
                     break;
                 }
             }
@@ -736,6 +738,7 @@ class SLN_Action_Init
     public function hook_admin_init()
     {
         new SLN_Action_Update($this->plugin);
+        $this->cleanupLegacyTranslateConstantsFile();
         $this->migrateOnboardingOption();
         if (apply_filters('sln_onboarding_skip', false)) {
             return;
@@ -771,6 +774,31 @@ class SLN_Action_Init
         }
         wp_safe_redirect(add_query_arg(array('page' => 'salon-onboarding'), admin_url('admin.php')));
         exit();
+    }
+
+    /**
+     * One-time removal of the legacy translate-constants.php file (CVE-2026-15070).
+     *
+     * Older versions generated this web-accessible PHP file from user-supplied
+     * custom-text input. A CSRF request could inject arbitrary PHP into it, making
+     * it directly executable (RCE). Generation has been removed, so any file still
+     * on disk is stale (and possibly a leftover payload on a previously-attacked
+     * site). Delete it once, guarded by an autoloaded option so the file check does
+     * not run on every admin request. Covers silent auto-updates that never fire the
+     * activation hook.
+     */
+    private function cleanupLegacyTranslateConstantsFile()
+    {
+        if (get_option('sln_translate_constants_cleaned')) {
+            return;
+        }
+
+        $legacy_file = SLN_PLUGIN_DIR . '/translate-constants.php';
+        if (file_exists($legacy_file)) {
+            @unlink($legacy_file);
+        }
+
+        update_option('sln_translate_constants_cleaned', 1);
     }
 
     private function migrateOnboardingOption()

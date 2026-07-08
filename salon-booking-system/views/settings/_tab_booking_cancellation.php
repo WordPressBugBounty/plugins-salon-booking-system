@@ -32,6 +32,10 @@ $hoursBeforeCancellation = $plugin->getSettings()->get('hours_before_cancellatio
         echo SLN_Form::fieldSelect(
 	$field,
 	array(
+		'0.25' => __('15 minutes', 'salon-booking-system'),
+		'0.3333' => __('20 minutes', 'salon-booking-system'),
+		'0.5' => __('30 minutes', 'salon-booking-system'),
+		'0.6667' => __('40 minutes', 'salon-booking-system'),
 		'1' => '1h',
 		'2' => '2h',
 		'3' => '3h',
@@ -45,7 +49,7 @@ $hoursBeforeCancellation = $plugin->getSettings()->get('hours_before_cancellatio
 	array(),
 	true
 ) ?>
-        <p class="help-block"><?php esc_html_e('How many hours before the appointment the cancellation is still allowed', 'salon-booking-system')?></p>
+        <p class="help-block"><?php esc_html_e('How much time before the appointment the cancellation is still allowed', 'salon-booking-system')?></p>
     </div>
     <div class="col-xs-12 col-sm-6 col-md-4 sln-box-maininfo  align-top">
         <p class="sln-box-info"><?php esc_html_e('Users once logged in inside the MY ACCOUNT BOOKING page will be able to see the list of their upcoming reservations and eventually Cancel them. An email notification will be sent to you and to the customers.', 'salon-booking-system');?></p>

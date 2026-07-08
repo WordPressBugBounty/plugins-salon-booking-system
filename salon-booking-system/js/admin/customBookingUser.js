@@ -846,6 +846,29 @@ function sln_adminDate($) {
 		validate(this);
 	});
 	validate($("#_sln_booking_date"));
+
+	// Re-fetch availability whenever the selected services change, so the time
+	// picker reflects the new total duration (slots where the service no longer
+	// fits drop out). Exposed as a guarded global because the service
+	// add/remove handlers live outside this closure. Debounced because select2
+	// emits several change events per interaction.
+	var slnRevalidateTimer = null;
+	window.sln_refreshAdminTimeSlots = function () {
+		if (!$("#_sln_booking_date").val()) {
+			return;
+		}
+		clearTimeout(slnRevalidateTimer);
+		slnRevalidateTimer = setTimeout(function () {
+			validate($("#_sln_booking_date"));
+		}, 400);
+	};
+	$(document).on(
+		"change",
+		'#sln_booking_services select[data-selection="service-selected"]',
+		function () {
+			window.sln_refreshAdminTimeSlots();
+		}
+	);
 	sln_initDatepickers($);
 	sln_initTimepickers($);
 	sln_initResendNotification();
@@ -1500,7 +1523,13 @@ function sln_bindRemoveBookingsServices(removeButton) {
 		sln_toggleSavePost(save_is_disabled);
 		sln_checkServicesAddedAlert(button);
 		button.closest(".sln-booking-service-line").remove();
-		
+
+		// Service removed → total duration changed → refresh the available time
+		// slots so the picker no longer offers slots sized for the old duration.
+		if (window.sln_refreshAdminTimeSlots) {
+			window.sln_refreshAdminTimeSlots();
+		}
+
 		// Trigger validation after service removal to update SAVE button state
 		setTimeout(function() {
 			var validateBooking = sln_validateBooking_dym();

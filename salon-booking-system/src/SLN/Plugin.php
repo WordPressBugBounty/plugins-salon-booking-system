@@ -156,6 +156,21 @@ class SLN_Plugin
         }
     }
 
+        $bookingForShop = null;
+        $previousShopGet = array_key_exists('shop', $_GET) ? $_GET['shop'] : null;
+        $shopContextSet = false;
+        if (isset($data['booking']) && $data['booking'] instanceof SLN_Wrapper_Booking) {
+            $bookingForShop = $data['booking'];
+            if (class_exists('\SalonMultishop\Addon')) {
+                $shopId = $bookingForShop->getMeta('shop');
+                if ($shopId) {
+                    \SalonMultishop\Addon::getInstance()->setCurrentShop($shopId);
+                    $_GET['shop'] = $shopId;
+                    $shopContextSet = true;
+                }
+            }
+        }
+
         try {
             $content = $this->loadView($view, $data);
         } catch (SLN_Exception $e) {
@@ -184,12 +199,19 @@ class SLN_Plugin
 
         add_filter('wp_mail_content_type', 'sln_html_content_type');
 		$headers = array_merge(array(
-			'From: '.$this->getSettings()->getSalonName().' <'.$this->getSettings()->getSalonEmail().'>',
+			'From: '.$this->getSettings()->getSalonName($bookingForShop).' <'.$this->getSettings()->getSalonEmail().'>',
 			'booking-id: ' . (isset($data['booking']) ? $data['booking']->getId() : '0'),
 			'remind: ' . ($data['remind'] ?? '0'),
 		), isset($settings['headers']) ? $settings['headers'] : array());
         if(empty($settings['to'])){
             remove_filter('wp_mail_content_type', 'sln_html_content_type');
+            if ($shopContextSet) {
+                if ($previousShopGet !== null) {
+                    $_GET['shop'] = $previousShopGet;
+                } else {
+                    unset($_GET['shop']);
+                }
+            }
             return;
             //throw new Exception('Receiver not defined');
         }
@@ -200,6 +222,14 @@ class SLN_Plugin
         wp_mail($settings['to'], $settings['subject'], $content, $headers, $settings['attachments']);
 
         remove_filter('wp_mail_content_type', 'sln_html_content_type');
+
+        if ($shopContextSet) {
+            if ($previousShopGet !== null) {
+                $_GET['shop'] = $previousShopGet;
+            } else {
+                unset($_GET['shop']);
+            }
+        }
     }
 
     /**

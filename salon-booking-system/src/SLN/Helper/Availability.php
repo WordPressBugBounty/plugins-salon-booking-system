@@ -24,6 +24,115 @@ class SLN_Helper_Availability
     protected $initialDate;
     private $excludeHiddenFromFrontend = false;
 
+    /**
+     * Request-scoped memoization of the leaf per-minute validation primitives
+     * (validateAttendantOnTime / validateServiceOnTime).
+     *
+     * Rationale: the alternate-order date step (SLN_Action_Ajax_CheckDateAlt)
+     * validates every candidate slot of a day, and every slot re-validates the
+     * whole [slot, slot+duration] minute window. Consecutive slots overlap
+     * heavily (e.g. 09:00 checks 09:00→09:45, 09:05 checks 09:05→09:50, …), so
+     * without caching each minute of the day is re-validated ~duration/interval
+     * times per attendant/service — the dominant cost of the date step.
+     *
+     * These primitives are PURE functions of the immutable per-request day model
+     * (existing bookings, opening hours, holiday/booking rules) for a given
+     * (attendant|service, H:i, service, flags). Caching them yields identical
+     * results while collapsing the redundant overlap to one computation per
+     * distinct minute. The cache is invalidated in setDate() whenever a new
+     * DayBookings model is built (day change or different booking context), so a
+     * stale day can never leak a wrong result.
+     *
+     * @var array
+     */
+    private $slotValidationCache = array();
+
+    /**
+     * Lightweight per-request performance counters for the availability engine.
+     * Populated only when self::$perfEnabled is true (set by a debug-gated caller,
+     * e.g. SLN_Action_Ajax_CheckDate) so there is zero overhead in normal runs.
+     * Surfaced to admins in the checkDate AJAX debug payload to diagnose whether
+     * the slowness comes from cache misses (full window re-processed each request)
+     * or from getTimes() itself — without relying on the (CDN-cached) log file.
+     *
+     * @var bool
+     */
+    public static $perfEnabled = false;
+    /** @var array */
+    public static $perf = array();
+
+    public static function perfReset()
+    {
+        self::$perf = array(
+            'cachedDays_calls'   => 0,
+            'cachedDays_ms'      => 0.0,
+            'window_days'        => 0,
+            'hasDay_hit'         => 0,
+            'hasDay_miss'        => 0,
+            'processDate_calls'  => 0,
+            'processDate_ms'     => 0.0,
+            'getTimes_calls'     => 0,
+            'getTimes_ms'        => 0.0,
+            // Diagnostic: bounded list of dates getTimes() is invoked with, to
+            // locate the hidden per-day loop that recomputes availability on a
+            // warm cache. Capped to avoid bloating the debug AJAX payload.
+            'getTimes_dates'     => array(),
+            // Diagnostic: number of days in the persisted salon_cache option at
+            // request start (-1 = option missing). Confirms whether the day
+            // cache actually persists/reloads across requests, or is empty every
+            // time (forcing getFullDays()->refreshAll() full-window recompute).
+            'cache_option_count' => null,
+            // Diagnostic: how many times the whole booking window was refreshed
+            // (refreshAll/refresh) during this request. Expected 0 on a warm,
+            // persisted cache.
+            'refresh_calls'      => 0,
+            'refresh_days'       => 0,
+            // --- Phase timers for the alternate-order date step -----------------
+            // (SLN_Action_Ajax_CheckDateAlt::getIntervalsArray). These split the
+            // ~4s "assistant -> date" cost seen on heavy live sites into its two
+            // dominant loops so we can tell whether the bottleneck is the per-day
+            // availability scan or the suggested-day time-list validation.
+            //
+            // dateloop_ms: wall time of the whole `foreach($dates)` scan that
+            //   decides which days are shown as bookable (checkDayServicesAndAttendants
+            //   + dateHasBookableSlot per day).
+            // timelist_ms: wall time of the final `foreach($times)` loop that
+            //   validates every slot of the suggested day for the time picker.
+            'dateloop_ms'        => 0.0,
+            'timelist_ms'        => 0.0,
+            // How many days the date loop scanned, and how many candidate slots the
+            // per-day bookable-slot probe evaluated in total. Together with
+            // dateloop_ms these give the real per-day / per-slot unit cost.
+            'dateHasBookableSlot_calls' => 0,
+            'candidateSlots_scanned'    => 0,
+            // checkDateTimeServicesAndAttendants() invocations (the strict per-slot
+            // validation) across the whole request — the multiplier that makes the
+            // date step expensive.
+            'checkSlot_calls'    => 0,
+            // DayBookings model (re)builds. Each build loads the day's existing
+            // bookings from the DB, so on a cold per-request state this scales with
+            // the number of distinct days touched (~window size) and is the prime
+            // suspect for the residual cost the per-minute memoization can't remove.
+            'dayBookings_builds'   => 0,
+            'dayBookings_build_ms' => 0.0,
+            // Effectiveness of the request-scoped per-minute validation memoization
+            // (validateAttendantOnTime / validateServiceOnTime).
+            'validation_hits'    => 0,
+            'validation_misses'  => 0,
+        );
+    }
+
+    public static function perfGet()
+    {
+        $p = self::$perf;
+        foreach (array('cachedDays_ms', 'processDate_ms', 'getTimes_ms', 'dateloop_ms', 'timelist_ms', 'dayBookings_build_ms') as $k) {
+            if (isset($p[$k])) {
+                $p[$k] = round($p[$k], 1);
+            }
+        }
+        return $p;
+    }
+
     public function __construct(SLN_Plugin $plugin)
     {
         $this->settings = $plugin->getSettings();
@@ -61,6 +170,8 @@ class SLN_Helper_Availability
     }
 
     public function getCachedDays() {
+        $perf = self::$perfEnabled;
+        $perfStart = $perf ? microtime(true) : 0;
         $bc = SLN_Plugin::getInstance()->getBookingCache();
         $interval = $this->getHoursBeforeHelper();
         $from = Date::create($interval->getFromDate());
@@ -69,6 +180,10 @@ class SLN_Helper_Availability
         $avItems = $this->getItems();
         $hItems  = $this->getHolidaysItemsWithWeekDayRules($avItems->getWeekDayRules());
         $dayLog = SLN_Helper_Availability_AdminRuleLog::getInstance();
+        if ($perf) {
+            self::$perf['cachedDays_calls']++;
+            self::$perf['window_days'] += $count;
+        }
         
         // PERFORMANCE OPTIMIZATION: Batch process all missing dates at once
         // Instead of: processDate() → save() → processDate() → save() (89 times)
@@ -80,15 +195,23 @@ class SLN_Helper_Availability
         while ($temp_count > 0) {
             $temp_count--;
             if(!$bc->hasDay($temp_from)) {
+                if ($perf) { self::$perf['hasDay_miss']++; }
                 $dates_to_process[] = clone $temp_from;
+            } elseif ($perf) {
+                self::$perf['hasDay_hit']++;
             }
             $temp_from = $temp_from->getNextDate();
         }
         
         // Process all missing dates, then save ONCE
         if (!empty($dates_to_process)) {
+            $procStart = $perf ? microtime(true) : 0;
             foreach ($dates_to_process as $date) {
                 $bc->processDate($date);
+            }
+            if ($perf) {
+                self::$perf['processDate_calls'] += count($dates_to_process);
+                self::$perf['processDate_ms'] += (microtime(true) - $procStart) * 1000;
             }
             $bc->save(); // Single save instead of N saves
         }
@@ -110,6 +233,9 @@ class SLN_Helper_Availability
             $from = $from->getNextDate();
         }
         
+        if ($perf) {
+            self::$perf['cachedDays_ms'] += (microtime(true) - $perfStart) * 1000;
+        }
         return $ret;
     }
 
@@ -137,6 +263,64 @@ class SLN_Helper_Availability
         $bc = SLN_Plugin::getInstance()->getBookingCache();
         if ($bc->hasFullDay($date)) {
             return array();
+        }
+        // PERFORMANCE: When a day is already resolved in the persisted day cache
+        // as non-bookable, getTimes() would recompute an empty result anyway
+        // (that is exactly why processDate() flagged it as full/non-working/holiday).
+        // Returning early keeps the result identical while skipping the expensive
+        // availability engine. This is what makes the forward day-scan in
+        // SLN_Helper_Intervals::setDatetime() cheap on a warm cache: without it,
+        // every scanned non-bookable day re-ran the full computation on each request
+        // (hasFullDay() only short-circuits the 'full' status, not 'booking_rules'
+        // or 'holiday_rules').
+        if ($bc->hasDay($date)) {
+            $day = $bc->getDay($date);
+            $status = isset($day['status']) ? $day['status'] : '';
+            if (in_array($status, array('full', 'booking_rules', 'holiday_rules'), true)) {
+                return array();
+            }
+            // PERFORMANCE: reuse the day's cached free_slots (the raw getTimes()
+            // output persisted by processDate()/processBooking()/refresh()) instead
+            // of recomputing the expensive per-slot availability engine on every
+            // request. getTimes() output depends only on opening hours, holidays and
+            // existing bookings — never on the selected service/attendant/duration
+            // (those filters are applied by callers AFTER this method) — so the
+            // cached slots are an exact substitute, and the cache is already
+            // invalidated whenever a booking or rule changes.
+            //
+            // This is the fix for the multi-second date step in the alternate step
+            // order (SLN_Action_Ajax_CheckDateAlt): its per-day bookability scan
+            // (dateHasBookableSlot) called getCachedTimes() -> getTimes() once for
+            // EVERY day in the booking window on each checkDate request (~tens of ms
+            // per day × the whole window), even on a warm cache.
+            //
+            // Restricted to days strictly AFTER today so the "hours before" lower
+            // bound — which trims already-passed times from *today* as the clock
+            // advances within the request — is never in play; today (and the boundary
+            // day) still recompute for exactness.
+            if ($status === 'free' && !empty($day['free_slots']) && is_array($day['free_slots'])) {
+                // Reuse cached free_slots only for days strictly AFTER BOTH today and
+                // the "hours before" minimum-advance day. The original guard used today
+                // alone, assuming the hours-before lower bound only ever trims times
+                // from *today*. That assumption breaks when hours_before_from pushes the
+                // earliest bookable moment onto a FUTURE day (e.g. "+1 day" => tomorrow
+                // 20:45): that boundary day's cached slots were computed with an earlier
+                // $from and still contain times that are now too near, so the date step
+                // offered (and defaulted to) slots that immediately failed the
+                // "date is too near" check. Recomputing via getTimes() for the boundary
+                // day re-applies the $d >= $from filter, dropping the too-near slots (and
+                // a day left with no valid slot correctly disappears from the calendar).
+                $hbFromDay = $this->getHoursBeforeHelper()->getFromDate()->format('Y-m-d');
+                $safeAfter = max(SLN_TimeFunc::date('Y-m-d'), $hbFromDay);
+                if ($date->toString() > $safeAfter) {
+                    $ret = array();
+                    foreach ($day['free_slots'] as $hi) {
+                        $ret[$hi] = new SLN_DateTime($date->toString() . ' ' . $hi);
+                    }
+
+                    return $ret;
+                }
+            }
         }
         $ret = $this->getTimes($date);
         if(empty($ret)){
@@ -274,6 +458,14 @@ class SLN_Helper_Availability
     
     public function getTimes(Date $date)
     {
+        $perf = self::$perfEnabled;
+        $perfStart = $perf ? microtime(true) : 0;
+        if ($perf) {
+            self::$perf['getTimes_calls']++;
+            if (count(self::$perf['getTimes_dates']) < 250) {
+                self::$perf['getTimes_dates'][] = $date->toString();
+            }
+        }
         $ret = array();
         $avItems = $this->getItems();
         $hItems = $this->getHolidaysItems();
@@ -341,7 +533,12 @@ class SLN_Helper_Availability
                 $ret[$time] = $d;
             }
         }
-        SLN_Plugin::addLog(__CLASS__.' getTimes '.print_r($ret, true));
+        if (SLN_Plugin::isDebugEnabled()) {
+            SLN_Plugin::addLog(__CLASS__.' getTimes '.print_r($ret, true));
+        }
+        if ($perf) {
+            self::$perf['getTimes_ms'] += (microtime(true) - $perfStart) * 1000;
+        }
 
         return $ret;
     }
@@ -360,15 +557,23 @@ class SLN_Helper_Availability
             $dayDate = clone $date;
             $dayDate->setTime(0, 0, 0);
             
+            $perf = self::$perfEnabled;
+            $buildStart = $perf ? microtime(true) : 0;
             $obj = SLN_Enum_AvailabilityModeProvider::getService(
                 $mode,
                 $dayDate,
                 $booking
             );
+            if ($perf) {
+                self::$perf['dayBookings_builds']++;
+                self::$perf['dayBookings_build_ms'] += (microtime(true) - $buildStart) * 1000;
+            }
             SLN_Plugin::addLog(__CLASS__.sprintf(' - Started DayBookings class: %s', get_class($obj)));
             SLN_Plugin::addLog(__CLASS__.sprintf(' - Date: %s', $date->format('Y-m-d H:i')));
             SLN_Plugin::addLog(__CLASS__.sprintf(' - Booking: %s', $booking ? '#'.$booking->getId() : 'none'));
             $this->dayBookings = $obj;
+            // A new day model invalidates all memoized per-minute validations.
+            $this->slotValidationCache = array();
         }
         $this->dayBookings->setTime($date->format('H'), $date->format('i'));
         $this->date = $date;
@@ -595,6 +800,21 @@ class SLN_Helper_Availability
 
     private function validateAttendantOnTime(SLN_Wrapper_AttendantInterface $attendant, SLN_DateTime $time, SLN_Wrapper_ServiceInterface $service=null)
     {
+        // Request-scoped memoization: pure function of the current day model for a
+        // given (attendant, minute, service). Collapses the heavy overlap between
+        // consecutive candidate slots (see $slotValidationCache doc).
+        $cacheKey = 'a|'.$attendant->getId().'|'.$time->format('H:i').'|'.($service ? $service->getId() : '0');
+        if (array_key_exists($cacheKey, $this->slotValidationCache)) {
+            if (self::$perfEnabled) { self::$perf['validation_hits']++; }
+            return $this->slotValidationCache[$cacheKey];
+        }
+        if (self::$perfEnabled) { self::$perf['validation_misses']++; }
+
+        return $this->slotValidationCache[$cacheKey] = $this->doValidateAttendantOnTime($attendant, $time, $service);
+    }
+
+    private function doValidateAttendantOnTime(SLN_Wrapper_AttendantInterface $attendant, SLN_DateTime $time, SLN_Wrapper_ServiceInterface $service=null)
+    {
         SLN_Plugin::addLogVerbose(__CLASS__.sprintf(' checking time %s', $time->format('Ymd H:i')));
         $time = $this->getDayBookings()->getTime($time->format('H'), $time->format('i'));
 
@@ -748,6 +968,20 @@ class SLN_Helper_Availability
     }
 
     private function validateServiceOnTime(SLN_Wrapper_ServiceInterface $service, SLN_DateTime $time, $checkDuration = true, $checkBookingAndHolidayRules = true)
+    {
+        // Request-scoped memoization: pure function of the current day model for a
+        // given (service, minute, flags). See $slotValidationCache doc.
+        $cacheKey = 's|'.$service->getId().'|'.$time->format('H:i').'|'.($checkDuration ? '1' : '0').'|'.($checkBookingAndHolidayRules ? '1' : '0');
+        if (array_key_exists($cacheKey, $this->slotValidationCache)) {
+            if (self::$perfEnabled) { self::$perf['validation_hits']++; }
+            return $this->slotValidationCache[$cacheKey];
+        }
+        if (self::$perfEnabled) { self::$perf['validation_misses']++; }
+
+        return $this->slotValidationCache[$cacheKey] = $this->doValidateServiceOnTime($service, $time, $checkDuration, $checkBookingAndHolidayRules);
+    }
+
+    private function doValidateServiceOnTime(SLN_Wrapper_ServiceInterface $service, SLN_DateTime $time, $checkDuration = true, $checkBookingAndHolidayRules = true)
     {
         SLN_Plugin::addLogVerbose(__CLASS__.sprintf(' checking time %s', $time->format('Ymd H:i')));
         $time = $this->getDayBookings()->getTime($time->format('H'), $time->format('i'));

@@ -4,7 +4,7 @@ Tags: booking, reservations, scheduling, booking calendar, appointment calendar
 Requires at least: 4.1
 Tested up to: 6.9
 Requires PHP: 7.4.8
-Stable tag: 10.30.32
+Stable tag: 10.30.33
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -407,6 +407,12 @@ FREE version doesn't have the online payments options, no mobile app access, no 
 
 
 == Changelog ==
+
+08.07.2026 - 10.30.33
+
+* Security fix: patched a Cross-Site Request Forgery vulnerability on the custom texts endpoint that could be abused for remote code execution (CVE-2026-15070)
+* Added nonce validation to the "Set custom text" AJAX action
+* Custom texts are now stored safely in the plugin options instead of a generated PHP file
 
 25.06.2026 - 10.30.32
 
@@ -827,6 +833,8 @@ Fix critical issue.
 
 == Upgrade Notice ==
 
+= 10.30.33 =
+Security release. Fixes a CSRF-to-RCE vulnerability (CVE-2026-15070). All users are strongly advised to update immediately.
 
 
 

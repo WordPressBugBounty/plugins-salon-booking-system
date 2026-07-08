@@ -1657,6 +1657,11 @@ function sln_loadStep($, data) {
                     },
                     700
                 );
+                // Mark that the upcoming step init is running on a freshly
+                // AJAX-rendered step. Its server-side intervals are up to date,
+                // so sln_stepDate() can skip the redundant init-time validate()
+                // (a second full availability computation). Reset by the consumer.
+                window.__slnStepFromAjax = true;
                 sln_init($);
                 $("div#sln-notifications")
                     .html("")
@@ -2600,7 +2605,39 @@ function sln_stepDate($) {
     // date, renders the time-slot panel immediately, and re-enables the correct
     // calendar days — all before the user needs to click anything.
     if ($(".sln_datepicker div").length) {
-        validate($(".sln_datepicker div"), false);
+        // PERFORMANCE: skip the redundant init-time validate() when the date step
+        // was just rendered via AJAX (wizard navigation). In that case the server
+        // already embedded freshly computed intervals in data-intervals, so the
+        // calendar days and time slots are correct and a second full availability
+        // computation (checkDate) would only duplicate work — the single biggest
+        // contributor to the slow attendant→date transition.
+        //
+        // Two safety conditions keep behavior identical where the init validate()
+        // is actually needed:
+        //   - Full page loads (flag not set): data-intervals may come from a cached
+        //     HTML page and must be refreshed.
+        //   - Customer-timezone display: slots must be recomputed client-side, which
+        //     only the init validate() (checkDate carrying the browser timezone) does.
+        var freshAjaxRender = window.__slnStepFromAjax === true;
+        window.__slnStepFromAjax = false;
+        var needsTimezoneRecompute =
+            typeof salon !== "undefined" &&
+            salon.display_slots_customer_timezone === "1";
+        // Only skip when the server render already produced bookable time slots for
+        // the auto-selected date. When it did not (day full / needs auto-retry to
+        // the next available date), fall through to validate() so that logic runs.
+        var hasRenderedTimes =
+            items.intervals &&
+            items.intervals.times &&
+            Object.keys(items.intervals.times).length > 0;
+        if (freshAjaxRender && !needsTimezoneRecompute && hasRenderedTimes) {
+            // Server-rendered intervals are authoritative for the first view; mark
+            // valid so the submit handler advances without a pre-submit re-check.
+            isValid = true;
+            isInitialLoad = false;
+        } else {
+            validate($(".sln_datepicker div"), false);
+        }
     }
 }
 

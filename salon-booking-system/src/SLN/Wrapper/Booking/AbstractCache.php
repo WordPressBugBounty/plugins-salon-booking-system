@@ -75,6 +75,12 @@ class SLN_Wrapper_Booking_AbstractCache
 
     public function refresh($from,$to)
     {
+        // Diagnostic (admin + debug only): record that a full-window refresh ran
+        // this request. On a warm, persisted cache this should never fire from
+        // the front-end read path.
+        if (class_exists('SLN_Helper_Availability') && SLN_Helper_Availability::$perfEnabled) {
+            SLN_Helper_Availability::$perf['refresh_calls'] = (isset(SLN_Helper_Availability::$perf['refresh_calls']) ? SLN_Helper_Availability::$perf['refresh_calls'] : 0) + 1;
+        }
         // Don't clear entire cache - only update specific dates
         // $this->settings = array();  // REMOVED: This was clearing ALL cached dates
         $from           = Date::create($from);

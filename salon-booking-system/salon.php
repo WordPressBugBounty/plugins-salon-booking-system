@@ -3,7 +3,7 @@
 /*
 Plugin Name: Salon Booking System - Free Version
 Description: Let your customers book you services through your website. Perfect for hairdressing salons, barber shops and beauty centers.
-Version: 10.30.32
+Version: 10.30.33
 Plugin URI: http://salonbookingsystem.com/
 Author: Salon Booking System
 Author URI: http://salonbookingsystem.com/
@@ -45,7 +45,7 @@ if (defined('SLN_PLUGIN_BASENAME')) {
 define('SLN_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('SLN_PLUGIN_DIR', untrailingslashit(dirname(__FILE__)));
 define('SLN_PLUGIN_URL', untrailingslashit(plugins_url('', __FILE__)));
-define('SLN_VERSION', '10.30.32');
+define('SLN_VERSION', '10.30.33');
 define('SLN_STORE_URL', 'https://salonbookingsystem.com');
 define('SLN_PRICING_URL', 'https://www.salonbookingsystem.com/plugin-pricing-2/');
 define('SLN_AUTHOR', 'Salon Booking');
@@ -277,6 +277,15 @@ add_filter('body_class', function ($classes) {
 });
 
 register_activation_hook(__FILE__, function () {
+	// Security (CVE-2026-15070): remove any legacy web-accessible translate-constants.php
+	// left by earlier versions. It was generated from user input and could contain an
+	// injected PHP payload. The plugin no longer generates this file.
+	$sln_legacy_translate_file = SLN_PLUGIN_DIR . '/translate-constants.php';
+	if (file_exists($sln_legacy_translate_file)) {
+		@unlink($sln_legacy_translate_file);
+	}
+	update_option('sln_translate_constants_cleaned', 1);
+
 	// PWA: next salon-booking-pwa load rewrites dist assets from *.template.* (new plugin zip).
 	\SLB_PWA\Plugin::invalidate_dist_regeneration_cache();
 

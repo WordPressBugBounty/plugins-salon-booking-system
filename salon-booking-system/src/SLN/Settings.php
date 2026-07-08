@@ -322,17 +322,14 @@ class SLN_Settings {
 	}
 
 	public function setCustomText($key, $value) {
+		// Persist custom texts via the options storage only. We intentionally do
+		// NOT generate a PHP source file from user input: the previous
+		// file_put_contents() into translate-constants.php allowed arbitrary PHP
+		// to be injected (CVE-2026-15070). getCustomText() reads from this option,
+		// so no generated file is needed for the feature to work.
 		$custom_texts = $this->get('custom_texts');
 		$custom_texts[$key] = $value;
 		$this->set('custom_texts', $custom_texts);
-
-                $text = "<?php \r\n";
-
-                foreach ($custom_texts as $key => $value) {
-                    $text .= "__('$value', 'salon-booking-system'); \r\n";
-                }
-
-                file_put_contents(SLN_PLUGIN_DIR . '/translate-constants.php', $text);
 
 		return true;
 	}

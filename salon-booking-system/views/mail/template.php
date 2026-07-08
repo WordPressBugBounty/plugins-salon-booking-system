@@ -158,7 +158,7 @@ a[x-apple-data-detectors] {
            <table class="es-footer-body" cellspacing="0" cellpadding="0" bgcolor="#ffffff" align="center" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:#FFFFFF;width:600px">
              <tr>
               <td align="left" style="padding:0;Margin:0;padding-left:20px;padding-right:20px;padding-top:40px">
-              <?php echo $plugin->loadView('mail/_salon_info', compact('plugin')) ?>
+              <?php echo $plugin->loadView('mail/_salon_info', compact('plugin', 'booking')) ?>
                </td>
              </tr>
              <tr>

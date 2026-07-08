@@ -7,6 +7,11 @@ class SLN_Action_Ajax_SetCustomText extends SLN_Action_Ajax_Abstract
 
 	public function execute()
 	{
+		// Reject cross-origin/forged (CSRF) requests before touching $_POST.
+		// The legitimate client (js/salon.js) sends salon.ajax_nonce, created via
+		// wp_create_nonce('ajax_post_validation') in SLN_Action_InitScripts.
+		check_ajax_referer('ajax_post_validation', 'security');
+
 		if (!is_user_logged_in()) {
 			return array( 'redirect' => wp_login_url());
 		}

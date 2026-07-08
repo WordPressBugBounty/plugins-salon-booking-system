@@ -638,9 +638,22 @@ class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
         }
         
         if ($remainedAmount) {
-            $this->setMeta('deposit', $this->getDeposit() + $remainedAmount);
-            $this->setMeta('paid_remained_amount', $remainedAmount);
-            $this->setMeta('remainedAmount', 0);
+            // Idempotency guard: only record the remaining balance once, and never let the
+            // deposit exceed the booking total. Stripe can deliver the same
+            // checkout.session.completed event to multiple endpoints (and the success
+            // redirect may also fire), so without this guard the deposit was repeatedly
+            // increased until it equalled the full booking amount.
+            if (!$this->getMeta('paid_remained_amount')) {
+                $newDeposit = min($this->getDeposit() + $remainedAmount, $this->getAmount());
+                $this->setMeta('deposit', $newDeposit);
+                $this->setMeta('paid_remained_amount', $remainedAmount);
+                $this->setMeta('remainedAmount', 0);
+            } else {
+                SLN_Plugin::addLog(sprintf(
+                    'markPaid: Remaining balance already recorded for booking #%d, skipping duplicate deposit increment',
+                    $this->getId()
+                ));
+            }
         }
         if (class_exists('SalonPackages\Addon') && slnpackages_is_pro_version_salon() && slnpackages_is_license_active()) {
             $this->setPrepaidServices();

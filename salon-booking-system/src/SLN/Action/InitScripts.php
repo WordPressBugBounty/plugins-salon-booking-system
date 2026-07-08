@@ -169,6 +169,12 @@ class SLN_Action_InitScripts
 			'txt_overbooking' => __('This slot is already booked. Please choose a different time.', 'salon-booking-system'),
 			'txt_no_slots_for_day' => __('No available time slots for this day. Please choose another date.', 'salon-booking-system'),
 			'debug' => $s->get('debug') ? '1' : '0',
+			// Frontend performance guard: when the date step is rendered via AJAX
+			// (wizard navigation), its intervals are already freshly computed
+			// server-side, so the redundant init-time validate() call can be
+			// skipped — UNLESS slots are shown in the customer timezone, which
+			// requires a client-side recompute that only the init validate() does.
+			'display_slots_customer_timezone' => $s->isDisplaySlotsCustomerTimezone() ? '1' : '0',
 		);
 
 		$fbLoginEnabled = SLN_Plugin::getInstance()->getSettings()->get('enabled_fb_login');
