@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 /**
  * Forecast step – STATE B (logged-in customer with booking history).

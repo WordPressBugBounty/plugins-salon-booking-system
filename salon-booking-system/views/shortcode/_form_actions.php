@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 /**
  * @var SLN_Shortcode_Salon_Step $step
@@ -22,15 +24,18 @@ $ajaxSecurity = wp_create_nonce('ajax_post_validation');
 $builder = $plugin->getBookingBuilder();
 $clientIdFieldValue = $builder->getClientId();
 $lastBookingObject = $builder->getLastBooking();
-$lastBookingId = $lastBookingObject ? $lastBookingObject->getId() : null;
+// SECURITY: expose the per-booking secure token ("{id}-{hash}") instead of the bare
+// numeric ID so the booking cannot be tampered with / enumerated by third parties.
+// Server-side consumers resolve it via SLN_Helper_BookingAccess.
+$lastBookingToken = $lastBookingObject ? $lastBookingObject->getUniqueId() : null;
 if (!empty($clientIdFieldValue)) {
     echo '<input type="hidden" name="sln_client_id" value="' . esc_attr($clientIdFieldValue) . '">';
 }
 echo '<input type="hidden" name="action" value="salon">';
 echo '<input type="hidden" name="method" value="salonStep">';
 echo '<input type="hidden" name="security" value="' . esc_attr($ajaxSecurity) . '">';
-if (!empty($lastBookingId)) {
-    echo '<input type="hidden" name="sln_booking_id" value="' . esc_attr($lastBookingId) . '">';
+if (!empty($lastBookingToken)) {
+    echo '<input type="hidden" name="sln_booking_id" value="' . esc_attr($lastBookingToken) . '">';
 }
 if (isset($_GET['lang'])) {
     echo '<input type="hidden" name="lang" value="' . esc_attr(sanitize_text_field(wp_unslash($_GET['lang']))) . '">';
@@ -136,12 +141,40 @@ $ajaxEnabled = $plugin->getSettings()->isAjaxEnabled(); ?>
         <?php
         endif;
         $backBtn = ob_get_clean();
+
+        // Deposit caption shown directly UNDER the pay button. It must live OUTSIDE the .sln-btn
+        // wrapper: that wrapper absolutely-positions its inner button/anchor to fill it, so any
+        // caption placed inside would be overlaid on top of the button label. The percentage is
+        // derived from the raw amounts so it is correct whether the deposit is configured as a
+        // percentage or a fixed amount. Skipped for the remaining-balance top-up.
+        // Paystack renders its own deposit caption from within the add-on (so it works on sites
+        // running an older main plugin), so skip it here to avoid a duplicate note.
+        $captionMethodKey = (!empty($paymentMethod) && $paymentMethod && method_exists($paymentMethod, 'getMethodKey'))
+            ? $paymentMethod->getMethodKey()
+            : '';
+        $depositCaption = '';
+        if (!empty($paymentMethod) && $paymentMethod && empty($payRemainingAmount) && $captionMethodKey !== 'paystack') {
+            $rawTotal   = (float) $bb->getAmount();
+            $rawDeposit = (float) $bb->getDeposit();
+            if ($rawDeposit > 0 && $rawTotal > 0) {
+                $depositPercent = (int) round(($rawDeposit / $rawTotal) * 100);
+                $depositCaption = $depositPercent > 0
+                    ? sprintf(__('As %d%% upfront deposit', 'salon-booking-system'), $depositPercent)
+                    : __('Upfront deposit', 'salon-booking-system');
+            }
+        }
+        ob_start();
+        if (!empty($depositCaption)) : ?>
+            <div class="sln-deposit-note"><?php echo esc_html($depositCaption); ?></div>
+        <?php endif;
+        $depositCaptionHtml = ob_get_clean();
         ?>
         <?php if ($size == '900') { ?>
             <div class="sln-box--formactions sln-box--formactions--<?php echo $current; ?> form-actions">
                 <div class="sln-btn sln-btn--emphasis sln-btn--medium sln-btn--fullwidth sln-btn--nextstep">
                     <?php echo $nextBtn ?>
                 </div>
+                <?php echo $depositCaptionHtml ?>
                 <?php if (isset($backBtn)) : ?>
                        <div class="sln-btn--prevstep"><?php echo $backBtn ?></div>
                 <?php endif ?>
@@ -151,6 +184,7 @@ $ajaxEnabled = $plugin->getSettings()->isAjaxEnabled(); ?>
                 <div class="sln-btn sln-btn--emphasis sln-btn--medium sln-btn--fullwidth sln-btn--nextstep">
                     <?php echo $nextBtn ?>
                 </div>
+                <?php echo $depositCaptionHtml ?>
                 <?php if (isset($backBtn)) : ?>
                        <div class="sln-btn--prevstep"><?php echo $backBtn ?></div>
                 <?php endif ?>
@@ -160,6 +194,7 @@ $ajaxEnabled = $plugin->getSettings()->isAjaxEnabled(); ?>
                 <div class="sln-btn sln-btn--emphasis sln-btn--medium sln-btn--fullwidth sln-btn--nextstep">
                     <?php echo $nextBtn ?>
                 </div>
+                <?php echo $depositCaptionHtml ?>
                 <?php if (isset($backBtn)) : ?>
                        <div class="sln-btn--prevstep"><?php echo $backBtn ?></div>
                 <?php endif ?>
@@ -170,6 +205,7 @@ $ajaxEnabled = $plugin->getSettings()->isAjaxEnabled(); ?>
                     <div class="sln-btn sln-btn--emphasis sln-btn--big sln-btn--fullwidth">
                         <?php echo $nextBtn ?>
                     </div>
+                    <?php echo $depositCaptionHtml ?>
                 </div>
                 <div class="col-xs-12 col-md-4 pull-right">
                     <?php if (isset($backBtn)) : ?>

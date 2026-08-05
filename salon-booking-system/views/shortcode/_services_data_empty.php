@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 ?>
 <div class="row sln-box--main">

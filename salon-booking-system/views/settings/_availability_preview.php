@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 if (!is_array($availabilities)) {
     $availabilities = array();

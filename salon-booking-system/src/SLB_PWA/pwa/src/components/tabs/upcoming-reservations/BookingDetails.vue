@@ -136,6 +136,94 @@
       </div>
     </div>
 
+    <!-- Waiting list (Smart Waitlist add-on) -->
+    <div class="detail-card" v-if="waitlist && waitlist.slot">
+      <p class="section-label">Waiting list</p>
+      <p class="wl-slot" v-if="waitlistSlotLabel">{{ waitlistSlotLabel }}</p>
+
+      <!-- Add a customer to the waiting list for this slot -->
+      <div class="wl-add">
+        <div class="wl-add-field">
+          <font-awesome-icon icon="fa-solid fa-magnifying-glass" class="wl-add-icon" />
+          <input
+            type="text"
+            class="wl-add-input"
+            v-model="wlSearch"
+            @input="onWlSearchInput"
+            placeholder="Add a customer — search by name or email…"
+          />
+          <button v-if="wlSearch" type="button" class="wl-add-clear" @click="clearWlSearch">
+            <font-awesome-icon icon="fa-solid fa-xmark" />
+          </button>
+        </div>
+        <div class="wl-results" v-if="wlResults.length">
+          <button
+            type="button"
+            class="wl-result"
+            v-for="u in wlResults"
+            :key="u.id"
+            :disabled="addingId === u.id"
+            @click="addCustomer(u.id)"
+          >
+            <span class="wl-result-avatar">{{ resultInitials(u) }}</span>
+            <span class="wl-result-info">
+              <span class="wl-result-name">{{ u.first_name }} {{ u.last_name }}</span>
+              <span class="wl-result-sub" v-if="u.email">{{ getDisplayEmail(u.email) }}</span>
+            </span>
+            <font-awesome-icon v-if="addingId === u.id" icon="fa-solid fa-rotate-right" spin class="wl-result-icon" />
+            <font-awesome-icon v-else icon="fa-solid fa-plus" class="wl-result-icon" />
+          </button>
+        </div>
+        <p class="wl-add-hint" v-else-if="wlSearch.trim().length >= 2 && !wlSearching">No customers found</p>
+      </div>
+
+      <transition name="wl-flash-fade">
+        <div class="wl-flash" :class="'wl-flash--' + waitlistFlashType" v-if="waitlistFlash">
+          <font-awesome-icon
+            :icon="waitlistFlashType === 'error' ? 'fa-solid fa-circle-xmark' : 'fa-regular fa-circle-check'"
+            class="wl-flash-icon"
+          />
+          <span class="wl-flash-text">{{ waitlistFlash }}</span>
+          <button type="button" class="wl-flash-close" @click="dismissFlash" aria-label="Dismiss">
+            <font-awesome-icon icon="fa-solid fa-xmark" />
+          </button>
+        </div>
+      </transition>
+
+      <template v-if="waitlistCandidates.length">
+        <p class="wl-note" :class="{ 'wl-note--ok': waitlistFreed }">{{ waitlistNote }}</p>
+        <div class="wl-row" v-for="c in waitlistCandidates" :key="c.entry_id">
+          <div class="wl-row-main">
+            <div class="wl-name">
+              <span class="wl-name-text">{{ c.name }}</span>
+              <span class="wl-badge" :class="'wl-badge--' + c.match">{{ matchLabel(c.match) }}</span>
+            </div>
+            <div class="wl-meta">
+              <span v-if="c.requested">{{ requestedLabel(c.requested) }}</span>
+              <span v-if="c.requested && c.channels.length" class="wl-dot"> · </span>
+              <span v-if="c.channels.length">{{ channelsLabel(c.channels) }}</span>
+              <span class="wl-score" v-if="c.score">★ {{ c.score }}</span>
+            </div>
+          </div>
+          <button
+            v-if="waitlistFreed"
+            type="button"
+            class="wl-notify-btn"
+            :class="{ 'wl-notify-btn--secondary': c.notified }"
+            :disabled="notifyingId === c.entry_id"
+            @click="notifyCandidate(c.entry_id)"
+          >
+            <span v-if="notifyingId === c.entry_id">…</span>
+            <span v-else>{{ c.notified ? 'Notify again' : 'Notify' }}</span>
+          </button>
+        </div>
+        <p class="wl-more" v-if="waitlist && waitlist.total > waitlist.shown">
+          +{{ waitlist.total - waitlist.shown }} more waiting that day
+        </p>
+      </template>
+      <p class="wl-empty" v-else>No customers are waiting for this day.</p>
+    </div>
+
     <!-- Extra Info -->
     <div class="detail-card" v-if="bookingCustomFieldsList.length">
       <div class="collapsible-header" @click="visibleExtraInfo = !visibleExtraInfo">
@@ -242,6 +330,25 @@
                 }
                 return null;
             },
+            waitlistCandidates() {
+                return this.waitlist && Array.isArray(this.waitlist.candidates) ? this.waitlist.candidates : [];
+            },
+            waitlistFreed() {
+                return !!(this.waitlist && this.waitlist.freed);
+            },
+            waitlistSlotLabel() {
+                const slot = this.waitlist && this.waitlist.slot;
+                if (!slot || !slot.date) {
+                    return '';
+                }
+                const time = slot.time ? this.timeFormat(slot.time) : '';
+                return (this.dateFormat(slot.date) + ' ' + time).trim();
+            },
+            waitlistNote() {
+                return this.waitlistFreed
+                    ? 'This slot is free — notify a customer to offer it to them. Exact time matches are listed first.'
+                    : 'These customers are waiting for this day. Notifying is enabled once this booking is cancelled or marked no-show.';
+            },
         },
         mounted() {
             this.toggleShow()
@@ -255,7 +362,17 @@
             return {
                 show: true,
                 visibleExtraInfo: false,
-                bookingData: this.booking
+                bookingData: this.booking,
+                waitlist: null,
+                notifyingId: null,
+                waitlistFlash: null,
+                waitlistFlashType: 'success',
+                waitlistFlashTimer: null,
+                wlSearch: '',
+                wlResults: [],
+                wlSearching: false,
+                wlSearchTimer: null,
+                addingId: null,
             }
         },
         methods: {
@@ -275,6 +392,141 @@
                 this.axios.get('bookings/' + this.bookingData.id).then((response) => {
                     this.bookingData = response.data.items[0]
                 })
+                this.updateWaitlist()
+            },
+            /**
+             * Fetch waiting-list candidates for this booking's slot from the
+             * Smart Waitlist add-on. Degrades silently (no card) when the add-on
+             * is inactive/unlicensed and the route 404s.
+             */
+            updateWaitlist() {
+                if (!this.bookingData || !this.bookingData.id) {
+                    return
+                }
+                this.axios.get('waitlist/booking/' + this.bookingData.id).then((response) => {
+                    this.waitlist = response.data && response.data.enabled ? response.data : null
+                }).catch(() => {
+                    this.waitlist = null
+                })
+            },
+            /** Manually offer this freed slot to a waiting customer. */
+            notifyCandidate(entryId) {
+                if (this.notifyingId) {
+                    return
+                }
+                this.notifyingId = entryId
+                this.dismissFlash()
+                this.axios.post('waitlist/booking/' + this.bookingData.id + '/notify', {entry_id: entryId})
+                    .then((response) => {
+                        if (response.data && response.data.enabled) {
+                            this.waitlist = response.data
+                        }
+                        this.setFlash((response.data && response.data.message) || 'The customer has been notified.', 'success')
+                    })
+                    .catch((error) => {
+                        const msg = error && error.response && error.response.data ? error.response.data.message : null
+                        this.setFlash(msg || 'Could not notify the customer.', 'error')
+                    })
+                    .finally(() => {
+                        this.notifyingId = null
+                    })
+            },
+            /** Debounced customer autocomplete for the "add to waiting list" field. */
+            onWlSearchInput() {
+                clearTimeout(this.wlSearchTimer)
+                if (this.wlSearch.trim().length < 2) {
+                    this.wlResults = []
+                    this.wlSearching = false
+                    return
+                }
+                this.wlSearching = true
+                this.wlSearchTimer = setTimeout(() => this.searchCustomers(), 300)
+            },
+            searchCustomers() {
+                const q = this.wlSearch.trim()
+                if (q.length < 2) {
+                    this.wlSearching = false
+                    return
+                }
+                this.axios.get('customers', {params: {search: q, search_type: 'contains', order_by: 'first_name_last_name'}})
+                    .then((response) => {
+                        this.wlResults = (response.data && response.data.items) || []
+                    })
+                    .catch(() => {
+                        this.wlResults = []
+                    })
+                    .finally(() => {
+                        this.wlSearching = false
+                    })
+            },
+            clearWlSearch() {
+                clearTimeout(this.wlSearchTimer)
+                this.wlSearch = ''
+                this.wlResults = []
+                this.wlSearching = false
+            },
+            /** Add a searched customer to the waiting list for this booking's slot. */
+            addCustomer(userId) {
+                if (this.addingId) {
+                    return
+                }
+                this.addingId = userId
+                this.dismissFlash()
+                this.axios.post('waitlist/booking/' + this.bookingData.id + '/add-customer', {user_id: userId})
+                    .then((response) => {
+                        if (response.data && response.data.enabled) {
+                            this.waitlist = response.data
+                        }
+                        this.setFlash((response.data && response.data.message) || 'Customer added to the waiting list.', 'success')
+                        this.clearWlSearch()
+                    })
+                    .catch((error) => {
+                        const msg = error && error.response && error.response.data ? error.response.data.message : null
+                        this.setFlash(msg || 'Could not add the customer to the waiting list.', 'error')
+                    })
+                    .finally(() => {
+                        this.addingId = null
+                    })
+            },
+            /** Show a waiting-list feedback message that auto-dismisses after a few seconds. */
+            setFlash(message, type) {
+                this.waitlistFlash = message
+                this.waitlistFlashType = type || 'success'
+                clearTimeout(this.waitlistFlashTimer)
+                this.waitlistFlashTimer = setTimeout(() => {
+                    this.waitlistFlash = null
+                }, 5000)
+            },
+            dismissFlash() {
+                clearTimeout(this.waitlistFlashTimer)
+                this.waitlistFlash = null
+            },
+            resultInitials(u) {
+                const f = (u.first_name || '')[0] || ''
+                const l = (u.last_name || '')[0] || ''
+                return (f + l).toUpperCase() || '?'
+            },
+            matchLabel(match) {
+                if (match === 'manual') return 'Manual'
+                if (match === 'exact') return 'Exact'
+                return 'Same day'
+            },
+            channelsLabel(channels) {
+                return (channels || []).map(c => c === 'sms' ? 'SMS' : (c.charAt(0).toUpperCase() + c.slice(1))).join(', ')
+            },
+            requestedLabel(requested) {
+                if (!requested) {
+                    return 'Any'
+                }
+                return String(requested).split(' ').map((part) => {
+                    if (/^\d{4}-\d{2}-\d{2}$/.test(part)) {
+                        return this.dateFormat(part)
+                    }
+                    if (/^\d{1,2}:\d{2}/.test(part)) {
+                        return this.timeFormat(part)
+                    }
+                    return part
+                }).join(' ')
             },
             showCustomerImages() {
                 this.$emit('showCustomerImages', {id: this.bookingData.customer_id, photos: this.photos})
@@ -589,5 +841,214 @@
 .extra-field-value {
   font-size: 14px;
   color: var(--color-text-primary, #0F172A);
+}
+.wl-slot {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary, #0F172A);
+  margin: 0 0 4px;
+}
+.wl-note {
+  font-size: 12px;
+  color: var(--color-text-secondary, #64748B);
+  margin: 0 0 10px;
+  line-height: 1.4;
+}
+.wl-note--ok { color: #166534; }
+.wl-flash {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+  border-radius: var(--radius-sm, 8px);
+  padding: 10px 10px 10px 12px;
+  margin-bottom: 10px;
+}
+.wl-flash-icon { font-size: 15px; margin-top: 1px; flex-shrink: 0; }
+.wl-flash-text { flex: 1; min-width: 0; }
+.wl-flash-close {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0 2px;
+  font-size: 13px;
+  color: inherit;
+  opacity: 0.55;
+  flex-shrink: 0;
+}
+.wl-flash-close:hover { opacity: 1; }
+.wl-flash--success {
+  color: #166534;
+  background: #dcfce7;
+}
+.wl-flash--error {
+  color: #b42318;
+  background: #fee4e2;
+}
+.wl-flash-fade-enter-active,
+.wl-flash-fade-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.wl-flash-fade-enter-from,
+.wl-flash-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+.wl-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border, #E2E8F0);
+}
+.wl-row:last-child { border-bottom: none; }
+.wl-row-main { flex: 1; min-width: 0; }
+.wl-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary, #0F172A);
+}
+.wl-name-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wl-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill, 999px);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+}
+.wl-badge--exact { background: #dcfce7; color: #166534; }
+.wl-badge--near { background: #f1f5f9; color: #64748B; }
+.wl-badge--manual { background: #dbeafe; color: #1e40af; }
+.wl-meta {
+  font-size: 12px;
+  color: var(--color-text-secondary, #64748B);
+  margin-top: 3px;
+}
+.wl-dot { color: var(--color-text-muted, #94A3B8); }
+.wl-score { margin-left: 6px; color: var(--color-text-muted, #94A3B8); }
+.wl-notify-btn {
+  flex-shrink: 0;
+  border: none;
+  border-radius: var(--radius-pill, 999px);
+  background: var(--color-primary, #2563EB);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  min-height: 36px;
+  cursor: pointer;
+}
+.wl-notify-btn:disabled { opacity: 0.6; cursor: default; }
+.wl-notify-btn--secondary {
+  background: var(--color-primary-light, #EFF6FF);
+  color: var(--color-primary, #2563EB);
+}
+.wl-more {
+  font-size: 12px;
+  color: var(--color-text-muted, #94A3B8);
+  margin: 10px 0 0;
+}
+.wl-empty {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--color-text-muted, #94A3B8);
+  margin: 4px 0 0;
+}
+.wl-add { margin: 10px 0 4px; }
+.wl-add-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-background, #F4F6FA);
+  border: 1px solid var(--color-border, #E2E8F0);
+  border-radius: var(--radius-sm, 8px);
+  padding: 8px 10px;
+}
+.wl-add-icon { color: var(--color-text-muted, #94A3B8); font-size: 13px; }
+.wl-add-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 14px;
+  color: var(--color-text-primary, #0F172A);
+  min-width: 0;
+}
+.wl-add-clear {
+  border: none;
+  background: none;
+  color: var(--color-text-muted, #94A3B8);
+  cursor: pointer;
+  padding: 2px 4px;
+  font-size: 13px;
+}
+.wl-results {
+  margin-top: 6px;
+  border: 1px solid var(--color-border, #E2E8F0);
+  border-radius: var(--radius-sm, 8px);
+  overflow: hidden;
+  max-height: 260px;
+  overflow-y: auto;
+}
+.wl-result {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border: none;
+  background: var(--color-surface, #fff);
+  border-bottom: 1px solid var(--color-border, #E2E8F0);
+  padding: 8px 10px;
+  cursor: pointer;
+  text-align: left;
+}
+.wl-result:last-child { border-bottom: none; }
+.wl-result:active { background: var(--color-background, #F4F6FA); }
+.wl-result:disabled { opacity: 0.6; cursor: default; }
+.wl-result-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-primary-light, #EFF6FF);
+  color: var(--color-primary, #2563EB);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.wl-result-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.wl-result-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary, #0F172A);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wl-result-sub {
+  font-size: 12px;
+  color: var(--color-text-secondary, #64748B);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wl-result-icon { color: var(--color-primary, #2563EB); font-size: 13px; flex-shrink: 0; }
+.wl-add-hint {
+  font-size: 12px;
+  color: var(--color-text-muted, #94A3B8);
+  margin: 8px 0 0;
 }
 </style>

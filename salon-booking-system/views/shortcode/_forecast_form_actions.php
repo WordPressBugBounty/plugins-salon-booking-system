@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 /**
  * Forecast step form actions — mirrors the large-format sidebar used by other

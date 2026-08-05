@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 use SLB_API_Mobile\Helper\UserRoleHelper;
 $user_role_helper = new UserRoleHelper();

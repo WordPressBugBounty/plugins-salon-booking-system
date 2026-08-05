@@ -10,6 +10,15 @@ class SLB_Discount_Action_Ajax_ApplyDiscountCode extends SLN_Action_Ajax_Abstrac
 	public function execute()
 	{
 		$plugin = $this->plugin;
+
+		// CSRF protection: reject forged/cross-origin requests. The legitimate
+		// client (js/discount/salon-discount.js) sends salon.ajax_nonce, created
+		// via wp_create_nonce('ajax_post_validation') in SLN_Action_InitScripts.
+		if ( ! isset($_POST['security']) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['security'] ) ), 'ajax_post_validation' ) ) {
+			$this->addError(__('Invalid security token. Please refresh the page and try again.', 'salon-booking-system'));
+			return array('errors' => $this->getErrors(), 'total' => 0);
+		}
+
 		$code   = sanitize_text_field(wp_unslash($_POST['sln']['discount']));
 
 		$criteria = array(
@@ -33,15 +42,18 @@ class SLB_Discount_Action_Ajax_ApplyDiscountCode extends SLN_Action_Ajax_Abstrac
 		
 		$bookingBuilder = $plugin->getBookingBuilder();
 
-		// Prefer the explicit booking ID from the form — same approach as ApplyTipsAmount.
+		// Prefer the explicit booking token from the form — same approach as ApplyTipsAmount.
 		// The session/transient last_id can be stale (a previous booking), which causes
 		// the discount to be validated and totals to be computed against the wrong booking.
+		// SECURITY: the id is resolved through SLN_Helper_BookingAccess, which only accepts
+		// a valid per-booking secure token, the visitor's own session booking, or (for
+		// logged-in users) their own/managed booking — blocking tampering with an
+		// arbitrary booking by enumerating IDs.
 		$bb = null;
 		if ( isset( $_POST['sln_booking_id'] ) ) {
-			$bookingId = intval( $_POST['sln_booking_id'] );
-			if ( $bookingId > 0 ) {
-				$bb = $plugin->createBooking( $bookingId );
-				SLN_Plugin::addLog( '[ApplyDiscountCode] Resolved booking #' . $bookingId . ' from POST sln_booking_id' );
+			$bb = SLN_Helper_BookingAccess::resolve( $plugin, sanitize_text_field( wp_unslash( $_POST['sln_booking_id'] ) ) );
+			if ( $bb ) {
+				SLN_Plugin::addLog( '[ApplyDiscountCode] Resolved booking #' . $bb->getId() . ' from POST sln_booking_id' );
 			}
 		}
 		if ( ! $bb ) {
@@ -126,6 +138,21 @@ class SLB_Discount_Action_Ajax_ApplyDiscountCode extends SLN_Action_Ajax_Abstrac
 		$fee         = SLN_Helper_TransactionFee::getFee($evalAmount);
 		$totalToPay  = $evalAmount + $fee;
 
+		// Recompute the amount shown inside the PAY button so the front-end can refresh
+		// just the .sln-pay-amount span (deposit vs full total), mirroring the logic in
+		// views/payment_method/*/pay.php. Only relevant when online payment is enabled and
+		// there is still a balance to pay (the zero-total case swaps the whole button below).
+		$payButtonAmount = null;
+		if ($plugin->getSettings()->isPayEnabled() && $totalToPay > 0.0) {
+			$deposit = $plugin->getSettings()->isPaymentDepositFixedAmount()
+				? $bb->getDeposit()
+				: $bb->getDeposit(true);
+			$payAmount       = $deposit > 0 ? $deposit : $bb->getToPayAmount(false);
+			// No space between the currency symbol and the number, matching the initial
+			// render in views/payment_method/*/pay.php (e.g. "£82.40").
+			$payButtonAmount = $plugin->format()->moneyFormatted($payAmount, true, false, null, false);
+		}
+
 		if ($errors = $this->getErrors()) {
 			$ret          = compact('errors');
 			// Use the freshly-computed total — avoids stale meta returning £0 or
@@ -133,6 +160,10 @@ class SLB_Discount_Action_Ajax_ApplyDiscountCode extends SLN_Action_Ajax_Abstrac
 			$ret['total'] = $plugin->format()->money($totalToPay, false, false, true);
 			// Do not replace the summary "next" button on error: that container holds
 			// the full payment UI (renderPayButton). salon-discount.js would .html() it away.
+			// The PAY amount span can still be refreshed safely (the discount was reverted).
+			if ($payButtonAmount !== null) {
+				$ret['payButtonAmount'] = $payButtonAmount;
+			}
 		} else {
 			$paymentMethod = $plugin->getSettings()->isPayEnabled() ? SLN_Enum_PaymentMethodProvider::getService($plugin->getSettings()->getPaymentMethod(), $plugin) : false;
 
@@ -153,6 +184,9 @@ class SLB_Discount_Action_Ajax_ApplyDiscountCode extends SLN_Action_Ajax_Abstrac
 					)
 				);
 				$ret['booking_id'] = $bb->getId();
+			} elseif ($payButtonAmount !== null) {
+				// Non-zero balance: keep the payment button as-is and just refresh the amount.
+				$ret['payButtonAmount'] = $payButtonAmount;
 			}
 		}
 

@@ -52,7 +52,7 @@ class SLN_Helper_CacheWarmer
             $duration = (microtime(true) - $start_time) * 1000;
             $results['success'] = true;
             $results['duration_ms'] = round($duration, 2);
-            $results['timestamp'] = date('Y-m-d H:i:s');
+            $results['timestamp'] = gmdate('Y-m-d H:i:s');
             
             if (SLN_Plugin::isDebugEnabled()) {
                 SLN_Plugin::addLog(sprintf(

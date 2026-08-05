@@ -62,18 +62,24 @@ class SLN_Action_Ajax_PreviewBulkFeedback extends SLN_Action_Ajax_Abstract
         }
         
         $breakdown = sprintf(
-            __('%d registered customer(s), %d guest(s)', 'salon-booking-system'),
+            /* translators: 1: number of registered customers, 2: number of guests. */
+            __('%1$d registered customer(s), %2$d guest(s)', 'salon-booking-system'),
             $registered,
             $guests
         );
         
+        if ($count > 0) {
+            /* translators: %d: number of eligible bookings found. */
+            $message = sprintf(_n('Found %d eligible booking', 'Found %d eligible bookings', $count, 'salon-booking-system'), $count);
+        } else {
+            $message = __('No eligible bookings found. Check settings below.', 'salon-booking-system');
+        }
+
         wp_send_json_success(array(
             'count' => $count,
             'details' => $details,
             'breakdown' => $breakdown,
-            'message' => $count > 0 
-                ? sprintf(_n('Found %d eligible booking', 'Found %d eligible bookings', $count, 'salon-booking-system'), $count)
-                : __('No eligible bookings found. Check settings below.', 'salon-booking-system')
+            'message' => $message,
         ));
     }
 }

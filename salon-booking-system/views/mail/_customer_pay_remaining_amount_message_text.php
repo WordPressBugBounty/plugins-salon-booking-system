@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 // phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
     $message = esc_html_e('Please pay the remaining amount of your booking.', 'salon-booking-system');
 ?>

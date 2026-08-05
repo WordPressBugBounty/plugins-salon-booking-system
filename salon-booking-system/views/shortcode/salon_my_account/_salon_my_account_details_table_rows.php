@@ -1,4 +1,6 @@
-<?php // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+<?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+ // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 <?php
 // Resolve rescheduling window in hours; migrate legacy day-based stored values.
 $sln_reschedule_raw          = $plugin->getSettings()->get('days_before_rescheduling');
@@ -74,10 +76,11 @@ $sln_reschedule_hours        = isset($sln_reschedule_legacy_hours[$sln_reschedul
                             </div>
                         <?php } ?>
 
-                        <?php if ($item['status_code'] == SLN_Enum_BookingStatus::PAID && $booking->getRemaingAmountAfterPay(false)) { ?>
+                        <?php
+                        $paymentMethod = $plugin->getSettings()->isPayEnabled() ? SLN_Enum_PaymentMethodProvider::getService($plugin->getSettings()->getPaymentMethod(), $plugin) : false;
+                        if ($item['status_code'] == SLN_Enum_BookingStatus::PAID && $booking->getRemaingAmountAfterPay(false) && $paymentMethod) { ?>
                             <div class="sln-btn sln-btn--emphasis sln-btn--medium sln-account__btn--pay sln-account__btn--pay-remaining">
                                 <?php
-                                $paymentMethod = $plugin->getSettings()->isPayEnabled() ? SLN_Enum_PaymentMethodProvider::getService($plugin->getSettings()->getPaymentMethod(), $plugin) : false;
                                 $payUrl = $booking->getPayUrl(true) . "&mode={$paymentMethod->getMethodKey()}";
                                 echo $paymentMethod->renderPayButton(array('booking' => $booking, 'paymentMethod' => $paymentMethod, 'payUrl' => $payUrl, 'payRemainingAmount' => 1));
                                 ?>

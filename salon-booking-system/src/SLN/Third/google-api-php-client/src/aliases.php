@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 
 if (class_exists('Google_Client', false)) {
     // Prevent error with preloading in PHP 7.4

@@ -1255,6 +1255,7 @@ parent.addEventListener("click", (event) => {
         return $("#sln-calendar-user-field").data("nomatches");
       },
     },
+    minimumInputLength: 3,
     ajax: {
       url:
         salon.ajax_url +
@@ -1267,7 +1268,6 @@ parent.addEventListener("click", (event) => {
           s: params.term,
         };
       },
-      minimumInputLength: 3,
       processResults: function (data, page) {
         return {
           results: data.result,

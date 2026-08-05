@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 $isMulti = $plugin->getSettings()->isMultipleAttendantsEnabled(); ?>
 <label for="<?php echo $elemId ?>" class="sln-list__item <?php if ($isMulti) { echo 'sln-list--multiple__item'; } ?> sln-attendant">

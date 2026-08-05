@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 if(!$data['comments']) return;
 $plugin = SLN_Plugin::getInstance();
 ?>

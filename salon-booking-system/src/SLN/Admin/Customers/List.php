@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 // phpcs:ignoreFile WordPress.DB.PreparedSQL.NotPrepared
 // phpcs:ignoreFile WordPress.Security.NonceVerification.Recommended
 use SLB_API_Mobile\Helper\UserRoleHelper;

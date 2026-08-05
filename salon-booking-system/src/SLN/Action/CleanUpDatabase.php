@@ -92,7 +92,7 @@ class SLN_Action_CleanUpDatabase
 
         // post_date is stored in site-local time (current_time('mysql')), so build the
         // threshold in local time too for an apples-to-apples comparison.
-        $thresholdLocal = date('Y-m-d H:i:s', current_time('timestamp') - ($maxAgeHours * HOUR_IN_SECONDS));
+        $thresholdLocal = gmdate('Y-m-d H:i:s', current_time('timestamp') - ($maxAgeHours * HOUR_IN_SECONDS));
 
         $ids = $wpdb->get_col(
             $wpdb->prepare(

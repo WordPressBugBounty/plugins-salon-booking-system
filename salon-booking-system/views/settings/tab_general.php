@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 $plugin = SLN_Plugin::getInstance();
 include $this->plugin->getViewFile('admin/utilities/settings_inpage_navbar');

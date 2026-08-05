@@ -9,7 +9,7 @@ class SLN_Formatter
         $this->plugin = $plugin;
     }
 
-    public function money($val, $showFree = true, $useDefaultSep = true, $removeDecimals = false, $htmlEntityDecode = false, $isLeftCurrencySymbol = null)
+    public function money($val, $showFree = true, $useDefaultSep = true, $removeDecimals = false, $htmlEntityDecode = false, $isLeftCurrencySymbol = null, $spaceAroundSymbol = true)
     {
 	$val = floatval($val);
         $s = $this->plugin->getSettings();
@@ -33,14 +33,17 @@ class SLN_Formatter
             }
 
             $decimals = $removeDecimals && floor($val) === floatval($val) ? 0 : 2;
-            $money = ($leftSymbol . ( !empty( $leftSymbol ) ? ' ' : '' ) . number_format((float)$val, $decimals, $decimalSeparator, $thousandSeparator) . ( !empty( $rightSymbol ) ? ' ' : '' ) . $rightSymbol);
+            // $spaceAroundSymbol controls the gap between the currency symbol and the number.
+            // It does not touch the thousand separator, so locale-specific spacing is preserved.
+            $symbolSep = $spaceAroundSymbol ? ' ' : '';
+            $money = ($leftSymbol . ( !empty( $leftSymbol ) ? $symbolSep : '' ) . number_format((float)$val, $decimals, $decimalSeparator, $thousandSeparator) . ( !empty( $rightSymbol ) ? $symbolSep : '' ) . $rightSymbol);
         }
 
         return $money;
     }
 
-    public function moneyFormatted($val, $showFree = true, $htmlEntityDecode = false, $isLeftCurrencySymbol = null) {
-        return $this->money($val, $showFree, false, true, $htmlEntityDecode, $isLeftCurrencySymbol);
+    public function moneyFormatted($val, $showFree = true, $htmlEntityDecode = false, $isLeftCurrencySymbol = null, $spaceAroundSymbol = true) {
+        return $this->money($val, $showFree, false, true, $htmlEntityDecode, $isLeftCurrencySymbol, $spaceAroundSymbol);
     }
 
     public function datetime($val)

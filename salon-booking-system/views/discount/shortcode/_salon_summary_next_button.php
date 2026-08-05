@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 // phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 /**
  * @var SLN_Plugin $plugin
@@ -6,7 +8,9 @@
  */
 $salonData = 'sln_step_page=summary&submit_summary=next&mode=confirm';
 if (!empty($booking) && $booking->getId()) {
-	$salonData .= '&sln_booking_id=' . (int) $booking->getId();
+	// SECURITY: emit the per-booking secure token ({id}-{hash}), not the bare numeric
+	// ID, so SLN_Helper_BookingAccess can authorize it without enumeration exposure.
+	$salonData .= '&sln_booking_id=' . rawurlencode($booking->getUniqueId());
 }
 $builder  = $plugin->getBookingBuilder();
 $clientId = $builder->getClientId();

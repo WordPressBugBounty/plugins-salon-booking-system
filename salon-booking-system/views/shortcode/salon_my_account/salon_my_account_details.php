@@ -1,4 +1,6 @@
-<?php // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+<?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+ // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 <div class="sln-account__header">
 <h3 class="text sln-account__title">
 	<?php

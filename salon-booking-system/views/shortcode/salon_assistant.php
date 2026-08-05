@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 if(!$data['attendants']) return;
 $service_repo             = $this->plugin->getRepository(SLN_Plugin::POST_TYPE_SERVICE);

@@ -195,6 +195,7 @@ class SLN_Action_Ajax_SendBulkFeedback extends SLN_Action_Ajax_Abstract
         $remaining = $has_more ? ($count - $batch_limit) : 0;
         
         $message = sprintf(
+            /* translators: %1$d: number of bookings feedback was sent to. */
             _n(
                 'Feedback sent to %1$d booking.',
                 'Feedback sent to %1$d bookings.',
@@ -206,6 +207,7 @@ class SLN_Action_Ajax_SendBulkFeedback extends SLN_Action_Ajax_Abstract
         
         if ($errors > 0) {
             $message .= ' ' . sprintf(
+                /* translators: %d: number of errors that occurred. */
                 _n(
                     '%d error occurred.',
                     '%d errors occurred.',
@@ -218,6 +220,7 @@ class SLN_Action_Ajax_SendBulkFeedback extends SLN_Action_Ajax_Abstract
         
         if ($has_more) {
             $message .= ' ' . sprintf(
+                /* translators: %d: number of remaining bookings still to process. */
                 __('%d more bookings remain. Click "Send" again to continue.', 'salon-booking-system'),
                 $remaining
             );
@@ -247,6 +250,7 @@ class SLN_Action_Ajax_SendBulkFeedback extends SLN_Action_Ajax_Abstract
             
             wp_send_json_error(array(
                 'message' => sprintf(
+                    /* translators: %s: error message describing why sending feedback failed. */
                     __('Failed to send feedback: %s', 'salon-booking-system'),
                     $error_message
                 ),

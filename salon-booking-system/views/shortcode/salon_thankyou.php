@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 /**
  * @var SLN_Plugin $plugin
  * @var string     $formAction

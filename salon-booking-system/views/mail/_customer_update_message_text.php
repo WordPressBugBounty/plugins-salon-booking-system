@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 
     $updated_message = isset($updated_message) && !empty($updated_message) ? $updated_message : $plugin->getSettings()->get('booking_update_message');
 

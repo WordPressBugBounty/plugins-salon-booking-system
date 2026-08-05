@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 use Google\Client as Google_Client;
 use Google\Service\Calendar as Google_Service_Calendar;
 use Google\Service\Calendar\Event as Google_Service_Calendar_Event;
@@ -66,13 +68,19 @@ if(!class_exists('Google_Service_Calendar')){
 class SLN_GoogleScope {
 
     public $date_offset = 0;
-    public $client_id = '102246196260-so9c267umku08brmrgder71ige08t3nm.apps.googleusercontent.com'; //change this
-    public $email_address = '102246196260-so9c267umku08brmrgder71ige08t3nm@developer.gserviceaccount.com'; //change this
+    // SECURITY: no credentials are shipped with the plugin. Each site must configure
+    // its own Google OAuth client (Client ID / Client Secret) in the Salon settings.
+    // Shipping shared default credentials let every installation use the same OAuth
+    // client, which is unsafe.
+    public $client_id = '';
+    public $email_address = '';
     public $scopes = "https://www.googleapis.com/auth/calendar";
-    public $key_file_location = 'prv.p12'; //change this
-    public $outh2_client_id = "102246196260-hjpu1fs2rh5b9mesa9l5urelno396vc0.apps.googleusercontent.com";
-    public $outh2_client_secret = "AJzLfWtRDz53JLT5fYp5gLqZ";
+    public $key_file_location = 'prv.p12';
+    public $outh2_client_id = '';
+    public $outh2_client_secret = '';
     public $outh2_redirect_uri;
+    /** @var string|null Server-validated post-OAuth redirect target (never taken from the raw request). */
+    protected $oauth_redirect_target = null;
     public $google_calendar_enabled = false;
     public $google_client_calendar;
     public $client;
@@ -84,8 +92,11 @@ class SLN_GoogleScope {
      */
     public function __construct() {
         if (is_admin()) {
+            // SECURITY: the OAuth callback is intentionally NOT registered for
+            // unauthenticated callers. Combined with the state + capability checks in
+            // get_client(), this prevents an attacker from binding the site's calendar
+            // sync to their own Google account (OAuth CSRF / connection hijack).
             add_action('wp_ajax_googleoauth-callback', array($this, 'get_client'));
-            add_action('wp_ajax_nopriv_googleoauth-callback', array($this, 'get_client'));
             add_action('wp_ajax_startsynch', array($this, 'start_synch'));
             add_action('wp_ajax_deleteallevents', array($this, 'delete_all_bookings_event'));
             add_action('admin_footer', array($this, 'add_script'));
@@ -362,6 +373,15 @@ class SLN_GoogleScope {
             if (!$force_revoke_token) {
                 if ( isset($_GET['force_revoke_token']) ) {
 
+                    // SECURITY: bind this OAuth flow to a single-use, unguessable state
+                    // token stored server-side. get_client() validates it on the callback
+                    // so a third party cannot complete the consent flow with THEIR Google
+                    // account and hijack the site's calendar connection. The token also
+                    // carries the (trusted) post-auth redirect target, so the raw
+                    // request-supplied state is never used as a redirect URL.
+                    $state = wp_generate_password(32, false);
+                    set_transient('sln_gcal_oauth_state_' . $state, $this->get_current_page_url(), 15 * MINUTE_IN_SECONDS);
+
                     $loginUrl = 'https://accounts.google.com/o/oauth2/auth?' . http_build_query(array(
                         'response_type'   => 'code',
                         'client_id'       => $this->outh2_client_id,
@@ -369,7 +389,7 @@ class SLN_GoogleScope {
                         'scope'           => $this->scopes,
                         'access_type'     => 'offline',
                         'approval_prompt' => 'force',
-                        'state'           => $this->get_current_page_url(),
+                        'state'           => $state,
                     ));
 
                     header("Location: " . $loginUrl);
@@ -379,7 +399,12 @@ class SLN_GoogleScope {
     }
 
     protected function get_success_redirect_page_url() {
-        return isset($_GET['state']) ? $_GET['state'] : $this->get_current_page_url();
+        // Use only the server-validated redirect target (set from the state transient
+        // in get_client()); never trust a request-supplied URL (open-redirect guard).
+        if (!empty($this->oauth_redirect_target)) {
+            return $this->oauth_redirect_target;
+        }
+        return $this->get_current_page_url();
     }
 
     protected function get_current_page_url() {
@@ -398,6 +423,32 @@ class SLN_GoogleScope {
      * get_client
      */
     public function get_client() {
+        // SECURITY: only a logged-in admin / salon manager may complete the OAuth
+        // connection (it stores site-wide calendar credentials).
+        if ( ! current_user_can('manage_options') && ! current_user_can('manage_salon') ) {
+            wp_die(
+                esc_html__('You are not allowed to perform this action.', 'salon-booking-system'),
+                esc_html__('Forbidden', 'salon-booking-system'),
+                array('response' => 403)
+            );
+        }
+
+        // SECURITY: validate the single-use OAuth state token this site issued. Without
+        // it, an attacker could feed their own authorization code to the callback and
+        // redirect the site's calendar sync to their Google account (connection hijack).
+        $state = isset($_GET['state']) ? sanitize_text_field(wp_unslash($_GET['state'])) : '';
+        $redirectTarget = $state ? get_transient('sln_gcal_oauth_state_' . $state) : false;
+        if ( ! $state || false === $redirectTarget ) {
+            wp_die(
+                esc_html__('Invalid or expired Google authorization request. Please start the connection again from the settings page.', 'salon-booking-system'),
+                esc_html__('Invalid request', 'salon-booking-system'),
+                array('response' => 400)
+            );
+        }
+        // Consume the token (single use) and remember the trusted redirect target.
+        delete_transient('sln_gcal_oauth_state_' . $state);
+        $this->oauth_redirect_target = $redirectTarget;
+
         if (isset($_GET['error'])) {
 	        wp_safe_redirect($this->get_error_redirect_page_url());
         }

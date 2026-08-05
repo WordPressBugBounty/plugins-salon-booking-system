@@ -1,4 +1,6 @@
-<?php // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+<?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+ // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 <div class="sbc-calendar booking-main" data-attrs="<?php echo esc_attr(json_encode($data['attrs'])); ?>">
 
     <?php /* ── Tab bar: visible on mobile, hidden on desktop ── */ ?>

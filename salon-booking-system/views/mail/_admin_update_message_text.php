@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
     // phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
     $updated_message = esc_html__('Reservation addt [SALON NAME] has been modified', 'salon-booking-system');
     $updated_message = str_replace('[SALON NAME]', $plugin->getSettings()->getSalonName(), $updated_message);

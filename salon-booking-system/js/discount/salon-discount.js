@@ -1,12 +1,27 @@
 "use strict";
 
-jQuery(function($) {});
+jQuery(function($) {
+    // Document-level delegation: #sln-salon-booking is replaced on every AJAX step swap,
+    // so handlers bound directly to it would be lost. Enter/Return in the discount field
+    // must trigger Apply — not the form's default submit (Next step / mode=confirm).
+    $(document)
+        .off("keydown.slnDiscount", "#sln_discount, input[name=\"sln[discount]\"]")
+        .on("keydown.slnDiscount", "#sln_discount, input[name=\"sln[discount]\"]", function(e) {
+            if (e.key === "Enter" || e.keyCode === 13) {
+                e.preventDefault();
+                e.stopPropagation();
+                sln_applyDiscountCode();
+            }
+        });
+});
 
 function sln_applyDiscountCode() {
     var $ = jQuery;
     var code = $("#sln_discount").val();
     function sln_discountCodeInitButton(){
-        $('[data-salon-toggle="next"]').on("click", function(e) {
+        $('[data-salon-toggle="next"]')
+            .off("click.slnDiscountNext")
+            .on("click.slnDiscountNext", function(e) {
             var form = $(this).closest("form");
             $(
                 "#sln-salon input.sln-invalid,#sln-salon textarea.sln-invalid,#sln-salon select.sln-invalid"
@@ -84,6 +99,12 @@ function sln_applyDiscountCode() {
                 $("#sln_discount_value").html(data.discount);
                 $('.sln-summary-row.sln-summary-row--discount').removeClass('hide');
                 $(".sln-total-price").html(data.total);
+                // Refresh the amount inside the PAY button (deposit or full total).
+                // Only the .sln-pay-amount span is updated, so the anchor and its
+                // bound click handlers (overbooking check / gateway redirect) survive.
+                if (data.payButtonAmount != undefined) {
+                    $('.sln-btn--nextstep .sln-pay-amount').html(data.payButtonAmount);
+                }
                 alertBox = $(
                     '<div class="sln-alert sln-alert--paddingleft sln-alert--success"></div>'
                 );
@@ -102,6 +123,11 @@ function sln_applyDiscountCode() {
                 $("#sln_discount_value").html(0);
                 $('.sln-summary-row.sln-summary-row--discount').addClass('hide');
                 $(".sln-total-price").html(data.total);
+                // Discount was reverted: refresh the PAY button amount back to the
+                // current (undiscounted) value so it stays in sync with the total.
+                if (data.payButtonAmount != undefined) {
+                    $('.sln-btn--nextstep .sln-pay-amount').html(data.payButtonAmount);
+                }
                 if(data.button != undefined){
                     $('.sln-btn.sln-btn--fullwidth.sln-btn--nextstep').html(data.button);
                     $('#sln-step-submit-complete').hide();

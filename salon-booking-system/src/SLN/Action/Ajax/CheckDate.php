@@ -298,6 +298,16 @@ class SLN_Action_Ajax_CheckDate extends SLN_Action_Ajax_Abstract
     {
 
         $plugin = $this->plugin;
+        if ($this->time && !SLN_Func::isTimeAlignedToInterval($this->time)) {
+            $this->addError(
+                __(
+                    'The selected time is not valid. Please choose one of the available time slots.',
+                    'salon-booking-system'
+                )
+            );
+            return;
+        }
+
         $date   = $this->getDateTime();
         $ah   = $plugin->getAvailabilityHelper();
         $hb   = $ah->getHoursBeforeHelper();

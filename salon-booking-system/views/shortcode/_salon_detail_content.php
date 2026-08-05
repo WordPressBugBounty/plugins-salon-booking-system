@@ -1,4 +1,6 @@
-<?php // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+<?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+ // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 <?php
 /**
  * @var array   $fields

@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 // phpcs:ignoreFile WordPress.DateTime.RestrictedFunctions.date_date
 
 // START UPDATE HOLIDAYS RULES

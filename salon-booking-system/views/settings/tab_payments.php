@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.UnsafePrintingFunction
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 include $this->plugin->getViewFile('admin/utilities/settings_inpage_navbar');

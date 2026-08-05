@@ -502,6 +502,7 @@ function sln_func_customBookingUser($) {
 			},
 		},
 
+		minimumInputLength: 3,
 		ajax: {
 			url:
 				salon.ajax_url +
@@ -514,7 +515,6 @@ function sln_func_customBookingUser($) {
 					s: params.term,
 				};
 			},
-			minimumInputLength: 3,
 			processResults: function (data, page) {
 				return {
 					results: data.result,
@@ -1554,9 +1554,24 @@ function sln_bindServicesSelects(line) {
 				.addClass("hide");
 			sln_checkServices_on_preselection($);
 		});
-	$(document).on("keyup", ".select2-search__field", function () {
-		sln_checkServices_on_preselection($);
-	});
+	// Bind the search-field keyup listener only ONCE. sln_bindServicesSelects() runs
+	// per service line, and a document-level .on() here would otherwise stack a new
+	// handler for every line, firing CheckServices N times per keystroke.
+	if (!window.slnServicesSearchKeyupBound) {
+		window.slnServicesSearchKeyupBound = true;
+		$(document).on("keyup", ".select2-search__field", function () {
+			// Only react while a SERVICE select2 is open. Typing in the customer search
+			// (or any other select2) must NOT trigger the heavy CheckServices availability
+			// call: doing so floods admin-ajax with requests that serialize on the PHP
+			// session lock and starve the customer search itself (observed 4× CheckServices
+			// per keystroke, pushing SearchUser to ~6s).
+			var $openSelect = $(".select2-container--open").prev("select");
+			if (!$openSelect.is('[data-selection="service-selected"]')) {
+				return;
+			}
+			sln_checkServices_on_preselection($);
+		});
+	}
 	$(line)
 		.find('select[data-selection="service-selected"]')
 		.on("change", function () {

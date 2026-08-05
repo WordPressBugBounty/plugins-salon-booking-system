@@ -3,7 +3,7 @@
 
 class SLN_Action_InitScripts
 {
-    const ASSETS_VERSION = SLN_VERSION . '-20260624-revenue-guard-banner-v44';
+    const ASSETS_VERSION = SLN_VERSION . '-20260728-customer-search-lock-fix-v45';
 	private static $isInclude = false;
 	private $isAdmin;
 	private $plugin;
@@ -27,75 +27,7 @@ class SLN_Action_InitScripts
 
 	public function hook_enqueue_scripts()
 	{
-
-		global $post;
-
-		/**
-
-		 * Betheme compatibility
-
-		 */
-		$mfnCmpHasShortcode = false;
-		if (!$this->isAdmin && is_a($post, 'WP_Post') && defined('MFN_THEME_VERSION')) {
-			$mfn_builder = new \Mfn_Builder_Front(get_the_ID());
-			ob_start();
-			$mfn_builder->show();
-			$content = ob_get_clean();
-			$mfnCmpHasShortcode = strpos($content, SLN_Shortcode_Salon::NAME)
-
-				|| strpos($content, SLN_Shortcode_SalonMyAccount::NAME)
-
-				|| strpos($content, SLN_Shortcode_SalonCalendar::NAME)
-
-				|| strpos($content, SLN_Shortcode_SalonAssistant::NAME)
-
-				|| strpos($content, SLN_Shortcode_SalonServices::NAME)
-
-				|| strpos($content, SLN_Shortcode_SalonRecentComments::NAME);
-		}
-
-		if (
-			!$this->isAdmin && is_a($post, 'WP_Post') && (
-
-				has_shortcode($post->post_content, SLN_Shortcode_Salon::NAME)
-
-				|| has_shortcode($post->post_content, SLN_Shortcode_SalonMyAccount::NAME)
-
-				|| has_shortcode($post->post_content, SLN_Shortcode_SalonCalendar::NAME)
-
-				|| has_shortcode($post->post_content, SLN_Shortcode_SalonAssistant::NAME)
-
-				|| has_shortcode($post->post_content, SLN_Shortcode_SalonServices::NAME)
-
-				|| has_shortcode($post->post_content, SLN_Shortcode_SalonRecentComments::NAME)
-
-
-				/**
-
-				 * Unyson compatibility
-
-				 */
-
-				|| (has_shortcode($post->post_content, 'text_block') && ($text_attr = shortcode_parse_atts($post->post_content)['text']) && (
-
-					strpos($text_attr, SLN_Shortcode_Salon::NAME)
-
-					|| strpos($text_attr, SLN_Shortcode_SalonMyAccount::NAME)
-
-					|| strpos($text_attr, SLN_Shortcode_SalonCalendar::NAME)
-
-					|| strpos($text_attr, SLN_Shortcode_SalonAssistant::NAME)
-
-					|| strpos($text_attr, SLN_Shortcode_SalonServices::NAME)
-
-					|| strpos($text_attr, SLN_Shortcode_SalonRecentComments::NAME)
-
-				))
-
-				|| $mfnCmpHasShortcode
-			)
-
-		) {
+		if (SLN_Helper_FrontendPage::shouldLoadFrontendAssets()) {
 			self::$isInclude = true;
 
 			self::preloadScripts();
@@ -322,7 +254,7 @@ class SLN_Action_InitScripts
     {
         wp_enqueue_script(
             'jquery-ui-touch-punch',
-            SLN_PLUGIN_URL . '/js/jquery.ui.touch-punch.min.js',
+            SLN_PLUGIN_URL . '/js/touch-punch.min.js',
             array('jquery-ui-slider'),
             self::ASSETS_VERSION,
             true

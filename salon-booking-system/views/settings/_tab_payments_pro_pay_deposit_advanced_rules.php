@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 $settings = SLN_Plugin::getInstance()->getSettings();
 $meta = 'salon_settings';
 $field = 'pay_deposit_advanced_rules';

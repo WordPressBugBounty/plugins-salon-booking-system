@@ -137,6 +137,8 @@ class Plugin {
             'featured_addon_promos'            => FeaturedAddonPromos::get_slides(),
             /** First promo card: free → PRO or Basic → Business; see PwaLicensePromo. */
             'license_upgrade_promo'            => PwaLicensePromo::get_for_pwa(),
+            /** Smart Waitlist add-on presence: gates the "Waiting list" tab. Set by the add-on. */
+            'waitlist_enabled'                 => (bool) apply_filters('sln_pwa_waitlist_enabled', false),
         );
 
         $dist_directory_path = SLN_PLUGIN_DIR . '/src/SLB_PWA/pwa/dist';

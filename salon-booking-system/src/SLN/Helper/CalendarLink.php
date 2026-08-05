@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 // phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 
 require_once SLN_PLUGIN_DIR . '/src/SLN/Third/calendar/vendor/autoload.php';

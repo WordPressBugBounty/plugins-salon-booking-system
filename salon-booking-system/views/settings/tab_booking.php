@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 $plugin = SLN_Plugin::getInstance();
 $include_nested_bookings_ui = ($plugin->getSettings()->getAvailabilityMode() === 'highend');
@@ -55,8 +57,7 @@ if ($include_nested_bookings_ui) {
                                 array('min' => 1, 'max' => 1000)
                             ) ?>
                         </div>
-                        <div class="col-xs-8 sln-label--big"><label for="salon_settings_sms_remind_interval">Customers
-                                per session</label></div>
+                        <div class="col-xs-8 sln-label--big"><label for="salon_settings_sms_remind_interval"><?php esc_html_e('Customers per session', 'salon-booking-system'); ?></label></div>
                         <div class="col-xs-12">
                             <p class="help-block sln-input-help"><?php _e(
                                     'Set these options carefully because it will affect the number of bookings you can accept for the same <strong>time/session</strong>.',

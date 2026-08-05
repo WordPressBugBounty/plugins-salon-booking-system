@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 /**
  * Clone booking popover.
  *
@@ -42,7 +44,7 @@
         <div class="sln-clone-popover__panel" data-clone-panel="specific" hidden>
             <p class="sln-clone-popover__note">
                 <span class="dashicons dashicons-info-outline"></span>
-                <span><?php printf( esc_html__('Opens an editable copy on the %1$sDate%2$s tab where you choose the new date & time (availability shown). Your original booking will not change.', 'salon-booking-system'), '<strong>', '</strong>' ); ?></span>
+                <span><?php /* translators: 1: opening <strong> tag, 2: closing </strong> tag. */ printf( esc_html__('Opens an editable copy on the %1$sDate%2$s tab where you choose the new date & time (availability shown). Your original booking will not change.', 'salon-booking-system'), '<strong>', '</strong>' ); ?></span>
             </p>
         </div>
     </div>

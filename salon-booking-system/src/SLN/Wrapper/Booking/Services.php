@@ -90,7 +90,9 @@ final class SLN_Wrapper_Booking_Services {
 	public static function build($data, SLN_DateTime $startsAt, $offset = 0, $serviceCount = array(), $resources = array()) {
 		$startsAtClone = clone $startsAt;
 		$services       = array();
-		$sequentialOnly = SLN_Plugin::getInstance()->getSettings()->isDoNotNestSameBookingServicesEnabled();
+		$settings       = SLN_Plugin::getInstance()->getSettings();
+		$sequentialOnly = $settings->isDoNotNestSameBookingServicesEnabled();
+		$nestedBookings = $settings->isNestedBookingsEnabled();
 
 		foreach ( $data as $i => $item ) {
 

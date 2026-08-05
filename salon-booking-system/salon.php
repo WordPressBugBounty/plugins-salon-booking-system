@@ -1,9 +1,13 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 
 /*
 Plugin Name: Salon Booking System - Free Version
 Description: Let your customers book you services through your website. Perfect for hairdressing salons, barber shops and beauty centers.
-Version: 10.30.33
+Version: 10.30.34
+Requires at least: 6.0
+Requires PHP: 7.4.8
 Plugin URI: http://salonbookingsystem.com/
 Author: Salon Booking System
 Author URI: http://salonbookingsystem.com/
@@ -45,7 +49,7 @@ if (defined('SLN_PLUGIN_BASENAME')) {
 define('SLN_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('SLN_PLUGIN_DIR', untrailingslashit(dirname(__FILE__)));
 define('SLN_PLUGIN_URL', untrailingslashit(plugins_url('', __FILE__)));
-define('SLN_VERSION', '10.30.33');
+define('SLN_VERSION', '10.30.34');
 define('SLN_STORE_URL', 'https://salonbookingsystem.com');
 define('SLN_PRICING_URL', 'https://www.salonbookingsystem.com/plugin-pricing-2/');
 define('SLN_AUTHOR', 'Salon Booking');
@@ -204,47 +208,7 @@ if (defined('SLN_VERSION_PAY')) {
 	});
 }
 
-add_action('init', function () {
-	if ( headers_sent() ) {
-		return;
-	}
-	if ((!session_id() || session_status() !== PHP_SESSION_ACTIVE)
-		&& !strstr($_SERVER['REQUEST_URI'], '/wp-admin/site-health.php')
-		&& !strstr($_SERVER['REQUEST_URI'], '/wp-json/wp-site-health')
-		&& !(isset($_POST['action']) && $_POST['action'] === 'health-check-loopback-requests')
-		&& !(isset($_REQUEST['action']) && $_REQUEST['action'] === 'wp_async_send_server_events')
-	) {
-		// Use a custom session name to avoid Edge browser tracking prevention blocking PHPSESSID
-		// Edge's Enhanced Tracking Prevention can block cookies named PHPSESSID as "tracking cookies"
-		session_name('sln_booking_session');
-		
-		// Configure session cookie parameters for better browser compatibility (especially Edge)
-		// Set SameSite to Lax for better compatibility while maintaining security
-		if (PHP_VERSION_ID >= 70300) {
-			// PHP 7.3+ supports SameSite attribute directly
-			session_set_cookie_params([
-				'lifetime' => 0,
-				'path' => COOKIEPATH ? COOKIEPATH : '/',
-				'domain' => COOKIE_DOMAIN ? COOKIE_DOMAIN : '',
-				'secure' => is_ssl(),
-				'httponly' => true,
-				'samesite' => 'Lax'
-			]);
-		} else {
-			// PHP < 7.3 workaround for SameSite
-			session_set_cookie_params(
-				0,
-				COOKIEPATH ? COOKIEPATH . '; SameSite=Lax' : '/; SameSite=Lax',
-				COOKIE_DOMAIN ? COOKIE_DOMAIN : '',
-				is_ssl(),
-				true
-			);
-		}
-		if ( session_status() === PHP_SESSION_NONE ) {
-			session_start();
-		}
-	}
-}, 1);
+SLN_Helper_Session::bootstrap();
 
 add_action('init', function () {
 
@@ -273,7 +237,11 @@ $sln_zapier = \SLB_Zapier\Plugin::get_instance();
 $sln_pwa = \SLB_PWA\Plugin::get_instance();
 
 add_filter('body_class', function ($classes) {
-	return array_merge($classes, array('sln-salon-page'));
+	if (SLN_Helper_FrontendPage::isQueriedSalonFrontendPage() || SLN_Helper_FrontendPage::hasBookingFlowQueryParams()) {
+		return array_merge($classes, array('sln-salon-page'));
+	}
+
+	return $classes;
 });
 
 register_activation_hook(__FILE__, function () {

@@ -1,4 +1,6 @@
-<?php if ($attendant->getId()): ?>
+<?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+ if ($attendant->getId()): ?>
     <?php $bb = SLN_Plugin::getINstance()->getBookingBuilder(); ?>
         <?php foreach($bb->getServices() as $service): ?>
             <?php if ($service->getVariablePriceEnabled()): ?>

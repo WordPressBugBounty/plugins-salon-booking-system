@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 ?>
 <style type="text/css">
     #post-preview, #view-post-btn,

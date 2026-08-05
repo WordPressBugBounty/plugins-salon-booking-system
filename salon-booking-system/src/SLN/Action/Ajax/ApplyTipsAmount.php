@@ -11,6 +11,14 @@ class SLN_Action_Ajax_ApplyTipsAmount extends SLN_Action_Ajax_Abstract
 	{
 	    $plugin = $this->plugin;
 
+	    // CSRF protection: reject forged/cross-origin requests. The legitimate
+	    // client (js/salon.js) sends salon.ajax_nonce, created via
+	    // wp_create_nonce('ajax_post_validation') in SLN_Action_InitScripts.
+	    if ( ! isset($_POST['security']) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['security'] ) ), 'ajax_post_validation' ) ) {
+		$this->addError(__('Invalid security token. Please refresh the page and try again.', 'salon-booking-system'));
+		return array('errors' => $this->getErrors());
+	    }
+
 	    if (!isset($_POST['sln']['tips'])) {
 		$this->addError(__('Tips amount is missing', 'salon-booking-system'));
 		return array('errors' => $this->getErrors());
@@ -29,15 +37,18 @@ class SLN_Action_Ajax_ApplyTipsAmount extends SLN_Action_Ajax_Abstract
 		$tips           = floatval($tips);
 		$bookingBuilder = $plugin->getBookingBuilder();
 
-		// Use the explicit booking ID sent from the form when available.
+		// Use the explicit booking token sent from the form when available.
 		// The session/transient can hold a stale last_id (a booking from a
 		// previous flow), causing the tip to be applied to the wrong booking.
+		// SECURITY: the id is resolved through SLN_Helper_BookingAccess, which
+		// only accepts a valid per-booking secure token, the visitor's own
+		// session booking, or (for logged-in users) their own/managed booking.
+		// This blocks tampering with an arbitrary booking by enumerating IDs.
 		$bb = null;
 		if ( isset( $_POST['sln_booking_id'] ) ) {
-		    $bookingId = intval( $_POST['sln_booking_id'] );
-		    if ( $bookingId > 0 ) {
-			$bb = $plugin->createBooking( $bookingId );
-			SLN_Plugin::addLog( sprintf( 'ApplyTipsAmount: resolved booking #%d from POST sln_booking_id', $bookingId ) );
+		    $bb = SLN_Helper_BookingAccess::resolve( $plugin, sanitize_text_field( wp_unslash( $_POST['sln_booking_id'] ) ) );
+		    if ( $bb ) {
+			SLN_Plugin::addLog( sprintf( 'ApplyTipsAmount: resolved booking #%d from POST sln_booking_id', $bb->getId() ) );
 		    }
 		}
 		if ( ! $bb ) {

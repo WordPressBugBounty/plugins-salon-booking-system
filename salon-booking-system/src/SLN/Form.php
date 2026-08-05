@@ -80,11 +80,9 @@ class SLN_Form {
 			}
 
 		}
-		$minutes = $value->format('i');
-		$diff = ($interval - $minutes % $interval) % $interval;
 		$value = clone $value;
         if (!isset($settings['modify_value']) || $settings['modify_value']) {
-            $value->modify("+$diff minutes");
+            $value = SLN_Func::alignDateTimeToInterval($value, $interval);
         }
 		if(!empty($settings['inline'])) {
 			?><span class="sln-jstime">

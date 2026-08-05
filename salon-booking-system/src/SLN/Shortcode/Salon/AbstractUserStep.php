@@ -90,7 +90,7 @@ abstract class SLN_Shortcode_Salon_AbstractUserStep extends SLN_Shortcode_Salon_
         if ($isDebugMode) {
             $oldSessionId = session_id();
             if (empty($oldSessionId)) {
-                @session_start();
+                SLN_Helper_Session::maybeStart(true);
                 $oldSessionId = session_id();
             }
             $oldBuilderId = spl_object_id($bb);
@@ -133,7 +133,7 @@ abstract class SLN_Shortcode_Salon_AbstractUserStep extends SLN_Shortcode_Salon_
             if ($isDebugMode) {
                 $newSessionId = session_id();
                 if (empty($newSessionId)) {
-                    @session_start();
+                    SLN_Helper_Session::maybeStart(true);
                     $newSessionId = session_id();
                 }
                 SLN_Plugin::addLog(sprintf('[SLN DEBUG] AFTER LOGIN (before reset): new_session_id=%s, client_id_in_GET=%s, client_id_in_POST=%s', 

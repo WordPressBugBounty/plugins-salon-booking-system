@@ -170,6 +170,7 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
         }
         $h = new SLN_Metabox_Helper();
         $is_modified = false;
+        $this->normalizeBookingTimeInRequest();
         if($h->isMetaNewForPost($post_id, $h->processRequest($this->getPostType(), $this->getFieldList())) &&
         $this->prevStatus != 'auto-draft') {
             $is_modified = true;
@@ -547,6 +548,28 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
     protected function addError($message)
     {
         $_SESSION['_sln_booking_user_errors'][] = $message;
+    }
+
+    /**
+     * Align admin-submitted booking time to the configured interval before
+     * availability checks and persistence (matches fieldJSTime rounding).
+     */
+    private function normalizeBookingTimeInRequest()
+    {
+        if (empty($_POST['_sln_booking']['time'])) {
+            return;
+        }
+
+        $normalized = SLN_Func::alignTimeToInterval(
+            sanitize_text_field(wp_unslash($_POST['_sln_booking']['time']))
+        );
+
+        if (empty($normalized)) {
+            return;
+        }
+
+        $_POST['_sln_booking']['time'] = $normalized;
+        $_POST[SLN_Metabox_Helper::getFieldName($this->getPostType(), 'time')] = $normalized;
     }
 
     /**

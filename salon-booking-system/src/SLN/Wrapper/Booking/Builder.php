@@ -14,9 +14,7 @@ class SLN_Wrapper_Booking_Builder
 
     public function __construct(SLN_Plugin $plugin)
     {
-        if (! headers_sent() && ( session_id() === '' || session_status() !== PHP_SESSION_ACTIVE ) && session_status() === PHP_SESSION_NONE ) {
-            session_start();
-        }
+        SLN_Helper_Session::maybeStart(true);
         $this->plugin = $plugin;
         $clientId      = $this->extractClientIdFromRequest();
         $this->persistence = new SLN_Service_BookingPersistence(__CLASS__, __CLASS__ . 'last_id', $clientId);
@@ -112,12 +110,7 @@ class SLN_Wrapper_Booking_Builder
         $from = $this->plugin->getSettings()->getHoursBeforeFrom();
         $d = new SLN_DateTime(SLN_TimeFunc::date('Y-m-d H:i:00'));
         $d->modify($from);
-        $tmp = $d->format('i');
-        $i = SLN_Plugin::getInstance()->getSettings()->getInterval();
-        $diff = $tmp % $i;
-        if ($diff > 0) {
-            $d->modify('+'.($i - $diff).' minutes');
-        }
+        $d = SLN_Func::alignDateTimeToInterval($d, SLN_Plugin::getInstance()->getSettings()->getInterval());
 
         return array(
             'date' => $d->format('Y-m-d'),
@@ -166,7 +159,7 @@ class SLN_Wrapper_Booking_Builder
 
     public function setTime($time)
     {
-        $this->data['time'] = $time;
+        $this->data['time'] = SLN_Func::filter($time, 'time');
 
         return $this;
     }
@@ -716,6 +709,11 @@ class SLN_Wrapper_Booking_Builder
 	SLN_Plugin::addLog('SLN booking settings: ' . print_r(array(
 	    'attendant_enabled' => $this->plugin->getSettings()->isAttendantsEnabled(),
 	), true));
+
+        if ($this->getTime() && !SLN_Func::isTimeAlignedToInterval($this->getTime())) {
+            SLN_Plugin::addLog('SLN booking time not aligned to interval: ' . $this->getTime());
+            return false;
+        }
 
         $ah = SLN_Plugin::getInstance()->getAvailabilityHelper();
         if ( ! $ah->isValidTime($this->getDateTime())) {

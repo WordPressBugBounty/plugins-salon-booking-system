@@ -1,3 +1,4 @@
+<?php if ( ! defined( 'ABSPATH' ) ) { exit; } ?>
 <div id="sln-salon-booking-calendar-shortcode" class="alignwide">
     <div class="sbc-header-row">
         <h2 class="sbc-heading"><?php esc_html_e('Booking Calendar by Assistant', 'salon-booking-system'); ?></h2>

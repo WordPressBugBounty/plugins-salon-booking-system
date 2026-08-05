@@ -40,22 +40,30 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
         
         // CRITICAL: Check REQUEST instead of just GET to handle both URL params and POST form data
         // The booking ID can come from:
-        // 1. POST: Hidden field <input name="sln_booking_id" value="123">
-        // 2. GET:  URL parameter ?sln_booking_id=123
-        if(isset($_REQUEST['sln_booking_id']) && intval($_REQUEST['sln_booking_id'])){
-            $bookingId = intval(sanitize_text_field($_REQUEST['sln_booking_id']));
-            SLN_Plugin::addLog('[SummaryStep] Found booking ID in request: ' . $bookingId);
-            $bb = $plugin->createBooking($bookingId);
-            if ($bb) {
-                SLN_Plugin::addLog('[SummaryStep] ✅ Successfully loaded booking #' . $bookingId . ' - Status: ' . $bb->getStatus());
+        // 1. POST: Hidden field <input name="sln_booking_id" value="{id}-{hash}">
+        // 2. GET:  URL parameter ?sln_booking_id={id}-{hash}
+        // SECURITY: resolve through SLN_Helper_BookingAccess so a bare numeric ID
+        // supplied by an attacker cannot load someone else's booking (IDOR). The
+        // wizard form and email pay links carry the secure "{id}-{hash}" token.
+        if(isset($_REQUEST['sln_booking_id'])){
+            $resolved = SLN_Helper_BookingAccess::resolve($plugin, sanitize_text_field(wp_unslash($_REQUEST['sln_booking_id'])));
+            if ($resolved) {
+                $bb = $resolved;
+                SLN_Plugin::addLog('[SummaryStep] ✅ Successfully loaded booking #' . $bb->getId() . ' - Status: ' . $bb->getStatus());
             } else {
-                SLN_Plugin::addLog('[SummaryStep] ❌ FAILED to load booking #' . $bookingId);
+                // The request explicitly asked for a booking the visitor is not entitled
+                // to. Do NOT silently proceed with the session booking (a different one);
+                // drop it so the recovery logic below re-derives state safely. resolve()
+                // already returns the session booking when the requested numeric ID
+                // matches it, so legitimate in-flow requests are unaffected.
+                $bb = null;
+                SLN_Plugin::addLog('[SummaryStep] ❌ FAILED to load/authorize booking from sln_booking_id — ignoring unauthorized id');
             }
         }
 
         if(empty($bb) && isset($_GET['op'])){
-            SLN_Plugin::addLog('[SummaryStep] Getting booking from op parameter: ' . intval(sanitize_text_field($_GET['op'])));
-            $bb = $plugin->createBooking(explode('-', sanitize_text_field($_GET['op']))[1]);
+            $bb = SLN_Helper_BookingAccess::resolveFromOp($plugin, sanitize_text_field(wp_unslash($_GET['op'])));
+            SLN_Plugin::addLog('[SummaryStep] Getting booking from op parameter: ' . ($bb ? $bb->getId() : 'not authorized'));
         }
 
         // CRITICAL: Handle post-login scenario where lastId was lost but builder has data
@@ -119,6 +127,16 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
         if(!empty($value)){
             $bb->setMeta('note', SLN_Func::filter($value));
         }
+
+        // MULTI-SHOPS: restore the "current shop" from the booking BEFORE any availability
+        // re-check below. The date/time picker computes availability scoped to the selected
+        // shop, but the confirm / pay-later submissions (and payment-gateway returns) do not
+        // carry sln[shop]. Without the shop context the sln_booking_repository_for_availability
+        // filter falls back to counting bookings across EVERY shop, so a slot that is free for
+        // this booking's own shop can exceed the global parallels_hour limit and be wrongly
+        // rejected ("limit of parallels bookings") — even though the picker offered it.
+        $this->restoreShopContextFromBooking($bb);
+
         $handler = new SLN_Action_Ajax_CheckDateAlt( $plugin );
 
         $paymentMethod = $plugin->getSettings()->isPayEnabled() ? SLN_Enum_PaymentMethodProvider::getService($plugin->getSettings()->getPaymentMethod(), $plugin) : false;
@@ -137,6 +155,23 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
         ));
 
         if($mode == 'confirm' || empty($paymentMethod) || $bb->getAmount() <= 0.0){
+            // IDEMPOTENCY GUARD: if this booking has already been finalized (e.g. a duplicated
+            // confirm from a mobile double-tap, a network retry, or a back-button resubmit), do
+            // NOT re-run the availability check. Once finalized the booking counts toward its own
+            // slot, so re-checking reports a false "slot unavailable" — which pushes the customer
+            // to rebook a different time and produces the reported "unavailable, then two
+            // appointments" double booking. Treat the repeat confirm as success and let render()
+            // show the thank-you for the existing booking.
+            if (!in_array($bb->getStatus(), array(SLN_Enum_BookingStatus::DRAFT, SLN_Enum_BookingStatus::PENDING_PAYMENT), true)) {
+                SLN_Plugin::addLog(sprintf(
+                    '[SummaryStep] Confirm received for already-finalized booking #%d (status: %s) — idempotent success, skipping availability re-check.',
+                    $bb->getId(),
+                    $bb->getStatus()
+                ));
+                $bookingBuilder->clear($bb->getId());
+                $this->cleanupBookingLock($bb);
+                return !$this->hasErrors();
+            }
             // Acquire a MySQL advisory lock for this time slot before checking availability.
             // This closes the race condition window where two concurrent requests both see the
             // slot as free, both pass the availability check, and both finalize successfully —
@@ -153,6 +188,9 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
             // FIX: Use getServicesMeta() instead of getAttendantsIds() to preserve services
             // where attendant = false (auto-assignment). getAttendantsIds() silently drops
             // those entries, producing an empty array and bypassing the conflict check entirely.
+            // Exclude the current booking from the slot count so a re-check can never conflict
+            // with itself (defense in depth alongside the idempotency guard above).
+            $handler->setBooking($bb);
             $errors = $handler->checkDateTimeServicesAndAttendants($bb->getServicesMeta(), $bb->getStartsAt());
             if(!empty($errors)){
                 $this->releaseSlotLock($slotLockKey);
@@ -239,6 +277,21 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
                 $bb->getStatus()
             ));
 
+            // IDEMPOTENCY GUARD: see the confirm branch above. A duplicated "Pay later"
+            // submission on an already-finalized booking must not re-run the availability check
+            // (which would conflict with the booking's own slot and falsely report it unavailable,
+            // driving the customer to rebook). Treat the repeat as success.
+            if (!in_array($bb->getStatus(), array(SLN_Enum_BookingStatus::DRAFT, SLN_Enum_BookingStatus::PENDING_PAYMENT), true)) {
+                SLN_Plugin::addLog(sprintf(
+                    '[SummaryStep] Pay later received for already-finalized booking #%d (status: %s) — idempotent success, skipping availability re-check.',
+                    $bb->getId(),
+                    $bb->getStatus()
+                ));
+                $bookingBuilder->clear($bb->getId());
+                $this->cleanupBookingLock($bb);
+                return !$this->hasErrors();
+            }
+
             $slotLockKey = $this->getSlotLockKey($bb);
             if (!$this->acquireSlotLock($slotLockKey)) {
                 SLN_Plugin::addLog('[SummaryStep] ⚠️ Slot lock unavailable — concurrent booking detected. Key: ' . $slotLockKey);
@@ -247,6 +300,8 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
             }
             SLN_Plugin::addLog('[SummaryStep] ✅ Slot lock acquired: ' . $slotLockKey);
 
+            // Exclude the current booking from the slot count (defense in depth; see confirm branch).
+            $handler->setBooking($bb);
             $errors = $handler->checkDateTimeServicesAndAttendants($bb->getServicesMeta(), $bb->getStartsAt());
             if(!empty($errors)){
                 $this->releaseSlotLock($slotLockKey);
@@ -424,26 +479,27 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
         // in the URL as sln_booking_id. Inject it into the builder so that getLastBooking()
         // works for both this method and the summary view template.
         if (!$bb->get('services') && !$bb->getLastBooking() && isset($_GET['sln_booking_id'])) {
-            $emailPayBookingId = intval(sanitize_text_field(wp_unslash($_GET['sln_booking_id'])));
-            if ($emailPayBookingId) {
-                try {
-                    $emailPayBooking = $this->getPlugin()->createBooking($emailPayBookingId);
-                    if ($emailPayBooking && in_array($emailPayBooking->getStatus(), array(
-                        SLN_Enum_BookingStatus::PENDING_PAYMENT,
-                        SLN_Enum_BookingStatus::PAY_LATER,
-                        SLN_Enum_BookingStatus::PENDING,
-                    ))) {
-                        SLN_Plugin::addLog(sprintf(
-                            '[SummaryStep] Email pay link: injecting booking #%d (status: %s) into builder',
-                            $emailPayBookingId,
-                            $emailPayBooking->getStatus()
-                        ));
-                        // clear($id, false) sets lastId without wiping builder data
-                        $bb->clear($emailPayBookingId, false);
-                    }
-                } catch (Exception $e) {
-                    SLN_Plugin::addLog('[SummaryStep] Email pay link: failed to load booking #' . $emailPayBookingId . ': ' . $e->getMessage());
+            // SECURITY: only inject a booking the visitor is authorized for. The email
+            // "PAY" link carries the secure "{id}-{hash}" token, so an attacker cannot
+            // supply a bare numeric ID to disclose someone else's booking (IDOR).
+            try {
+                $emailPayBooking = SLN_Helper_BookingAccess::resolve($this->getPlugin(), sanitize_text_field(wp_unslash($_GET['sln_booking_id'])));
+                if ($emailPayBooking && in_array($emailPayBooking->getStatus(), array(
+                    SLN_Enum_BookingStatus::PENDING_PAYMENT,
+                    SLN_Enum_BookingStatus::PAY_LATER,
+                    SLN_Enum_BookingStatus::PENDING,
+                ))) {
+                    $emailPayBookingId = $emailPayBooking->getId();
+                    SLN_Plugin::addLog(sprintf(
+                        '[SummaryStep] Email pay link: injecting booking #%d (status: %s) into builder',
+                        $emailPayBookingId,
+                        $emailPayBooking->getStatus()
+                    ));
+                    // clear($id, false) sets lastId without wiping builder data
+                    $bb->clear($emailPayBookingId, false);
                 }
+            } catch (Exception $e) {
+                SLN_Plugin::addLog('[SummaryStep] Email pay link: failed to load/authorize booking: ' . $e->getMessage());
             }
         }
 
@@ -596,6 +652,10 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
         $bookingBuilder = $this->getPlugin()->getBookingBuilder();
         $lastBooking = $bookingBuilder->getLastBooking();
         $lastBookingId = $lastBooking ? $lastBooking->getId() : null;
+        // SECURITY: expose the per-booking secure token ("{id}-{hash}") to the
+        // client instead of the bare numeric ID, so the confirm/later/pay links
+        // cannot be enumerated. Consumers resolve it via SLN_Helper_BookingAccess.
+        $lastBookingToken = $lastBooking ? $lastBooking->getUniqueId() : null;
         $clientId = $bookingBuilder->getClientId();
 
         if ($this->getPlugin()->getSettings()->isPayEnabled() && empty($clientId) && method_exists($bookingBuilder, 'forceTransientStorage')) {
@@ -634,9 +694,9 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
             $laterUrl   = add_query_arg('sln_client_id', $clientId, $laterUrl);
         }
 
-        if (!empty($lastBookingId)) {
-            $confirmUrl = add_query_arg('sln_booking_id', $lastBookingId, $confirmUrl);
-            $laterUrl   = add_query_arg('sln_booking_id', $lastBookingId, $laterUrl);
+        if (!empty($lastBookingToken)) {
+            $confirmUrl = add_query_arg('sln_booking_id', $lastBookingToken, $confirmUrl);
+            $laterUrl   = add_query_arg('sln_booking_id', $lastBookingToken, $laterUrl);
         }
 
         $data = array(
@@ -665,8 +725,8 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
             if (!empty($clientId)) {
                 $payUrl = add_query_arg('sln_client_id', $clientId, $payUrl);
             }
-            if (!empty($lastBookingId)) {
-                $payUrl = add_query_arg('sln_booking_id', $lastBookingId, $payUrl);
+            if (!empty($lastBookingToken)) {
+                $payUrl = add_query_arg('sln_booking_id', $lastBookingToken, $payUrl);
             }
 
             $payUrl = apply_filters('sln.booking.thankyou-step.get-pay-url', $payUrl);
@@ -804,6 +864,43 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
             // This is a critical issue - logged-in user but no data in profile either
             SLN_Plugin::addLog('[Summary Step] ✗ ERROR: No customer data in user profile either');
         }
+    }
+
+    /**
+     * Restore the Multi-Shops "current shop" from the booking being finalized.
+     *
+     * The date/time picker computes availability scoped to the selected shop, but the
+     * confirm / pay-later submissions (and payment-gateway returns) do not carry sln[shop].
+     * Without the shop context the sln_booking_repository_for_availability filter falls back
+     * to counting bookings across every shop, so a slot that is genuinely free for THIS shop
+     * can exceed the global parallels_hour limit and be rejected — even though the picker just
+     * offered it. Setting the current shop here keeps the confirm availability check consistent
+     * with the picker. No-op on single-shop installs (guarded by class_exists). Mirrors the
+     * shop-context restore SLN_Plugin performs when rendering booking emails.
+     *
+     * @param SLN_Wrapper_Booking $bb
+     */
+    private function restoreShopContextFromBooking(SLN_Wrapper_Booking $bb)
+    {
+        if (!class_exists('\SalonMultishop\Addon')) {
+            return;
+        }
+
+        $shopId = $bb->getMeta('shop');
+        if (empty($shopId)) {
+            return;
+        }
+
+        \SalonMultishop\Addon::getInstance()->setCurrentShop($shopId);
+        // The availability filter also inspects $_GET['shop']; mirror the canonical
+        // context-restore used by SLN_Plugin so both channels agree for the rest of the request.
+        $_GET['shop'] = $shopId;
+
+        SLN_Plugin::addLog(sprintf(
+            '[SummaryStep] Multi-Shops: restored current shop #%s from booking #%d before availability check',
+            $shopId,
+            $bb->getId()
+        ));
     }
 
     /**

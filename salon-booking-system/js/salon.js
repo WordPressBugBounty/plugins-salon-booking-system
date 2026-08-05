@@ -386,7 +386,13 @@ function sln_init($) {
 
     if ($("#salon-step-date").length) {
         sln_stepDate($);
-    } else {
+    }
+
+    if ($("#salon-step-summary").length) {
+        sln_stepSummary($);
+    }
+
+    if (!$("#salon-step-date").length) {
         if ($("#salon-step-summary").length && $('#start-over').length) {
             $('.sln-btn--prevstep a').removeAttr("data-salon-data");
             $('.sln-btn--prevstep a').removeAttr("href");
@@ -1589,6 +1595,24 @@ function sln_stepForecast($) {
                 $container.find('#sln_login_name').trigger('focus');
             }
         });
+    });
+}
+
+function sln_stepSummary($) {
+    var $form = $("#salon-step-summary");
+    if (!$form.length) {
+        return;
+    }
+
+    // Native form submit (e.g. Enter in a field without a dedicated handler) must go
+    // through the AJAX step loader, not a full page POST that can drop booking state.
+    $form.off("submit.slnSummaryStep").on("submit.slnSummaryStep", function (e) {
+        e.preventDefault();
+        var $submit = $form.find('#sln-step-submit[data-salon-toggle="next"]');
+        if ($submit.length && !$submit.is(":disabled")) {
+            $submit.trigger("click");
+        }
+        return false;
     });
 }
 
@@ -3619,7 +3643,31 @@ function sln_renderAvailableTimeslots($, data, changeMinute = false) {
             }
         });
     } else {
+        // Build the time-cell grid from the UNION of workTimes (the salon's
+        // general working-hours grid) and times (the actually-bookable slots).
+        // A bookable slot can legitimately fall OUTSIDE the general grid — e.g. a
+        // late Thursday 20:30 slot when the standard grid ends at ~19:00. Rendering
+        // only workTimes leaves such a slot with no cell, so
+        // sln_updateDatepickerTimepickerSlots() has nothing to enable: every cell
+        // stays disabled (and is hidden by CSS), making the time list look empty
+        // even though a valid slot exists. Including times guarantees each bookable
+        // slot always has a cell to enable.
+        var slotKeys = {};
         $.each(data.intervals.workTimes, function (value) {
+            slotKeys[value] = true;
+        });
+        if (data.intervals.times) {
+            $.each(data.intervals.times, function (key, value) {
+                if (value) {
+                    slotKeys[value] = true;
+                }
+            });
+        }
+        // Zero-padded 24h "HH:MM" strings sort correctly lexicographically, so any
+        // injected slot lands in chronological order within the grid.
+        var sortedKeys = Object.keys(slotKeys).sort();
+
+        $.each(sortedKeys, function (i, value) {
             hours = parseInt(value, 10) || 0;
             minutes = parseInt(value.substr(value.indexOf(":") + 1), 10) || 0;
 

@@ -244,6 +244,76 @@ class SLN_Func
     }
 
     /**
+     * Round a DateTime up to the next booking-interval boundary.
+     *
+     * @param DateTimeInterface $dateTime
+     * @param int               $interval Minutes between slots.
+     * @return SLN_DateTime
+     */
+    public static function alignDateTimeToInterval($dateTime, $interval)
+    {
+        $interval = max(1, (int) $interval);
+        $aligned  = clone $dateTime;
+        $totalMins = (int) $aligned->format('H') * 60 + (int) $aligned->format('i');
+        $remainder = $totalMins % $interval;
+        if ($remainder > 0) {
+            $aligned->modify('+' . ($interval - $remainder) . ' minutes');
+        }
+
+        return $aligned instanceof SLN_DateTime ? $aligned : new SLN_DateTime($aligned->format('Y-m-d H:i:s'), $aligned->getTimezone());
+    }
+
+    /**
+     * @param string|DateTimeInterface $time     Time as H:i or DateTime.
+     * @param int|null                 $interval Booking interval in minutes; defaults to salon setting.
+     * @return string|null Aligned H:i, or null when input is empty.
+     */
+    public static function alignTimeToInterval($time, $interval = null)
+    {
+        if ($interval === null) {
+            $interval = (int) SLN_Plugin::getInstance()->getSettings()->getInterval();
+        }
+        $interval = max(1, (int) $interval);
+
+        if ($time instanceof DateTime || $time instanceof DateTimeImmutable) {
+            $time = $time->format('H:i');
+        }
+
+        $time = self::filter($time, 'time');
+        if (empty($time)) {
+            return $time;
+        }
+
+        return self::alignDateTimeToInterval(new SLN_DateTime('1970-01-01 ' . $time), $interval)->format('H:i');
+    }
+
+    /**
+     * @param string $time     Time as H:i.
+     * @param int|null $interval Booking interval in minutes; defaults to salon setting.
+     */
+    public static function isTimeAlignedToInterval($time, $interval = null)
+    {
+        if ($interval === null) {
+            $interval = (int) SLN_Plugin::getInstance()->getSettings()->getInterval();
+        }
+        $interval = max(1, (int) $interval);
+
+        if ($time instanceof DateTime || $time instanceof DateTimeImmutable) {
+            $time = $time->format('H:i');
+        }
+
+        $time = self::filter($time, 'time');
+        if (empty($time)) {
+            return true;
+        }
+
+        $parts     = explode(':', $time);
+        $totalMins = (int) $parts[0] * 60 + (int) $parts[1];
+
+        return ($totalMins % $interval) === 0;
+    }
+
+    /**
      * @param $times
      * @param $startDate
      * @param $endDate
@@ -605,8 +675,24 @@ class SLN_Func
         
         // Fallback: If converting UTF-8 to UTF-8, just sanitize and return
         if ($to_encoding === 'UTF-8' && $from_encoding === 'UTF-8') {
-            // Use WordPress function to ensure UTF-8
-            return seems_utf8($string) ? $string : utf8_encode($string);
+            if (seems_utf8($string)) {
+                return $string;
+            }
+            // utf8_encode() is deprecated as of PHP 8.2; convert Latin-1 -> UTF-8
+            // via iconv when available, otherwise with an exact manual polyfill.
+            if (function_exists('iconv')) {
+                $converted = @iconv('ISO-8859-1', 'UTF-8//IGNORE', $string);
+                if ($converted !== false) {
+                    return $converted;
+                }
+            }
+            $out = '';
+            $len = strlen($string);
+            for ($i = 0; $i < $len; $i++) {
+                $o = ord($string[$i]);
+                $out .= $o < 128 ? $string[$i] : (chr(0xC0 | ($o >> 6)) . chr(0x80 | ($o & 0x3F)));
+            }
+            return $out;
         }
         
         // For other conversions, use iconv if available

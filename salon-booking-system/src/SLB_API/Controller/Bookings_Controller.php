@@ -1016,6 +1016,67 @@ class Bookings_Controller extends REST_Controller
         return $id;
     }
 
+    /**
+     * Object-level authorization for a single booking.
+     *
+     * The route-level permission_callback only checks a generic capability and
+     * never inspects the requested booking, so without this gate any logged-in
+     * user could read/edit ANY booking by enumerating its numeric ID (IDOR),
+     * exposing customer PII (email, phone, address, transaction id, private
+     * admin note). This restricts access to:
+     *   - administrators / shop managers (full access);
+     *   - staff / workers (only bookings they are assigned to, mirroring the
+     *     mobile API);
+     *   - and, when $allowOwner is true, the booking's own author (a logged-in
+     *     customer viewing their own booking).
+     *
+     * @param mixed $booking    SLN_Wrapper_Booking instance or a booking ID.
+     * @param bool  $allowOwner Whether a plain customer may access their own booking.
+     * @return bool
+     */
+    protected function current_user_can_access_booking($booking, $allowOwner = true)
+    {
+        if (current_user_can('manage_options') || current_user_can('manage_salon') || $this->is_shop_manager()) {
+            return true;
+        }
+
+        if (!($booking instanceof SLN_Wrapper_Booking)) {
+            try {
+                $booking = new SLN_Wrapper_Booking(intval($booking));
+            } catch (\Exception $e) {
+                return false;
+            }
+        }
+        if (!$booking || !$booking->getId()) {
+            return false;
+        }
+
+        $currentUserId    = get_current_user_id();
+        $currentUserRoles = (array) wp_get_current_user()->roles;
+
+        // Staff / workers: restricted to the bookings they are assigned to,
+        // exactly as the mobile API does.
+        if (in_array(SLN_Plugin::USER_ROLE_STAFF, $currentUserRoles, true) || in_array(SLN_Plugin::USER_ROLE_WORKER, $currentUserRoles, true)) {
+            $plugin        = SLN_Plugin::getInstance();
+            $assistantsIDs = array();
+            $attendants    = $plugin->getRepository(SLN_Plugin::POST_TYPE_ATTENDANT)->getAll();
+            foreach ($attendants as $attendant) {
+                if ($attendant->getMeta('staff_member_id') == $currentUserId && $attendant->getIsStaffMemberAssignedToBookingsOnly()) {
+                    $assistantsIDs[] = $attendant->getId();
+                }
+            }
+            if (empty($assistantsIDs)) {
+                // No "assigned-only" restriction configured → full staff access.
+                return true;
+            }
+            return (bool) array_intersect($assistantsIDs, $booking->getAttendantsIds());
+        }
+
+        // Everyone else (e.g. customers): only their own booking, and only when
+        // owner access is permitted for this operation.
+        return $allowOwner && $currentUserId > 0 && intval($booking->getUserId()) === intval($currentUserId);
+    }
+
     public function get_item( $request )
     {
         $query = $this->get_item_query($request->get_param('id'), $request);
@@ -1025,8 +1086,19 @@ class Bookings_Controller extends REST_Controller
         }
 
         try {
-            $booking = $this->prepare_item_for_response(current($query->posts), $request);
-            $booking = $this->prepare_response_for_collection($booking);
+            $bookingObj = $this->prepare_item_for_response(current($query->posts), $request);
+
+            // SECURITY: enforce booking ownership (see current_user_can_access_booking).
+            if ( ! $this->current_user_can_access_booking($bookingObj) ) {
+                return new WP_Error( 'salon_rest_cannot_view', __( 'Sorry, you cannot view resource.', 'salon-booking-system' ), array( 'status' => 403 ) );
+            }
+
+            $booking = $this->prepare_response_for_collection($bookingObj);
+
+            // Never expose the private staff/admin note to non-privileged (customer) viewers.
+            if ( ! current_user_can('manage_options') && ! current_user_can('manage_salon') && ! $this->is_shop_manager() ) {
+                unset($booking['admin_note']);
+            }
         } catch (\Exception $ex) {
             return new WP_Error( 'salon_rest_cannot_view', __( 'Sorry, get resource error ('.sprintf('%s', $ex->getMessage()).').', 'salon-booking-system' ), array( 'status' => 404 ) );
         }
@@ -1045,8 +1117,16 @@ class Bookings_Controller extends REST_Controller
         }
 
         try {
-            $booking = $this->prepare_item_for_response(current($query->posts), $request);
-            $booking = $this->prepare_response_for_collection($booking);
+            $bookingObj = $this->prepare_item_for_response(current($query->posts), $request);
+
+            // SECURITY: editing a booking is a privileged operation — restrict it to
+            // admins / shop managers / assigned staff (no plain-customer self-edit),
+            // preventing tampering with an arbitrary booking by enumerating its ID.
+            if ( ! $this->current_user_can_access_booking($bookingObj, false) ) {
+                return new WP_Error( 'salon_rest_cannot_update', __( 'Sorry, you cannot edit resource.', 'salon-booking-system' ), array( 'status' => 403 ) );
+            }
+
+            $booking = $this->prepare_response_for_collection($bookingObj);
         } catch (\Exception $ex) {
             return new WP_Error( 'salon_rest_cannot_view', __( 'Sorry, get resource error ('.sprintf('%s', $ex->getMessage()).').', 'salon-booking-system' ), array( 'status' => 404 ) );
         }
@@ -1094,6 +1174,12 @@ class Bookings_Controller extends REST_Controller
             return new WP_Error( 'salon_rest_cannot_delete', __( 'Sorry, resource not found.', 'salon-booking-system' ), array( 'status' => 404 ) );
         }
 
+        // SECURITY: deleting a booking is a privileged operation — restrict it to
+        // admins / shop managers / assigned staff, never a plain customer.
+        if ( ! $this->current_user_can_access_booking(current($query->posts)->ID, false) ) {
+            return new WP_Error( 'salon_rest_cannot_delete', __( 'Sorry, you cannot delete resource.', 'salon-booking-system' ), array( 'status' => 403 ) );
+        }
+
         wp_trash_post($request->get_param('id'));
 
         return $this->success_response();
@@ -1105,6 +1191,12 @@ class Bookings_Controller extends REST_Controller
 
         if (!$query->posts) {
             return new WP_Error('salon_rest_cannot_pay_remaining_amount', __('Sorry, resource not found.', 'salon-booking-system'), array('status' => 404));
+        }
+
+        // SECURITY: only privileged users may trigger the pay-remaining email for a
+        // booking, preventing enumeration/abuse against arbitrary customers' bookings.
+        if ( ! $this->current_user_can_access_booking($request->get_param('id'), false) ) {
+            return new WP_Error('salon_rest_cannot_pay_remaining_amount', __('Sorry, you cannot access resource.', 'salon-booking-system'), array('status' => 403));
         }
 
         $booking = new SLN_Wrapper_Booking($request->get_param('id'));

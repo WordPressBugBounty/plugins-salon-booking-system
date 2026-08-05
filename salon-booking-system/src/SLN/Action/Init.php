@@ -109,10 +109,15 @@ class SLN_Action_Init
 
 	add_action( 'profile_update', array($this, 'updateProfileLastUpdateTime') );
 	
-	// Clear user search cache when user data is updated
+	// Clear user search cache when user data changes.
+	// Meta hooks are narrowed to searchable keys so unrelated meta writes
+	// (sessions, last-login, etc.) don't constantly invalidate the cache.
 	add_action( 'profile_update', array('SLN_Action_Ajax_SearchUser', 'clearSearchCache') );
 	add_action( 'user_register', array('SLN_Action_Ajax_SearchUser', 'clearSearchCache') );
-	add_action( 'updated_user_meta', array('SLN_Action_Ajax_SearchUser', 'clearSearchCache') );
+	add_action( 'deleted_user', array('SLN_Action_Ajax_SearchUser', 'clearSearchCache') );
+	add_action( 'added_user_meta', array('SLN_Action_Ajax_SearchUser', 'maybeClearSearchCacheOnMeta'), 10, 3 );
+	add_action( 'updated_user_meta', array('SLN_Action_Ajax_SearchUser', 'maybeClearSearchCacheOnMeta'), 10, 3 );
+	add_action( 'deleted_user_meta', array('SLN_Action_Ajax_SearchUser', 'maybeClearSearchCacheOnMeta'), 10, 3 );
 
         new SLN_Action_UpdatePhoneCountryDialCode($p);
     }

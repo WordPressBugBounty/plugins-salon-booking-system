@@ -1459,6 +1459,7 @@ a.sln-btn.sln-btn--borderonly,
   margin-bottom: 2em;
 }
 #sln-salon .sln-panel .sln-panel-heading {
+  position: relative;
   margin-bottom: 0;
   outline: none;
   text-decoration: none;
@@ -4828,6 +4829,13 @@ a.sln-btn.sln-btn--disabled a,
 #sln-salon .sln-box--formactions--outline .sln-btn--medium .sln-btn__info strong,
 #sln-salon.sln-loginform:not(.sln-customcolors) .sln-box--formactions--outline #loginform #wp-submit .sln-btn__info strong,
 #sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-box--formactions--outline #wp-submit .sln-btn__info strong {
+  font-weight: 700;
+}
+#sln-salon .sln-box--formactions--summary .sln-btn--medium .sln-pay-amount, #sln-salon.sln-loginform:not(.sln-customcolors) .sln-box--formactions--summary #loginform #wp-submit .sln-pay-amount, #sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-box--formactions--summary #wp-submit .sln-pay-amount,
+#sln-salon .sln-box--formactions--outline .sln-btn--medium .sln-pay-amount,
+#sln-salon.sln-loginform:not(.sln-customcolors) .sln-box--formactions--outline #loginform #wp-submit .sln-pay-amount,
+#sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-box--formactions--outline #wp-submit .sln-pay-amount {
+  margin-left: 0.35em;
   font-weight: 700;
 }
 #sln-salon .sln-box--formactions--summary .sln-btn--medium.sln-btn--fitcontent, #sln-salon.sln-loginform:not(.sln-customcolors) .sln-box--formactions--summary #loginform .sln-btn--fitcontent#wp-submit, #sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-box--formactions--summary .sln-btn--fitcontent#wp-submit,
@@ -13377,6 +13385,15 @@ body:not(.sln-salon-page)
   font-size: 13px;
   text-align: center;
   margin-top: -10px;
+}
+
+#sln-salon .sln-deposit-note {
+  color: #6b7280;
+  font-size: 13px;
+  line-height: 1.3;
+  text-align: center;
+  margin-top: 8px;
+  margin-bottom: 1em;
 }
 
 #sln-salon .sln-input-group .iti__selected-flag {

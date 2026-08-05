@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 ?>
 <div role="tabpanel" class="tab-pane sln-account__tabpanel sln-account__tabpanel--discounts" id="sln-account__discount__content">

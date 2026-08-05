@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 $addAjax = apply_filters('sln.template.calendar.ajaxUrl', '');
 $ai = $plugin->getSettings()->getAvailabilityItems();
@@ -501,7 +503,7 @@ echo expirePopup();
                                         ?></p>
                                         <p><?php _e('<strong>If you are happy with us, please submit a positive review.</strong>', 'salon-booking-system') ?></p>
                                     </div>
-                                    <a href="https://reviews.capterra.com/new/166320?utm_source=vp&utm_medium=none&utm_campaign=vendor_request_paid" target="_blank" class="sln-notice--plugin_update__action"><?php esc_html_e('Leave a review', 'salon-booking-system') ?></a>
+                                    <a href="https://reviews.capterra.com/products/new/7cca6575-7acf-4e99-92d8-a7d20045a786/?utm_source=vp&utm_campaign=vendor_request" target="_blank" class="sln-notice--plugin_update__action"><?php esc_html_e('Leave a review', 'salon-booking-system') ?></a>
                                     <button style="position: absolute;right: 0px;top: 0px;background: transparent;" class="custom sln-btn sln-btn--main sln-btn--small sln-btn--icon sln-icon--close">info</button>
                                 </div>
                             </div>
@@ -881,7 +883,7 @@ echo expirePopup();
                     <div class="sln-notice sln-notice--review">
                         <h2><?php esc_html_e('Are you happy with us?', 'salon-booking-system') ?> <?php _e('Share your love for <strong>Salon Booking System</strong> leaving a positive review.', 'salon-booking-system') ?>
                             <?php esc_html_e("Let's grow our community.", 'salon-booking-system') ?>
-                            <a href="https://wordpress.org/support/plugin/salon-booking-system/reviews/?filter=5#new-post" target="_blank" class="sln-notice--action">
+                            <a href="https://wordpress.org/support/plugin/salon-booking-system/reviews/#new-post" target="_blank" class="sln-notice--action">
                                 <?php esc_html_e('Submit a review', 'salon-booking-system') ?>
                             </a>
                         </h2>

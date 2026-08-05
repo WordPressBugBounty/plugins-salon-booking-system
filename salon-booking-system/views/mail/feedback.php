@@ -1,4 +1,6 @@
-<?php   // algolplus
+<?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+   // algolplus
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 /**
  * @var SLN_Plugin           $plugin

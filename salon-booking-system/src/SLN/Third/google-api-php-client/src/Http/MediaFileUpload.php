@@ -332,7 +332,8 @@ class MediaFileUpload
 
     private function transformToUploadUrl()
     {
-        $parts = parse_url((string) $this->request->getUri());
+        // Local wp.org-compliance patch: wp_parse_url() over parse_url() (runs inside WP).
+        $parts = wp_parse_url((string) $this->request->getUri());
         if (!isset($parts['path'])) {
             $parts['path'] = '';
         }

@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 // phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 // START UPDATE SERVICES & ATTENDANTS FOR BOOKINGS BEFORE 110 feature
 $args = array(

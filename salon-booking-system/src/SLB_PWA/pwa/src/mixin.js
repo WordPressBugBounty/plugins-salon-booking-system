@@ -29,6 +29,8 @@ if (process.env.NODE_ENV === 'development' && typeof window.slnPWA === 'undefine
         is_pro: false,
         pro_pricing_url: 'https://www.salonbookingsystem.com/plugin-pricing-2/',
         is_shops: false,
+        /** Dev: show the Smart Waitlist tab. Production sets this from the add-on. */
+        waitlist_enabled: true,
         /** Match production: assistant filter chips only for admin + shop managers */
         can_use_assistant_filter: true,
         can_access_booking_resize_pref: true,

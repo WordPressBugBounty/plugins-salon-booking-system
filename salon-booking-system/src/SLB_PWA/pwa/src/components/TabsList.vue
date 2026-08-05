@@ -62,6 +62,21 @@
                 />
                 <div v-else class="pwa-pro-only-tab-placeholder" />
             </b-tab>
+            <b-tab v-if="waitlistEnabled">
+                <ShopTitle v-if="isShopsEnabled" :shop="shop" @applyShop="applyShop"/>
+                <template #title>
+                    <span class="tab-item" @click="navigateToTab('#waiting-list', $event)">
+                        <font-awesome-icon icon="fa-solid fa-bell" class="tab-icon" />
+                        <span class="tab-label">Waitlist</span>
+                    </span>
+                </template>
+                <WaitingListTab
+                    v-if="isProUser"
+                    :shop="shop"
+                    @hideTabsHeader="hideTabsHeader"
+                />
+                <div v-else class="pwa-pro-only-tab-placeholder" />
+            </b-tab>
             <b-tab title-item-class="nav-item-profile">
                 <template #title>
                     <span class="tab-item" @click="click('#user-profile')">
@@ -113,6 +128,10 @@
             }),
             CustomersAddressBookTab: defineAsyncComponent({
                 loader: () => import('./tabs/CustomersAddressBookTab.vue'),
+                ...asyncOpts,
+            }),
+            WaitingListTab: defineAsyncComponent({
+                loader: () => import('./tabs/WaitingListTab.vue'),
                 ...asyncOpts,
             }),
             UserProfileTab: defineAsyncComponent({
@@ -179,6 +198,32 @@
             /** Strict: only boolean true counts as PRO (avoids truthy strings from bad JSON). */
             isProUser() {
                 return window.slnPWA?.is_pro === true
+            },
+            /** Smart Waitlist add-on present → show the Waiting list tab. */
+            waitlistEnabled() {
+                return window.slnPWA?.waitlist_enabled === true
+            },
+            /**
+             * Ordered list of tab hashes actually rendered, in the same order as
+             * the <b-tab> elements above. Both Shops and Waiting list are
+             * conditional, so index maths is derived from this single source of
+             * truth rather than hardcoded per-combination maps.
+             */
+            tabOrder() {
+                const order = []
+                if (this.isShopsEnabled) {
+                    order.push('#shops')
+                }
+                order.push('#upcoming-reservations', '#reservations-calendar', '#customers')
+                if (this.waitlistEnabled) {
+                    order.push('#waiting-list')
+                }
+                order.push('#user-profile')
+                return order
+            },
+            /** Hashes that require a PRO license. */
+            proOnlyHashes() {
+                return ['#reservations-calendar', '#customers', '#waiting-list']
             },
         },
         watch: {
@@ -277,38 +322,18 @@
                 }
             },
             hashToTabIndex(hash) {
-                const sh = this.isShopsEnabled
-                const map = sh
-                    ? {
-                        '#shops': 0,
-                        '#upcoming-reservations': 1,
-                        '#reservations-calendar': 2,
-                        '#customers': 3,
-                        '#user-profile': 4,
-                    }
-                    : {
-                        '#upcoming-reservations': 0,
-                        '#reservations-calendar': 1,
-                        '#customers': 2,
-                        '#user-profile': 3,
-                    }
-                if (Object.prototype.hasOwnProperty.call(map, hash)) {
-                    return map[hash]
+                const idx = this.tabOrder.indexOf(hash)
+                if (idx !== -1) {
+                    return idx
                 }
-                return sh ? 1 : 0
+                const upcoming = this.tabOrder.indexOf('#upcoming-reservations')
+                return upcoming !== -1 ? upcoming : 0
             },
             tabIndexToHash(idx) {
-                const sh = this.isShopsEnabled
-                const arr = sh
-                    ? ['#shops', '#upcoming-reservations', '#reservations-calendar', '#customers', '#user-profile']
-                    : ['#upcoming-reservations', '#reservations-calendar', '#customers', '#user-profile']
-                return arr[idx] != null ? arr[idx] : '#upcoming-reservations'
+                return this.tabOrder[idx] != null ? this.tabOrder[idx] : '#upcoming-reservations'
             },
             isRestrictedTabIndex(idx) {
-                const sh = this.isShopsEnabled
-                const cal = sh ? 2 : 1
-                const cust = sh ? 3 : 2
-                return idx === cal || idx === cust
+                return this.proOnlyHashes.includes(this.tabOrder[idx])
             },
             resolveInitialHashFromUrl() {
                 const params = this.getQueryParams()
@@ -326,7 +351,7 @@
                     return false
                 }
                 const h = hash.startsWith('#') ? hash : '#' + hash
-                return h === '#reservations-calendar' || h === '#customers'
+                return this.proOnlyHashes.includes(h)
             },
             syncLocationToHash(hash) {
                 try {

@@ -1,3 +1,4 @@
+<?php if ( ! defined( 'ABSPATH' ) ) { exit; } ?>
 <label for="sln_packages_180" class="sln-list__item sln-package sln-package--180">
 	<?php
     /*

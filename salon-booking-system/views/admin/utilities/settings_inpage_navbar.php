@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 // phpcs:ignoreFile WordPress.Security.NonceVerification.Recommended
 // phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 function sum(...$items) {

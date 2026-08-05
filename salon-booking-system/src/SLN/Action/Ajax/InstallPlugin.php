@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 // phpcs:ignoreFile WordPress.Security.NonceVerification.Missing
 require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
 

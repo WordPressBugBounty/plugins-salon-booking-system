@@ -21,6 +21,9 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
     /** @var bool guard so the shutdown flush is registered only once per request */
     private static $cacheShutdownHooked = false;
 
+    /** @var bool prevents recursive meta correction for misaligned booking times */
+    private static $aligningBookingTimeMeta = false;
+
     public function init()
     {
         parent::init();
@@ -372,12 +375,14 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
                 echo esc_html($duration);
                 break;
             case 'booking_date':
-                echo esc_html($this->getPlugin()->format()->datetime(
-                    new SLN_DateTime(
-                        get_post_meta($post_id, '_sln_booking_date', true)
-                        .' '.get_post_meta($post_id, '_sln_booking_time', true)
-                    )
-                ));
+                $startsAt = $obj->getStartsAt();
+                if (!SLN_Func::isTimeAlignedToInterval($startsAt->format('H:i'))) {
+                    $startsAt = SLN_Func::alignDateTimeToInterval(
+                        $startsAt,
+                        (int) $this->getPlugin()->getSettings()->getInterval()
+                    );
+                }
+                echo esc_html($this->getPlugin()->format()->datetime($startsAt));
                 echo '<span style="color:#969494;font-size: 10px;"><br>'.get_the_date('j F Y');
                 echo '<br>'.get_the_time('G:i').'</span>';
                 break;
@@ -884,6 +889,26 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
         // Only process booking post type
         if (get_post_type($post_id) !== SLN_Plugin::POST_TYPE_BOOKING) {
             return;
+        }
+
+        if ($meta_key === '_sln_booking_time' && !self::$aligningBookingTimeMeta) {
+            $aligned = SLN_Func::alignTimeToInterval($meta_value);
+            if ($aligned && $aligned !== $meta_value) {
+                self::$aligningBookingTimeMeta = true;
+                update_post_meta($post_id, '_sln_booking_time', $aligned);
+                self::$aligningBookingTimeMeta = false;
+
+                if (SLN_Plugin::isDebugEnabled()) {
+                    SLN_Plugin::addLog(sprintf(
+                        '[Booking Time] Corrected misaligned time for booking #%d: %s -> %s',
+                        $post_id,
+                        $meta_value,
+                        $aligned
+                    ));
+                }
+
+                return;
+            }
         }
 
         // Sanitize shop ID: the Multi-Shops addon can write the value with a leading/trailing

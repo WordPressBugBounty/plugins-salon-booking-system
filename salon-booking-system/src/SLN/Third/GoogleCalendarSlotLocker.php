@@ -341,8 +341,8 @@ class SLN_Third_GoogleCalendarSlotLocker
                 SLN_Plugin::addLogVerbose(sprintf(
                     '[GoogleCalendarSlotLocker] Slot %s blocked (GCal event %s–%s)',
                     $datetime->format('H:i'),
-                    date('H:i', $startTs),
-                    date('H:i', $endTs)
+                    gmdate('H:i', $startTs),
+                    gmdate('H:i', $endTs)
                 ));
                 return false;
             }

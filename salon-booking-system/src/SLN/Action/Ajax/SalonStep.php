@@ -134,7 +134,7 @@ class SLN_Action_Ajax_SalonStep extends SLN_Action_Ajax_Abstract
         // Get session ID
         $sessionId = session_id();
         if (empty($sessionId)) {
-            @session_start();
+            SLN_Helper_Session::maybeStart(true);
             $sessionId = session_id();
         }
         

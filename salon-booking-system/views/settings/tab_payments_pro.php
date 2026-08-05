@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.UnsafePrintingFunction
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 include $this->plugin->getViewFile('admin/utilities/settings_inpage_navbar');
@@ -24,7 +26,7 @@ $pro_badge = !defined('SLN_VERSION_PAY')
     : '';
 ?>
 <div id="sln-online_payment_status" class="sln-box sln-box--main sln-box--online-payment sln-box--haspanel sln-box--haspanel--open sln-profeature <?php echo !defined('SLN_VERSION_PAY') ? 'sln-profeature--disabled' : '' ?>">
-    <h2 class="sln-box-title sln-box__paneltitle sln-box__paneltitle--open"><?php _e('Online payment<span>Allow users to pay in advance using one of the available payments methods.</span>', 'salon-booking-system'); ?><?php echo $pro_badge; ?></h2>
+    <h2 class="sln-box-title sln-box__paneltitle sln-box__paneltitle--open"><?php _e('Online payment<span>Allow users to pay in advance using one of the available payment methods.</span>', 'salon-booking-system'); ?><?php echo $pro_badge; ?></h2>
     <div class="collapse in sln-box__panelcollapse">
         <div class="row">
             <div class="col-xs-12">
@@ -41,7 +43,7 @@ $pro_badge = !defined('SLN_VERSION_PAY')
                             ); ?>
                         </div>
                         <div class="sln-box-maininfo">
-                            <p class="sln-box-info"><?php esc_html_e('If enabled you need to setup one of the available payments methods.', 'salon-booking-system'); ?></p>
+                            <p class="sln-box-info"><?php esc_html_e('If enabled you need to setup one of the available payment methods.', 'salon-booking-system'); ?></p>
                         </div>
                     </div>
                 </div>
@@ -144,10 +146,10 @@ echo '</div>';
                     <div class="sln-switch">
                         <?php $this->row_input_checkbox_switch(
                             'pay_cash',
-                            'Pay later Status',
+                            __('Pay later Status', 'salon-booking-system'),
                             array(
-                                'bigLabelOn' => 'Pay later is enabled',
-                                'bigLabelOff' => 'Pay later is disabled',
+                                'bigLabelOn' => __('Pay later is enabled', 'salon-booking-system'),
+                                'bigLabelOff' => __('Pay later is disabled', 'salon-booking-system'),
                             )
                         ); ?>
                     </div>

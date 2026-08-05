@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 /**
  * @var $plugin SLN_Plugin
  * @var $helper SLN_Admin_Settings

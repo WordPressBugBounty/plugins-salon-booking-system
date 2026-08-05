@@ -1,4 +1,6 @@
-<?php if ($service->isVariableDuration()): ?>
+<?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+ if ($service->isVariableDuration()): ?>
     <div class="sln-service-variable-duration" data-units-per-session="<?php echo esc_html($service->getMaxVariableDuration()) ?>">
         <div class="sln-service-variable-duration--counter">
             <span class="sln-service-variable-duration--counter--minus <?php echo $bb->getCountService($service->getId()) <= 0 ? 'sln-service-variable-duration--counter--button--disabled' : '' ?>"></span>

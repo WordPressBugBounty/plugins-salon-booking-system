@@ -1,4 +1,6 @@
-<?php // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+<?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+ // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 <table cellpadding="0" cellspacing="0" width="100%" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
     <tr>
         <td align="center" valign="top" style="padding:0;Margin:0;width:560px">

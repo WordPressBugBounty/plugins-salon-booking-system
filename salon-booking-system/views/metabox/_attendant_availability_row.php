@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 $alert = __(
     'This rule represents your open and close days, your open and close shift. Set carefully as it will affect your reservation system.',

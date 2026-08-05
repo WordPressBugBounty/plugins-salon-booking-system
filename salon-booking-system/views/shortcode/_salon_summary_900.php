@@ -1,4 +1,6 @@
-<?php // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+<?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+ // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 <div class="col-xs-12 col-md-8">
         <div class="row sln-box--main sln-box--fixed_height sln-box--fixed_height--l">
             <div class="col-xs-12">

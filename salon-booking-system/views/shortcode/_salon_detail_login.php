@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 $fbLoginEnabled = $plugin->getSettings()->get('enabled_fb_login');
 ob_start(); ?>

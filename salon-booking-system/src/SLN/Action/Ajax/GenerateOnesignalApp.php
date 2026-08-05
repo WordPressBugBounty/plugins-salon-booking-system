@@ -6,7 +6,7 @@ class SLN_Action_Ajax_GenerateOnesignalApp extends SLN_Action_Ajax_Abstract
         if(current_user_can ('manage_options') && isset($_POST['security']) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['security'] ) ), 'ajax_post_validation')){
             $url  = 'https://onesignal.com/api/v1/apps';
 
-            $info = parse_url(home_url());
+            $info = wp_parse_url(home_url());
 
             $args = array(
                 'headers' => array(

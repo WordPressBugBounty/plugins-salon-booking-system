@@ -132,14 +132,18 @@ abstract class SLN_Helper_Availability_AbstractDayBookings
         $now = clone $this->getDate();
         $now->setTime($hour, $minutes ? $minutes : 0);
         $time = $now->format('H:i');
-        
-        // Don't count bookings in break slots (where nested bookings are allowed)
-        if (isset($this->timeslots[$time]['break']) && !empty($this->timeslots[$time]['break'])) {
-            SLN_Plugin::addLogVerbose(sprintf('[countBookingsByHour] %s is a break slot - returning 0 (allows nested)', $time));
+
+        $bookings = isset($this->timeslots[$time]['booking']) ? $this->timeslots[$time]['booking'] : array();
+
+        // A break window is only "free for nesting" when NO working service occupies the slot.
+        // Previously this returned 0 for ANY break slot, so a working service sharing the slot
+        // (a same-booking service mis-placed into the break, or an already-nested booking) was
+        // still reported as free — producing the double bookings on top of existing appointments.
+        if (!empty($this->timeslots[$time]['break']) && empty($bookings)) {
+            SLN_Plugin::addLogVerbose(sprintf('[countBookingsByHour] %s is an unoccupied break slot - returning 0 (allows nested)', $time));
             return 0;
         }
-        
-        $bookings = isset($this->timeslots[$time]['booking']) ? $this->timeslots[$time]['booking'] : array();
+
         return count($bookings);
     }
 
@@ -225,11 +229,19 @@ abstract class SLN_Helper_Availability_AbstractDayBookings
     {
         $now = $this->getTime($time->format('H'), $time->format('i'));
         $key = $now->format('H:i');
-        if (!isset($this->timeslots[$key]['break'])) {
+        if (empty($this->timeslots[$key]['break'])) {
             return false;
         }
 
-        return !empty($this->timeslots[$key]['break']);
+        // Only an UNOCCUPIED break window is nestable. If a working service already occupies this
+        // slot (a mis-placed same-booking service, or a previously nested booking), it is not a free
+        // gap: reporting it as a break slot let downstream validation skip overlap checks / bypass
+        // the parallel-bookings cap, which is exactly how the double bookings were created.
+        if (!empty($this->timeslots[$key]['booking'])) {
+            return false;
+        }
+
+        return true;
     }
 
 }

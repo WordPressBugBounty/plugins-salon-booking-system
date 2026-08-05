@@ -100,6 +100,7 @@ class SLN_Action_Sms_Ip1SmsV2 extends SLN_Action_Sms_Abstract
         // Check for WordPress HTTP errors (network issues, timeouts, etc.)
         if (is_wp_error($response)) {
             $error_message = sprintf(
+                /* translators: %s: error message returned by the IP1SMS API request. */
                 __('IP1SMS API Request Failed: %s', 'salon-booking-system'),
                 $response->get_error_message()
             );
@@ -139,6 +140,7 @@ class SLN_Action_Sms_Ip1SmsV2 extends SLN_Action_Sms_Abstract
         
         // Handle error responses
         $error_message = sprintf(
+            /* translators: %d: HTTP status code returned by the IP1SMS API. */
             __('IP1SMS API Error (HTTP %d)', 'salon-booking-system'),
             $code
         );
@@ -234,6 +236,7 @@ class SLN_Action_Sms_Ip1SmsV2 extends SLN_Action_Sms_Abstract
                 return array(
                     'success' => true,
                     'message' => sprintf(
+                        /* translators: %s: sender ID that was registered. */
                         __('Sender ID "%s" registered successfully', 'salon-booking-system'),
                         $sender
                     ),
@@ -243,6 +246,7 @@ class SLN_Action_Sms_Ip1SmsV2 extends SLN_Action_Sms_Abstract
             return array(
                 'success' => false,
                 'message' => sprintf(
+                    /* translators: %s: error message returned when sender ID registration failed. */
                     __('Failed to register sender ID: %s', 'salon-booking-system'),
                     is_array($response['body']) && isset($response['body']['message']) 
                         ? $response['body']['message'] 

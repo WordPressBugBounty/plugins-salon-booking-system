@@ -1,7 +1,10 @@
 <?php
+
 // phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 
 namespace SLB_API_Mobile;
+
+if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 use SLB_API_Mobile\Helper\TokenHelper;
 use SLB_API_Mobile\Helper\RequestHelper;

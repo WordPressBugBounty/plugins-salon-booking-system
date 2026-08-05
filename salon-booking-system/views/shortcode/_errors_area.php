@@ -1,4 +1,6 @@
-<?php if ($size == '400') : ?>
+<?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+ if ($size == '400') : ?>
     <?php if ($errors) : ?>
         <div class="col-xs-12">
             <span class="errors-area" data-class="sln-alert sln-alert-medium sln-alert--problem">

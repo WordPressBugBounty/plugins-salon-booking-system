@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 /**
  * @var SLN_Plugin $plugin
@@ -7,8 +9,14 @@
  * @var SLN_Shortcode_Salon_Step $step
  */
 $bb = $plugin->getBookingBuilder()->getLastBooking();
+// SECURITY: only load a booking from the request when the visitor is authorized for
+// it (valid secure token, own session, or own/managed booking). A bare numeric ID is
+// rejected to prevent IDOR disclosure of another customer's booking.
+if(empty($bb) && isset($_GET['sln_booking_id'])){
+    $bb = SLN_Helper_BookingAccess::resolve($plugin, sanitize_text_field(wp_unslash($_GET['sln_booking_id'])));
+}
 if(empty($bb) && isset($_GET['op'])){
-    $bb = $plugin->createBooking(explode('-', sanitize_text_field($_GET['op'])));
+    $bb = SLN_Helper_BookingAccess::resolveFromOp($plugin, sanitize_text_field(wp_unslash($_GET['op'])));
 }
 
 // Add null check to prevent fatal error

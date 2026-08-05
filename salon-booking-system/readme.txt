@@ -1,10 +1,10 @@
 === Salon Booking System - Free Version ===
 Contributors: Salon Booking System
 Tags: booking, reservations, scheduling, booking calendar, appointment calendar
-Requires at least: 4.1
-Tested up to: 6.9
+Requires at least: 6.0
+Tested up to: 7.0
 Requires PHP: 7.4.8
-Stable tag: 10.30.33
+Stable tag: 10.30.34
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -407,6 +407,13 @@ FREE version doesn't have the online payments options, no mobile app access, no 
 
 
 == Changelog ==
+
+30.07.2026 - 10.30.34
+
+* Security fix: enforced booking ownership on the single-booking REST endpoint to prevent authenticated users from reading other customers' booking details (IDOR) — thanks to Muni Nitish Kumar Yaddala
+* Security fix: added nonce and secure per-booking token validation to the tip and discount AJAX actions to prevent unauthenticated tampering with bookings — thanks to Muni Nitish Kumar Yaddala
+* Security fix: enforced the per-booking secure token on the booking wizard confirmation/summary steps to prevent unauthenticated disclosure of booking information — thanks to Usama Arshad
+* Security fix: added OAuth state validation, an admin capability check and removal of the unauthenticated callback on the Google Calendar connection to prevent connection hijacking; removed the shared hardcoded OAuth credentials (each site must now configure its own) — thanks to Daniel Dhaniswara
 
 08.07.2026 - 10.30.33
 

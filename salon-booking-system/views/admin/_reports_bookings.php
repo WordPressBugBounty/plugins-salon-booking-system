@@ -1,3 +1,4 @@
+<?php if ( ! defined( 'ABSPATH' ) ) { exit; } ?>
 <div class="sln-box sln-box--main">
 	<h2 class="sln-box-title"><?php esc_html_e('Reports','salon-booking-system') ?></h2>
 	<div class="row">

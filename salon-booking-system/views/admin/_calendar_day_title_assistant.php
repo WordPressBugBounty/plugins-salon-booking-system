@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 /** @var SLN_Wrapper_Booking $booking */
 ?>
 <div class="day-event-item__calendar-day__header" >

@@ -1,3 +1,4 @@
+<?php if ( ! defined( 'ABSPATH' ) ) { exit; } ?>
 <!-- algolplus -->
 <?php
 // phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch

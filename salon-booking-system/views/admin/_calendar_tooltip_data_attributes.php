@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 
 /**
  * Common tooltip data attributes for calendar views
@@ -26,9 +28,9 @@ function generateTooltipDataAttributes($event, $isPro, $eventType = 'bsEvent')
 
   // Title handling (different for day vs week view)
   if ($eventType === 'bsEvent') {
-    $title = $event->main ? strip_tags($event->title) : '';
+    $title = $event->main ? wp_strip_all_tags($event->title) : '';
   } else {
-    $title = strip_tags($event->title);
+    $title = wp_strip_all_tags($event->title);
   }
   $attributes[] = 'data-event-title="' . esc_attr($title) . '"';
 
@@ -179,7 +181,8 @@ function generateTooltipDataAttributes($event, $isPro, $eventType = 'bsEvent')
           $editor_name = $editor->display_name ?: $editor->user_login;
           $time_ago = human_time_diff(strtotime($last_edited_at), current_time('timestamp'));
           $displayLabel .= '<span style="color:#999;font-size:11px;font-style:italic;"><br>';
-          $displayLabel .= sprintf(__('Edited by %s (%s ago)', 'salon-booking-system'), $editor_name, $time_ago);
+          /* translators: 1: editor name, 2: human-readable time elapsed since the edit. */
+          $displayLabel .= sprintf(__('Edited by %1$s (%2$s ago)', 'salon-booking-system'), $editor_name, $time_ago);
           $displayLabel .= '</span>';
         }
       }
@@ -402,6 +405,7 @@ function generateTooltipDataAttributes($event, $isPro, $eventType = 'bsEvent')
   $attributes[] = 'tabindex="0"';
 
   // Aria label
+  /* translators: %s: booking title / customer name. */
   $ariaLabel = sprintf(__('Booking: %s', 'salon-booking-system'), $title);
   $attributes[] = 'aria-label="' . esc_attr($ariaLabel) . '"';
 
@@ -486,7 +490,7 @@ function generateModernTooltipTitle($event, $eventType = 'bsEvent')
       return $booking->getDisplayName();
     } catch (Exception $e) {
       // Fallback to clean event title
-      return $event->main ? strip_tags($event->title) : 'Booking Details';
+      return $event->main ? wp_strip_all_tags($event->title) : 'Booking Details';
     }
   } else {
     // For week view, use existing booking object
@@ -495,7 +499,7 @@ function generateModernTooltipTitle($event, $eventType = 'bsEvent')
       return $event->getDisplayName();
     } else {
       // Fallback to title property for CalendarEvent objects
-      return isset($event->title) ? strip_tags($event->title) : 'Booking Details';
+      return isset($event->title) ? wp_strip_all_tags($event->title) : 'Booking Details';
     }
   }
 }

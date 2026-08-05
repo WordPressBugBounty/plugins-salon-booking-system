@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 // phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
 ?>
 <div class="sln-box__fl__item sln-input--simple sln-box__fl__item--full sln-booking-discounts">

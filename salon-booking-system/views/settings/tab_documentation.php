@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.UnsafePrintingFunction
 $enum = new SLN_Enum_ShortcodeStyle();
 $curr = $this->settings->getStyleShortcode();

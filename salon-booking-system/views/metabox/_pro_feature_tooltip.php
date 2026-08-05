@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 if (!defined("SLN_VERSION_PAY")) {
     if (!isset($cta_url) || !$cta_url) {
         $cta_url = defined( 'SLN_PRICING_URL' ) ? SLN_PRICING_URL : 'https://www.salonbookingsystem.com/plugin-pricing-2/';

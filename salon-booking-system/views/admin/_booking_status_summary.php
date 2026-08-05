@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 
 /**
  * Booking Status Summary Component
@@ -20,19 +22,19 @@ if (isset($statusCounts) && is_array($statusCounts)): ?>
     <h4 style="margin-top: 0;">Booking Status Summary</h4>
     <div style="display: flex; flex-wrap: wrap; gap: 15px;">
       <span class="sln-status-summary__item--paid-confirmed" style="display: inline-block; margin-right: 15px;">
-        <strong><?php echo $statusCounts['paid_confirmed']; ?></strong> <?php esc_html_e('Paid/Confirmed', 'salon-booking-system') ?>
+        <strong><?php echo (int) $statusCounts['paid_confirmed']; ?></strong> <?php esc_html_e('Paid/Confirmed', 'salon-booking-system') ?>
       </span>
       <span class="sln-status-summary__item--pay-later" style="display: inline-block; margin-right: 15px;">
-        <strong><?php echo $statusCounts['pay_later']; ?></strong> <?php esc_html_e('Pay Later', 'salon-booking-system') ?>
+        <strong><?php echo (int) $statusCounts['pay_later']; ?></strong> <?php esc_html_e('Pay Later', 'salon-booking-system') ?>
       </span>
       <span class="sln-status-summary__item--pending" style="display: inline-block; margin-right: 15px;">
-        <strong><?php echo $statusCounts['pending']; ?></strong> <?php esc_html_e('Pending', 'salon-booking-system') ?>
+        <strong><?php echo (int) $statusCounts['pending']; ?></strong> <?php esc_html_e('Pending', 'salon-booking-system') ?>
       </span>
       <span class="sln-status-summary__item--cancelled" style="display: inline-block; margin-right: 15px;">
-        <strong><?php echo $statusCounts['cancelled']; ?></strong> <?php esc_html_e('Cancelled', 'salon-booking-system') ?>
+        <strong><?php echo (int) $statusCounts['cancelled']; ?></strong> <?php esc_html_e('Cancelled', 'salon-booking-system') ?>
       </span>
       <span class="sln-status-summary__item--noshow" style="display: inline-block; margin-right: 15px;">
-        <strong><?php echo $statusCounts['noshow']; ?></strong> <?php esc_html_e('No Show', 'salon-booking-system') ?>
+        <strong><?php echo (int) $statusCounts['noshow']; ?></strong> <?php esc_html_e('No Show', 'salon-booking-system') ?>
       </span>
     </div>
   </div>

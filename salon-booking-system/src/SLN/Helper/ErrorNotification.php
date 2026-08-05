@@ -597,8 +597,8 @@ class SLN_Helper_ErrorNotification
         $body .= "Severity: {$data['severity']}\n";
         $body .= "Occurrences: {$data['error_info']['count']} time(s)\n";
         $body .= "Unique IPs Affected: " . count($data['error_info']['affected_ips']) . "\n";
-        $body .= "First Seen: " . date('Y-m-d H:i:s', $data['error_info']['first_seen']) . "\n";
-        $body .= "Last Seen: " . date('Y-m-d H:i:s', $data['error_info']['last_seen']) . "\n";
+        $body .= "First Seen: " . gmdate('Y-m-d H:i:s', $data['error_info']['first_seen']) . "\n";
+        $body .= "Last Seen: " . gmdate('Y-m-d H:i:s', $data['error_info']['last_seen']) . "\n";
         
         // Calculate occurrence rate
         $time_span = $data['error_info']['last_seen'] - $data['error_info']['first_seen'];

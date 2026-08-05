@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 // Helper function to get next available booking date based on configured availability
 function getNextAvailableDate($availableDays) {
     $date = new DateTime();

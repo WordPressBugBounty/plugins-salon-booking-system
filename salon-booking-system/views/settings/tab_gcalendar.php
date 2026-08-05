@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.UnsafePrintingFunction
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 $page = sanitize_text_field(wp_unslash($_GET['page']));
@@ -27,7 +29,7 @@ sum(
         <div class="col-xs-12 col-sm-4 col-md-4 form-group sln-switch">
             <?php $this->row_input_checkbox_switch(
 	'google_calendar_publish_pending_payment',
-	'Publish "Payment pending" reservations',
+	__('Publish "Payment pending" reservations', 'salon-booking-system'),
 	array(
 		'help' => __('When active even the "Payment pending" reservation need to be published on Google Calendar.', 'salon-booking-system'),
 		'bigLabelOn' => __('Enabled', 'salon-booking-system'),

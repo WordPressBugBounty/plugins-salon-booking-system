@@ -1,5 +1,7 @@
 
-<?php   // algolplus
+<?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+   // algolplus
     // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 	$custom_url = $plugin->getSettings()->get('custom_feedback_url');
 	$feedback_url = !empty($custom_url) ? $custom_url : home_url() . '?sln_customer_login=' . $customer->getHash() . '&feedback_id=' . $booking->getId();

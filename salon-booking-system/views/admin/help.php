@@ -1,4 +1,6 @@
-<?php if (!defined("SLN_VERSION_PAY")) { ?>
+<?php
+if ( ! defined( 'ABSPATH' ) ) { exit; }
+ if (!defined("SLN_VERSION_PAY")) { ?>
 	<script type="text/javascript">
 		! function(e, t, n) {
 			function a() {

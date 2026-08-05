@@ -148,8 +148,9 @@ class SLN_Admin_MigrationTools_Ip1SmsMigration
                 <p>
                     <?php
                     printf(
+                        /* translators: %s: date (shown in bold) when the old IP1SMS API is shut down. */
                         esc_html__('IP1SMS is shutting down the old API on %s. Your SMS notifications will stop working unless you migrate to the new API V2.', 'salon-booking-system'),
-                        '<strong>' . date_i18n(get_option('date_format'), strtotime(self::DEPRECATION_DEADLINE)) . '</strong>'
+                        '<strong>' . esc_html(date_i18n(get_option('date_format'), strtotime(self::DEPRECATION_DEADLINE))) . '</strong>'
                     );
                     ?>
                 </p>
@@ -215,7 +216,7 @@ class SLN_Admin_MigrationTools_Ip1SmsMigration
             jQuery('.sln-ip1sms-migration-notice').fadeOut();
             jQuery.post(ajaxurl, {
                 action: 'sln_dismiss_ip1sms_migration_notice',
-                security: '<?php echo wp_create_nonce('sln_dismiss_ip1sms_migration_notice'); ?>'
+                security: '<?php echo esc_attr(wp_create_nonce('sln_dismiss_ip1sms_migration_notice')); ?>'
             });
         }
         </script>
