@@ -640,7 +640,11 @@ class SLN_Action_Init
         add_action('wp_ajax_sln_send_bulk_feedback', array(new SLN_Action_Ajax_SendBulkFeedback($this->plugin), 'execute'));
         add_action('wp_ajax_sln_preview_bulk_feedback', array(new SLN_Action_Ajax_PreviewBulkFeedback($this->plugin), 'execute'));
         add_action('wp_ajax_sln_ajax_noshow', array(new SLN_Action_Ajax_OnNoShow($this->plugin), 'execute'));
-        
+
+        // Read-only, admin-only SMS location diagnostic (sends nothing).
+        // Visit /wp-admin/?sln_sms_loc_diag=1 while logged in as an administrator.
+        new SLN_Action_SmsLocationDiagnostic($this->plugin);
+
         // Cache warmer AJAX endpoint (public, for external cron services)
         new SLN_Action_Ajax_CacheWarmer($this->plugin);
 

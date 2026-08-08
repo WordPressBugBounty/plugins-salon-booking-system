@@ -1607,9 +1607,22 @@ function sln_stepSummary($) {
     // Native form submit (e.g. Enter in a field without a dedicated handler) must go
     // through the AJAX step loader, not a full page POST that can drop booking state.
     $form.off("submit.slnSummaryStep").on("submit.slnSummaryStep", function (e) {
-        e.preventDefault();
+        // Only hijack the submit when AJAX booking is enabled. When AJAX is disabled
+        // there is no AJAX submit handler, so calling preventDefault() here would
+        // swallow the ONLY submit path and leave the summary "Complete" button dead.
+        // In that case let the native full-page POST proceed unchanged.
+        //
+        // Primary guard: the explicit server-provided salon.ajax_enabled flag (never
+        // infer the AJAX mode from DOM attributes — that fragility is what caused the
+        // original regression). Secondary guard: the AJAX submit button must exist.
+        var ajaxEnabled =
+            typeof salon !== "undefined" && salon.ajax_enabled === "1";
         var $submit = $form.find('#sln-step-submit[data-salon-toggle="next"]');
-        if ($submit.length && !$submit.is(":disabled")) {
+        if (!ajaxEnabled || !$submit.length) {
+            return;
+        }
+        e.preventDefault();
+        if (!$submit.is(":disabled")) {
             $submit.trigger("click");
         }
         return false;
@@ -2650,10 +2663,26 @@ function sln_stepDate($) {
         // Only skip when the server render already produced bookable time slots for
         // the auto-selected date. When it did not (day full / needs auto-retry to
         // the next available date), fall through to validate() so that logic runs.
-        var hasRenderedTimes =
-            items.intervals &&
-            items.intervals.times &&
-            Object.keys(items.intervals.times).length > 0;
+        //
+        // A length check on items.intervals.times is NOT sufficient: intervals.times
+        // can carry values that do not correspond to any .minute[data-ymd] cell in the
+        // rendered time grid (that grid is generated from the salon's workTimes /
+        // minuteStep by sln_initTimepickers() above). When that happens the panel shows
+        // no selectable slot even though times.length > 0, and skipping the init
+        // validate() leaves the grid empty until the user manually changes the day.
+        // Require at least one available time to intersect the rendered grid before
+        // treating the server render as authoritative.
+        var slnAvailableTimes =
+            items.intervals && items.intervals.times
+                ? Object.values(items.intervals.times)
+                : [];
+        var hasRenderedTimes = false;
+        for (var slnTimeIdx = 0; slnTimeIdx < slnAvailableTimes.length; slnTimeIdx++) {
+            if ($('.minute[data-ymd="' + slnAvailableTimes[slnTimeIdx] + '"]').length) {
+                hasRenderedTimes = true;
+                break;
+            }
+        }
         if (freshAjaxRender && !needsTimezoneRecompute && hasRenderedTimes) {
             // Server-rendered intervals are authoritative for the first view; mark
             // valid so the submit handler advances without a pre-submit re-check.

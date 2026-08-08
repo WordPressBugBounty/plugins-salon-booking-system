@@ -56,6 +56,17 @@ class SLN_Admin_Onboarding extends SLN_Admin_AbstractPage
         add_action('load-' . $pagename, array($this, 'enqueueAssets'), 0);
     }
 
+    /**
+     * Dequeue WP emoji scripts if another plugin re-enqueued them after our remove_action.
+     */
+    public function dequeueEmojiScripts()
+    {
+        wp_dequeue_script('wp-emoji');
+        wp_dequeue_script('wp-emoji-release');
+        wp_deregister_script('wp-emoji');
+        wp_deregister_script('wp-emoji-release');
+    }
+
     public function show()
     {
         if (
@@ -94,6 +105,12 @@ class SLN_Admin_Onboarding extends SLN_Admin_AbstractPage
 
     public function enqueueAssets()
     {
+        // WP converts emoji in the DOM to <img class="emoji">. That mutates React-owned
+        // text nodes and crashes the wizard on route change (removeChild NotFoundError).
+        remove_action('admin_print_scripts', 'print_emoji_detection_script');
+        remove_action('admin_print_styles', 'print_emoji_styles');
+        add_action('admin_print_scripts', array($this, 'dequeueEmojiScripts'), 100);
+
         $av = SLN_Action_InitScripts::ASSETS_VERSION;
         $use_react = apply_filters('sln_onboarding_use_react', true);
         $react_js = defined('SLN_PLUGIN_DIR') ? SLN_PLUGIN_DIR . '/onboarding-app/dist/onboarding.index.js' : '';

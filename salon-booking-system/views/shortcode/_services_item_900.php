@@ -51,7 +51,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
     </div>
         
 <div class="sln-service__action sln-list__item__action">
-    <div class="sln-checkbox <?php echo $service->isvariableDuration() ? 'hide' : ''; ?>">
+    <div class="sln-checkbox <?php echo ($service->isVariableDuration() || $service->isQuantityEnabled()) ? 'hide' : ''; ?>">
         <?php SLN_Form::fieldCheckbox(
             'sln[services][' . $service->getId() . ']',
             $bb->hasService($service),

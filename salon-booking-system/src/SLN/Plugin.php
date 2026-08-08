@@ -134,6 +134,57 @@ class SLN_Plugin
         return $this->templating()->loadView($view, $data);
     }
 
+    /**
+     * Activate the Multi-Shops "current shop" context from a booking's shop meta.
+     *
+     * Messages can be rendered outside of any admin/browser request (e.g. during the
+     * WP-Cron SMS reminder run). In that context the Multi-Shops add-on has no
+     * "current shop", so per-shop settings ([SALON NAME]/gen_name, gen_address,
+     * sms_new_attendant, message templates, etc.) fall back to the default shop and
+     * produce the WRONG location in outgoing messages. Setting the shop from the
+     * booking before rendering fixes this. sendMail() and every SMS flow use this
+     * helper so email and SMS resolve the shop identically.
+     *
+     * @param SLN_Wrapper_Booking|mixed $booking
+     * @return array State to pass back to restoreShopContext()
+     */
+    public function applyShopContextFromBooking($booking)
+    {
+        $state = array(
+            'set'      => false,
+            'previous' => array_key_exists('shop', $_GET) ? $_GET['shop'] : null,
+        );
+
+        if ($booking instanceof SLN_Wrapper_Booking && class_exists('\SalonMultishop\Addon')) {
+            $shopId = $booking->getMeta('shop');
+            if ($shopId) {
+                \SalonMultishop\Addon::getInstance()->setCurrentShop($shopId);
+                $_GET['shop'] = $shopId;
+                $state['set'] = true;
+            }
+        }
+
+        return $state;
+    }
+
+    /**
+     * Restore the shop context previously altered by applyShopContextFromBooking().
+     *
+     * @param array $state
+     * @return void
+     */
+    public function restoreShopContext($state)
+    {
+        if (empty($state['set'])) {
+            return;
+        }
+        if (isset($state['previous']) && $state['previous'] !== null) {
+            $_GET['shop'] = $state['previous'];
+        } else {
+            unset($_GET['shop']);
+        }
+    }
+
     public function sendMail($view, $data)
     {
 	$data['data'] = $settings = new ArrayObject($data);
@@ -159,19 +210,10 @@ class SLN_Plugin
     }
 
         $bookingForShop = null;
-        $previousShopGet = array_key_exists('shop', $_GET) ? $_GET['shop'] : null;
-        $shopContextSet = false;
         if (isset($data['booking']) && $data['booking'] instanceof SLN_Wrapper_Booking) {
             $bookingForShop = $data['booking'];
-            if (class_exists('\SalonMultishop\Addon')) {
-                $shopId = $bookingForShop->getMeta('shop');
-                if ($shopId) {
-                    \SalonMultishop\Addon::getInstance()->setCurrentShop($shopId);
-                    $_GET['shop'] = $shopId;
-                    $shopContextSet = true;
-                }
-            }
         }
+        $shopState = $this->applyShopContextFromBooking($bookingForShop);
 
         try {
             $content = $this->loadView($view, $data);
@@ -207,13 +249,7 @@ class SLN_Plugin
 		), isset($settings['headers']) ? $settings['headers'] : array());
         if(empty($settings['to'])){
             remove_filter('wp_mail_content_type', 'sln_html_content_type');
-            if ($shopContextSet) {
-                if ($previousShopGet !== null) {
-                    $_GET['shop'] = $previousShopGet;
-                } else {
-                    unset($_GET['shop']);
-                }
-            }
+            $this->restoreShopContext($shopState);
             return;
             //throw new Exception('Receiver not defined');
         }
@@ -225,13 +261,7 @@ class SLN_Plugin
 
         remove_filter('wp_mail_content_type', 'sln_html_content_type');
 
-        if ($shopContextSet) {
-            if ($previousShopGet !== null) {
-                $_GET['shop'] = $previousShopGet;
-            } else {
-                unset($_GET['shop']);
-            }
-        }
+        $this->restoreShopContext($shopState);
     }
 
     /**

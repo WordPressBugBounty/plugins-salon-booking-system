@@ -215,7 +215,13 @@ abstract class SLN_Action_Ajax_AbstractImport extends SLN_Action_Ajax_Abstract
 
     protected function getTransientKey()
     {
-        return "sln_import_{$this->type}_data";
+        // IMPORTANT: keep this OUT of the "sln_" transient namespace.
+        // Booking creation triggers SLN_PostType_Booking::clearIntervalsCache(),
+        // which runs DELETE ... WHERE option_name LIKE '_transient_sln_%'. When the
+        // import state lived under "sln_import_*", importing the first booking row
+        // wiped the import transient and every following row failed with
+        // "Filename not found" (the generic "Something is gone wrong" error).
+        return "slb_import_{$this->type}_data";
     }
 
     protected function addError($err)

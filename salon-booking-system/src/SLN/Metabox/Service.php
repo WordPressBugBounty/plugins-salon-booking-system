@@ -21,6 +21,7 @@ class SLN_Metabox_Service extends SLN_Metabox_Abstract
         'variable_price' => '',
         'variable_duration' => 'bool',
         'max_variable_duration' => 'int',
+        'enable_quantity' => 'bool',
 	    'multiple_attendants_for_service' => 'bool',
         'multiple_count_attendants' => 'int',
         'offset_for_service' => 'bool',

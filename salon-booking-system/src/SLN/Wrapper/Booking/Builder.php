@@ -675,7 +675,9 @@ class SLN_Wrapper_Booking_Builder
 		$max = 0;
         foreach ($this->getServices() as $s) {
 	        $d = $s->getTotalDuration();
-			$dInMinutes = SLN_Func::getMinutesFromDuration($d);
+			// Multiply by quantity so the wizard duration matches the saved booking
+			// (SLN_Wrapper_Booking::evalDuration, which also multiplies by count).
+			$dInMinutes = SLN_Func::getMinutesFromDuration($d) * $this->getCountService($s->getId());
 			if ($s->isExecutionParalleled()) {
 				if ($dInMinutes > $max) {
 					$max = $dInMinutes;

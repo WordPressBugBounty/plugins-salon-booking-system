@@ -300,23 +300,19 @@ class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
         $bookingServices = apply_filters('sln.calc_booking_total.apply_prepaid_services', $this->getBookingServices(), $this);
 
         foreach ($bookingServices->getItems() as $bookingService) {
-            $row = $bookingService->toArray();
-            $rawVar = isset($row['service'])
-                ? get_post_meta((int) $row['service'], '_sln_service_variable_duration', true)
-                : false;
-            // Only explicit boolean truthy meta (WP checkboxes: '1'); stray values like "-1" must not enable variable pricing.
-            $vb = is_scalar($rawVar) || $rawVar === null
-                ? filter_var($rawVar, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE)
-                : false;
-            $variable = $vb === true;
-
+            // Line total is always unit price × quantity. Services without the quantity
+            // feature keep count = 1 (no-op), while quantity-enabled services (and legacy
+            // variable-duration ones) multiply consistently with the booking wizard
+            // (SLN_Wrapper_Booking_Builder::getTotal) and the admin recalculation
+            // (SLN_Action_Ajax_CalcBookingTotal).
             $unit = (float) $bookingService->getPrice();
             $qty  = max(1, (int) $bookingService->getCountServices());
-            $line = $variable ? ( $unit * $qty ) : $unit;
+            $line = $unit * $qty;
 
-            // Corrupt meta (e.g. negative quantity) must never make a positive-priced service subtract from the total when tips are added.
+            // Corrupt meta (e.g. negative unit price) must never make a positive line
+            // subtract from the total when tips are added later.
             if ($unit >= 0.0 && $line < 0.0) {
-                $line = abs($unit) * ( $variable ? $qty : 1 );
+                $line = abs($unit) * $qty;
             }
 
             $amount += $line;

@@ -137,157 +137,153 @@ class SLN_Service_Messages
         do_action('sln.messages.before_booking_send_message', $booking);
 
         $p   = $this->plugin;
+        // Activate the booking's shop so per-shop settings (sms_new_attendant,
+        // [SALON NAME], templates) resolve to the correct location.
+        $shopState = $p->applyShopContextFromBooking($booking);
+        try {
+            $sms = $p->sms();
+            $s   = $p->getSettings();
+
+            if ($s->get('sms_new')) {
+
+                $phone = $s->get('sms_new_number');
+                if ($phone) {
+                    $sms->send($phone, $p->loadView('sms/summary', compact('booking')));
+                }
+
+                $phone = $booking->getPhone();
+                if ($phone && $booking->getNotifyCustomer() && $sendToCustomer) {
+                    SLN_Plugin::addLog('[DONT_NOTIFY_DIAG] >>> CUSTOMER SMS SENT (sms/summary or sms/pending) | booking #' . $booking->getId() . ' | phone=' . $phone);
+                    if($booking->getStatus() == SLN_Enum_BookingStatus::PENDING && $s->get('confirmation')){
+                        $sms->send($phone, $p->loadView('sms/pending', compact('booking')), $booking->getsmsPrefix());
+                    }else{
+                        $sms->send($phone, $p->loadView('sms/summary', compact('booking')), $booking->getSmsPrefix());
+                    }
+                }
+            }
+
+            $this->sendSmsToAttendants($booking, 'sms_new_attendant', 'sms/summary');
+
+            do_action('sln.messages.booking_sms',$booking);
+        } finally {
+            $p->restoreShopContext($shopState);
+        }
+    }
+
+    /**
+     * Send an SMS to each attendant assigned to the booking, if the given setting
+     * flag is enabled. Also logs why messages are (not) sent so the "therapists
+     * receive no SMS" issue can be diagnosed from the plugin log.
+     *
+     * @param SLN_Wrapper_Booking $booking
+     * @param string $settingKey e.g. sms_new_attendant / sms_modified_attendant / sms_canceled_attendant
+     * @param string $view       SMS template to render
+     * @return void
+     */
+    private function sendSmsToAttendants($booking, $settingKey, $view)
+    {
+        $p   = $this->plugin;
         $sms = $p->sms();
         $s   = $p->getSettings();
 
-        if ($s->get('sms_new')) {
+        if (!$s->get($settingKey)) {
+            SLN_Plugin::addLog('[ATTENDANT_SMS_DIAG] ' . $settingKey . ' is OFF for this shop | booking #' . $booking->getId());
+            return;
+        }
 
-            $phone = $s->get('sms_new_number');
+        $tmpAttendants = $booking->getAttendants();
+        $tmpAttendants = $tmpAttendants && is_array($tmpAttendants) ? $tmpAttendants : array();
+
+        $attendants = array();
+
+        foreach ($tmpAttendants as $a) {
+            if (is_array($a)) {
+                foreach ($a as $singleAttendant) {
+                    $attendants[$singleAttendant->getId()] = $singleAttendant;
+                }
+            } else {
+                $attendants[$a->getId()] = $a;
+            }
+        }
+
+        if (empty($attendants)) {
+            SLN_Plugin::addLog('[ATTENDANT_SMS_DIAG] no attendants assigned | booking #' . $booking->getId());
+            return;
+        }
+
+        foreach ($attendants as $attendant) {
+
+            $phone = $attendant->getPhone();
+
             if ($phone) {
-                $sms->send($phone, $p->loadView('sms/summary', compact('booking')));
-            }
-
-            $phone = $booking->getPhone();
-            if ($phone && $booking->getNotifyCustomer() && $sendToCustomer) {
-                SLN_Plugin::addLog('[DONT_NOTIFY_DIAG] >>> CUSTOMER SMS SENT (sms/summary or sms/pending) | booking #' . $booking->getId() . ' | phone=' . $phone);
-                if($booking->getStatus() == SLN_Enum_BookingStatus::PENDING && $s->get('confirmation')){
-                    $sms->send($phone, $p->loadView('sms/pending', compact('booking')), $booking->getsmsPrefix());
-                }else{
-                    $sms->send($phone, $p->loadView('sms/summary', compact('booking')), $booking->getSmsPrefix());
-                }
+                SLN_Plugin::addLog('[ATTENDANT_SMS_DIAG] sending ' . $view . ' to attendant #' . $attendant->getId() . ' | phone=' . $phone . ' | booking #' . $booking->getId());
+                $sms->send($phone, $p->loadView($view, compact('booking')), $attendant->getSmsPrefix());
+            } else {
+                SLN_Plugin::addLog('[ATTENDANT_SMS_DIAG] attendant #' . $attendant->getId() . ' has NO phone number, skipped | booking #' . $booking->getId());
             }
         }
-
-        if ($s->get('sms_new_attendant')) {
-
-            $tmpAttendants = $booking->getAttendants();
-            $tmpAttendants = $tmpAttendants && is_array($tmpAttendants) ? $tmpAttendants : array();
-
-            $attendants = array();
-
-            foreach ($tmpAttendants as $a) {
-                if (is_array($a)) {
-                    foreach ($a as $singleAttendant) {
-                        $attendants[$singleAttendant->getId()] = $singleAttendant;
-                    }
-                } else {
-                    $attendants[$a->getId()] = $a;
-                }
-            }
-
-            foreach ($attendants as $attendant) {
-
-                $phone = $attendant->getPhone();
-
-                if ($phone) {
-                    $sms->send($phone, $p->loadView('sms/summary', compact('booking')), $attendant->getSmsPrefix());
-                }
-            }
-        }
-
-        do_action('sln.messages.booking_sms',$booking);
     }
 
     private function sendSmsModifiedBooking($booking) {
         do_action('sln.messages.before_booking_send_message', $booking);
 
         $p   = $this->plugin;
-        $sms = $p->sms();
-        $s   = $p->getSettings();
+        $shopState = $p->applyShopContextFromBooking($booking);
+        try {
+            $sms = $p->sms();
+            $s   = $p->getSettings();
 
-        if ($s->get('sms_modified')) {
+            if ($s->get('sms_modified')) {
 
-            $phone = $s->get('sms_new_number');
-            if ($phone) {
-                $sms->send($phone, $p->loadView('sms/summary_modified', compact('booking')));
-            }
-
-            $phone = $booking->getPhone();
-            if ($phone && $booking->getNotifyCustomer()) {
-                SLN_Plugin::addLog('[DONT_NOTIFY_DIAG] >>> CUSTOMER SMS SENT (sms/summary_modified) | booking #' . $booking->getId() . ' | phone=' . $phone);
-                $sms->send($phone, $p->loadView('sms/summary_modified', compact('booking')), $booking->getSmsPrefix());
-            }
-        }
-
-        if ($s->get('sms_modified_attendant')) {
-
-            $tmpAttendants = $booking->getAttendants();
-            $tmpAttendants = $tmpAttendants && is_array($tmpAttendants) ? $tmpAttendants : array();
-
-            $attendants = array();
-
-            foreach ($tmpAttendants as $a) {
-                if (is_array($a)) {
-                    foreach ($a as $singleAttendant) {
-                        $attendants[$singleAttendant->getId()] = $singleAttendant;
-                    }
-                } else {
-                    $attendants[$a->getId()] = $a;
-                }
-            }
-
-            foreach ($attendants as $attendant) {
-
-                $phone = $attendant->getPhone();
-
+                $phone = $s->get('sms_new_number');
                 if ($phone) {
-                    $sms->send($phone, $p->loadView('sms/summary_modified', compact('booking')), $attendant->getSmsPrefix());
+                    $sms->send($phone, $p->loadView('sms/summary_modified', compact('booking')));
+                }
+
+                $phone = $booking->getPhone();
+                if ($phone && $booking->getNotifyCustomer()) {
+                    SLN_Plugin::addLog('[DONT_NOTIFY_DIAG] >>> CUSTOMER SMS SENT (sms/summary_modified) | booking #' . $booking->getId() . ' | phone=' . $phone);
+                    $sms->send($phone, $p->loadView('sms/summary_modified', compact('booking')), $booking->getSmsPrefix());
                 }
             }
-        }
 
-        do_action('sln.messages.modified_booking_sms',$booking);
+            $this->sendSmsToAttendants($booking, 'sms_modified_attendant', 'sms/summary_modified');
+
+            do_action('sln.messages.modified_booking_sms',$booking);
+        } finally {
+            $p->restoreShopContext($shopState);
+        }
     }
 
     private function sendSmsCanceledBooking($booking) {
         do_action('sln.messages.before_booking_send_message', $booking);
 
         $p   = $this->plugin;
-        $sms = $p->sms();
-        $s   = $p->getSettings();
+        $shopState = $p->applyShopContextFromBooking($booking);
+        try {
+            $sms = $p->sms();
+            $s   = $p->getSettings();
 
-        if ($s->get('sms_canceled')) {
+            if ($s->get('sms_canceled')) {
 
-            $phone = $s->get('sms_new_number');
-            if ($phone) {
-                $sms->send($phone, $p->loadView('sms/status_canceled', compact('booking')));
-            }
-
-            $phone = $booking->getPhone();
-            if ($phone && $booking->getNotifyCustomer()) {
-                SLN_Plugin::addLog('[DONT_NOTIFY_DIAG] >>> CUSTOMER SMS SENT (sms/status_canceled) | booking #' . $booking->getId() . ' | phone=' . $phone);
-                $sms->send($phone, $p->loadView('sms/status_canceled', compact('booking')), $booking->getSmsPrefix());
-            }
-        }
-
-        if ($s->get('sms_canceled_attendant')) {
-
-            $tmpAttendants = $booking->getAttendants();
-            $tmpAttendants = $tmpAttendants && is_array($tmpAttendants) ? $tmpAttendants : array();
-
-            $attendants = array();
-
-            foreach ($tmpAttendants as $a) {
-                if (is_array($a)) {
-                    foreach ($a as $singleAttendant) {
-                        $attendants[$singleAttendant->getId()] = $singleAttendant;
-                    }
-                } else {
-                    $attendants[$a->getId()] = $a;
-                }
-            }
-
-            foreach ($attendants as $attendant) {
-
-                $phone = $attendant->getPhone();
-
+                $phone = $s->get('sms_new_number');
                 if ($phone) {
-                    $sms->send($phone, $p->loadView('sms/status_canceled', compact('booking')), $attendant->getSmsPrefix());
+                    $sms->send($phone, $p->loadView('sms/status_canceled', compact('booking')));
+                }
+
+                $phone = $booking->getPhone();
+                if ($phone && $booking->getNotifyCustomer()) {
+                    SLN_Plugin::addLog('[DONT_NOTIFY_DIAG] >>> CUSTOMER SMS SENT (sms/status_canceled) | booking #' . $booking->getId() . ' | phone=' . $phone);
+                    $sms->send($phone, $p->loadView('sms/status_canceled', compact('booking')), $booking->getSmsPrefix());
                 }
             }
-        }
 
-        do_action('sln.messages.canceled_booking_sms',$booking);
+            $this->sendSmsToAttendants($booking, 'sms_canceled_attendant', 'sms/status_canceled');
+
+            do_action('sln.messages.canceled_booking_sms',$booking);
+        } finally {
+            $p->restoreShopContext($shopState);
+        }
     }
 
     public function sendRescheduledMail($booking)

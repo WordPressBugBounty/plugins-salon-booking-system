@@ -386,4 +386,17 @@ function sln_dataAttendant($) {
     } else {
         $('.sln-service-max-variable-duration-wrapper').addClass('hide');
     }
+
+    // Quantity and Variable duration are mutually exclusive: both reuse the same
+    // front-end counter (sln[service_count]), so enabling one disables the other.
+    $('#_sln_service_enable_quantity').on('change', function () {
+        if ($(this).is(':checked')) {
+            $('#_sln_service_variable_duration').prop('checked', false).trigger('change');
+        }
+    });
+    $('#_sln_service_variable_duration').on('change', function () {
+        if ($(this).is(':checked')) {
+            $('#_sln_service_enable_quantity').prop('checked', false);
+        }
+    });
 }

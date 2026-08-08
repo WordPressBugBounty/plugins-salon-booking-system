@@ -754,6 +754,39 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
       $by_hour = array_merge($by_hour, $currBsServices);
     }
 
+    // TEMP DIAGNOSTIC (therapist-missing-appointments): dump the built day events so
+    // we can see whether a missing booking produced an event at all, and with what
+    // geometry (top/lines/left/display_state). Remove once the issue is fixed.
+    $diagTargets = array(86472, 87216, 87088);
+    $diagEventSummary = array();
+    foreach ($by_hour as $bsEvent) {
+      if (in_array((int) $bsEvent->id, $diagTargets, true)) {
+        $diagEventSummary[] = sprintf(
+          'id=%d top=%s lines=%s left=%s display=%s main=%s att=[%s]',
+          $bsEvent->id,
+          isset($bsEvent->top) ? $bsEvent->top : 'n/a',
+          isset($bsEvent->lines) ? $bsEvent->lines : 'n/a',
+          isset($bsEvent->left) ? var_export($bsEvent->left, true) : 'n/a',
+          isset($bsEvent->display_state) ? $bsEvent->display_state : 'n/a',
+          !empty($bsEvent->main) ? '1' : '0',
+          is_array($bsEvent->attendant) ? implode(',', $bsEvent->attendant) : var_export($bsEvent->attendant, true)
+        );
+      }
+    }
+    $diagServiceCounts = array();
+    foreach ($this->bookings as $b) {
+      if (in_array((int) $b->getId(), $diagTargets, true)) {
+        $diagServiceCounts[] = $b->getId() . ':' . count($b->getBookingServices()->getItems()) . 'svc';
+      }
+    }
+    SLN_Plugin::addLog(sprintf(
+      '[DIAG THERAPIST-CAL renderDay] gridLines=%s totalEvents=%d serviceItems=[%s] targetEvents=[%s]',
+      isset($lines) ? $lines : 'n/a',
+      count($by_hour),
+      implode(' ', $diagServiceCounts),
+      implode(' | ', $diagEventSummary)
+    ));
+
     $headers = array();
 
     if ($this->attendantMode) {
@@ -1088,16 +1121,37 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
   {
     $criteria = $this->getCriteria();
 
-    // TEMP DIAGNOSTIC: log shop criteria and whether booking 85791 is returned
-    $diagShop = isset($criteria['shop']) ? $criteria['shop'] : '(not set)';
-    SLN_Plugin::addLog('[DIAG buildBookings] shop criteria=' . $diagShop);
+    // TEMP DIAGNOSTIC (therapist-missing-appointments): track how the calendar
+    // fetches and filters bookings for the logged-in therapist. The target IDs are
+    // Olena's fully-discounted 11:00 (86472) and Phil's paid 14:00 (87088); adjust
+    // as needed. Remove this whole block once the issue is fixed.
+    $diagTargets   = array(86472, 87216, 87088);
+    $diagUser      = wp_get_current_user();
+    $diagShop      = isset($criteria['shop']) ? $criteria['shop'] : '(not set)';
+    SLN_Plugin::addLog(sprintf(
+      '[DIAG THERAPIST-CAL buildBookings] user=#%d (%s) roles=[%s] attendantMode=%s shopCriteria=%s',
+      $diagUser->ID,
+      $diagUser->user_login,
+      implode(',', (array) $diagUser->roles),
+      $this->attendantMode ? 'true' : 'false',
+      $diagShop
+    ));
 
     $this->bookings = $this->plugin
       ->getRepository(SLN_Plugin::POST_TYPE_BOOKING)
       ->get($criteria);
 
     $diagIds = array_map(function ($b) { return $b->getId(); }, $this->bookings);
-    SLN_Plugin::addLog('[DIAG buildBookings] fetched ' . count($diagIds) . ' bookings. 85791 present: ' . (in_array(85791, $diagIds) ? 'YES' : 'NO'));
+    $diagTargetsFetched = array();
+    foreach ($diagTargets as $tId) {
+      $diagTargetsFetched[] = $tId . ':' . (in_array($tId, $diagIds) ? 'YES' : 'NO');
+    }
+    SLN_Plugin::addLog(sprintf(
+      '[DIAG THERAPIST-CAL buildBookings] fetched %d bookings. ids=[%s]. targets-fetched=[%s]',
+      count($diagIds),
+      implode(',', $diagIds),
+      implode(' ', $diagTargetsFetched)
+    ));
 
     // Prime ALL booking post meta in one SQL query so that every subsequent
     // getMeta() / get_post_meta() call during rendering (firstname, lastname,
@@ -1127,6 +1181,34 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
           return array_intersect($assistantsIDs, $booking->getAttendantsIds());
         });
       }
+
+      // TEMP DIAGNOSTIC (therapist-missing-appointments): this staff/worker user is
+      // limited to their own attendant bookings. Log the attendant IDs matched to the
+      // user and which bookings survived the filter, so we can see if a missing
+      // booking was dropped here. Remove once the issue is fixed.
+      $diagSurvivors = array_map(function ($b) { return $b->getId(); }, $this->bookings);
+      $diagTargetsSurviving = array();
+      foreach (array(86472, 87216, 87088) as $tId) {
+        $diagTargetsSurviving[] = $tId . ':' . (in_array($tId, $diagSurvivors) ? 'YES' : 'NO');
+      }
+      SLN_Plugin::addLog(sprintf(
+        '[DIAG THERAPIST-CAL staffFilter] user=#%d matchedAttendantIds=[%s] survivingBookings=%d ids=[%s] targets-surviving=[%s]',
+        get_current_user_id(),
+        implode(',', $assistantsIDs),
+        count($diagSurvivors),
+        implode(',', $diagSurvivors),
+        implode(' ', $diagTargetsSurviving)
+      ));
+    } else {
+
+      // TEMP DIAGNOSTIC (therapist-missing-appointments): non-staff/worker viewer
+      // (e.g. admin/shop manager) — no per-attendant booking filter is applied.
+      // Remove once the issue is fixed.
+      SLN_Plugin::addLog(sprintf(
+        '[DIAG THERAPIST-CAL staffFilter] user=#%d is NOT staff/worker — no own-bookings filter applied; bookings=%d',
+        get_current_user_id(),
+        count($this->bookings)
+      ));
     }
   }
 
@@ -1294,12 +1376,26 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
     
     // Multi-Shop Support: ONLY add shop filtering if Multi-Shop hasn't already done it
     // This ensures calendar events, "Upcoming Reservations" and "Calbar Tooltips" respect shop selection
+    $diagShopSource = isset($criteria['shop']) ? 'addon-criteria-filter' : 'none';
     if (class_exists('\SalonMultishop\Addon') && !isset($criteria['shop'])) {
       $shopId = $this->getCurrentShopId();
       if ($shopId > 0) {
         $criteria['shop'] = $shopId;
+        $diagShopSource = 'getCurrentShopId';
       }
     }
+
+    // TEMP DIAGNOSTIC (therapist-missing-appointments): record how the calendar
+    // resolved the shop scope for this request. Remove once the issue is fixed.
+    SLN_Plugin::addLog(sprintf(
+      '[DIAG THERAPIST-CAL getCriteria] resolvedShop=%s source=%s GET[shop]=%s addonPresent=%s range=%s..%s',
+      isset($criteria['shop']) ? $criteria['shop'] : '(none)',
+      $diagShopSource,
+      isset($_GET['shop']) ? sanitize_text_field(wp_unslash($_GET['shop'])) : '(unset)',
+      class_exists('\SalonMultishop\Addon') ? 'yes' : 'no',
+      $this->from->format('Y-m-d'),
+      $this->to->format('Y-m-d')
+    ));
 
     return $criteria;
   }

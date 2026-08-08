@@ -877,11 +877,10 @@ class SLN_Helper_Availability
     }
 
     public function validateBookingAttendant(SLN_Wrapper_Booking_Service $bookingService, $isLastService = false){
-        //
         return $this->validateAttendant(
             $bookingService->getAttendant(),
             $bookingService->getStartsAt(),
-            $bookingService->getTotalDuration(),
+            $this->getCountAwareDuration($bookingService),
             $bookingService->getService(),
             $bookingService->getBreakStartsAt(),
             $bookingService->getBreakEndsAt(),
@@ -893,12 +892,34 @@ class SLN_Helper_Availability
         return $this->validateAttendants(
             $bookingService->getAttendant(),
             $bookingService->getStartsAt(),
-            $bookingService->getTotalDuration(),
+            $this->getCountAwareDuration($bookingService),
             $bookingService->getService(),
             $bookingService->getBreakStartsAt(),
             $bookingService->getBreakEndsAt(),
             $isLastService
         );
+    }
+
+    /**
+     * Return the booking service total duration extended by its quantity (count).
+     *
+     * The attendant must be free for the WHOLE quantity window (units are executed
+     * back-to-back on the same attendant). A clone is returned so the booking service's
+     * stored duration object is never mutated. For count = 1 the original duration is
+     * returned unchanged.
+     *
+     * @return DateTime|null
+     */
+    private function getCountAwareDuration(SLN_Wrapper_Booking_Service $bookingService){
+        $duration = $bookingService->getTotalDuration();
+        $count    = (int) $bookingService->getCountServices();
+        if ($count > 1 && $duration instanceof DateTime) {
+            $duration     = clone $duration;
+            $baseMinutes  = SLN_Func::getMinutesFromDuration($duration);
+            $extraMinutes = $baseMinutes * ($count - 1);
+            $duration->modify('+'.$extraMinutes.' minutes');
+        }
+        return $duration;
     }
 
 
@@ -907,9 +928,12 @@ class SLN_Helper_Availability
         $date = empty($date) ? $this->date : $date;
         $totalDuration = $service->getTotalDuration();
         if($count > 1) {
-            $currentMinutes = (int)$totalDuration->format('i');
-            $newMinutes = $currentMinutes * $count - $currentMinutes;
-            $totalDuration->modify("+{$newMinutes} minutes");
+            // Extend by the FULL per-unit duration (hours + minutes). The previous code used
+            // only DateTime::format('i'), dropping the hours component, so services longer than
+            // 59 minutes were under-reserved when booked with quantity > 1.
+            $baseMinutes  = SLN_Func::getMinutesFromDuration($totalDuration);
+            $extraMinutes = $baseMinutes * ($count - 1);
+            $totalDuration->modify("+{$extraMinutes} minutes");
         }
 
         $duration = empty($totalDuration) ? $duration : $totalDuration;

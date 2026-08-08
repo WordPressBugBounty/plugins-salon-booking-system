@@ -136,6 +136,32 @@ class SLN_Helper_Availability_Advanced_DayBookings extends SLN_Helper_Availabili
                             }
 			}
                     }
+
+                    // Bidirectional offset: also reserve the window BEFORE this booking starts,
+                    // so a new appointment cannot END too close to it (break between clients).
+                    // Window is [startsAt - offset, startsAt); filterTimes is start-inclusive/end-exclusive.
+                    $offsetStart = clone $booking->getStartsAt();
+                    $offsetStart->modify('-'.$bookingOffset.' minutes');
+                    $offsetEnd = $booking->getStartsAt();
+                    $times = SLN_Func::filterTimes($this->minutesIntervals, $offsetStart, $offsetEnd);
+                    foreach ($times as $time) {
+                        $time = $time->format('H:i');
+                        if (apply_filters('sln_build_timeslots_add_booking_to_timeslot', true, $time, $booking, $this->bookings)
+                        ) {
+                            $ret[$time]['booking'][] = $booking->getId();
+                            foreach ($bookingServices->getItems() as $bookingService) {
+                                if ($bookingService->getService()) {
+                                    @$ret[$time]['service'][$bookingService->getService()->getId()]++;
+                                }
+                                if (!empty($bookingService->getResource()) && apply_filters('sln_build_timeslots_add_resource_to_timeslot', true, $time, $bookingService, $booking, $this->bookings)) {
+                                    if ($bookingService->getService() && apply_filters('sln_build_timeslots_add_attendant_to_timeslot', true, $time, $bookingService, $booking, $this->bookings)) {
+                                        @$ret[$time]['resource'][$bookingService->getResource()->getId()] ++;
+                                        @$ret[$time]['resource_service'][$bookingService->getResource()->getId()][] = $bookingService->getService()->getId();
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -192,6 +218,33 @@ class SLN_Helper_Availability_Advanced_DayBookings extends SLN_Helper_Availabili
                     $offsetStart = $booking->getEndsAt();
                     $offsetEnd = clone $booking->getEndsAt();
                     $offsetEnd->modify('+'.$bookingOffset.' minutes');
+                    $times = SLN_Func::filterTimes($this->minutesIntervals, $offsetStart, $offsetEnd);
+                    foreach ($times as $time) {
+                        $time = $time->format('H:i');
+			if (apply_filters('sln_build_timeslots_add_booking_to_timeslot', true, $time, $booking, $this->bookings)
+			) {
+                            foreach ($bookingServices->getItems() as $bookingService) {
+                                if ($bookingService->getService() && $bookingService->getAttendant()) {
+                                    $attendant = $bookingService->getAttendant();
+                                    if(!is_array($attendant)){
+                                        @$ret[$time]['attendant'][$bookingService->getAttendant()->getId()]++;
+                                        @$ret[$time]['attendant_service'][$bookingService->getAttendant()->getId()][] = $bookingService->getService()->getId();
+                                    }else{
+                                        foreach($attendant as $attObj){
+                                            @$ret[$time]['attendant'][$attObj->getId()]++;
+                                            @$ret[$time]['attendant_service'][$attObj->getId()][] = $bookingService->getService()->getId();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Bidirectional offset: mirror the attendant reservation on the window
+                    // BEFORE this booking starts ([startsAt - offset, startsAt)).
+                    $offsetStart = clone $booking->getStartsAt();
+                    $offsetStart->modify('-'.$bookingOffset.' minutes');
+                    $offsetEnd = $booking->getStartsAt();
                     $times = SLN_Func::filterTimes($this->minutesIntervals, $offsetStart, $offsetEnd);
                     foreach ($times as $time) {
                         $time = $time->format('H:i');

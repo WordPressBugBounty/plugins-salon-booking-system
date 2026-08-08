@@ -1863,7 +1863,11 @@ function formatTime(datetimeStr) {
  * Helper function to format date header (e.g., "Tuesday 26 July")
  */
 function formatDateHeader(dateStr) {
-  var date = new Date(dateStr);
+  // Parse "Y-m-d" as a LOCAL date. new Date("2026-07-28") would be parsed as
+  // UTC midnight and then read back in the browser timezone, shifting the day
+  // back by one for any negative-offset timezone (title showed the day before).
+  var parts = String(dateStr).split('-');
+  var date = new Date(parts[0], parts[1] - 1, parts[2]);
   var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   

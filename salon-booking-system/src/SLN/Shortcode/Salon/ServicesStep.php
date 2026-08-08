@@ -46,8 +46,21 @@ class SLN_Shortcode_Salon_ServicesStep extends SLN_Shortcode_Salon_AbstractUserS
             } else {
                 $bb->removeService($service);
             }
-            if (isset($countService) && isset($countService[$service->getId()])) {
-                $bb->addCountService($service->getId(), $countService[$service->getId()]);
+            // Only accept a quantity for services that actually allow it (variable
+            // duration or the quantity feature), clamped to the service maximum.
+            // This blocks count injection (price/duration multiplication) via a
+            // tampered POST on services without the feature.
+            $allowsCount = $service->isVariableDuration() || $service->isQuantityEnabled();
+            if ($allowsCount && isset($countService[$service->getId()])) {
+                $max   = $service->isVariableDuration() ? $service->getMaxVariableDuration() : $service->getMaxQuantity();
+                $count = (int) $countService[$service->getId()];
+                if ($count < 1) {
+                    $count = 1;
+                }
+                if ($max > 0 && $count > $max) {
+                    $count = $max;
+                }
+                $bb->addCountService($service->getId(), $count);
             } else {
                 $bb->removeCountService($service->getId());
             }

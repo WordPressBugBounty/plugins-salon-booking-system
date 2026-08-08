@@ -78,6 +78,24 @@ $helper->showNonce($postType);
             <div class="sln-clear"></div>
         </div>
         <div class="row">
+            <div
+                class="col-xs-12 col-sm-4 col-md-4 col-lg-4 form-group sln-checkbox sln-service-enable-quantity sln-profeature <?php echo !defined("SLN_VERSION_PAY") ? 'sln-service-enable-quantity-disabled sln-profeature--disabled  sln-profeature__tooltip-wrapper' : '' ?>">
+                <?php echo $plugin->loadView(
+                    'metabox/_pro_feature_tooltip',
+                    array(
+                        'additional_classes' => 'sln-profeature__cta--smallwrapper',
+                        'trigger' => 'sln-service-enable-quantity',
+                    )
+                ); ?>
+                <div class="sln-profeature__input sln-service-enable-quantity--checkbox">
+                    <?php SLN_Form::fieldCheckbox($helper->getFieldName($postType, 'enable_quantity'), $service->isQuantityEnabled()) ?>
+                    <label for="_sln_service_enable_quantity"><?php esc_html_e('Enable quantity', 'salon-booking-system'); ?></label>
+                    <p><?php esc_html_e('Allow customers to book this service more than once in a single reservation (e.g. a haircut for a parent and a child). The maximum quantity is the "Units per session" value above.', 'salon-booking-system'); ?></p>
+                </div>
+            </div>
+            <div class="sln-clear"></div>
+        </div>
+        <div class="row">
             <div class="col-xs-12 col-sm-4 col-md-6 col-lg-4 form-group sln-checkbox">
                 <?php SLN_Form::fieldCheckbox($helper->getFieldName($postType, 'secondary'), $service->isSecondary(), array('attrs' => array('data-action' => 'change-service-type', 'data-target' => '#secondary_details'))) ?>
                 <label for="_sln_service_secondary"><?php esc_html_e('Secondary', 'salon-booking-system'); ?></label>

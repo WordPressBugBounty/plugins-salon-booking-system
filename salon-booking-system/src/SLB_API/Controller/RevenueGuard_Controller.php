@@ -6,9 +6,9 @@ namespace SLB_API\Controller;
 use WP_REST_Server;
 use WP_REST_Response;
 use WP_Error;
-use SLB_RevenueGuard_Service_AttendanceQuery;
-use SLB_RevenueGuard_Service_AttendanceService;
-use SLB_RevenueGuard_Service_LostRevenueCalculator;
+use SLB_RevenueGuard_Service_AttendanceQuery as AttendanceQuery;
+use SLB_RevenueGuard_Service_AttendanceService as AttendanceService;
+use SLB_RevenueGuard_Service_LostRevenueCalculator as LostRevenueCalculator;
 use SLB_RevenueGuard_License;
 
 class RevenueGuard_Controller extends REST_Controller {

@@ -817,7 +817,7 @@ function sln_initImporter($item, mode) {
                     );
                     $modalBtn.button("reset");
 
-                    $modal.find("table tbody").html(response.data.matching);
+                    $modal.find("table").html(response.data.matching);
                     jQuery("#wpwrap").css("z-index", "auto");
                     $modal.modal({
                         keyboard: false,
@@ -889,10 +889,13 @@ function sln_initImporter($item, mode) {
         left = parseInt(left);
 
         var value = ((total - left) / total) * 100;
+        if (isNaN(value)) { value = 0; }
+        var rounded = Math.round(value);
         $importArea
             .find(".progress-bar")
             .attr("aria-valuenow", value)
-            .css("width", value + "%");
+            .css("width", value + "%")
+            .text(rounded + "%  ·  " + (total - left) + " / " + total);
         if(skipped !== true){
             jQuery('.alert.alert-success .alert-skipped').removeClass('hide');
             let skipped_list = jQuery('#import-skipped-booking-modal .alert-skipped .skipped-bookings');

@@ -516,23 +516,57 @@ echo expirePopup();
                     $exp_raw = (is_object($exp_license_data) && isset($exp_license_data->expires))
                         ? $exp_license_data->expires
                         : (isset($subscription_status['expiration']) ? $subscription_status['expiration'] : null);
-                    $expire_days = $exp_raw ? ceil((strtotime($exp_raw) - current_time('timestamp')) / (24 * 3600)) : 0;
+
+                    // Determine whether the license itself is still active or has also expired.
+                    // For Dodo purchases whose post-trial payment failed, both the subscription
+                    // AND the license lapse, so the banner must not claim the license is active.
+                    $exp_license_state = (is_object($exp_license_data) && isset($exp_license_data->license))
+                        ? $exp_license_data->license : null;
+                    $exp_timestamp = ($exp_raw && $exp_raw !== 'lifetime' && $exp_raw !== 'never')
+                        ? strtotime($exp_raw) : null;
+                    $license_expired = ($exp_license_state === 'expired')
+                        || ($exp_timestamp !== null && $exp_timestamp <= current_time('timestamp'));
+
+                    $expire_days = $exp_timestamp ? ceil(($exp_timestamp - current_time('timestamp')) / (24 * 3600)) : 0;
                     $expire = sprintf(
                         // translators: %s the name of the expire days
                         _n('%s day', '%s days', $expire_days, 'salon-booking-system'),
                         $expire_days
                     );
+
+                    // Use the actual product/plan name from the license data instead of a
+                    // hardcoded plan, falling back to the plugin name.
+                    $exp_product_name = '';
+                    if (is_object($exp_license_data)) {
+                        if (!empty($exp_license_data->item_name)) {
+                            $exp_product_name = $exp_license_data->item_name;
+                        } elseif (!empty($exp_license_data->product_name)) {
+                            $exp_product_name = $exp_license_data->product_name;
+                        }
+                    }
+                    if ($exp_product_name === '') {
+                        $exp_product_name = 'Salon Booking System';
+                    }
                     ?>
                     <div class="row">
                         <div class="col-xs-12 sln-notice__wrapper">
                             <div class="sln-notice sln-notice--bold sln-notice--subscription-cancelled">
                                 <div class="sln-notice--bold__text">
                                     <h2><?php _e('<strong>Your subscription is expired!</strong>', 'salon-booking-system') ?></h2>
-                                    <p><?php echo sprintf(
-                                            // translators: %s will be replaced by the license expiration time
-                                            __('<strong>Attention:</strong> your subscription to <strong>Salon Booking System “Business Plan”</strong> is expired but your license is still active and <strong>it will expire in %s</strong>', 'salon-booking-system'),
-                                            $expire
-                                        ) ?></p>
+                                    <?php if ($license_expired): ?>
+                                        <p><?php echo sprintf(
+                                                // translators: %s will be replaced by the product/plan name
+                                                __('<strong>Attention:</strong> your subscription to <strong>%s</strong> and your license have both expired. Renew now to restore product updates, customer support and Pro features.', 'salon-booking-system'),
+                                                esc_html($exp_product_name)
+                                            ) ?></p>
+                                    <?php else: ?>
+                                        <p><?php echo sprintf(
+                                                // translators: %1$s the product/plan name, %2$s the license expiration time
+                                                __('<strong>Attention:</strong> your subscription to <strong>%1$s</strong> is expired but your license is still active and <strong>it will expire in %2$s</strong>', 'salon-booking-system'),
+                                                esc_html($exp_product_name),
+                                                $expire
+                                            ) ?></p>
+                                    <?php endif; ?>
                                     <p><?php _e('<strong>Renew it now and get a discounted price.</strong>', 'salon-booking-system') ?></p>
                                 </div>
                                 <a href="<?php echo esc_url( defined( 'SLN_PRICING_URL' ) ? SLN_PRICING_URL : 'https://www.salonbookingsystem.com/plugin-pricing-2/' ); ?>" target="_blank" class="sln-notice--plugin_update__action"><?php esc_html_e('Renew your license', 'salon-booking-system') ?></a>

@@ -68,8 +68,8 @@ class SLN_Action_Ajax_CalcBookingTotal extends SLN_Action_Ajax_Abstract
     protected function getServicesSubtotal($bookingServices) {
         $subtotal = 0;
         foreach ($bookingServices->getItems() as $bookingService) {
-            $price = $bookingService->getPrice();
-            $subtotal += $price;
+            $qty = max(1, (int) $bookingService->getCountServices());
+            $subtotal += $bookingService->getPrice() * $qty;
         }
         return $subtotal;
     }
@@ -99,16 +99,12 @@ class SLN_Action_Ajax_CalcBookingTotal extends SLN_Action_Ajax_Abstract
 
     protected function getDuration($bookingServices) {
 
-	$h = 0;
 	$i = 0;
 
 	foreach ($bookingServices->getItems() as $bookingService) {
-	    $d = $bookingService->getTotalDuration();
-	    $h = $h + intval($d->format('H'));
-	    $i = $i + intval($d->format('i'));
+	    $qty = max(1, (int) $bookingService->getCountServices());
+	    $i += SLN_Func::getMinutesFromDuration($bookingService->getTotalDuration()) * $qty;
 	}
-
-	$i += $h * 60;
 
 	return SLN_Func::convertToHoursMins($i);
     }

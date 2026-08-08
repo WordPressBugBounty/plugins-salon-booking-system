@@ -211,64 +211,63 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 				</div>
 			</div>
 
-			<div id="import-matching-modal" class="modal" role="dialog">
-				<div class="modal-dialog">
+			<div id="import-matching-modal" class="modal sln-import-modal" role="dialog" aria-labelledby="import-matching-title">
+				<div class="modal-dialog modal-dialog--import">
 					<div class="modal-content">
-<!--						<div class="modal-header"></div>-->
-						<div class="modal-body">
-							<div class="row">
-								<div class="col-xs-12 form-group">
-									<h2 class="sln-box-title"><?php esc_html_e('You need to match your CSV file data with Salon Booking database','salon-booking-system') ?></h2>
-									<h6 class="sln-fake-label"><?php esc_html_e('Select for each column the corresponding one inside your file.','salon-booking-system')?></h6>
-								</div>
-								<div class="col-xs-12">
-									<table class="table sln-import-table" cellspacing="0"><tbody></tbody></table>
-								</div>
-								<div class="col-xs-12">
-									<div class="row">
-										<div class="col-xs-12 col-md-8">
-											<div class="alert alert-danger hide">
-												<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-												<?php esc_html_e('Please provide all requested columns', 'salon-booking-system') ?>
-											</div>
-										</div>
-										<div class="col-xs-12 col-md-4">
-											<button type="button" class="sln-btn sln-btn--main sln-btn--big sln-file__btn" data-action="sln_import_matching"
-											        data-loading-text="<span class='glyphicon glyphicon-repeat sln-import-loader' aria-hidden='true'></span> <?php esc_html_e('loading', 'salon-booking-system') ?>">
-												<?php esc_html_e('Import', 'salon-booking-system') ?>
-											</button>
-										</div>
-									</div>
-								</div>
+						<div class="modal-header sln-import-modal__header">
+							<button type="button" class="sln-import-modal__close" data-dismiss="modal" aria-label="<?php esc_attr_e('Close', 'salon-booking-system') ?>">&times;</button>
+							<h2 id="import-matching-title" class="sln-box-title"><?php esc_html_e('Match your CSV columns','salon-booking-system') ?></h2>
+							<h6 class="sln-fake-label"><?php esc_html_e('For each Salon Booking field, pick the matching column from your file. Fields marked with * are required. A live preview of your first rows is shown below.','salon-booking-system')?></h6>
+						</div>
+						<div class="modal-body sln-import-modal__body">
+							<div class="sln-import-table__scroll">
+								<table class="table sln-import-table" cellspacing="0"><tbody></tbody></table>
 							</div>
 						</div>
-<!--						<div class="modal-footer"></div>-->
+						<div class="modal-footer sln-import-modal__footer">
+							<div class="alert alert-danger sln-import-modal__alert hide" role="alert">
+								<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+								<?php esc_html_e('Please match all required columns before continuing.', 'salon-booking-system') ?>
+							</div>
+							<div class="sln-import-modal__actions">
+								<button type="button" class="sln-btn sln-btn--borderonly sln-btn--big" data-dismiss="modal"><?php esc_html_e('Cancel', 'salon-booking-system') ?></button>
+								<button type="button" class="sln-btn sln-btn--main sln-btn--big sln-file__btn" data-action="sln_import_matching"
+								        data-loading-text="<span class='glyphicon glyphicon-repeat sln-import-loader' aria-hidden='true'></span> <?php esc_html_e('loading', 'salon-booking-system') ?>">
+									<?php esc_html_e('Start import', 'salon-booking-system') ?>
+								</button>
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>
 
-			<div id="import-skipped-booking-modal" class="modal">
-				<div class="modal-content">
-					<div class="modal-body">
-						<div class="row">
-							<div class="col-xs-12">
-								<h2 class="sln-box-title"><?php esc_html_e('Skipped bookings', 'salon-booking-system');?></h2>
-								<h3 class="sln-box-title"><b class="skipped-bookings--number"></b> <?php esc_html_e('of', 'salon-booking-system'); ?> <b class="skipped-bookings--total"></b> <?php esc_html_e('records have been skipped due to errors', 'salon-booking-system')?>:</h3>
+			<div id="import-skipped-booking-modal" class="modal sln-import-modal sln-import-modal--skipped">
+				<div class="modal-dialog modal-dialog--import">
+					<div class="modal-content">
+						<div class="modal-header sln-import-modal__header">
+							<button type="button" class="sln-import-modal__close" data-dismiss="modal" aria-label="<?php esc_attr_e('Close', 'salon-booking-system') ?>">&times;</button>
+							<h2 class="sln-box-title"><?php esc_html_e('Import finished — some rows were skipped', 'salon-booking-system');?></h2>
+							<h6 class="sln-fake-label"><b class="skipped-bookings--number"></b> <?php esc_html_e('of', 'salon-booking-system'); ?> <b class="skipped-bookings--total"></b> <?php esc_html_e('records could not be imported. Review the reasons below and re-import them after fixing your file.', 'salon-booking-system')?></h6>
+						</div>
+						<div class="modal-body sln-import-modal__body">
+							<div class="alert-skipped">
+								<div class="skipped-bookings--title">
+									<span class="skipped-booking--id"><?php esc_html_e('ID', 'salon-booking-system') ?></span>
+									<span class="skipped-booking--datetime"><?php esc_html_e('Date/Time', 'salon-booking-system') ?></span>
+									<span class="skipped-booking--first-name"><?php esc_html_e('First name', 'salon-booking-system') ?></span>
+									<span class="skipped-booking--last-name"><?php esc_html_e('Last name', 'salon-booking-system') ?></span>
+									<span class="skipped-booking--email"><?php esc_html_e('Email', 'salon-booking-system') ?></span>
+									<span class="skipped-booking--error"><?php esc_html_e('Reason', 'salon-booking-system'); ?></span>
+								</div>
+								<ul class="skipped-bookings"></ul>
 							</div>
 						</div>
-						<div class="alert-skipped">
-							<div class="skipped-bookings--title">
-								<span class="skipped-booking--id"><?php esc_html_e('ID', 'salon-booking-system') ?></span>
-								<span class="skipped-booking--datetime"><?php esc_html_e('Date/Time', 'salon-booking-system') ?></span>
-								<span class="skipped-booking--first-name"><?php esc_html_e('First name', 'salon-booking-system') ?></span>
-								<span class="skipped-booking--last-name"><?php esc_html_e('Last name', 'salon-booking-system') ?></span>
-								<span class="skipped-booking--email"><?php esc_html_e('Email', 'salon-booking-system') ?></span>
-								<span class="skipped-booking--error"><?php esc_html_e('Error message', 'salon-booking-system'); ?></span>
+						<div class="modal-footer sln-import-modal__footer">
+							<div class="sln-import-modal__actions">
+								<button type="button" class="sln-btn sln-btn--main sln-btn--big" data-dismiss="modal"><?php esc_html_e('Done', 'salon-booking-system') ?></button>
 							</div>
-							<ul class="skipped-bookings"></ul>
 						</div>
 					</div>
-<!--						<div class="modal-footer"></div>-->
 				</div>
 			</div>
 		</div>

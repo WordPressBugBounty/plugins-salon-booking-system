@@ -107,6 +107,11 @@ class SLN_Action_InitScripts
 			// skipped — UNLESS slots are shown in the customer timezone, which
 			// requires a client-side recompute that only the init validate() does.
 			'display_slots_customer_timezone' => $s->isDisplaySlotsCustomerTimezone() ? '1' : '0',
+			// Explicit AJAX-booking flag. JS must NOT infer the AJAX mode from the
+			// presence of DOM attributes (e.g. data-salon-toggle="next"): that is
+			// fragile and previously caused the summary "Complete" button to become
+			// dead when AJAX was disabled. Expose the setting directly instead.
+			'ajax_enabled' => $s->isAjaxEnabled() ? '1' : '0',
 		);
 
 		$fbLoginEnabled = SLN_Plugin::getInstance()->getSettings()->get('enabled_fb_login');

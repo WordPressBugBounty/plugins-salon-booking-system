@@ -48,6 +48,36 @@ class SLN_Wrapper_Service extends SLN_Wrapper_Abstract implements SLN_Wrapper_Se
         return intval($ret);
     }
 
+    /**
+     * Whether customers can book this service multiple times in a single
+     * reservation (Fase 1 "quantity" feature, e.g. a haircut for parent + child).
+     * Independent from variable duration; both reuse the same count plumbing.
+     *
+     * @return bool
+     */
+    function isQuantityEnabled()
+    {
+        $ret = $this->getMeta('enable_quantity');
+        $ret = empty($ret) ? false : true;
+
+        // PRO-only feature: always disabled in the free edition.
+        return defined("SLN_VERSION_PAY") ? $ret : false;
+    }
+
+    /**
+     * Maximum quantity a customer can select for this service. Per product
+     * decision the limit is the service "Units per session" value; falls back
+     * to 10 when that field is unset (0).
+     *
+     * @return int
+     */
+    function getMaxQuantity()
+    {
+        $unit = $this->getUnitPerHour();
+
+        return $unit > 0 ? $unit : 10;
+    }
+
     function getDuration()
     {
         $settings = SLN_Plugin::getInstance()->getSettings();

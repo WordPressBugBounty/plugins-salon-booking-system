@@ -4,7 +4,7 @@ Tags: booking, reservations, scheduling, booking calendar, appointment calendar
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4.8
-Stable tag: 10.30.34
+Stable tag: 10.30.35
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -407,6 +407,14 @@ FREE version doesn't have the online payments options, no mobile app access, no 
 
 
 == Changelog ==
+
+
+07.08.2026 - 10.30.35
+
+*Fixed onboarding wizard
+* New: "Service quantity" (PRO) — customers can book the same service multiple times within a single reservation (e.g. a haircut for a parent and a child). Enable it per service; the maximum is set by the service "Units per session" value
+* Improved consistency of price, duration and attendant availability calculations when a service is booked with a quantity greater than one
+* Minor improvements
 
 30.07.2026 - 10.30.34
 

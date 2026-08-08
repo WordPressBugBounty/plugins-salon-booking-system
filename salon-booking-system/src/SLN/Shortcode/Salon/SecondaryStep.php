@@ -14,8 +14,19 @@ class SLN_Shortcode_Salon_SecondaryStep extends SLN_Shortcode_Salon_Step
             } else {
                 $bb->removeService($service);
             }
-            if (isset($countService) && isset($countService[$service->getId()])) {
-                $bb->addCountService($service->getId(), $countService[$service->getId()]);
+            // Accept a quantity only for services that allow it, clamped to the max
+            // (see ServicesStep::dispatchForm for rationale).
+            $allowsCount = $service->isVariableDuration() || $service->isQuantityEnabled();
+            if ($allowsCount && isset($countService[$service->getId()])) {
+                $max   = $service->isVariableDuration() ? $service->getMaxVariableDuration() : $service->getMaxQuantity();
+                $count = (int) $countService[$service->getId()];
+                if ($count < 1) {
+                    $count = 1;
+                }
+                if ($max > 0 && $count > $max) {
+                    $count = $max;
+                }
+                $bb->addCountService($service->getId(), $count);
             } else {
                 $bb->removeCountService($service->getId());
             }
