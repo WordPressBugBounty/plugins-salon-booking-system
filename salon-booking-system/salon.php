@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 /*
 Plugin Name: Salon Booking System - Free Version
 Description: Let your customers book you services through your website. Perfect for hairdressing salons, barber shops and beauty centers.
-Version: 10.30.35
+Version: 10.31.0
 Requires at least: 6.0
 Requires PHP: 7.4.8
 Plugin URI: http://salonbookingsystem.com/
@@ -49,7 +49,7 @@ if (defined('SLN_PLUGIN_BASENAME')) {
 define('SLN_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('SLN_PLUGIN_DIR', untrailingslashit(dirname(__FILE__)));
 define('SLN_PLUGIN_URL', untrailingslashit(plugins_url('', __FILE__)));
-define('SLN_VERSION', '10.30.35');
+define('SLN_VERSION', '10.31.0');
 define('SLN_STORE_URL', 'https://salonbookingsystem.com');
 define('SLN_PRICING_URL', 'https://www.salonbookingsystem.com/plugin-pricing-2/');
 define('SLN_AUTHOR', 'Salon Booking');

@@ -16,9 +16,17 @@ $block = __(
 if (!is_array($holidays)) {
 	$holidays = array();
 }
+$aiSetupUrl = admin_url('admin.php?page=' . SLN_Admin_AISetup::PAGE);
 ?>
 <div id="sln-holidays_days" class="sln-box sln-box--main sln-booking-holiday-rules sln-box--haspanel">
-	<h2 class="sln-box-title sln-box__paneltitle"><?php echo esc_attr($label); ?> <span class="block"><?php echo $block ?></span></h2>
+	<h2 class="sln-box-title sln-box__paneltitle"><?php echo esc_attr($label); ?>
+		<span class="block"><?php echo $block ?></span>
+		<span class="block" style="margin-top:0.5em;">
+			<a href="<?php echo esc_url($aiSetupUrl); ?>">
+				<?php esc_html_e('Prefer to describe holidays in chat? Open AI Setup', 'salon-booking-system'); ?>
+			</a>
+		</span>
+	</h2>
 	<div class="collapse sln-box__panelcollapse">
 		<div class="row">
 			<div class="sln-booking-holiday-rules-wrapper">

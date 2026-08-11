@@ -2,11 +2,12 @@
 
 jQuery(function ($) {
     var url = location.search;
-    if (url.indexOf("post_type=sln_service") > -1) {
-        sln_initServiceManagement($);
-    }
+    // Category taxonomy URL also includes post_type=sln_service — handle it first
+    // so service-list sortable is not bound on the terms screen.
     if (url.indexOf("taxonomy=sln_service_category") > -1) {
         sln_initServiceCategoryManagement($);
+    } else if (url.indexOf("post_type=sln_service") > -1) {
+        sln_initServiceManagement($);
     }
     if (url.indexOf("post_type=sln_attendant") > -1) {
         sln_initAttendantManagement($);
@@ -240,17 +241,6 @@ function sln_wpListTableSortableAppendTarget() {
     return $w.length ? $w[0] : document.body;
 }
 
-/**
- * Same breakpoint as WP admin (782px): show grip column; above that column is hidden in CSS.
- * Desktop uses full-row drag (handle false) so reorder still works without the icon.
- */
-function sln_wpListTableSortableUseGripHandle() {
-    if (typeof window.matchMedia !== "function") {
-        return true;
-    }
-    return window.matchMedia("(max-width: 782px)").matches;
-}
-
 function sln_wpListTableBindSortable($tbody, onStopReordered) {
     if (!$tbody.length || !$tbody.find(".sln-list-sort-handle").length) {
         return;
@@ -263,20 +253,22 @@ function sln_wpListTableBindSortable($tbody, onStopReordered) {
         }
     }
     var $listTable = $tbody.closest("table.wp-list-table");
-    var useGrip = sln_wpListTableSortableUseGripHandle();
-    var cancelSel =
-        "input,textarea,button,select,option,.row-actions,.check-column";
-    if (!useGrip) {
-        cancelSel += ",a,label,.row-title";
-    }
+    // Phones/tablets (coarse pointer): short press-hold so scrolling the page
+    // does not steal the gesture. Desktop mouse keeps immediate grip drag.
+    var useTouchDrag =
+        typeof window.matchMedia === "function" &&
+        window.matchMedia("(pointer: coarse)").matches;
+    // Always use the dedicated grip column (desktop + mobile). Full-row drag was
+    // dropping name/title links from cancel, which made taxonomy lists undraggable.
     $tbody.sortable({
-        handle: useGrip ? ".sln-list-sort-handle" : false,
+        handle: ".sln-list-sort-handle",
         axis: "y",
-        distance: 8,
+        distance: useTouchDrag ? 5 : 8,
+        delay: useTouchDrag ? 200 : 0,
         scroll: true,
         scrollSensitivity: 40,
         items: "> tr:not(.no-items):not(.inline-edit-row)",
-        cancel: cancelSel,
+        cancel: "input,textarea,button,select,option,.row-actions,.check-column",
         appendTo: sln_wpListTableSortableAppendTarget(),
         helper: function (event, ui) {
             var $row = sln_wpListTableResolveDragRow($tbody, event, ui);

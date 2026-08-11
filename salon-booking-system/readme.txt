@@ -1,72 +1,51 @@
-=== Salon Booking System - Free Version ===
+=== Salon Booking System – Appointment Booking for Salons, Barbershops & Spas ===
 Contributors: Salon Booking System
-Tags: booking, reservations, scheduling, booking calendar, appointment calendar
+Tags: salon, spa, appointment booking, booking system, scheduling
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4.8
-Stable tag: 10.30.35
+Stable tag: 10.31.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 
-Appointment scheduling plugin for salons, spas, and wellness centers to streamline bookings and improve customer satisfaction.
+Appointment booking built for hair salons, barbershops, spas and beauty pros. Online scheduling, SMS and email reminders, Google Calendar sync.
 
 == Description ==
 
-**Salon Booking System** is a comprehensive, user-friendly appointment scheduling solution designed to help small businesses streamline their booking process and maximize online reservations.
+**The appointment booking plugin built only for salons — not adapted to them.**
 
-Whether you're running a salon, spa, workshop, or any service-based business, Salon Booking System takes the hassle out of managing appointments. With an intuitive interface and powerful features, it helps you save valuable time while providing a seamless booking experience for your customers.
+While generic booking plugins try to serve every industry, Salon Booking System is designed around how a salon actually works: staff members with different schedules and skills, services with processing and finishing times, clients who rebook the same treatment every few weeks, and the daily fight against no-shows.
 
-Since its launch in 2015, Salon Booking System has become a trusted tool for hundreds of businesses, enabling them to easily accept bookings directly from their website and efficiently manage their daily schedules.
+Since 2015 it has been the booking system of choice for **hairdressers, barbershops, beauty salons, nail studios and spas**, with more than **750,000 downloads**.
 
+**Your bookings. Your clients. 0% commission.**
 
-=== Salon Booking System is trusted by: ===
+Unlike marketplace booking apps, Salon Booking System runs on your own WordPress website:
 
-- Hairdressers & Barbershops
-- Beauty Salons & Spas
-- Mechanical Workshops
-- Therapists & Tutors
-- Health Care Centers & Clinics
-- COVID Test Centers
-
-Whether you're offering one-on-one services, same-day appointments, or a specific time-based reservation, this plugin is the perfect solution for any business that needs to efficiently manage individual appointments.
-
-
-=== Key Benefits:===
-
-- Easy to Use: Designed for busy professionals with minimal tech experience.
-- Flexible Booking: Ideal for businesses offering services that require a fixed time and date.
-- Time-Saving: Automates scheduling and reduces administrative tasks, freeing up your time to focus on your customers.
-- Customizable: Adapt the system to fit your unique business needs.
-
-With Salon Booking System, growing your client base and managing bookings has never been easier.
-
-
-=== Why Choose Salon Booking System? ===
-
-- Reliability: Trusted by small businesses around the world.
-- Seamless Integration: Easily integrates with your WordPress website.
-- Customer-Focused: Optimized to provide a smooth booking experience for your clients.
-
-Start managing your appointments efficiently and grow your business with the Salon Booking System today!
-
-
-
-With **Salon Booking System** handling your appointments is very easy, take a look at this 60’’ video:
-
+* You pay **no commission** on bookings — ever
+* Your client list and booking history **belong to you**
+* Nobody shows competing salons to your customers
+* **Unlimited bookings, services and staff members — free**
 
 https://www.youtube.com/watch?v=MGW0hSZrV5c
 
+**See it in action:** [Online demo](https://salon.salonbooking.it/) | [Documentation](https://salonbookingsystem.helpscoutdocs.com/)
 
 
-**Online Demo**
+=== Built for the way salons work ===
 
-[click here to see it in action](https://salon.salonbooking.it/)
+* **Smart booking form** — your clients pick date, service and stylist in seconds, from any device. Customizable steps order, colors, fields and direct booking links for your social profiles.
+* **Reduce no-shows** — automatic email and SMS reminders and follow-ups (Twilio, Plivo and iP1 supported out of the box).
+* **Staff schedules that match reality** — individual weekly timetables, holidays, services per staff member, and notifications when they get booked.
+* **Salon-specific services** — duration, price, categories, conditional "secondary services" (e.g. color + cut), service breaks for processing time, exclusive services.
+* **Two-way Google Calendar sync** — reservations appear in your Google Calendar; add or cancel appointments from there and the plugin stays in sync.
+* **Grow repeat business** — customer archive with full booking history, review invitations after the appointment, unlimited discount coupons.
 
 
 
 
-==Plugin’s main Free features==
+== Everything included in the free version ==
 
 
 **Back-end calendar**
@@ -234,7 +213,7 @@ https://www.youtube.com/watch?v=MGW0hSZrV5c
 
 
 
-[Complete list of PRO Features..](https://www.salonbookingsystem.com/homepage/plugin-pricing/).
+[Complete list of PRO Features..](https://www.salonbookingsystem.com/plugin-pricing-2/).
 
 
 ==Official Add-ons==
@@ -286,7 +265,7 @@ https://www.youtube.com/watch?v=MGW0hSZrV5c
 
 ==Other Add-ons==
 
-[**Mailchimp Integration**]()
+[**Mailchimp Integration**](https://www.salonbookingsystem.com/downloads/mailchimp-integration-plugin/) - Sync your customers list with your Mailchimp audience
 
 ==Third parts integrations==
 
@@ -313,101 +292,87 @@ This section describes how to install the plugin and get it working.
 == Frequently Asked Questions ==
 
 
-= What kind of business this plugins best fits? =
+= What kind of business does this plugin best fit? =
 
-This plugin has been developed thinking about the specific needs of Barber Shop, Hairdressing salon, Beauty Centres and Spas.
+Salon Booking System is built specifically for barbershops, hairdressing salons, beauty centres, nail studios and spas. If your business runs on staff members, treatments and repeat appointments, this plugin was designed for you.
 
- 
-= Where is the official documentations? =
+= Is there a limit on bookings in the free version? =
 
-[click here](https://salonbookingsystem.helpscoutdocs.com/)
+No. Bookings, services and staff members are unlimited in the free version, forever.
 
- 
-= Which version of php is supported? =
+= How is this different from booking marketplaces like Fresha or Booksy? =
 
-The plugin supports php 7.4 and above version.
+Marketplace apps charge commissions on bookings and new clients, and they show competing salons to your customers. Salon Booking System runs on your own website: 0% commission, your client data belongs to you, and your brand is the only one your clients see.
 
- 
 = Is it possible to accept online payments? =
 
-Online payments are available only with the PREMIUM VERSION of Salon Booking
-that can be purchased here: [salonbookingsystem.com](https://salonbookingsystem.com/)
+Online payments (Stripe, PayPal and 20+ local gateways) are available with the [PRO version](https://www.salonbookingsystem.com/plugin-pricing-2/).
 
- 
+= What is the difference with the FREE version? =
 
-= Is it multi language ready? =
+The free version includes unlimited bookings, staff and services, email/SMS notifications and Google Calendar sync. The PRO version adds online payments, deposits, the staff mobile app, priority support and access to 30+ add-ons. [Compare plans](https://www.salonbookingsystem.com/plugin-pricing-2/)
 
-YES, Salon Booking comes equipped with a lot of localisations.
-Just set your favourite Wordpress language and Salon Booking will use that language.
+= Is it multi-language ready? =
 
-You can easily manage the translation using a plugin like LocoTranslate.
+Yes. Salon Booking System ships with many localisations and follows your WordPress language setting. WPML and Polylang are supported, and you can adjust any text with a plugin like Loco Translate. Want to contribute a translation? Visit [Transifex](https://www.transifex.com/projects/p/salon-booking-system/).
 
-Languages available:
+= Does it work with caching plugins? =
 
-[Transifex.com](https://www.transifex.com/projects/p/salon-booking-system/)
+Yes. Like any booking plugin, the booking pages must be excluded from page caching so availability is always fresh. [Here is the setup guide](https://salonbookingsystem.helpscoutdocs.com/).
 
-If you want to contribuite to plugin translation please visit:
+= Is it possible to customise the look and feel of the booking form? =
 
-[Transifex.com](https://www.transifex.com/projects/p/salon-booking-system/)
+Yes. Go to "Settings > Style" to pick a color combination or generate your own palette, and choose the form layout that fits your page.
 
-WPML and Polylang supported
- 
-= Are there any conflicts with other plugins? =
+= Is it possible to manage multiple locations? =
 
-Some caching plugins could generate conflicts with our plugin.
+Yes, with the [Multi-Shops add-on](https://www.salonbookingsystem.com/downloads/salon-booking-system-multi-shops/) (included in the Business plan).
 
- 
-= Is it possible to customise the look and feel of the plugin front-end? =
+= Which version of PHP is supported? =
 
-Yes, go to "Settings > Style > Color combination" option
+PHP 7.4 and above.
 
+= Where is the official documentation? =
 
-
-= Is It possible to manage multiple locations? =
-
-Yes with a dedicated add-on that you can find here: 
-
-[Multi-Shops](https://www.salonbookingsystem.com/downloads/salon-booking-system-multi-shops/)
-
-= Where I can buy the PREMIUM VERSION? = 
-
-[Click here:](https://www.salonbookingsystem.com/salon-booking-plugin-pricing/)
-
-= What is the difference with FREE version? = 
-
-FREE version doesn't have the online payments options, no mobile app access, no priority support, no access to 30+ add-ons and many other plugin’s features.
+[salonbookingsystem.helpscoutdocs.com](https://salonbookingsystem.helpscoutdocs.com/)
 
 
 
 == Screenshots ==
 
-1. screenshot-1.jpg
- 
-2. screenshot-2.jpg 
+1. Mobile booking form — your clients pick their services in seconds, with prices and durations at a glance.
 
-3. screenshot-3.jpg 
+2. Back-end calendar — monthly overview of all your salon's appointments, with one-click CSV export.
 
-4. screenshot-4.jpg 
+3. Daily staff view — each stylist's column with booking details, payments and deposits at a glance.
 
-5. screenshot-5.jpg  
+4. Add or edit a reservation directly from the calendar: date, time, services, attendant and status.
 
-6. screenshot-6.jpg 
+5. Customer account page — clients can review, cancel or reschedule their appointments on their own.
 
-7. screenshot-7.jpg 
+6. Customer account page — active discount coupons and loyalty points, with instant rebooking.
 
-8. screenshot-8.jpg
+7. Booking notification — clean, branded emails with all the reservation details.
 
-9. screenshot-9.jpg 
+8. Bookings archive — search and filter every reservation by date, status, customer, service or staff member.
 
-10. screenshot-10.jpg
-
-11. screenshot-11.jpg 
+9. Back-end calendar — color-coded month view to spot busy and free days instantly.
 
 
 
 
 == Changelog ==
 
+
+11.08.2026 - 10.31.0
+
+* New: AI Setup Assistant — configure your salon by chatting (or speaking) with an AI assistant from the new "Salon > AI Setup" screen: opening hours, holidays, services, staff members, booking rules, notification schedules, style and more. Available on both Free and PRO
+* New: AI assistant on the booking calendar — look up customers, find or cancel reservations and manage discounts without leaving the calendar
+* New: the free version now invites you to leave a WordPress.org review once your salon has managed enough bookings (fully dismissible)
+* Improved: drag-and-drop reordering of services and categories now works smoothly on phones and tablets
+* Fixed: the services list sorting no longer interferes with the service categories screen
+* Fixed: the IP1SMS migration notice dismissal was not being saved
+* Refreshed WordPress.org listing (name, description, FAQ and screenshots)
 
 07.08.2026 - 10.30.35
 

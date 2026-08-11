@@ -85,6 +85,8 @@ class SLN_Action_Init
         add_action('template_redirect', array($this, 'template_redirect'));
         new SLN_Privacy();
         new SLN_Action_InitScripts($this->plugin, is_admin());
+        // REST routes must register on every request (incl. /wp-json/), not only is_admin().
+        new SLN_AI_REST_Controller($p);
         $this->initPolylangSupport();
         SLB_Discount_Plugin::getInstance();
         SLB_RevenueGuard_Plugin::getInstance();
@@ -136,25 +138,31 @@ class SLN_Action_Init
 
         new SLN_Admin_Calendar($p);
         new SLN_Admin_Onboarding($p);
+        new SLN_Admin_AISetup($p);
         new SLN_Admin_Tools($p);
         new SLN_Admin_Customers($p);
         new SLN_Admin_Reports($p);
         new SLN_Admin_Settings($p);
         new SLN_Admin_DeactivationSurvey($p);
+
+        // WP.org review request notice (free version only)
+        $reviewRequest = new SLN_Admin_ReviewRequest($p);
+        add_action('admin_notices', array($reviewRequest, 'showNotice'));
         
         // Cache Warmer Setup Notice
         // Cache warmer is now in Tools section, no admin notice needed
         
-        // IP1SMS API Migration Notice (API V2 Migration)
+        // IP1SMS API Migration Notice (API V2 Migration).
+        // The dismiss AJAX handler and the expiry cron callback are registered in
+        // initAjax()/init() because initAdmin() does not run during admin-ajax.php
+        // or wp-cron.php requests.
         $migration = new SLN_Admin_MigrationTools_Ip1SmsMigration($p);
         add_action('admin_notices', array($migration, 'showMigrationNotice'));
-        add_action('wp_ajax_sln_dismiss_ip1sms_migration_notice', array($migration, 'handleDismissNotice'));
         
         // Check migration notice expiry daily
         if (!wp_next_scheduled('sln_check_ip1sms_migration_notice_expiry')) {
             wp_schedule_event(time(), 'daily', 'sln_check_ip1sms_migration_notice_expiry');
         }
-        add_action('sln_check_ip1sms_migration_notice_expiry', array($migration, 'checkDismissedNoticeExpiry'));
         new SLN_Admin_Extensions($p);
 
         add_action('admin_init', array($this, 'hook_admin_init'));
@@ -640,10 +648,22 @@ class SLN_Action_Init
         add_action('wp_ajax_sln_send_bulk_feedback', array(new SLN_Action_Ajax_SendBulkFeedback($this->plugin), 'execute'));
         add_action('wp_ajax_sln_preview_bulk_feedback', array(new SLN_Action_Ajax_PreviewBulkFeedback($this->plugin), 'execute'));
         add_action('wp_ajax_sln_ajax_noshow', array(new SLN_Action_Ajax_OnNoShow($this->plugin), 'execute'));
+        add_action('wp_ajax_sln_review_request_dismiss', array(new SLN_Admin_ReviewRequest($this->plugin), 'handleDismiss'));
+
+        // IP1SMS migration notice: dismiss handler and expiry cron callback must be
+        // registered here (runs on every request) because initAdmin() is skipped
+        // during admin-ajax.php and wp-cron.php requests.
+        $ip1smsMigration = new SLN_Admin_MigrationTools_Ip1SmsMigration($this->plugin);
+        add_action('wp_ajax_sln_dismiss_ip1sms_migration_notice', array($ip1smsMigration, 'handleDismissNotice'));
+        add_action('sln_check_ip1sms_migration_notice_expiry', array($ip1smsMigration, 'checkDismissedNoticeExpiry'));
 
         // Read-only, admin-only SMS location diagnostic (sends nothing).
         // Visit /wp-admin/?sln_sms_loc_diag=1 while logged in as an administrator.
         new SLN_Action_SmsLocationDiagnostic($this->plugin);
+
+        // Read-only, admin-only AI cloud proxy connectivity diagnostic.
+        // Visit /wp-admin/?sln_ai_proxy_diag=1 while logged in as an administrator.
+        new SLN_AI_ProxyDiagnostic();
 
         // Cache warmer AJAX endpoint (public, for external cron services)
         new SLN_Action_Ajax_CacheWarmer($this->plugin);

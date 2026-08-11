@@ -3,7 +3,7 @@
 
 class SLN_Action_InitScripts
 {
-    const ASSETS_VERSION = SLN_VERSION . '-20260728-customer-search-lock-fix-v45';
+    const ASSETS_VERSION = SLN_VERSION . '-20260810-taxonomy-submit-v51';
 	private static $isInclude = false;
 	private $isAdmin;
 	private $plugin;
@@ -318,10 +318,20 @@ class SLN_Action_InitScripts
 
 	public static function enqueueCustomMetaService()
 	{
+		// Modern touch bridge so jQuery UI Sortable works on phones/tablets.
+		// (Legacy touch-punch.min.js is still used by sliders; list tables need
+		// this bridge because ontouchend / initMouseEvent detection is brittle.)
+		wp_enqueue_script(
+			'salon-jquery-ui-touch-bridge',
+			SLN_PLUGIN_URL . '/js/admin/jqueryUiTouchPunch.js',
+			array('jquery', 'jquery-ui-mouse'),
+			SLN_Action_InitScripts::ASSETS_VERSION,
+			true
+		);
 		wp_enqueue_script(
 			'salon-customMetaService',
 			SLN_PLUGIN_URL . '/js/admin/customMetaService.js',
-			array('jquery', 'jquery-ui-sortable'),
+			array('jquery', 'jquery-ui-sortable', 'salon-jquery-ui-touch-bridge'),
 			SLN_Action_InitScripts::ASSETS_VERSION,
 			true
 		);

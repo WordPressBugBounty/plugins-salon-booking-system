@@ -1186,3 +1186,4 @@ echo expirePopup();
     </div>
 </div>
 <?php do_action( 'sln.admin.calendar.footer' ); ?>
+<?php include dirname( __FILE__ ) . '/_ai_calendar_assistant.php'; ?>
