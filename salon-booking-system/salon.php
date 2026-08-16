@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 /*
 Plugin Name: Salon Booking System - Free Version
 Description: Let your customers book you services through your website. Perfect for hairdressing salons, barber shops and beauty centers.
-Version: 10.31.0
+Version: 10.31.1
 Requires at least: 6.0
 Requires PHP: 7.4.8
 Plugin URI: http://salonbookingsystem.com/
@@ -49,7 +49,7 @@ if (defined('SLN_PLUGIN_BASENAME')) {
 define('SLN_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('SLN_PLUGIN_DIR', untrailingslashit(dirname(__FILE__)));
 define('SLN_PLUGIN_URL', untrailingslashit(plugins_url('', __FILE__)));
-define('SLN_VERSION', '10.31.0');
+define('SLN_VERSION', '10.31.1');
 define('SLN_STORE_URL', 'https://salonbookingsystem.com');
 define('SLN_PRICING_URL', 'https://www.salonbookingsystem.com/plugin-pricing-2/');
 define('SLN_AUTHOR', 'Salon Booking');
@@ -58,6 +58,11 @@ define('SLN_UPLOADS_URL', wp_upload_dir()['baseurl'] . '/sln_uploads/');
 define('SLN_ITEM_SLUG', 'salon-booking-wordpress-plugin');
 define('SLN_ITEM_NAME', 'Salon booking wordpress plugin');
 define('SLN_ITEM_ID', 'salon-booking-wordpress-plugin');
+// Numeric EDD download ID of the main "Salon booking wordpress plugin" product.
+// All paid editions (Pro, Basic/SE, ...) are price options of this single download,
+// so validating the license by item_id (which EDD prioritises over item_name) lets
+// every license issued for this product activate on any edition build.
+define('SLN_ITEM_DOWNLOAD_ID', 23261);
 define('SLN_API_KEY', '0b47c255778d646aaa89b6f40859b159');
 define('SLN_API_TOKEN', '7c901a98fa10dd3af65b038d6f5f190c');
 
@@ -265,71 +270,21 @@ register_activation_hook(__FILE__, function () {
 	// Flag to redirect to onboarding wizard on next admin load (first activation)
 	set_transient('sln_redirect_to_onboarding', true, 30);
 	
-	// Track activation to salonbookingsystem.com
-	wp_remote_post('https://www.salonbookingsystem.com/wp-json/sbs-tracker/v1/activation', array(
-		'blocking' => false, // Don't slow down activation
-		'timeout' => 2,
-		'sslverify' => true,
-		'body' => array(
-			'version' => defined('SLN_VERSION_PAY') && SLN_VERSION_PAY ? 'pro' : 'free',
-			'plugin_version' => SLN_VERSION,
-			'wp_version' => get_bloginfo('version'),
-			'php_version' => phpversion(),
-			'locale' => get_locale(),
-			'site_hash' => hash('sha256', home_url())
-		)
-	));
+	// Track activation to salonbookingsystem.com (api_key + UA via helper)
+	SLN_Helper_Tracker::sendActivation();
 });
 
 register_deactivation_hook(__FILE__, function () {
 	// Track deactivation to salonbookingsystem.com with survey data
 	try {
-		// Get survey data if available (set by AJAX handler)
 		$survey_data = get_transient('sln_deactivation_survey_data');
-		
-		// Calculate activation metrics
-		$activation_time = get_option('sln_activation_time', current_time('timestamp'));
-		$days_active = floor((current_time('timestamp') - $activation_time) / DAY_IN_SECONDS);
-		
-		// Prepare payload
-		$payload = array(
-			'version' => defined('SLN_VERSION_PAY') && SLN_VERSION_PAY ? 'pro' : 'free',
-			'plugin_version' => SLN_VERSION,
-			'site_hash' => hash('sha256', home_url()),
-			'days_active' => intval($days_active)
-		);
-		
-		// Add survey data if available
-		if ($survey_data) {
-			$payload['deactivation_reason'] = isset($survey_data['reason']) ? $survey_data['reason'] : 'skipped';
-			$payload['deactivation_feedback'] = isset($survey_data['feedback']) ? $survey_data['feedback'] : '';
-			$payload['deactivation_rating'] = isset($survey_data['rating']) ? intval($survey_data['rating']) : 0;
-			$payload['setup_progress'] = isset($survey_data['setup_progress']) ? intval($survey_data['setup_progress']) : 0;
-			$payload['completed_first_booking'] = isset($survey_data['completed_first_booking']) ? (bool) $survey_data['completed_first_booking'] : false;
-		} else {
-			// No survey data - user skipped
-			$payload['deactivation_reason'] = 'skipped';
-			$payload['deactivation_feedback'] = '';
-			$payload['deactivation_rating'] = 0;
-			$payload['setup_progress'] = 0;
-			$payload['completed_first_booking'] = false;
-		}
-		
-		wp_remote_post('https://www.salonbookingsystem.com/wp-json/sbs-tracker/v1/deactivation', array(
-			'blocking' => false,
-			'timeout' => 2,
-			'sslverify' => true,
-			'body' => $payload
-		));
-		
-		// Send follow-up email if user provided detailed feedback
+		SLN_Helper_Tracker::sendDeactivation(is_array($survey_data) ? $survey_data : array());
+
 		if ($survey_data && !empty($survey_data['feedback']) && trim($survey_data['feedback']) !== '') {
 			sln_send_deactivation_followup_email($survey_data);
 		}
-		
-		// Clean up transient
+
 		delete_transient('sln_deactivation_survey_data');
-		
 	} catch (Error $e) {
 		// Fail silently - don't break deactivation
 		return;

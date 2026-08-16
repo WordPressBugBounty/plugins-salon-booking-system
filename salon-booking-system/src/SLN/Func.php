@@ -175,7 +175,9 @@ class SLN_Func
     {
         return array(
             '+5 minutes' => __('5 minutes', 'salon-booking-system'),
+            '+10 minutes' => __('10 minutes', 'salon-booking-system'),
             '+15 minutes' => __('quarter of an hour', 'salon-booking-system'),
+            '+20 minutes' => __('20 minutes', 'salon-booking-system'),
             '+30 minutes' => __('half hour', 'salon-booking-system'),
             '+1 hour' => '1 ' . __('hour', 'salon-booking-system'),
             '+2 hours' => '2 ' . __('hours', 'salon-booking-system'),

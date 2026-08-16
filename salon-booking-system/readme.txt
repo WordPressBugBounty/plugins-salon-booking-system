@@ -4,7 +4,7 @@ Tags: salon, spa, appointment booking, booking system, scheduling
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4.8
-Stable tag: 10.31.0
+Stable tag: 10.31.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -363,6 +363,10 @@ PHP 7.4 and above.
 
 == Changelog ==
 
+
+16.08.2026 - 10.31.1
+
+* Improved: anonymous usage telemetry (activation, weekly heartbeat, first completed booking, review prompt) so we can see whether the free version is working. No personal data and no site URL. Disable with the sln_tracker_enabled filter.
 
 11.08.2026 - 10.31.0
 

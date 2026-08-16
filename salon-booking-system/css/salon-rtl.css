@@ -778,8 +778,7 @@ a.sln-btn.sln-btn--borderonly:active button,
 }
 
 .sln-steps-name:hover, .sln-alert a:hover,
-#sln-salon .alert a:hover, .sln-checkbox input + label:hover:after,
-#sln-salon .sln-checkbox input + label:hover:after, #sln-salon.sln-loginform #loginform .login-emember label:hover:after, .sln-text--emphasis--hoverk {
+#sln-salon .alert a:hover, .sln-text--emphasis--hoverk {
   color: #0091ea;
 }
 
@@ -968,8 +967,7 @@ a.sln-btn.sln-btn--borderonly:active,
 .sln-bootstrap #sln-salon.sln-loginform:not(.sln-customcolors) #loginform #wp-submit:focus,
 #sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-bootstrap #wp-submit:focus,
 .sln-bootstrap #sln-salon.sln-loginform:not(.sln-customcolors) #loginform #wp-submit:active,
-#sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-bootstrap #wp-submit:active, .sln-radiobox input + label:hover:after,
-#sln-salon .sln-radiobox input + label:hover:after, #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--single:hover, #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--single:focus, #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--single[aria-expanded=true],
+#sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-bootstrap #wp-submit:active, #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--single:hover, #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--single:focus, #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--single[aria-expanded=true],
 #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--multiple:hover,
 #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--multiple:focus,
 #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--multiple[aria-expanded=true], .sln-salon-page:not(.sln-salon-page-customcolors) .select2-container.select2-container--sln .select2-results__option--highlighted[aria-selected], #sln-salon .sln-panel .sln-panel-heading .sln-btn--borderonly:hover, #sln-salon .sln-panel .sln-panel-heading .sln-btn--nobkg:hover, #sln-salon .datetimepicker.sln-datetimepicker table tr td.day:not(.disabled):hover,
@@ -1064,8 +1062,7 @@ ul.sln-list--dashed li,
 #sln-salon .sln-btn--borderonly:active,
 #sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-btn--borderonly#wp-submit:hover,
 #sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-btn--borderonly#wp-submit:focus,
-#sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-btn--borderonly#wp-submit:active, #sln-salon.sln-loginform:not(.sln-customcolors) .sln-box--formactions #loginform .sln-btn--icon--left#wp-submit:hover, #sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-box--formactions .sln-btn--icon--left#wp-submit:hover, #sln-salon.sln-loginform:not(.sln-customcolors) .sln-box--formactions #loginform .sln-btn--icon--left#wp-submit:focus, #sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-box--formactions .sln-btn--icon--left#wp-submit:focus, #sln-salon.sln-loginform:not(.sln-customcolors) .sln-box--formactions #loginform .sln-btn--icon--left#wp-submit:active, #sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-box--formactions .sln-btn--icon--left#wp-submit:active, .sln-checkbox input + label:hover:before,
-#sln-salon .sln-checkbox input + label:hover:before, #sln-salon.sln-loginform #loginform .login-emember label:hover:before, #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--single:hover, #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--single:focus, #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--single[aria-expanded=true],
+#sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-btn--borderonly#wp-submit:active, #sln-salon.sln-loginform:not(.sln-customcolors) .sln-box--formactions #loginform .sln-btn--icon--left#wp-submit:hover, #sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-box--formactions .sln-btn--icon--left#wp-submit:hover, #sln-salon.sln-loginform:not(.sln-customcolors) .sln-box--formactions #loginform .sln-btn--icon--left#wp-submit:focus, #sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-box--formactions .sln-btn--icon--left#wp-submit:focus, #sln-salon.sln-loginform:not(.sln-customcolors) .sln-box--formactions #loginform .sln-btn--icon--left#wp-submit:active, #sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-box--formactions .sln-btn--icon--left#wp-submit:active, #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--single:hover, #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--single:focus, #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--single[aria-expanded=true],
 #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--multiple:hover,
 #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--multiple:focus,
 #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--multiple[aria-expanded=true], #sln-salon .sln-panel .sln-panel-heading .sln-btn--borderonly:hover {
@@ -1459,6 +1456,7 @@ a.sln-btn.sln-btn--borderonly,
   margin-bottom: 2em;
 }
 #sln-salon .sln-panel .sln-panel-heading {
+  position: relative;
   margin-bottom: 0;
   outline: none;
   text-decoration: none;
@@ -3573,9 +3571,16 @@ a.sln-btn.sln-btn--borderonly,
     height: 16px;
   }
 }
-.sln-checkbox input + label:hover:after,
-#sln-salon .sln-checkbox input + label:hover:after {
-  opacity: 0.75;
+@media (hover: hover) {
+  .sln-checkbox input + label:hover:before,
+  #sln-salon .sln-checkbox input + label:hover:before {
+    border-color: #0091ea;
+  }
+  .sln-checkbox input + label:hover:after,
+  #sln-salon .sln-checkbox input + label:hover:after {
+    opacity: 0.75;
+    color: #0091ea;
+  }
 }
 .sln-checkbox input:checked + label:after,
 .sln-checkbox input:checked + label:hover:after,
@@ -3765,8 +3770,14 @@ a.sln-btn.sln-btn--borderonly,
     height: 16px;
   }
 }
-#sln-salon.sln-loginform #loginform .login-emember label:hover:after {
-  opacity: 0.5;
+@media (hover: hover) {
+  #sln-salon.sln-loginform #loginform .login-emember label:hover:before {
+    border-color: #0091ea;
+  }
+  #sln-salon.sln-loginform #loginform .login-emember label:hover:after {
+    opacity: 0.5;
+    color: #0091ea;
+  }
 }
 #sln-salon.sln-loginform #loginform .login-emember label.is-checked:after,
 #sln-salon.sln-loginform #loginform .login-emember label.is-checked:hover:after {
@@ -4263,9 +4274,12 @@ a.sln-btn.sln-btn--borderonly,
   text-align: center;
   opacity: 0;
 }
-.sln-radiobox input + label:hover:after,
-#sln-salon .sln-radiobox input + label:hover:after {
-  opacity: 1;
+@media (hover: hover) {
+  .sln-radiobox input + label:hover:after,
+  #sln-salon .sln-radiobox input + label:hover:after {
+    opacity: 1;
+    background-color: #0091ea;
+  }
 }
 .sln-radiobox input:checked + label:after,
 .sln-radiobox input:checked + label:hover:after,
@@ -4828,6 +4842,13 @@ a.sln-btn.sln-btn--disabled a,
 #sln-salon .sln-box--formactions--outline .sln-btn--medium .sln-btn__info strong,
 #sln-salon.sln-loginform:not(.sln-customcolors) .sln-box--formactions--outline #loginform #wp-submit .sln-btn__info strong,
 #sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-box--formactions--outline #wp-submit .sln-btn__info strong {
+  font-weight: 700;
+}
+#sln-salon .sln-box--formactions--summary .sln-btn--medium .sln-pay-amount, #sln-salon.sln-loginform:not(.sln-customcolors) .sln-box--formactions--summary #loginform #wp-submit .sln-pay-amount, #sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-box--formactions--summary #wp-submit .sln-pay-amount,
+#sln-salon .sln-box--formactions--outline .sln-btn--medium .sln-pay-amount,
+#sln-salon.sln-loginform:not(.sln-customcolors) .sln-box--formactions--outline #loginform #wp-submit .sln-pay-amount,
+#sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-box--formactions--outline #wp-submit .sln-pay-amount {
+  margin-right: 0.35em;
   font-weight: 700;
 }
 #sln-salon .sln-box--formactions--summary .sln-btn--medium.sln-btn--fitcontent, #sln-salon.sln-loginform:not(.sln-customcolors) .sln-box--formactions--summary #loginform .sln-btn--fitcontent#wp-submit, #sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-box--formactions--summary .sln-btn--fitcontent#wp-submit,
@@ -7501,41 +7522,65 @@ body.modal-open {
   text-align: left;
 }
 
+#sln-salon-booking__content {
+  position: relative;
+}
+
+.sln-salon-title {
+  padding-left: 2.75em;
+}
+
 .sln-topbar,
 #sln-salon .sln-topbar {
+  position: absolute;
+  top: 1em;
+  left: 1em;
+  z-index: 3;
   display: flex;
   justify-content: end;
   align-items: center;
-  margin-bottom: 1em;
 }
-.sln-topbar h6,
-#sln-salon .sln-topbar h6 {
-  color: rgb(80, 80, 80);
-}
-.sln-topbar h6::before,
-#sln-salon .sln-topbar h6::before {
-  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13.693' height='15.155' viewBox='0 0 13.693 15.155'%3E%3Cpath id='Unione_1' data-name='Unione 1' d='M-1986.017,1870.731v-1.461a1.925,1.925,0,0,0-1.923-1.923h-5.846a1.912,1.912,0,0,0-1.36.563,1.916,1.916,0,0,0-.563,1.361v1.461a1,1,0,0,1-1,1,1,1,0,0,1-1-1v-1.461a3.9,3.9,0,0,1,1.149-2.775,3.9,3.9,0,0,1,2.774-1.149h5.846a3.928,3.928,0,0,1,3.923,3.924v1.461a1,1,0,0,1-1,1A1,1,0,0,1-1986.017,1870.731Zm-8.77-10.23a3.928,3.928,0,0,1,3.923-3.924,3.928,3.928,0,0,1,3.923,3.924,3.928,3.928,0,0,1-3.923,3.923A3.928,3.928,0,0,1-1994.786,1860.5Zm2,0a1.925,1.925,0,0,0,1.923,1.922,1.925,1.925,0,0,0,1.923-1.922,1.925,1.925,0,0,0-1.923-1.923A1.925,1.925,0,0,0-1992.786,1860.5Z' transform='translate(1997.709 -1856.577)' fill='rgb(80, 80, 80)'/%3E%3C/svg%3E%0A");
-  margin-left: 0.5em;
-}
-.sln-topbar a,
-#sln-salon .sln-topbar a {
+.sln-topbar .sln-topbar__account,
+#sln-salon .sln-topbar .sln-topbar__account {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1em;
+  line-height: 1.1;
+  text-align: center;
   color: rgb(9, 120, 189);
-  border-bottom: 1px solid;
-  border-bottom-color: transparent;
+  border-bottom: 0;
 }
-.sln-topbar a,
-#sln-salon .sln-topbar a {
-  -webkit-transition: border-bottom-color 250ms;
-  -moz-transition: border-bottom-color 250ms;
-  -o-transition: border-bottom-color 250ms;
-  transition: border-bottom-color 250ms;
+.sln-topbar .sln-topbar__account,
+#sln-salon .sln-topbar .sln-topbar__account {
+  -webkit-transition: opacity 250ms;
+  -moz-transition: opacity 250ms;
+  -o-transition: opacity 250ms;
+  transition: opacity 250ms;
 }
 @media (hover: hover) {
-  .sln-topbar a:hover,
-  #sln-salon .sln-topbar a:hover {
+  .sln-topbar .sln-topbar__account:hover,
+  #sln-salon .sln-topbar .sln-topbar__account:hover {
     text-decoration: none;
-    border-bottom-color: currentColor;
+    opacity: 0.75;
   }
+}
+.sln-topbar .sln-topbar__name,
+#sln-salon .sln-topbar .sln-topbar__name {
+  display: block;
+  max-width: 7em;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 0.75em;
+  color: rgb(80, 80, 80);
+}
+.sln-topbar .sln-topbar__icon,
+#sln-salon .sln-topbar .sln-topbar__icon {
+  display: block;
+  width: 1.9em;
+  height: 1.9em;
+  fill: currentColor;
 }
 
 #sln-salon #sln-salon-my-account.mobile-version .sln-salon-booking-calendar.table tr {
@@ -13353,6 +13398,15 @@ body:not(.sln-salon-page)
   font-size: 13px;
   text-align: center;
   margin-top: -10px;
+}
+
+#sln-salon .sln-deposit-note {
+  color: #6b7280;
+  font-size: 13px;
+  line-height: 1.3;
+  text-align: center;
+  margin-top: 8px;
+  margin-bottom: 1em;
 }
 
 #sln-salon .sln-input-group .iti__selected-flag {

@@ -12,7 +12,7 @@
       <b-spinner variant="light" small></b-spinner>
     </div>
     
-    <div class="booking" :class="{ 'no-show': booking.no_show }" @click="showDetails">
+    <div class="booking" :class="{ 'no-show': booking.no_show, 'has-side-actions': canUsePwaNoShowControl }" @click="showDetails">
       <div class="customer-info">
         <div class="customer-info-header">
           <span class="customer-name">{{ customer }}</span>
@@ -37,15 +37,10 @@
         <span class="note-text">{{ booking.note }}</span>
       </div>
 
-      <div class="booking-actions-bottom">
-        <!-- Walk-In Badge -->
-        <div v-if="booking.is_walkin" class="walkin-badge" title="Walk-In">
-          🚶
-        </div>
-        
+      <!-- Right-side action column (kept clear of booking details) -->
+      <div v-if="canUsePwaNoShowControl" class="booking-side-actions">
         <!-- No-show (PRO + salon setting only) -->
         <button 
-          v-if="canUsePwaNoShowControl"
           class="no-show-icon"
           :class="{ 'active': booking.no_show }"
           @click.stop="toggleNoShow"
@@ -54,6 +49,24 @@
         >
           <span class="no-show-icon-svg"></span>
         </button>
+        
+        <!-- Trash for no-show bookings (same gate as no-show control) -->
+        <button 
+          v-if="booking.no_show"
+          class="trash-icon"
+          @click.stop="confirmDelete"
+          :disabled="isDelete"
+          title="Delete no-show booking"
+        >
+          <span class="trash-icon-svg"></span>
+        </button>
+      </div>
+
+      <div class="booking-actions-bottom">
+        <!-- Walk-In Badge -->
+        <div v-if="booking.is_walkin" class="walkin-badge" title="Walk-In">
+          🚶
+        </div>
         
         <!-- Approve/Reject Actions for Pending Bookings -->
         <div v-if="showApprovalActions" class="approval-actions" @click.stop>
@@ -74,17 +87,6 @@
             👎
           </button>
         </div>
-        
-        <!-- Trash for no-show bookings (same gate as no-show control) -->
-        <button 
-          v-if="canUsePwaNoShowControl && booking.no_show"
-          class="trash-icon"
-          @click.stop="confirmDelete"
-          :disabled="isDelete"
-          title="Delete no-show booking"
-        >
-          <span class="trash-icon-svg"></span>
-        </button>
       </div>
     </div>
     
@@ -767,6 +769,18 @@ export default {
   overflow: hidden;
 }
 
+/* Reserve a clear right-side lane for the no-show/trash controls so they
+   never overlap the customer name, booking id or service details. */
+.booking.has-side-actions {
+  padding-right: 44px;
+}
+
+/* Keep the bottom action bar (walk-in / approve-reject) clear of the
+   bottom-right no-show corner cluster. */
+.booking.has-side-actions .booking-actions-bottom {
+  right: 44px;
+}
+
 .booking-wrapper.is-resizing .booking {
   background-color: #F8FAFC;
   border-color: #E2E8F0;
@@ -1013,6 +1027,24 @@ export default {
   transform: scale(1.2);
 }
 
+/* Bottom-right action cluster: reserved corner for no-show + trash controls */
+.booking-side-actions {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 6;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  pointer-events: none; /* let the card handle clicks in empty space */
+}
+
+.booking-side-actions > * {
+  pointer-events: auto; /* but the icons themselves stay clickable */
+}
+
 /* No-Show Icon */
 .no-show-icon {
   background: transparent;
@@ -1023,7 +1055,6 @@ export default {
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
-  margin-left: 8px;
 }
 
 .no-show-icon:disabled {

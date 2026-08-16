@@ -778,8 +778,7 @@ a.sln-btn.sln-btn--borderonly:active button,
 }
 
 .sln-steps-name:hover, .sln-alert a:hover,
-#sln-salon .alert a:hover, .sln-checkbox input + label:hover:after,
-#sln-salon .sln-checkbox input + label:hover:after, #sln-salon.sln-loginform #loginform .login-emember label:hover:after, .sln-text--emphasis--hoverk {
+#sln-salon .alert a:hover, .sln-text--emphasis--hoverk {
   color: #0091ea;
 }
 
@@ -968,8 +967,7 @@ a.sln-btn.sln-btn--borderonly:active,
 .sln-bootstrap #sln-salon.sln-loginform:not(.sln-customcolors) #loginform #wp-submit:focus,
 #sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-bootstrap #wp-submit:focus,
 .sln-bootstrap #sln-salon.sln-loginform:not(.sln-customcolors) #loginform #wp-submit:active,
-#sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-bootstrap #wp-submit:active, .sln-radiobox input + label:hover:after,
-#sln-salon .sln-radiobox input + label:hover:after, #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--single:hover, #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--single:focus, #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--single[aria-expanded=true],
+#sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-bootstrap #wp-submit:active, #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--single:hover, #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--single:focus, #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--single[aria-expanded=true],
 #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--multiple:hover,
 #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--multiple:focus,
 #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--multiple[aria-expanded=true], .sln-salon-page:not(.sln-salon-page-customcolors) .select2-container.select2-container--sln .select2-results__option--highlighted[aria-selected], #sln-salon .sln-panel .sln-panel-heading .sln-btn--borderonly:hover, #sln-salon .sln-panel .sln-panel-heading .sln-btn--nobkg:hover, #sln-salon .datetimepicker.sln-datetimepicker table tr td.day:not(.disabled):hover,
@@ -1064,8 +1062,7 @@ ul.sln-list--dashed li,
 #sln-salon .sln-btn--borderonly:active,
 #sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-btn--borderonly#wp-submit:hover,
 #sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-btn--borderonly#wp-submit:focus,
-#sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-btn--borderonly#wp-submit:active, #sln-salon.sln-loginform:not(.sln-customcolors) .sln-box--formactions #loginform .sln-btn--icon--left#wp-submit:hover, #sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-box--formactions .sln-btn--icon--left#wp-submit:hover, #sln-salon.sln-loginform:not(.sln-customcolors) .sln-box--formactions #loginform .sln-btn--icon--left#wp-submit:focus, #sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-box--formactions .sln-btn--icon--left#wp-submit:focus, #sln-salon.sln-loginform:not(.sln-customcolors) .sln-box--formactions #loginform .sln-btn--icon--left#wp-submit:active, #sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-box--formactions .sln-btn--icon--left#wp-submit:active, .sln-checkbox input + label:hover:before,
-#sln-salon .sln-checkbox input + label:hover:before, #sln-salon.sln-loginform #loginform .login-emember label:hover:before, #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--single:hover, #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--single:focus, #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--single[aria-expanded=true],
+#sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-btn--borderonly#wp-submit:active, #sln-salon.sln-loginform:not(.sln-customcolors) .sln-box--formactions #loginform .sln-btn--icon--left#wp-submit:hover, #sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-box--formactions .sln-btn--icon--left#wp-submit:hover, #sln-salon.sln-loginform:not(.sln-customcolors) .sln-box--formactions #loginform .sln-btn--icon--left#wp-submit:focus, #sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-box--formactions .sln-btn--icon--left#wp-submit:focus, #sln-salon.sln-loginform:not(.sln-customcolors) .sln-box--formactions #loginform .sln-btn--icon--left#wp-submit:active, #sln-salon.sln-loginform:not(.sln-customcolors) #loginform .sln-box--formactions .sln-btn--icon--left#wp-submit:active, #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--single:hover, #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--single:focus, #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--single[aria-expanded=true],
 #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--multiple:hover,
 #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--multiple:focus,
 #sln-salon:not(.sln-customcolors) .select2-container.select2-container--sln .select2-selection--multiple[aria-expanded=true], #sln-salon .sln-panel .sln-panel-heading .sln-btn--borderonly:hover {
@@ -3574,9 +3571,16 @@ a.sln-btn.sln-btn--borderonly,
     height: 16px;
   }
 }
-.sln-checkbox input + label:hover:after,
-#sln-salon .sln-checkbox input + label:hover:after {
-  opacity: 0.75;
+@media (hover: hover) {
+  .sln-checkbox input + label:hover:before,
+  #sln-salon .sln-checkbox input + label:hover:before {
+    border-color: #0091ea;
+  }
+  .sln-checkbox input + label:hover:after,
+  #sln-salon .sln-checkbox input + label:hover:after {
+    opacity: 0.75;
+    color: #0091ea;
+  }
 }
 .sln-checkbox input:checked + label:after,
 .sln-checkbox input:checked + label:hover:after,
@@ -3766,8 +3770,14 @@ a.sln-btn.sln-btn--borderonly,
     height: 16px;
   }
 }
-#sln-salon.sln-loginform #loginform .login-emember label:hover:after {
-  opacity: 0.5;
+@media (hover: hover) {
+  #sln-salon.sln-loginform #loginform .login-emember label:hover:before {
+    border-color: #0091ea;
+  }
+  #sln-salon.sln-loginform #loginform .login-emember label:hover:after {
+    opacity: 0.5;
+    color: #0091ea;
+  }
 }
 #sln-salon.sln-loginform #loginform .login-emember label.is-checked:after,
 #sln-salon.sln-loginform #loginform .login-emember label.is-checked:hover:after {
@@ -4264,9 +4274,12 @@ a.sln-btn.sln-btn--borderonly,
   text-align: center;
   opacity: 0;
 }
-.sln-radiobox input + label:hover:after,
-#sln-salon .sln-radiobox input + label:hover:after {
-  opacity: 1;
+@media (hover: hover) {
+  .sln-radiobox input + label:hover:after,
+  #sln-salon .sln-radiobox input + label:hover:after {
+    opacity: 1;
+    background-color: #0091ea;
+  }
 }
 .sln-radiobox input:checked + label:after,
 .sln-radiobox input:checked + label:hover:after,

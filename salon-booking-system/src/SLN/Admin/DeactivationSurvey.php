@@ -424,26 +424,8 @@ class SLN_Admin_DeactivationSurvey
             );
         }
 
-        // Send to tracker API with survey data
         try {
-            wp_remote_post('https://www.salonbookingsystem.com/wp-json/sbs-tracker/v1/deactivation', array(
-                'blocking' => false,
-                'timeout' => 2,
-                'sslverify' => true,
-                'body' => array(
-                    'version' => defined('SLN_VERSION_PAY') && SLN_VERSION_PAY ? 'pro' : 'free',
-                    'plugin_version' => SLN_VERSION,
-                    'site_hash' => hash('sha256', home_url()),
-                    
-                    // Survey data
-                    'deactivation_reason' => $survey_data['reason'],
-                    'deactivation_feedback' => isset($survey_data['feedback']) ? $survey_data['feedback'] : '',
-                    'deactivation_rating' => isset($survey_data['rating']) ? intval($survey_data['rating']) : 0,
-                    'days_active' => intval($survey_data['days_active']),
-                    'setup_progress' => intval($survey_data['setup_progress']),
-                    'completed_first_booking' => (bool) $survey_data['completed_first_booking']
-                )
-            ));
+            SLN_Helper_Tracker::sendDeactivation($survey_data);
         } catch (Exception $e) {
             // Fail silently - don't break deactivation
         }

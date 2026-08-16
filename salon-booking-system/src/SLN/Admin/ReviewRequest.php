@@ -46,6 +46,8 @@ class SLN_Admin_ReviewRequest
             return;
         }
 
+        SLN_Helper_Tracker::sendReviewPromptShown();
+
         $review_url = self::REVIEW_URL;
         $nonce      = wp_create_nonce('sln_review_request_dismiss');
         ?>
@@ -67,7 +69,7 @@ class SLN_Admin_ReviewRequest
                 ?>
             </p>
             <p>
-                <a href="<?php echo esc_url($review_url); ?>" target="_blank" rel="noopener" class="button button-primary" onclick="slnReviewRequestDismiss('done')">
+                <a href="<?php echo esc_url($review_url); ?>" target="_blank" rel="noopener" class="button button-primary" onclick="slnReviewRequestDismiss('reviewed')">
                     <?php esc_html_e('Leave a review', 'salon-booking-system'); ?> ★★★★★
                 </a>
                 <button type="button" class="button" onclick="slnReviewRequestDismiss('later')">
@@ -101,7 +103,10 @@ class SLN_Admin_ReviewRequest
 
         $mode = isset($_POST['mode']) ? sanitize_key(wp_unslash($_POST['mode'])) : 'later';
 
-        if ('done' === $mode) {
+        if ('reviewed' === $mode) {
+            SLN_Helper_Tracker::sendReviewPromptClicked();
+            update_option(self::OPTION_STATE, 'done');
+        } elseif ('done' === $mode) {
             update_option(self::OPTION_STATE, 'done');
         } else {
             update_option(self::OPTION_STATE, time() + self::SNOOZE_DAYS * DAY_IN_SECONDS);
@@ -146,28 +151,6 @@ class SLN_Admin_ReviewRequest
             return false;
         }
 
-        return $this->getSuccessfulBookingsCount() >= self::MIN_BOOKINGS;
-    }
-
-    /**
-     * Count bookings in "successful" statuses using the core-cached counter.
-     *
-     * @return int
-     */
-    private function getSuccessfulBookingsCount()
-    {
-        $counts = wp_count_posts(SLN_Plugin::POST_TYPE_BOOKING);
-        if (!$counts) {
-            return 0;
-        }
-
-        $total = 0;
-        foreach (array(SLN_Enum_BookingStatus::CONFIRMED, SLN_Enum_BookingStatus::PAID, SLN_Enum_BookingStatus::PAY_LATER) as $status) {
-            if (isset($counts->{$status})) {
-                $total += (int) $counts->{$status};
-            }
-        }
-
-        return $total;
+        return SLN_Helper_Tracker::getSuccessfulBookingsCount() >= self::MIN_BOOKINGS;
     }
 }

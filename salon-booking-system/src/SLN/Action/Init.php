@@ -81,6 +81,7 @@ class SLN_Action_Init
             array(SLN_Plugin::POST_TYPE_SERVICE)
         );
         $this->initSchedules();
+        SLN_Helper_Tracker::init();
 
         add_action('template_redirect', array($this, 'template_redirect'));
         new SLN_Privacy();

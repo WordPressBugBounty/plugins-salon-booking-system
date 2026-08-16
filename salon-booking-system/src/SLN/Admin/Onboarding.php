@@ -356,23 +356,7 @@ class SLN_Admin_Onboarding extends SLN_Admin_AbstractPage
                 // This powers the "Top Salon Business Types" chart on salonbookingsystem.com.
                 $business_type = sanitize_key(isset($data['usage_goal']) ? $data['usage_goal'] : '');
                 if ($business_type) {
-                    $ping_body = array(
-                        'business_type' => $business_type,
-                        'site_hash'     => hash('sha256', home_url()),
-                    );
-                    // Include API key if defined in wp-config.php or the plugin file.
-                    if (defined('SBS_TRACKER_API_SECRET') && SBS_TRACKER_API_SECRET) {
-                        $ping_body['api_key'] = SBS_TRACKER_API_SECRET;
-                    }
-                    wp_remote_post(
-                        'https://www.salonbookingsystem.com/wp-json/sbs-tracker/v1/business-type',
-                        array(
-                            'blocking'  => false,
-                            'timeout'   => 2,
-                            'sslverify' => true,
-                            'body'      => $ping_body,
-                        )
-                    );
+                    SLN_Helper_Tracker::sendOnboarding($business_type);
                 }
 
                 wp_send_json_success();

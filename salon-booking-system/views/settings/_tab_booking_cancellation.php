@@ -34,6 +34,7 @@ $hoursBeforeCancellation = $plugin->getSettings()->get('hours_before_cancellatio
         echo SLN_Form::fieldSelect(
 	$field,
 	array(
+		'0.1667' => __('10 minutes', 'salon-booking-system'),
 		'0.25' => __('15 minutes', 'salon-booking-system'),
 		'0.3333' => __('20 minutes', 'salon-booking-system'),
 		'0.5' => __('30 minutes', 'salon-booking-system'),
