@@ -12,6 +12,7 @@ class SLN_Admin_Onboarding extends SLN_Admin_AbstractPage
         add_action('in_admin_header', array($this, 'in_admin_header'));
         add_action('wp_ajax_sln_onboarding_save_step', array($this, 'ajaxSaveStep'));
         add_action('wp_ajax_sln_onboarding_complete', array($this, 'ajaxComplete'));
+        add_action('wp_ajax_sln_onboarding_skip', array($this, 'ajaxSkip'));
         add_action('wp_ajax_sln_onboarding_upload_logo', array($this, 'ajaxUploadLogo'));
     }
 
@@ -640,6 +641,90 @@ class SLN_Admin_Onboarding extends SLN_Admin_AbstractPage
         delete_option('_sln_onboarding_pending_assistants');
         delete_option('_sln_onboarding_pending_services');
         wp_send_json_success(array('redirect' => admin_url('admin.php?page=salon')));
+    }
+
+    /**
+     * Skip the wizard: seed Mon–Fri hours + one service so the booking form works, then calendar.
+     */
+    public function ajaxSkip()
+    {
+        if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'sln_onboarding')) {
+            wp_send_json_error(array('message' => 'Security check failed'));
+        }
+        if (!current_user_can($this->getCapability())) {
+            wp_send_json_error(array('message' => 'Forbidden'));
+        }
+
+        $this->applySkipDefaults();
+
+        update_option('_sln_onboarding_completed', 1);
+        delete_option('_sln_onboarding_pending_assistants');
+        delete_option('_sln_onboarding_pending_services');
+
+        wp_send_json_success(array('redirect' => admin_url('admin.php?page=salon')));
+    }
+
+    /**
+     * Minimal bookable salon so Skip does not land on an empty frontend form.
+     */
+    private function applySkipDefaults()
+    {
+        $settings = $this->plugin->getSettings();
+
+        if (trim((string) get_option('_sln_usage_goal', '')) === '') {
+            update_option('_sln_usage_goal', 'skipped');
+            SLN_Helper_Tracker::sendOnboarding('skipped');
+        }
+
+        if (trim((string) $settings->get('gen_name')) === '') {
+            $settings->set('gen_name', get_bloginfo('name'));
+        }
+        if (trim((string) $settings->get('gen_email')) === '') {
+            $settings->set('gen_email', (string) get_option('admin_email'));
+        }
+
+        $errors = $this->getOnboardingMinimumErrors();
+        if (in_array('availability', $errors, true)) {
+            $availabilities = $settings->get('availabilities');
+            if (!is_array($availabilities)) {
+                $availabilities = array();
+            }
+            $availabilities[0] = array(
+                'days'   => array(2 => 1, 3 => 1, 4 => 1, 5 => 1, 6 => 1),
+                'from'   => array('09:00', '14:00'),
+                'to'     => array('13:00', '18:00'),
+                'always' => true,
+            );
+            $settings->set('availabilities', SLN_Helper_AvailabilityItems::processSubmission($availabilities));
+        }
+
+        $settings->save();
+
+        $existing = get_posts(array(
+            'post_type'      => SLN_Plugin::POST_TYPE_SERVICE,
+            'post_status'    => 'publish',
+            'posts_per_page' => 1,
+            'fields'         => 'ids',
+        ));
+        if (empty($existing)) {
+            $post_id = wp_insert_post(array(
+                'post_title'  => __('Service', 'salon-booking-system'),
+                'post_status' => 'publish',
+                'post_type'   => SLN_Plugin::POST_TYPE_SERVICE,
+            ));
+            if ($post_id && !is_wp_error($post_id)) {
+                update_post_meta($post_id, '_sln_service_price', '0');
+                update_post_meta($post_id, '_sln_service_duration', '00:30');
+                update_post_meta($post_id, '_sln_service_unit', '1');
+                update_post_meta($post_id, '_sln_service_order', '0');
+            }
+        }
+
+        if (class_exists('SLN_Helper_Availability_Cache')) {
+            SLN_Helper_Availability_Cache::clearCache();
+        }
+        $this->plugin->getBookingCache()->refreshAll();
+        $this->plugin->getBookingCache()->save();
     }
 
     /**

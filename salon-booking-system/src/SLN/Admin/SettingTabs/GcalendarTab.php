@@ -13,15 +13,27 @@ class SLN_Admin_SettingTabs_GcalendarTab extends SLN_Admin_SettingTabs_AbstractT
         'google_calendar_lock_slots',
     );
 
+	/** @var bool Captured in validate() before save, consumed in postProcess(). */
+	protected $pending_revoke = false;
+
 	protected function validate(){
-		
-        if ($this->needsGCalendarRevokeToken()) {
-            header("Location: ".admin_url('admin.php?page=salon-settings&tab=gcalendar&revoketoken=1'));
+        // Compare submitted values to the still-unsaved settings. After
+        // saveSettings() the old/new check would no longer see a change.
+        $this->pending_revoke = $this->needsGCalendarRevokeToken();
+	}
+
+	protected function postProcess()
+	{
+        if ( ! $this->pending_revoke ) {
+            return;
         }
 
-        if (isset($_GET['revoketoken']) && $_GET['revoketoken'] == 1) {
-            header("Location: ".admin_url('admin.php?page=salon-settings&tab=gcalendar'));
-        }
+        wp_safe_redirect(add_query_arg(
+            '_wpnonce',
+            wp_create_nonce('google_calendar'),
+            admin_url('admin.php?page=salon-settings&tab=gcalendar&revoketoken=1')
+        ));
+        exit;
 	}
 	
 	protected function needsGCalendarRevokeToken()

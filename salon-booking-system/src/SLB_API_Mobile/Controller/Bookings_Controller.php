@@ -22,6 +22,12 @@ class Bookings_Controller extends REST_Controller
     const POST_TYPE = SLN_Plugin::POST_TYPE_BOOKING;
 
     /**
+     * PWA Upcoming chips go up to 1 week. Anything larger is treated as a dump
+     * of the whole future book (CVE-2026-17020).
+     */
+    const UPCOMING_HOURS_MAX = 168;
+
+    /**
      * Route base.
      *
      * @var string
@@ -144,6 +150,8 @@ class Bookings_Controller extends REST_Controller
                         'type'              => 'integer',
                         'validate_callback' => array($this, 'rest_validate_request_arg'),
 			'required'          => true,
+                        'minimum'           => 1,
+                        'maximum'           => self::UPCOMING_HOURS_MAX,
                     ),
 		    'statuses' => array(
 			'description'       => __('Booking statuses.', 'salon-booking-system'),
@@ -271,6 +279,112 @@ class Bookings_Controller extends REST_Controller
         ) );
     }
 
+    /**
+     * Collection routes on the mobile API are a staff surface. The inherited
+     * check only requires post-type `read`, which a Subscriber has — the same
+     * gap that left /bookings/upcoming open on the public API (CVE-2026-17020).
+     */
+    public function get_items_permissions_check( $request )
+    {
+        if ( ! $this->current_user_can_list_bookings() ) {
+            return new WP_Error( 'salon_rest_cannot_view', __( 'Sorry, you cannot list resources.', 'salon-booking-system' ), array( 'status' => rest_authorization_required_code() ) );
+        }
+
+        return true;
+    }
+
+    /**
+     * Per-id reads on the mobile API are also staff-only. A customer viewing
+     * their own booking uses the public API + ownership check, not this controller.
+     */
+    public function get_item_permissions_check( $request )
+    {
+        if ( ! $this->current_user_can_list_bookings() ) {
+            return new WP_Error( 'salon_rest_cannot_view', __( 'Sorry, you cannot view resource.', 'salon-booking-system' ), array( 'status' => rest_authorization_required_code() ) );
+        }
+
+        return true;
+    }
+
+    protected function current_user_can_list_bookings()
+    {
+        if ( current_user_can('manage_options') || current_user_can('manage_salon') ) {
+            return true;
+        }
+
+        $user = wp_get_current_user();
+        if ( ! $user || ! $user->ID ) {
+            return false;
+        }
+
+        return in_array('shop_manager', (array) $user->roles, true)
+            || in_array('sln_shop_manager', (array) $user->roles, true);
+    }
+
+    protected function sanitize_upcoming_hours( $hours )
+    {
+        $hours = (int) $hours;
+        if ( $hours < 1 ) {
+            return 1;
+        }
+        if ( $hours > self::UPCOMING_HOURS_MAX ) {
+            return self::UPCOMING_HOURS_MAX;
+        }
+        return $hours;
+    }
+
+    /**
+     * Object-level authorization for a single booking (mirrors the public API).
+     */
+    protected function current_user_can_access_booking($booking, $allowOwner = true)
+    {
+        if (current_user_can('manage_options') || current_user_can('manage_salon') || $this->current_user_can_list_bookings()) {
+            if (!($booking instanceof SLN_Wrapper_Booking)) {
+                try {
+                    $booking = new SLN_Wrapper_Booking(intval($booking));
+                } catch (\Exception $e) {
+                    return false;
+                }
+            }
+            if (!$booking || !$booking->getId()) {
+                return false;
+            }
+
+            $currentUserId    = get_current_user_id();
+            $currentUserRoles = (array) wp_get_current_user()->roles;
+
+            if (in_array(SLN_Plugin::USER_ROLE_STAFF, $currentUserRoles, true) || in_array(SLN_Plugin::USER_ROLE_WORKER, $currentUserRoles, true)) {
+                $plugin        = SLN_Plugin::getInstance();
+                $assistantsIDs = array();
+                $attendants    = $plugin->getRepository(SLN_Plugin::POST_TYPE_ATTENDANT)->getAll();
+                foreach ($attendants as $attendant) {
+                    if ($attendant->getMeta('staff_member_id') == $currentUserId && $attendant->getIsStaffMemberAssignedToBookingsOnly()) {
+                        $assistantsIDs[] = $attendant->getId();
+                    }
+                }
+                if (empty($assistantsIDs)) {
+                    return true;
+                }
+                return (bool) array_intersect($assistantsIDs, $booking->getAttendantsIds());
+            }
+
+            return true;
+        }
+
+        if (!($booking instanceof SLN_Wrapper_Booking)) {
+            try {
+                $booking = new SLN_Wrapper_Booking(intval($booking));
+            } catch (\Exception $e) {
+                return false;
+            }
+        }
+        if (!$booking || !$booking->getId()) {
+            return false;
+        }
+
+        return $allowOwner && get_current_user_id() > 0 && intval($booking->getUserId()) === intval(get_current_user_id());
+    }
+
     public function get_stats( $request )
     {
         global $wpdb;
@@ -352,7 +466,7 @@ class Bookings_Controller extends REST_Controller
 
     public function get_items( $request )
     {
-        if( !current_user_can( 'manage_salon' ) ){
+        if( ! $this->current_user_can_list_bookings() ){
             return rest_ensure_response( array(
                 'status' => '403',
                 ) );
@@ -592,7 +706,8 @@ class Bookings_Controller extends REST_Controller
 	$from_date = $current_datetime->format('Y-m-d');
 	$from_time = $current_datetime->format('H:i:s');
 
-	$to_datetime = $current_datetime->add(new \DateInterval('PT'.((int)($request['hours'] * 3600)).'S'));
+	$hours = $this->sanitize_upcoming_hours($request['hours']);
+	$to_datetime = $current_datetime->add(new \DateInterval('PT'.($hours * 3600).'S'));
 
 	$to_date = $to_datetime->format('Y-m-d');
 	$to_time = $to_datetime->format('H:i:s');
@@ -909,6 +1024,10 @@ class Bookings_Controller extends REST_Controller
             'custom_fields'       => $custom_fields,
         );
 
+        if ( ! $this->current_user_can_list_bookings() ) {
+            unset($response['admin_note']);
+        }
+
 	return apply_filters('sln_api_bookings_prepare_response_for_collection', $response, $booking);
     }
 
@@ -1134,8 +1253,11 @@ class Bookings_Controller extends REST_Controller
         }
 
         try {
-            $booking = $this->prepare_item_for_response(current($query->posts), $request);
-            $booking = $this->prepare_response_for_collection($booking);
+            $bookingObj = $this->prepare_item_for_response(current($query->posts), $request);
+            if ( ! $this->current_user_can_access_booking($bookingObj, false) ) {
+                return new WP_Error( 'salon_rest_cannot_update', __( 'Sorry, you cannot edit resource.', 'salon-booking-system' ), array( 'status' => 403 ) );
+            }
+            $booking = $this->prepare_response_for_collection($bookingObj);
         } catch (\Exception $ex) {
             return new WP_Error( 'salon_rest_cannot_view', __( sprintf('Sorry, get resource error (%s).', $ex->getMessage()), 'salon-booking-system' ), array( 'status' => 404 ) );
         }
@@ -1183,6 +1305,10 @@ class Bookings_Controller extends REST_Controller
             return new WP_Error( 'salon_rest_cannot_delete', __( 'Sorry, resource not found.', 'salon-booking-system' ), array( 'status' => 404 ) );
         }
 
+        if ( ! $this->current_user_can_access_booking(current($query->posts)->ID, false) ) {
+            return new WP_Error( 'salon_rest_cannot_delete', __( 'Sorry, you cannot delete resource.', 'salon-booking-system' ), array( 'status' => 403 ) );
+        }
+
         wp_trash_post($request->get_param('id'));
 
         return $this->success_response();
@@ -1194,6 +1320,10 @@ class Bookings_Controller extends REST_Controller
 
         if ( ! $query->posts ) {
             return new WP_Error( 'salon_rest_cannot_pay_remaining_amount', __( 'Sorry, resource not found.', 'salon-booking-system' ), array( 'status' => 404 ) );
+        }
+
+        if ( ! $this->current_user_can_access_booking($request->get_param('id'), false) ) {
+            return new WP_Error( 'salon_rest_cannot_pay_remaining_amount', __( 'Sorry, you cannot access resource.', 'salon-booking-system' ), array( 'status' => 403 ) );
         }
 
         $booking = new SLN_Wrapper_Booking($request->get_param('id'));

@@ -20,6 +20,12 @@ class Bookings_Controller extends REST_Controller
     const POST_TYPE = SLN_Plugin::POST_TYPE_BOOKING;
 
     /**
+     * PWA Upcoming chips go up to 1 week. Anything larger is treated as a dump
+     * of the whole future book (CVE-2026-17020).
+     */
+    const UPCOMING_HOURS_MAX = 168;
+
+    /**
      * Route base.
      *
      * @var string
@@ -116,6 +122,8 @@ class Bookings_Controller extends REST_Controller
                         'type'              => 'integer',
                         'validate_callback' => array($this, 'rest_validate_request_arg'),
 			'required'          => true,
+                        'minimum'           => 1,
+                        'maximum'           => self::UPCOMING_HOURS_MAX,
                     ),
                 ),
             ),
@@ -367,6 +375,47 @@ class Bookings_Controller extends REST_Controller
         ) );
     }
 
+    /**
+     * Collection / analytics routes return many bookings (or derived data).
+     * The inherited check only requires the post-type `read` cap, which every
+     * logged-in user has — including a Subscriber. That is what left
+     * /bookings/upcoming open after the per-id ownership patch (CVE-2026-17020).
+     */
+    public function get_items_permissions_check( $request )
+    {
+        if ( ! $this->current_user_can_list_bookings() ) {
+            return new WP_Error( 'salon_rest_cannot_view', __( 'Sorry, you cannot list resources.', 'salon-booking-system' ), array( 'status' => rest_authorization_required_code() ) );
+        }
+
+        return true;
+    }
+
+    /**
+     * Salon staff, shop managers and administrators may list bookings.
+     * A plain customer / Subscriber may not.
+     */
+    protected function current_user_can_list_bookings()
+    {
+        return current_user_can('manage_options')
+            || current_user_can('manage_salon')
+            || $this->is_shop_manager();
+    }
+
+    /**
+     * Clamp the upcoming window so a crafted hours=100000 cannot dump the book.
+     */
+    protected function sanitize_upcoming_hours( $hours )
+    {
+        $hours = (int) $hours;
+        if ( $hours < 1 ) {
+            return 1;
+        }
+        if ( $hours > self::UPCOMING_HOURS_MAX ) {
+            return self::UPCOMING_HOURS_MAX;
+        }
+        return $hours;
+    }
+
     public function get_stats( $request )
     {
         global $wpdb;
@@ -448,7 +497,7 @@ class Bookings_Controller extends REST_Controller
 
     public function get_items( $request )
     {
-        if( !current_user_can( 'manage_salon' ) ){
+        if( ! $this->current_user_can_list_bookings() ){
             return rest_ensure_response( array(
                 'status' => '403',
             ) );
@@ -590,7 +639,10 @@ class Bookings_Controller extends REST_Controller
 
         try {
             foreach ( $query->posts as $booking ) {
-                $data        = $this->prepare_item_for_response( $booking, $request );
+                $data = $this->prepare_item_for_response( $booking, $request );
+                if ( ! $this->current_user_can_access_booking($data) ) {
+                    continue;
+                }
                 $bookings[]  = $this->prepare_response_for_collection( $data );
             }
         } catch (\Exception $ex) {
@@ -648,7 +700,8 @@ class Bookings_Controller extends REST_Controller
 	$from_date = $current_datetime->format('Y-m-d');
 	$from_time = $current_datetime->format('H:i:s');
 
-	$to_datetime = $current_datetime->add(new \DateInterval('PT'.((int)($request['hours'] * 3600)).'S'));
+	$hours = $this->sanitize_upcoming_hours($request['hours']);
+	$to_datetime = $current_datetime->add(new \DateInterval('PT'.($hours * 3600).'S'));
 
 	$to_date = $to_datetime->format('Y-m-d');
 	$to_time = $to_datetime->format('H:i:s');
@@ -769,7 +822,10 @@ class Bookings_Controller extends REST_Controller
 
         try {
             foreach ( $posts as $booking ) {
-                $data        = $this->prepare_item_for_response( $booking, $request );
+                $data = $this->prepare_item_for_response( $booking, $request );
+                if ( ! $this->current_user_can_access_booking($data) ) {
+                    continue;
+                }
                 $bookings[]  = $this->prepare_response_for_collection( $data );
             }
         } catch (\Exception $ex) {
@@ -851,6 +907,12 @@ class Bookings_Controller extends REST_Controller
             'note'                => $booking->getNote(),
             'admin_note'	  => $booking->getAdminNote(),
         );
+
+        // Never expose the private staff/admin note to non-privileged viewers,
+        // whichever route serialized this booking (list, upcoming, or per-id).
+        if ( ! current_user_can('manage_options') && ! current_user_can('manage_salon') && ! $this->is_shop_manager() ) {
+            unset($response['admin_note']);
+        }
 
 	return apply_filters('sln_api_bookings_prepare_response_for_collection', $response, $booking);
     }
@@ -1094,11 +1156,6 @@ class Bookings_Controller extends REST_Controller
             }
 
             $booking = $this->prepare_response_for_collection($bookingObj);
-
-            // Never expose the private staff/admin note to non-privileged (customer) viewers.
-            if ( ! current_user_can('manage_options') && ! current_user_can('manage_salon') && ! $this->is_shop_manager() ) {
-                unset($booking['admin_note']);
-            }
         } catch (\Exception $ex) {
             return new WP_Error( 'salon_rest_cannot_view', __( 'Sorry, get resource error ('.sprintf('%s', $ex->getMessage()).').', 'salon-booking-system' ), array( 'status' => 404 ) );
         }

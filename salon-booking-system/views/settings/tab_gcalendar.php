@@ -5,6 +5,10 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 $page = sanitize_text_field(wp_unslash($_GET['page']));
 $tab = sanitize_text_field(wp_unslash($_GET['tab']));
+$gcal_oauth_start_url = wp_nonce_url(
+	admin_url('admin.php?page=' . rawurlencode($page) . '&tab=' . rawurlencode($tab) . '&force_revoke_token=1'),
+	'google_calendar'
+);
 include $this->plugin->getViewFile('admin/utilities/settings_inpage_navbar');
 sum(
 	// link anchor, link text
@@ -126,20 +130,16 @@ if (isset($_calendar_list) && !empty($_calendar_list)) {?>
                 </div>
                 <div class="col-xs-12">
 
-                <a href="?<?php echo "page={$page}&tab={$tab}&force_revoke_token=1"; ?>" class="sln-btn sln-btn--main--tonal sln-btn--big sln-btn--icon sln-icon--settings sln-btn--disabled"><?php echo esc_html__('Get authorization', 'salon-booking-system'); ?></a></div>
+                <a href="<?php echo esc_url($gcal_oauth_start_url); ?>" class="sln-btn sln-btn--main--tonal sln-btn--big sln-btn--icon sln-icon--settings sln-btn--disabled"><?php echo esc_html__('Get authorization', 'salon-booking-system'); ?></a></div>
                 <?php
 } elseif ($api_error) // API failed!
 {
 	echo '<div class="col-xs-12 col-sm-8 sln-box-maininfo  align-top"><h5 class="sln-message sln-message--warning">' . esc_html__("Google API Error: ", 'salon-booking-system') . $api_error . '</h5></div>';
-	echo '<div class="col-xs-12"><a href="?';
-	echo "page={$page}&tab={$tab}&force_revoke_token=1";
-	echo '" class="sln-btn sln-btn--main--tonal sln-btn--big sln-btn--icon sln-icon--settings">' . esc_html__('Get authorization', 'salon-booking-system') . '</a></div>';
+	echo '<div class="col-xs-12"><a href="' . esc_url($gcal_oauth_start_url) . '" class="sln-btn sln-btn--main--tonal sln-btn--big sln-btn--icon sln-icon--settings">' . esc_html__('Get authorization', 'salon-booking-system') . '</a></div>';
 } else // not assigned to API
 {
 	echo '<div class="col-xs-12 col-sm-8 sln-box-maininfo  align-top"><h5 class="sln-message sln-message--warning">' . esc_html__("To get the list of your Google Calendar you need to log-in with Google OAuth. At the moment you are not logged-in.", 'salon-booking-system') . '</h5></div>';
-	echo '<div class="col-xs-12"><a href="?';
-	echo "page={$page}&tab={$tab}&force_revoke_token=1";
-	echo '" class="sln-btn sln-btn--main--tonal sln-btn--big sln-btn--icon sln-icon--settings">' . esc_html__('Get authorization', 'salon-booking-system') . '</a></div>';
+	echo '<div class="col-xs-12"><a href="' . esc_url($gcal_oauth_start_url) . '" class="sln-btn sln-btn--main--tonal sln-btn--big sln-btn--icon sln-icon--settings">' . esc_html__('Get authorization', 'salon-booking-system') . '</a></div>';
 }
 ?>
     </div>

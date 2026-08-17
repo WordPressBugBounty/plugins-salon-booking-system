@@ -798,7 +798,7 @@ class SLN_Action_Init
         // Do not redirect AJAX requests for the onboarding wizard
         if (defined('DOING_AJAX') && DOING_AJAX) {
             $action = isset($_REQUEST['action']) ? sanitize_text_field(wp_unslash($_REQUEST['action'])) : '';
-            if (in_array($action, array('sln_onboarding_save_step', 'sln_onboarding_complete', 'sln_onboarding_upload_logo'), true)) {
+            if (in_array($action, array('sln_onboarding_save_step', 'sln_onboarding_complete', 'sln_onboarding_skip', 'sln_onboarding_upload_logo'), true)) {
                 return;
             }
         }

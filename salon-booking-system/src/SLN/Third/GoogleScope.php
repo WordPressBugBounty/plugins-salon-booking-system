@@ -349,15 +349,36 @@ class SLN_GoogleScope {
         if (!isset($access_token) || empty($access_token))
             $access_token = $this->settings->getGoogleAccessToken();
 
+        // $force_revoke_token is the internal "calendar disabled" cleanup.
+        // The GET branches are state-changing and must never run from a public
+        // init hook without capability + nonce (CVE-2026-17023).
+        $explicit_revoke = isset($_GET['revoketoken']) && (string) $_GET['revoketoken'] === '1'
+            && $this->is_authorized_gcalendar_query_action();
+        $explicit_reauth = isset($_GET['force_revoke_token'])
+            && $this->is_authorized_gcalendar_query_action();
+
         if (isset($access_token) && !empty($access_token)) {
-            if ($force_revoke_token || (isset($_GET['revoketoken']) && $_GET['revoketoken'] == 1)) {
+            $should_revoke = $force_revoke_token || $explicit_revoke || $explicit_reauth;
+
+            if ($should_revoke) {
                 $res = wp_remote_get("https://accounts.google.com/o/oauth2/revoke?token={$access_token}");
 
                 $this->save_tokens('', '');
 
                 unset($_SESSION['access_token']);
 
-                header("Location: " . $this->get_success_redirect_page_url());
+                if ($force_revoke_token) {
+                    // Internal "calendar disabled" cleanup: do not redirect a front-end visitor.
+                    return;
+                }
+                if ($explicit_reauth) {
+                    // Stale/invalid token: drop it, then start a fresh consent flow
+                    // so "Get authorization" works when an access token is still stored.
+                    $this->begin_oauth_flow();
+                    return;
+                }
+                wp_safe_redirect($this->get_success_redirect_page_url());
+                exit;
             }
 
             $this->client = new Google_Client(array('retry' => array('retries' => 2)));
@@ -369,33 +390,64 @@ class SLN_GoogleScope {
             $this->client->setAccessToken($access_token);
 
             $this->service = $this->get_google_service();
-        } else {
-            if (!$force_revoke_token) {
-                if ( isset($_GET['force_revoke_token']) ) {
-
-                    // SECURITY: bind this OAuth flow to a single-use, unguessable state
-                    // token stored server-side. get_client() validates it on the callback
-                    // so a third party cannot complete the consent flow with THEIR Google
-                    // account and hijack the site's calendar connection. The token also
-                    // carries the (trusted) post-auth redirect target, so the raw
-                    // request-supplied state is never used as a redirect URL.
-                    $state = wp_generate_password(32, false);
-                    set_transient('sln_gcal_oauth_state_' . $state, $this->get_current_page_url(), 15 * MINUTE_IN_SECONDS);
-
-                    $loginUrl = 'https://accounts.google.com/o/oauth2/auth?' . http_build_query(array(
-                        'response_type'   => 'code',
-                        'client_id'       => $this->outh2_client_id,
-                        'redirect_uri'    => $this->outh2_redirect_uri,
-                        'scope'           => $this->scopes,
-                        'access_type'     => 'offline',
-                        'approval_prompt' => 'force',
-                        'state'           => $state,
-                    ));
-
-                    header("Location: " . $loginUrl);
-                }
-            }
+            return;
         }
+
+        if (!$force_revoke_token && $explicit_reauth) {
+            $this->begin_oauth_flow();
+        }
+    }
+
+    /**
+     * Start the Google consent flow. Caller must already have passed
+     * is_authorized_gcalendar_query_action().
+     */
+    protected function begin_oauth_flow()
+    {
+        $state = wp_generate_password(32, false);
+        set_transient('sln_gcal_oauth_state_' . $state, array(
+            'redirect' => $this->get_current_page_url(),
+            'user_id'  => get_current_user_id(),
+        ), 15 * MINUTE_IN_SECONDS);
+
+        $loginUrl = 'https://accounts.google.com/o/oauth2/auth?' . http_build_query(array(
+            'response_type'   => 'code',
+            'client_id'       => $this->outh2_client_id,
+            'redirect_uri'    => $this->outh2_redirect_uri,
+            'scope'           => $this->scopes,
+            'access_type'     => 'offline',
+            'approval_prompt' => 'force',
+            'state'           => $state,
+        ));
+
+        // Google's authorize URL is external; wp_safe_redirect would block it.
+        header("Location: " . $loginUrl);
+        exit;
+    }
+
+    /**
+     * Capability shared with the OAuth callback: only salon managers / admins
+     * may start, finish or revoke the calendar connection.
+     */
+    protected function current_user_can_manage_gcalendar()
+    {
+        return current_user_can('manage_options') || current_user_can('manage_salon');
+    }
+
+    /**
+     * GET-driven calendar actions sit on the front-end init hook, so they must
+     * refuse anything that is not an authenticated admin request with a nonce.
+     */
+    protected function is_authorized_gcalendar_query_action()
+    {
+        if ( ! is_admin() ) {
+            return false;
+        }
+        if ( ! $this->current_user_can_manage_gcalendar() ) {
+            return false;
+        }
+        $nonce = isset($_REQUEST['_wpnonce']) ? sanitize_text_field(wp_unslash($_REQUEST['_wpnonce'])) : '';
+        return $nonce && wp_verify_nonce($nonce, 'google_calendar');
     }
 
     protected function get_success_redirect_page_url() {
@@ -411,12 +463,12 @@ class SLN_GoogleScope {
         return admin_url(
             (isset($_SERVER['REDIRECT_URL']) ? str_replace('wp-admin', '', trim($_SERVER['REDIRECT_URL'] , '/')) : 'admin.php').
             '?'.
-            remove_query_arg(array('revoketoken', 'force_revoke_token'), $_SERVER['QUERY_STRING'])
+            remove_query_arg(array('revoketoken', 'force_revoke_token', '_wpnonce'), $_SERVER['QUERY_STRING'])
         );
     }
 
     protected function get_error_redirect_page_url() {
-        return $this->get_success_redirect_page_url().'&revoketoken=1';
+        return add_query_arg('_wpnonce', wp_create_nonce('google_calendar'), $this->get_success_redirect_page_url().'&revoketoken=1');
     }
 
     /**
@@ -425,7 +477,7 @@ class SLN_GoogleScope {
     public function get_client() {
         // SECURITY: only a logged-in admin / salon manager may complete the OAuth
         // connection (it stores site-wide calendar credentials).
-        if ( ! current_user_can('manage_options') && ! current_user_can('manage_salon') ) {
+        if ( ! $this->current_user_can_manage_gcalendar() ) {
             wp_die(
                 esc_html__('You are not allowed to perform this action.', 'salon-booking-system'),
                 esc_html__('Forbidden', 'salon-booking-system'),
@@ -433,12 +485,23 @@ class SLN_GoogleScope {
             );
         }
 
-        // SECURITY: validate the single-use OAuth state token this site issued. Without
-        // it, an attacker could feed their own authorization code to the callback and
-        // redirect the site's calendar sync to their Google account (connection hijack).
+        // SECURITY: validate the single-use OAuth state token this site issued,
+        // and that it was issued to THIS user. Without the user binding, an
+        // attacker who obtained a state (the old anonymous force_revoke_token
+        // path) could feed it through an admin's browser and replace the tokens.
         $state = isset($_GET['state']) ? sanitize_text_field(wp_unslash($_GET['state'])) : '';
-        $redirectTarget = $state ? get_transient('sln_gcal_oauth_state_' . $state) : false;
-        if ( ! $state || false === $redirectTarget ) {
+        $stateData = $state ? get_transient('sln_gcal_oauth_state_' . $state) : false;
+        $redirectTarget = '';
+        $stateUserId    = 0;
+        if (is_array($stateData)) {
+            $redirectTarget = isset($stateData['redirect']) ? $stateData['redirect'] : '';
+            $stateUserId    = isset($stateData['user_id']) ? (int) $stateData['user_id'] : 0;
+        } elseif (is_string($stateData) && $stateData !== '') {
+            // Legacy transients stored only the redirect URL. Reject them:
+            // they were not bound to a user.
+            $redirectTarget = '';
+        }
+        if ( ! $state || $redirectTarget === '' || $stateUserId < 1 || $stateUserId !== (int) get_current_user_id() ) {
             wp_die(
                 esc_html__('Invalid or expired Google authorization request. Please start the connection again from the settings page.', 'salon-booking-system'),
                 esc_html__('Invalid request', 'salon-booking-system'),

@@ -4,7 +4,7 @@ Tags: salon, spa, appointment booking, booking system, scheduling
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4.8
-Stable tag: 10.31.1
+Stable tag: 10.31.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -363,6 +363,11 @@ PHP 7.4 and above.
 
 == Changelog ==
 
+
+17.08.2026 - 10.31.2
+
+* Security fix: enforced salon-staff authorization on the upcoming-bookings REST route and the other booking list/analytics routes on the same controller, so a logged-in Subscriber can no longer read every future booking's customer details and private admin notes — thanks to Muni Nitish Kumar Yaddala
+* Security fix: required a capability check and a nonce on the Google Calendar token-revocation and OAuth-start branches, and bound the OAuth state to the user who started the connection — thanks to Daniel Dhaniswara
 
 16.08.2026 - 10.31.1
 
