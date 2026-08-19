@@ -4,7 +4,7 @@
 class SLN_Action_Ajax_SearchBookings extends SLN_Action_Ajax_Abstract
 {
 	function execute(){
-		if( !current_user_can( 'manage_salon' ) ){
+		if( !$this->authorizeSalonAjax() ){
 			return array( 'status' => '403' );
 		}
 		$search = sanitize_text_field( isset($_POST['search']) ? wp_unslash($_POST['search']) : '' );

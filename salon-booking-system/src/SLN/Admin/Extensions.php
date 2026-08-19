@@ -62,6 +62,7 @@ class SLN_Admin_Extensions extends SLN_Admin_AbstractPage
         $slug = defined( 'SLN_ITEM_SLUG' ) ? SLN_ITEM_SLUG : 'salon-booking-wordpress-plugin';
         $params = [
             'ajax_url'        => admin_url('admin-ajax.php') . '?lang=' . $s->getLocale(),
+            'ajax_nonce'      => wp_create_nonce('ajax_post_validation'),
             'clear_cache_url' => wp_nonce_url(
                 admin_url( 'admin.php?page=' . static::PAGE . '&sln_clear_ext_cache=1' ),
                 'sln_clear_ext_cache'

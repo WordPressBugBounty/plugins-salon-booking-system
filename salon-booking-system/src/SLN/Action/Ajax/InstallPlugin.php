@@ -18,7 +18,7 @@ class SLN_Action_Ajax_InstallPlugin extends SLN_Action_Ajax_Abstract {
         if (!isset($sln_license))
             return ['success' => false, 'message' => 'License manager not initialized.'];
 
-        if (!current_user_can('install_plugins'))
+        if (!$this->authorizeSalonAjax('install_plugins'))
             return ['success' => false, 'message' => 'Insufficient permissions for this action.'];
 
         $productID = isset($_POST['product_id']) ? absint($_POST['product_id']) : 0;

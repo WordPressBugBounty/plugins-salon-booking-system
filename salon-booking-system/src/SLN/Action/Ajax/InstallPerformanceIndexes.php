@@ -7,8 +7,7 @@ class SLN_Action_Ajax_InstallPerformanceIndexes extends SLN_Action_Ajax_Abstract
 {
     public function execute()
     {
-        // Security check
-        if (!current_user_can('manage_options')) {
+        if (!$this->authorizeSalonAjax('manage_options')) {
             return array(
                 'success' => false,
                 'message' => __('You do not have permission to perform this action.', 'salon-booking-system'),

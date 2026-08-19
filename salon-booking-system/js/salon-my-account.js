@@ -51,12 +51,19 @@ var sln_myAccount = {
         option: option,
         customer_timezone: new window.Intl.DateTimeFormat().resolvedOptions()
           .timeZone,
+        security: salon.ajax_nonce,
       },
       method: "POST",
       dataType: "json",
       success: function (data) {
         if (typeof data.redirect != "undefined") {
           window.location.href = data.redirect;
+        } else if (data.errors && data.errors.length) {
+          var $box = jQuery('<div class="sln-alert sln-alert--problem"></div>');
+          jQuery.each(data.errors, function (_, err) {
+            $box.append(jQuery("<p></p>").text(err));
+          });
+          jQuery("#sln-salon-my-account-content").html($box);
         } else {
           jQuery("#sln-salon-my-account-content").html(data.content);
           sln_createSelect2Full(jQuery);
@@ -210,6 +217,20 @@ var sln_myAccount = {
               method: "POST",
               dataType: "json",
               success: function (data) {
+                if (data.errors && data.errors.length && !data.intervals) {
+                  var $box = jQuery(
+                    '<div class="sln-alert sln-alert--problem"></div>',
+                  );
+                  jQuery.each(data.errors, function (_, err) {
+                    $box.append(jQuery("<p></p>").text(err));
+                  });
+                  form
+                    .find(".sln-notifications")
+                    .addClass("sln-notifications--active")
+                    .html($box);
+                  return;
+                }
+
                 items.intervals = data.intervals;
                 items.booking_id = data.booking_id;
 
@@ -839,12 +860,19 @@ var sln_myAccount = {
           part: "history",
           page: page,
         },
+        security: salon.ajax_nonce,
       },
       method: "POST",
       dataType: "json",
       success: function (data) {
         if (typeof data.redirect != "undefined") {
           window.location.href = data.redirect;
+        } else if (data.errors && data.errors.length) {
+          var $box = jQuery('<div class="sln-alert sln-alert--problem"></div>');
+          jQuery.each(data.errors, function (_, err) {
+            $box.append(jQuery("<p></p>").text(err));
+          });
+          jQuery("#sln-salon-my-account-history-content").html($box);
         } else {
           jQuery("#sln-salon-my-account-history-content").html(data.content);
           if (
@@ -916,6 +944,7 @@ var sln_myAccount = {
         id: post_id,
         score: jQuery("#ratingModal .rating").raty("score"),
         comment: jQuery("#ratingModal textarea").val(),
+        security: salon.ajax_nonce,
       },
       method: "POST",
       dataType: "json",
@@ -1002,7 +1031,7 @@ var sln_myAccount = {
     );
     statusContainer.parent().hide();
     statusContainer.html("");
-    data += "&method=UpdateProfile";
+    data += "&method=UpdateProfile&security=" + salon.ajax_nonce;
     jQuery.ajax({
       url: salon.ajax_url,
       data: data,

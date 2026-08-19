@@ -686,6 +686,17 @@ function sln_calculateTotal() {
 		success: function (data) {
 			sln_checkServicesTotalDuration();
 			jQuery(".sln-calc-total-loading").html("");
+			jQuery(".sln-calc-total-error").remove();
+			if (data.errors && data.errors.length) {
+				var alertBox = jQuery(
+					'<div class="alert alert-danger sln-calc-total-error"></div>',
+				);
+				jQuery.each(data.errors, function (_, err) {
+					alertBox.append(jQuery("<p></p>").text(err));
+				});
+				jQuery("#calculate-total").parent().after(alertBox);
+				return;
+			}
 			jQuery("#_sln_booking_amount").val(data.total);
 			jQuery("#_sln_booking_deposit").val(data.deposit);
 			jQuery("#sln-duration").val(data.duration);

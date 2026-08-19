@@ -4,7 +4,7 @@ Tags: salon, spa, appointment booking, booking system, scheduling
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4.8
-Stable tag: 10.31.2
+Stable tag: 10.31.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -363,6 +363,11 @@ PHP 7.4 and above.
 
 == Changelog ==
 
+
+19.08.2026 - 10.31.3
+
+* Security fix: required an administrator capability and a nonce on the license AJAX actions, so a logged-in Subscriber can no longer clear or overwrite the stored license and subscription data — thanks to NAWardRox (CVE-2025-32220)
+* Security fix: required a nonce on privileged salon AJAX (calendar locks, booking search, customer lookup, notification resend, extension install, booking totals) and required login, nonce and booking ownership on the My Account reschedule date-check
 
 17.08.2026 - 10.31.2
 

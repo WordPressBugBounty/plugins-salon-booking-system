@@ -15,7 +15,9 @@ class SLN_Action_Ajax_RemoveDailyHolydays extends SLN_Action_Ajax_Abstract
 		$plugin = SLN_Plugin::getInstance();
 		$settings = $plugin->getSettings();
 
-		if(current_user_can('manage_salon')) {
+		if (!$this->isValidSalonAjaxNonce()) {
+			$this->addError(__('Invalid security token. Please refresh the page and try again.', 'salon-booking-system'));
+		} elseif(current_user_can('manage_salon')) {
 
                         $date             = sanitize_text_field(wp_unslash($_GET['date']));
                         $_assistants_mode = sanitize_text_field(wp_unslash($_GET['_assistants_mode']));

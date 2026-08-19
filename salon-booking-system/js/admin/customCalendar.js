@@ -96,6 +96,7 @@ var SlotAuditModal = (function ($) {
         date: date,
         time: time,
         shop_id: shopId || 0,
+        security: salon.ajax_nonce,
       },
       success: function (data) {
         if (data && data.error) {
@@ -724,6 +725,7 @@ function sln_initSalonCalendar(
         method: action + "HolydayRule",
         rule: target ? target : DayCalendarHolydays.selection.data,
         attendant_id: attId,
+        security: salon.ajax_nonce,
       };
 
       data = Object.assign({}, window.dayCalendarHolydaysAjaxData, data);
@@ -999,6 +1001,7 @@ function sln_initSalonCalendar(
           day: calendar.options.day,
           action: "salon",
           method: "SearchBookings",
+          security: salon.ajax_nonce,
         };
         this.xhr = $.ajax({
           url: salon.ajax_url,
@@ -1177,7 +1180,9 @@ function sln_initSalonCalendar(
         "&action=salon&method=RemoveDailyHolydays&date=" +
         calendar.options.day +
         "&_assistants_mode=" +
-        calendar.options._assistants_mode,
+        calendar.options._assistants_mode +
+        "&security=" +
+        salon.ajax_nonce,
       type: "POST",
       success: function (data) {
         // Update both local cache and window global to keep in sync

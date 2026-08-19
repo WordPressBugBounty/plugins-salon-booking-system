@@ -174,6 +174,7 @@ function sln_init($) {
                 action: "salon_discount",
                 method: "ApplyDiscountIdOnStart",
                 discount_id: discount_request_arg.split("=")[1],
+                security: salon.ajax_nonce,
             },
             method: "POST",
             dataType: "json",

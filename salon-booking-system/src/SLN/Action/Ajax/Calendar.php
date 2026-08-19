@@ -26,7 +26,7 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
 
   public function execute()
   {
-    if (!current_user_can('manage_salon')) {
+    if (!$this->authorizeSalonAjax()) {
       wp_send_json_error(null, 403);
     }
 

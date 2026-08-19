@@ -29,6 +29,7 @@ jQuery(function ($) {
                 method:        'installPlugin',
                 product_id:    productID,
                 plugin_action: action,
+                security:      salon.ajax_nonce,
             },
             beforeSend: function () {
                 errEl.text('');

@@ -8,6 +8,13 @@ class SLN_Action_Ajax_MyAccountDetails extends SLN_Action_Ajax_Abstract
 			return array( 'redirect' => wp_login_url());
 		}
 
+		if (!$this->isValidSalonAjaxNonce()) {
+			return array(
+				'content' => '',
+				'errors'  => array(__('Invalid security token. Please refresh the page and try again.', 'salon-booking-system')),
+			);
+		}
+
 		$args = array();
 
 		if (isset($_POST['args'])) {

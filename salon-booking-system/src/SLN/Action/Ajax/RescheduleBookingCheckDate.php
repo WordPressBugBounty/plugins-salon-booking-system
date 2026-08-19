@@ -1,5 +1,4 @@
 <?php
-// phpcs:ignoreFile WordPress.Security.NonceVerification.Missing
 
 class SLN_Action_Ajax_RescheduleBookingCheckDate extends SLN_Action_Ajax_Abstract {
 	/**
@@ -164,6 +163,40 @@ class SLN_Action_Ajax_RescheduleBookingCheckDate extends SLN_Action_Ajax_Abstrac
 	}
 
 	public function execute() {
+		if ( ! is_user_logged_in() ) {
+			return array( 'redirect' => wp_login_url() );
+		}
+
+		if ( ! $this->isValidSalonAjaxNonce() ) {
+			return array(
+				'success' => 0,
+				'errors'  => array( __( 'Invalid security token. Please refresh the page and try again.', 'salon-booking-system' ) ),
+			);
+		}
+
+		if ( ! isset( $_POST['_sln_booking_id'] ) || ! is_numeric( $_POST['_sln_booking_id'] ) ) {
+			return array(
+				'success' => 0,
+				'errors'  => array( __( 'Invalid booking ID.', 'salon-booking-system' ) ),
+			);
+		}
+
+		$bookingID = intval( $_POST['_sln_booking_id'] );
+
+		if ( get_post_type( $bookingID ) !== SLN_Plugin::POST_TYPE_BOOKING ) {
+			return array(
+				'success' => 0,
+				'errors'  => array( __( 'Sorry, you cannot reschedule the non-booking.' ) ),
+			);
+		}
+
+		if ( get_current_user_id() != get_post_field( 'post_author', $bookingID, 'edit' ) ) {
+			return array(
+				'success' => 0,
+				'errors'  => array( __( 'Sorry, you are not allowed to reschedule this booking.', 'salon-booking-system' ) ),
+			);
+		}
+
 		$date = isset( $_POST['_sln_booking_date'] ) ? sanitize_text_field( wp_unslash( $_POST['_sln_booking_date'] ) ) : '';
 		$time = isset( $_POST['_sln_booking_time'] ) ? sanitize_text_field( wp_unslash( $_POST['_sln_booking_time'] ) ) : '';
 
@@ -174,7 +207,6 @@ class SLN_Action_Ajax_RescheduleBookingCheckDate extends SLN_Action_Ajax_Abstrac
 
 		$timezone = isset( $_POST['customer_timezone'] ) ? sanitize_text_field( wp_unslash( $_POST['customer_timezone'] ) ) : '';
 		$services = isset( $_POST['_sln_booking']['services'] ) && is_array( $_POST['_sln_booking']['services'] ) ? $_POST['_sln_booking']['services'] : array();
-		$bookingID = isset( $_POST['_sln_booking_id'] ) ? intval( $_POST['_sln_booking_id'] ) : 0;
 
 		$r = self::runRescheduleValidation( $this->plugin, $bookingID, $date, $time, $services, $timezone );
 

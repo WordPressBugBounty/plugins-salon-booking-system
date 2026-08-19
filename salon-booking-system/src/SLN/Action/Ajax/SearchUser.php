@@ -7,7 +7,7 @@ class SLN_Action_Ajax_SearchUser extends SLN_Action_Ajax_Abstract
 {
     public function execute()
     {
-       if(!current_user_can( 'manage_salon' )) throw new Exception('not allowed');
+       if(!$this->authorizeSalonAjax()) throw new Exception('not allowed');
        $result = array();
        $search = sanitize_text_field(wp_unslash( isset($_GET['s']) ? $_GET['s'] : '' ));
        if(isset($search)){

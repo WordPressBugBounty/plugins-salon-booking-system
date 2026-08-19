@@ -8,6 +8,10 @@ class SLB_Discount_Action_Ajax_ApplyDiscountIdOnStart extends SLN_Action_Ajax_Ab
     protected $errors = array();
 
     public function execute(){
+        if (!$this->isValidSalonAjaxNonce()) {
+            return array('error' => __('Invalid security token. Please refresh the page and try again.', 'salon-booking-system'));
+        }
+
         $discount = sanitize_text_field(wp_unslash($_POST['discount_id']));
         $discount = $this->plugin->getRepository(SLB_Discount_Plugin::POST_TYPE_DISCOUNT)->create($discount);
         $bb = $this->plugin->getBookingBuilder();

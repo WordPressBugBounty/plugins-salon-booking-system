@@ -20,7 +20,7 @@ class SLN_Action_Ajax_SlotAudit extends SLN_Action_Ajax_Abstract
 {
     public function execute()
     {
-        if (!is_user_logged_in() || !current_user_can('manage_salon')) {
+        if (!$this->authorizeSalonAjax()) {
             return array('error' => __('Permission denied.', 'salon-booking-system'));
         }
 

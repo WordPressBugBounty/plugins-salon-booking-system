@@ -5,6 +5,13 @@ class SLN_Action_Ajax_CalcBookingTotal extends SLN_Action_Ajax_Abstract
 {
     public function execute()  {
 
+        if (!$this->authorizeSalonAjax()) {
+            return array(
+                'success' => 0,
+                'errors'  => array(__('You do not have permission to perform this action.', 'salon-booking-system')),
+            );
+        }
+
         if(!isset($_POST['post_ID']) && !isset($_POST['_sln_booking_date']) && !isset($_POST['_sln_booking_time']) && !isset($_POST['_sln_booking'])) {
             return array(
                 'total'	=> round(0, 2),

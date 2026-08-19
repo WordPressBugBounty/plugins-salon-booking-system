@@ -11,6 +11,11 @@ class SLN_Action_Ajax_SetBookingRating extends SLN_Action_Ajax_Abstract
 			return array( 'redirect' => wp_login_url());
 		}
 
+		if (!$this->isValidSalonAjaxNonce()) {
+			$this->addError(__('Invalid security token. Please refresh the page and try again.', 'salon-booking-system'));
+			return array('errors' => $this->getErrors());
+		}
+
 		if (isset($_POST['score']) && isset($_POST['comment'])) {
 			$booking = SLN_Plugin::getInstance()->createBooking(intval($_POST['id']));
 
