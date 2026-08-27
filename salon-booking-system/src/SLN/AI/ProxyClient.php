@@ -741,6 +741,7 @@ class SLN_AI_ProxyClient
 				'find_customer',
 				'find_service',
 				'find_assistant',
+				'inspect_availabilities',
 			),
 			true
 		);
@@ -822,6 +823,40 @@ class SLN_AI_ProxyClient
 					'draft'     => null,
 				);
 			}
+		}
+
+		// Opening-hours timetable (before catalog lookups so “check assistant
+		// availability rules” / “change opening hours” is not a staff search).
+		$parsedHours = $this->mockParseOpeningHours($raw);
+		if ($parsedHours) {
+			if ($this->mockIsInspectAvailabilities($raw)) {
+				return $this->mockAttachShopOrAsk(
+					'inspect_availabilities',
+					$parsedHours,
+					$context,
+					$raw,
+					$this->mockMsg($lang, 'check_details', __('I’ll check what I can with the details you provided.', 'salon-booking-system'))
+				);
+			}
+
+			return $this->mockAttachShopOrAsk(
+				'set_salon_availabilities',
+				$parsedHours,
+				$context,
+				$raw,
+				$this->mockMsg($lang, 'hours_preview', __('Got it — here’s what I understood. Review the preview and confirm to apply.', 'salon-booking-system'))
+			);
+		}
+
+		// Read-only shop + assistant + service hours audit (no new timetable).
+		if ($this->mockIsInspectAvailabilities($raw)) {
+			return $this->mockAttachShopOrAsk(
+				'inspect_availabilities',
+				array(),
+				$context,
+				$raw,
+				$this->mockMsg($lang, 'check_details', __('I’ll check what I can with the details you provided.', 'salon-booking-system'))
+			);
 		}
 
 		// Slot availability diagnosis (read-only).
@@ -1250,18 +1285,6 @@ class SLN_AI_ProxyClient
 			);
 		}
 
-		// Full timetable in one message.
-		$parsed = $this->mockParseOpeningHours($raw);
-		if ($parsed) {
-			return $this->mockAttachShopOrAsk(
-				'set_salon_availabilities',
-				$parsed,
-				$context,
-				$raw,
-				$this->mockMsg($lang, 'hours_preview', __('Got it — here’s what I understood. Review the preview and confirm to apply.', 'salon-booking-system'))
-			);
-		}
-
 		// Days without times → ask for hours (natural follow-up).
 		$daysOnly = $this->extractDayRangeOrList($raw);
 		$closed   = $this->extractClosedDays($raw);
@@ -1539,8 +1562,11 @@ class SLN_AI_ProxyClient
 		)) {
 			return null;
 		}
-		// Avoid colliding with “service Haircut” unavailability questions.
-		if (preg_match('/\b(unavailable|not available|non disponibile|perche|why)\b/i', $folded)) {
+		// Avoid colliding with “service Haircut” unavailability questions
+		// and with opening-hours / consistency checks.
+		if (preg_match('/\b(unavailable|not available|non disponibile|perche|why)\b/i', $folded)
+			|| $this->isHoursRulesIntent($text)
+		) {
 			return null;
 		}
 
@@ -1560,6 +1586,9 @@ class SLN_AI_ProxyClient
 			'/\b(find|list|show|check|which|what|trova|trovami|cerca|mostra|elenca|quali|buscar|mostrar|listar|trouver|lister|afficher|finden|zeige|liste)\b.{0,40}\b(assistant|assistants|attendant|attendants|staff|assistente|assistenti|asistente|stylist)\b/i',
 			$folded
 		)) {
+			return null;
+		}
+		if ($this->isHoursRulesIntent($text) || $this->isAvailabilityQuestion($text)) {
 			return null;
 		}
 
@@ -2092,6 +2121,56 @@ class SLN_AI_ProxyClient
 	}
 
 	/**
+	 * Opening-hours / availability-rules wording (not a staff/service lookup).
+	 *
+	 * @param string $text
+	 * @return bool
+	 */
+	private function isHoursRulesIntent($text)
+	{
+		$folded = strtolower(preg_replace('/[`\'"^~]/', '', SLN_AI_Language::fold((string) $text)));
+
+		return (bool) preg_match(
+			'/\b('
+			. 'opening hours|orari di apertura|horaires d.?ouverture|horario[s]? de apertura|offnungszeiten'
+			. '|availabilit\w*\s+rules|regole di disponibil|reglas de disponibil|regles de disponibil'
+			. '|consistent|coeren\w*|alline\w*|align'
+			. '|closed days?|giorni chius|jours ferm'
+			. '|change.{0,50}(hours|orari|horaires|horarios)'
+			. '|modifica.{0,50}orar'
+			. ')\b/i',
+			$folded
+		);
+	}
+
+	/**
+	 * “Check if assistant/service hours are consistent” without a new timetable.
+	 *
+	 * @param string $text
+	 * @return bool
+	 */
+	private function mockIsInspectAvailabilities($text)
+	{
+		$folded = strtolower(preg_replace('/[`\'"^~]/', '', SLN_AI_Language::fold((string) $text)));
+		if (preg_match('/\b(why|come mai|perche|slot|prenotabile|not bookable|unbookable|can\'?t book)\b/i', $folded)) {
+			return false;
+		}
+		// Apply verbs win over verify when the user is clearly changing hours.
+		if (preg_match(
+			'/\b(change|set|update|replace|apply|modifica|imposta|cambia|mettre|modifier|andern)\b.{0,40}\b(hours|orari|horaires|horarios|offnungszeiten|opening)\b/i',
+			$folded
+		) && ! preg_match('/\b(verify|check|compare|consistent|desired|verifica|controlla|souhait|desir)\b/i', $folded)) {
+			return false;
+		}
+		$asks = (bool) preg_match(
+			'/\b(check|verify|inspect|review|compare|consistent|coeren\w*|verifica|controlla|verifie|prufer|desired|souhait)\b/i',
+			$folded
+		);
+
+		return $asks && $this->isHoursRulesIntent($text);
+	}
+
+	/**
 	 * True for “why isn’t this bookable / available?” questions.
 	 *
 	 * @param string $text
@@ -2124,6 +2203,12 @@ class SLN_AI_ProxyClient
 	private function mockParseUnavailableSlot($text, array $context)
 	{
 		if (! $this->isAvailabilityQuestion($text)) {
+			return null;
+		}
+		// “Are availability rules consistent?” is an audit, not a slot diagnosis.
+		if ($this->isHoursRulesIntent($text)
+			&& ! preg_match('/\b(why|come mai|perche|slot|prenotabile|not bookable|unbookable)\b/i', SLN_AI_Language::fold($text))
+		) {
 			return null;
 		}
 
@@ -2762,7 +2847,7 @@ class SLN_AI_ProxyClient
 	private function messageHasTimes($text)
 	{
 		return (bool) preg_match(
-			'/\d{1,2}\s*[:.]\s*\d{2}|\d{1,2}\s*[ap]m|\b\d{1,2}\s*[–\-—to]+\s*\d{1,2}\b|\b(?:dalle|da|de|von|from)\s*\d{1,2}/i',
+			'/\d{1,2}\s*[:.h]\s*\d{2}|\d{1,2}\s*h\b|\d{1,2}\s*[ap]m|\b\d{1,2}\s*[–\-—to]+\s*\d{1,2}\b|\b(?:dalle|da|de|von|from)\s*\d{1,2}/i',
 			$text
 		);
 	}
@@ -2942,46 +3027,51 @@ class SLN_AI_ProxyClient
 	private function mockParseOpeningHours($text)
 	{
 		$text = $this->normalizeDayTypos((string) $text);
+		$text = $this->normalizeTimeTokens($text);
 		if (! $this->textLooksLikeTimetable($text)) {
 			return null;
 		}
 
 		$closedDays = $this->extractClosedDays($text);
-		$rules      = array();
+		$workText   = $this->stripClosedClauses($text);
+		$groups     = $this->extractDayHourGroups($workText, $closedDays);
+		$rules      = $groups;
 
-		if (preg_match(
-			'/(mon(?:day)?|tue(?:s(?:day)?)?|wed(?:nesday)?|thu(?:rs(?:day)?)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)\s*[–\-—]+\s*(mon(?:day)?|tue(?:s(?:day)?)?|wed(?:nesday)?|thu(?:rs(?:day)?)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)/i',
-			$text,
-			$rangeMatch
-		)) {
-			$fromDay   = $this->dayTokenToKey($rangeMatch[1]);
-			$toDay     = $this->dayTokenToKey($rangeMatch[2]);
-			$days      = $this->expandDayRange($fromDay, $toDay);
-			$days      = array_values(array_diff($days, $closedDays));
-			$intervals = $this->extractIntervals($text);
-			if ($days && $intervals) {
-				$rules[] = array(
-					'days'      => $days,
-					'intervals' => $intervals,
-					'always'    => true,
-				);
-			}
-		} elseif (preg_match('/\b(weekdays?|every\s+day|everyday|all\s+week|7\s*days?)\b/i', $text)) {
-			$intervals = $this->extractIntervals($text);
-			if ($intervals) {
-				$days    = preg_match('/\bweekdays?\b/i', $text)
-					? array(2, 3, 4, 5, 6)
-					: array(1, 2, 3, 4, 5, 6, 7);
-				$days    = array_values(array_diff($days, $closedDays));
-				$rules[] = array(
-					'days'      => $days,
-					'intervals' => $intervals,
-					'always'    => true,
-				);
+		if (! $rules) {
+			if (preg_match(
+				'/(mon(?:day)?|tue(?:s(?:day)?)?|wed(?:nesday)?|thu(?:rs(?:day)?)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)\s*[–\-—]+\s*(mon(?:day)?|tue(?:s(?:day)?)?|wed(?:nesday)?|thu(?:rs(?:day)?)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)/i',
+				$text,
+				$rangeMatch
+			)) {
+				$fromDay   = $this->dayTokenToKey($rangeMatch[1]);
+				$toDay     = $this->dayTokenToKey($rangeMatch[2]);
+				$days      = $this->expandDayRange($fromDay, $toDay);
+				$days      = array_values(array_diff($days, $closedDays));
+				$intervals = $this->extractIntervals($text);
+				if ($days && $intervals) {
+					$rules[] = array(
+						'days'      => $days,
+						'intervals' => $intervals,
+						'always'    => true,
+					);
+				}
+			} elseif (preg_match('/\b(weekdays?|every\s+day|everyday|all\s+week|7\s*days?)\b/i', $text)) {
+				$intervals = $this->extractIntervals($text);
+				if ($intervals) {
+					$days    = preg_match('/\bweekdays?\b/i', $text)
+						? array(2, 3, 4, 5, 6)
+						: array(1, 2, 3, 4, 5, 6, 7);
+					$days    = array_values(array_diff($days, $closedDays));
+					$rules[] = array(
+						'days'      => $days,
+						'intervals' => $intervals,
+						'always'    => true,
+					);
+				}
 			}
 		}
 
-		if (preg_match_all(
+		if (! $rules && preg_match_all(
 			'/(?:^|[,;]\s*)(mon(?:day)?|tue(?:s(?:day)?)?|wed(?:nesday)?|thu(?:rs(?:day)?)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)\s+(\d{1,2}(?::\d{2})?(?:\s*[ap]m)?)\s*[–\-—to]+\s*(\d{1,2}(?::\d{2})?(?:\s*[ap]m)?)/i',
 			$text,
 			$singles,
@@ -2992,12 +3082,17 @@ class SLN_AI_ProxyClient
 				if ($key === null || in_array($key, $closedDays, true)) {
 					continue;
 				}
+				$from = $this->normTime($m[2]);
+				$to   = $this->normTime($m[3]);
+				if (! $from || ! $to) {
+					continue;
+				}
 				$rules[] = array(
 					'days'      => array($key),
 					'intervals' => array(
 						array(
-							'from' => $this->normTime($m[2]),
-							'to'   => $this->normTime($m[3]),
+							'from' => $from,
+							'to'   => $to,
 						),
 					),
 					'always'    => true,
@@ -3020,11 +3115,108 @@ class SLN_AI_ProxyClient
 			);
 		}
 
-		return array(
+		$mentioned = array();
+		foreach ($rules as $rule) {
+			foreach (isset($rule['days']) ? $rule['days'] : array() as $day) {
+				$mentioned[ (int) $day ] = true;
+			}
+		}
+		$unmentioned = array();
+		for ($day = 1; $day <= 7; $day++) {
+			if (empty($mentioned[ $day ]) && ! in_array($day, $closedDays, true)) {
+				$unmentioned[] = $day;
+			}
+		}
+		$usedRangeOrWeek = (bool) preg_match(
+			'/\b(weekdays?|every\s+day|everyday|all\s+week|7\s*days?)\b/i',
+			$text
+		) || (bool) preg_match(
+			'/\b(?:mon|tue|wed|thu|fri|sat|sun)[a-z]*\s*(?:to|–|-|—)\s*(?:mon|tue|wed|thu|fri|sat|sun)/i',
+			$text
+		);
+		$preserve = (bool) $unmentioned && (bool) $closedDays && ! $usedRangeOrWeek;
+
+		$out = array(
 			'mode'    => 'replace_all',
 			'summary' => trim(wp_strip_all_tags($text)),
 			'rules'   => $rules,
 		);
+		if ($closedDays) {
+			$out['closed_days'] = $closedDays;
+		}
+		if ($preserve) {
+			$out['preserve_unmentioned'] = true;
+		}
+
+		return $out;
+	}
+
+	/**
+	 * French/EU time tokens: 13h30 → 13:30, 13h → 13:00.
+	 *
+	 * @param string $text
+	 * @return string
+	 */
+	private function normalizeTimeTokens($text)
+	{
+		$text = preg_replace('/(\d{1,2})h(\d{2})\b/i', '$1:$2', (string) $text);
+		$text = preg_replace('/(\d{1,2})h\b/i', '$1:00', $text);
+
+		return $text;
+	}
+
+	/**
+	 * Per-group “Mon, Tue, Wed from 9 to 12 then 13:30 to 19:30 / Friday from …”
+	 *
+	 * @param string $text
+	 * @param int[]  $closedDays
+	 * @return array
+	 */
+	private function extractDayHourGroups($text, array $closedDays)
+	{
+		$dayTok = $this->dayTokenPattern();
+		$unit   = '(?:' . $dayTok . ')(?:\s*(?:to|through|thru|a|au|bis|[–\-—])\s*(?:' . $dayTok . ')|(?:\s*(?:,|;|and|&|e|et|y|und)\s*(?:' . $dayTok . '))*)';
+		if (! preg_match_all('/\b(' . $unit . ')\b/i', $text, $matches, PREG_OFFSET_CAPTURE)) {
+			return array();
+		}
+
+		$spans = $matches[1];
+		$out   = array();
+		$count = count($spans);
+		for ($i = 0; $i < $count; $i++) {
+			$label  = $spans[ $i ][0];
+			$start  = $spans[ $i ][1] + strlen($label);
+			$end    = isset($spans[ $i + 1 ][1]) ? $spans[ $i + 1 ][1] : strlen($text);
+			$clause = substr($text, $start, max(0, $end - $start));
+			$days   = $this->extractDayRangeOrList($label);
+			$days   = array_values(array_diff($days, $closedDays));
+			$intervals = $this->extractIntervals($clause);
+			if (! $days || ! $intervals) {
+				continue;
+			}
+			$out[] = array(
+				'days'      => $days,
+				'intervals' => $intervals,
+				'always'    => true,
+			);
+		}
+
+		return $out;
+	}
+
+	/**
+	 * @param string $text
+	 * @return string
+	 */
+	private function stripClosedClauses($text)
+	{
+		$dayTok = $this->dayTokenPattern();
+		$closed = 'closed|chius[oi]|cerrad[oa]s?|ferm[eé]|geschlossen';
+		$list   = '(?:' . $dayTok . ')(?:\s*(?:,|and|&|e|et|y|und)\s*(?:' . $dayTok . '))*';
+		$text   = preg_replace('/\b' . $list . '\s+(?:' . $closed . ')\b/i', ' ', (string) $text);
+		$text   = preg_replace('/\b(?:' . $closed . ')(?:\s+on|\s+il|\s+el|\s+le)?\s+' . $list . '\b/i', ' ', $text);
+
+		return $text;
 	}
 
 	/**
@@ -3046,26 +3238,25 @@ class SLN_AI_ProxyClient
 		$folded = SLN_AI_Language::fold($text);
 		$dayTok = $this->dayTokenPattern();
 		$closed = array();
-		if (preg_match_all(
-			'/(?:closed|chiuso|cerrado|ferme|geschlossen)(?:\s+on|\s+il|\s+el|\s+le)?\s+(' . $dayTok . ')/i',
-			$folded,
-			$matches
-		)) {
-			foreach ($matches[1] as $token) {
-				$key = $this->dayTokenToKey($token);
-				if ($key !== null) {
+		$list   = '(?:' . $dayTok . ')(?:\s*(?:,|and|&|e|et|y|und)\s*(?:' . $dayTok . '))*';
+		$word   = 'closed|chius[oi]|cerrad[oa]s?|ferm[eé]|geschlossen';
+
+		if (preg_match_all('/(' . $list . ')\s+(?:' . $word . ')/i', $folded, $matches)) {
+			foreach ($matches[1] as $chunk) {
+				foreach ($this->extractDayRangeOrList($chunk) as $key) {
 					$closed[] = $key;
 				}
 			}
 		}
+		// Only “closed on Friday” / clause-initial “closed Thursday and Sunday”.
+		// Bare “closed Friday” after “Sunday closed Friday from …” would steal Friday.
 		if (preg_match_all(
-			'/(' . $dayTok . ')\s+(?:closed|chiuso|cerrado|ferme|geschlossen)/i',
+			'/(?:(?:' . $word . ')(?:\s+on|\s+il|\s+el|\s+le|:)|(?:^|[.;\n])\s*(?:' . $word . '))\s+(' . $list . ')/i',
 			$folded,
 			$matches
 		)) {
-			foreach ($matches[1] as $token) {
-				$key = $this->dayTokenToKey($token);
-				if ($key !== null) {
+			foreach ($matches[1] as $chunk) {
+				foreach ($this->extractDayRangeOrList($chunk) as $key) {
 					$closed[] = $key;
 				}
 			}
@@ -3167,7 +3358,8 @@ class SLN_AI_ProxyClient
 	private function extractIntervals($text)
 	{
 		$intervals = array();
-		$folded    = SLN_AI_Language::fold($text);
+		$folded    = SLN_AI_Language::fold($this->normalizeTimeTokens($text));
+		$seen      = array();
 		$patterns  = array(
 			'/(\d{1,2}[:.]\d{2})\s*[–\-—to]+\s*(\d{1,2}[:.]\d{2})/i',
 			'/(\d{1,2}(?::\d{2})?\s*[ap]m)\s*[–\-—to]+\s*(\d{1,2}(?::\d{2})?\s*[ap]m)/i',
@@ -3177,22 +3369,33 @@ class SLN_AI_ProxyClient
 		);
 
 		foreach ($patterns as $pattern) {
-			if (preg_match_all($pattern, $folded, $matches, PREG_SET_ORDER)) {
-				foreach ($matches as $m) {
-					$from = $this->normTime($m[1]);
-					$to   = $this->normTime($m[2]);
-					if ($from && $to) {
-						$intervals[] = array('from' => $from, 'to' => $to);
-					}
-					if (count($intervals) >= 2) {
-						return $intervals;
-					}
+			if (! preg_match_all($pattern, $folded, $matches, PREG_SET_ORDER)) {
+				continue;
+			}
+			foreach ($matches as $m) {
+				$from = $this->normTime($m[1]);
+				$to   = $this->normTime($m[2]);
+				if (! $from || ! $to) {
+					continue;
+				}
+				$key = $from . '-' . $to;
+				if (isset($seen[ $key ])) {
+					continue;
+				}
+				$seen[ $key ]  = true;
+				$intervals[]   = array('from' => $from, 'to' => $to);
+				if (count($intervals) >= 2) {
+					break 2;
 				}
 			}
-			if ($intervals) {
-				break;
-			}
 		}
+
+		usort(
+			$intervals,
+			function ($a, $b) {
+				return strcmp($a['from'], $b['from']);
+			}
+		);
 
 		return $intervals;
 	}

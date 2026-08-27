@@ -161,11 +161,7 @@ class SLN_Wrapper_Attendant extends SLN_Wrapper_Abstract implements SLN_Wrapper_
 
     public function getContent()
     {
-        $object = SLN_Helper_Multilingual::isMultilingual()  ? $this->translationObject : $this->object;
-        if ($object) {
-            if(isset($object->post_excerpt))
-            return $object->post_excerpt;
-        }
+        return $this->getExcerpt();
     }
 
     public function canMultipleCustomers(){

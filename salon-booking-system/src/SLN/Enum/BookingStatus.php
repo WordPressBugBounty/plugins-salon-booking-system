@@ -65,6 +65,16 @@ class SLN_Enum_BookingStatus extends SLN_Enum_AbstractEnum
         return $ret;
     }
 
+    /**
+     * Rebuild gettext on each read so labels follow the current locale
+     * after SLN_Helper_Multilingual::applyLanguage().
+     */
+    public static function getLabels()
+    {
+        self::init();
+        return self::$labels;
+    }
+
     public static function getLabel($key)
     {
         $labels = self::getLabels();

@@ -290,6 +290,13 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
 	    if (!$booking->getMeta('created_by_user_id')) {
 		    $booking->setMeta('created_by_user_id', get_current_user_id());
 	    }
+
+	    if (!$booking->getMeta('language')) {
+		    $booking_lang = SLN_Helper_Multilingual::sanitizeLanguageCode(SLN_Helper_Multilingual::getCurrentLanguage());
+		    if ($booking_lang) {
+			    $booking->setMeta('language', $booking_lang);
+		    }
+	    }
 	    
 	    // Track the last editor and edit time (updates on every save)
 	    $current_user_id = get_current_user_id();

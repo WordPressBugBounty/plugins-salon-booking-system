@@ -36,26 +36,28 @@ $launcher_url = SLN_PLUGIN_URL . '/img/ai-calendar-launcher.png';
 		</header>
 
 		<div class="sln-ai-calendar__body">
-			<p id="sln-ai-setup-welcome" class="sln-ai-setup__chat-welcome" hidden></p>
-			<div id="sln-ai-setup-backend" class="sln-ai-setup__backend sln-ai-calendar__backend" hidden>
-				<div class="sln-ai-setup__backend-card">
-					<span class="sln-ai-setup__backend-label"></span>
-					<p class="description sln-ai-setup__backend-hint"></p>
+			<div class="sln-ai-calendar__scroll">
+				<p id="sln-ai-setup-welcome" class="sln-ai-setup__chat-welcome" hidden></p>
+				<div id="sln-ai-setup-backend" class="sln-ai-setup__backend sln-ai-calendar__backend" hidden>
+					<div class="sln-ai-setup__backend-card">
+						<span class="sln-ai-setup__backend-label"></span>
+						<p class="description sln-ai-setup__backend-hint"></p>
+					</div>
 				</div>
-			</div>
 
-			<div id="sln-ai-setup-messages" class="sln-ai-setup__messages" aria-live="polite"></div>
+				<div id="sln-ai-setup-messages" class="sln-ai-setup__messages" aria-live="polite"></div>
 
-			<div id="sln-ai-setup-preview" class="sln-ai-setup__preview" hidden>
-				<h3 class="sln-ai-setup__preview-title"></h3>
-				<div class="sln-ai-setup__preview-body"></div>
-				<div class="sln-ai-setup__preview-actions">
-					<button type="button" class="button button-primary" id="sln-ai-setup-confirm"></button>
-					<button type="button" class="button" id="sln-ai-setup-cancel"></button>
+				<div id="sln-ai-setup-preview" class="sln-ai-setup__preview" hidden>
+					<h3 class="sln-ai-setup__preview-title"></h3>
+					<div class="sln-ai-setup__preview-body"></div>
+					<div class="sln-ai-setup__preview-actions">
+						<button type="button" class="button button-primary" id="sln-ai-setup-confirm"></button>
+						<button type="button" class="button" id="sln-ai-setup-cancel"></button>
+					</div>
 				</div>
-			</div>
 
-			<div class="sln-ai-setup__suggestions" id="sln-ai-setup-suggestions" hidden></div>
+				<div class="sln-ai-setup__suggestions" id="sln-ai-setup-suggestions" hidden></div>
+			</div>
 
 			<form id="sln-ai-setup-form" class="sln-ai-setup__composer sln-ai-calendar__composer">
 				<label class="screen-reader-text" for="sln-ai-setup-input"><?php esc_html_e( 'Message', 'salon-booking-system' ); ?></label>

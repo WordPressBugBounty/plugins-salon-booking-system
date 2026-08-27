@@ -96,6 +96,15 @@
             v-model="elCustomerPhone"
         />
       </div>
+      <div class="form-field" v-if="showLanguageControl">
+        <label class="field-label">{{ getLabel('bookingLanguageLabel') }}</label>
+        <b-form-select
+            v-model="elLanguage"
+            :options="languageSelectOptions"
+            class="language-select"
+        />
+        <p class="field-help">{{ getLabel('bookingLanguageHelp') }}</p>
+      </div>
       <div class="form-field">
         <b-form-textarea
             v-model="elCustomerNotes"
@@ -459,6 +468,16 @@ export default {
         return {};
       },
     },
+    language: {
+      default: function () {
+        return '';
+      },
+    },
+    customerLanguage: {
+      default: function () {
+        return '';
+      },
+    },
   },
   mixins: [mixins],
   mounted() {
@@ -543,6 +562,18 @@ export default {
         'placeholder': this.getLabel('customerPhonePlaceholder')
       },
       specificValidationMessage: this.getLabel('validationMessage'),
+      elLanguage: (() => {
+        const list = (window.slnPWA && Array.isArray(window.slnPWA.languages)) ? window.slnPWA.languages : [];
+        const codes = list.map((lang) => lang && lang.code).filter(Boolean);
+        const fallback = (window.slnPWA && window.slnPWA.default_language) ? window.slnPWA.default_language : '';
+        const candidates = [this.language, this.customerLanguage, fallback];
+        for (const code of candidates) {
+          if (code && (codes.length === 0 || codes.indexOf(code) > -1)) {
+            return code;
+          }
+        }
+        return fallback || (codes[0] || '');
+      })(),
     };
   },
   watch: {
@@ -555,6 +586,18 @@ export default {
       const prefix = newVal || '';
       this.elCustomerPhoneCountryCode = prefix;
       this.originalCustomerPhoneCountryCode = prefix;
+    },
+    customerLanguage(newVal) {
+      const next = this.normalizeBookingLanguage(newVal);
+      if (next) {
+        this.elLanguage = next;
+      }
+    },
+    language(newVal) {
+      const next = this.normalizeBookingLanguage(newVal);
+      if (next) {
+        this.elLanguage = next;
+      }
     },
     elDate() {
       this.loadAvailabilityIntervals()
@@ -742,6 +785,22 @@ export default {
         return s;
       })
     },
+    bookingLanguages() {
+      const list = window.slnPWA && Array.isArray(window.slnPWA.languages) ? window.slnPWA.languages : [];
+      return list.filter((lang) => lang && lang.code);
+    },
+    defaultBookingLanguage() {
+      return (window.slnPWA && window.slnPWA.default_language) ? window.slnPWA.default_language : '';
+    },
+    showLanguageControl() {
+      return this.bookingLanguages.length > 1;
+    },
+    languageSelectOptions() {
+      return this.bookingLanguages.map((lang) => ({
+        value: lang.code,
+        text: lang.name || lang.code,
+      }));
+    },
   },
   methods: {
     sprintf(format, ...args) {
@@ -752,6 +811,16 @@ export default {
     },
     chooseCustomer() {
       this.$emit('chooseCustomer');
+    },
+    normalizeBookingLanguage(code) {
+      if (!code) {
+        return '';
+      }
+      const codes = this.bookingLanguages.map((lang) => lang.code);
+      if (!codes.length || codes.indexOf(code) > -1) {
+        return code;
+      }
+      return '';
     },
     convertDurationToMinutes(duration) {
       const [hours, minutes] = duration.split(':').map(Number);
@@ -929,6 +998,7 @@ export default {
         note: this.elCustomerNotes,
         customer_personal_note: this.elCustomerPersonalNotes,
         admin_note: this.elAdminNote,
+        language: this.elLanguage,
         save_as_new_customer: this.saveAsNewCustomer,
         custom_fields: this.elCustomFields,
       }
@@ -1011,6 +1081,10 @@ export default {
           });
     },
     loadResources() {
+      if (!this.showResource) {
+        this.elResourcesList = [];
+        return Promise.resolve();
+      }
       return this.axios
           .get('resources', {params: {shop: this.shop ? this.shop.id : null}})
           .then(response => {
@@ -1304,22 +1378,38 @@ export default {
       }
       return default_value
     },
-    addServicesSelectSearchInput(index) {
-      this.serviceSearch.push('')
+    /**
+     * Move the custom search field into a vue-select dropdown.
+     * No-ops when that select is hidden (v-if) or not yet in the DOM,
+     * so missing attendant/resource/discount rows cannot throw on .prepend().
+     */
+    attachSelectSearchInput(index, {blockSelector, fieldSelector, refName, searchKey}) {
+      this[searchKey].push('')
       setTimeout(() => {
-        window.document
-            .querySelectorAll(".service .vue-dropdown")[index]
-              .prepend(window.document.querySelectorAll(".service .vue-select-search")[index])
+        const block = window.document.querySelectorAll(blockSelector)[index]
+        if (!block) {
+          return
+        }
+        const dropdown = block.querySelector(fieldSelector + ' .vue-dropdown')
+        const search = block.querySelector(fieldSelector + ' .vue-select-search')
+        const input = block.querySelector(fieldSelector + ' .vue-select-search-input')
+        if (!dropdown || !search) {
+          return
+        }
+        dropdown.prepend(search)
 
-        let i = this.$refs['select-service'][index]
-
-        let blur = i.blur
-        i.blur = () => {
+        const refs = this.$refs[refName]
+        const select = Array.isArray(refs) ? refs[index] : refs
+        if (!select || !input) {
+          return
         }
 
-        let focus = i.focus
-        let input = window.document.querySelectorAll(".service .vue-select-search-input")[index];
-        i.focus = () => {
+        const blur = select.blur
+        select.blur = () => {
+        }
+
+        const focus = select.focus
+        select.focus = () => {
           focus()
           setTimeout(() => {
             input.focus()
@@ -1327,88 +1417,41 @@ export default {
         }
         input.addEventListener('blur', () => {
           blur()
-          this.serviceSearch[index] = ''
+          this[searchKey][index] = ''
         })
-      }, 0);
+      }, 0)
+    },
+    addServicesSelectSearchInput(index) {
+      this.attachSelectSearchInput(index, {
+        blockSelector: '.service-block',
+        fieldSelector: '.service',
+        refName: 'select-service',
+        searchKey: 'serviceSearch',
+      })
     },
     addAssistantsSelectSearchInput(index) {
-      this.assistantSearch.push('')
-      setTimeout(() => {
-        window.document
-            .querySelectorAll(".attendant .vue-dropdown")[index]
-            .prepend(window.document.querySelectorAll(".attendant .vue-select-search")[index])
-
-        let i = this.$refs['select-assistant'][index]
-
-        let blur = i.blur
-        i.blur = () => {
-        }
-
-        let focus = i.focus
-        let input = window.document.querySelectorAll(".attendant .vue-select-search-input")[index];
-        i.focus = () => {
-          focus()
-          setTimeout(() => {
-            input.focus()
-          }, 0)
-        }
-        input.addEventListener('blur', () => {
-          blur()
-          this.assistantSearch[index] = ''
-        })
-      }, 0);
+      this.attachSelectSearchInput(index, {
+        blockSelector: '.service-block',
+        fieldSelector: '.attendant',
+        refName: 'select-assistant',
+        searchKey: 'assistantSearch',
+      })
     },
     addResourcesSelectSearchInput(index) {
-      this.resourceSearch.push('')
-      setTimeout(() => {
-        window.document
-            .querySelectorAll(".resource .vue-dropdown")[index]
-            .prepend(window.document.querySelectorAll(".resource .vue-select-search")[index])
-
-        let i = this.$refs['select-resource'][index]
-
-        let blur = i.blur
-        i.blur = () => {
-        }
-
-        let focus = i.focus
-        let input = window.document.querySelectorAll(".resource .vue-select-search-input")[index];
-        i.focus = () => {
-          focus()
-          setTimeout(() => {
-            input.focus()
-          }, 0)
-        }
-        input.addEventListener('blur', () => {
-          blur()
-          this.resourceSearch[index] = ''
-        })
-      }, 0);
+      this.attachSelectSearchInput(index, {
+        blockSelector: '.service-block',
+        fieldSelector: '.resource',
+        refName: 'select-resource',
+        searchKey: 'resourceSearch',
+      })
     },
     addDiscountsSelectSearchInput(index) {
-      this.discountSearch.push('')
-      setTimeout(() => {
-        window.document.querySelectorAll(".discount .vue-dropdown")[index].prepend(window.document.querySelectorAll(".discount .vue-select-search")[index])
-
-        let i = this.$refs['select-discount'][index]
-
-        let blur = i.blur
-        i.blur = () => {
-        }
-
-        let focus = i.focus
-        let input = window.document.querySelectorAll(".discount .vue-select-search-input")[index];
-        i.focus = () => {
-          focus()
-          setTimeout(() => {
-            input.focus()
-          }, 0)
-        }
-        input.addEventListener('blur', () => {
-          blur()
-          this.discountSearch[index] = ''
-        })
-      }, 0);
+      this.attachSelectSearchInput(index, {
+        blockSelector: '.discount-block',
+        fieldSelector: '.discount',
+        refName: 'select-discount',
+        searchKey: 'discountSearch',
+      })
     },
     getAttendantsOrResourcesListBySearch(list, search) {
       if (!search) {
@@ -1461,7 +1504,9 @@ export default {
 }
 
 /* ── Input overrides ── */
-.form-field :deep(.form-control) {
+.form-field :deep(.form-control),
+.form-field :deep(.custom-select),
+.form-field :deep(.form-select) {
   border: 1.5px solid var(--color-border, #E2E8F0);
   border-radius: var(--radius-sm, 8px);
   padding: 10px 12px;
@@ -1475,7 +1520,9 @@ export default {
   color: var(--color-text-muted, #94A3B8);
   font-size: 14px;
 }
-.form-field :deep(.form-control:focus) {
+.form-field :deep(.form-control:focus),
+.form-field :deep(.custom-select:focus),
+.form-field :deep(.form-select:focus) {
   border-color: var(--color-primary, #2563EB);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
   outline: none;
@@ -1647,9 +1694,16 @@ export default {
   cursor: pointer;
 }
 .collapsible-icon { color: var(--color-text-muted, #94A3B8); font-size: 14px; }
-.status-select {
+.status-select,
+.language-select {
   width: 100%;
   margin-bottom: 12px;
+}
+.field-help {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--color-text-muted, #94A3B8);
 }
 .save-row { display: flex; justify-content: flex-end; }
 .save-btn {

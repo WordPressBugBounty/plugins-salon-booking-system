@@ -50,6 +50,7 @@ window.SLN_BOOKING_CLIENT = {
                 : __('Your account', 'salon-booking-system');
             echo '<div class="sln-topbar">';
             echo '<a class="sln-topbar__account" href="' . esc_url($accountUrl) . '" title="' . esc_attr($accountLabel) . '" aria-label="' . esc_attr($accountLabel) . '">';
+            echo '<span class="sln-topbar__name">' . esc_html($accountLabel) . '</span>';
             echo $accountIcon;
             echo '</a>';
             echo '</div>';

@@ -94,6 +94,16 @@ class SLN_AI_ContextPack
 			'discounts'              => $discounts,
 			'pro_features'           => array_keys(SLN_AI_Edition::proFeatures()),
 			'availabilities_summary' => $hours->formatAvailabilitiesSummary(is_array($avail) ? $avail : array()),
+			'assistant_hours_custom' => SLN_AI_AvailabilityCascade::contextLines(
+				$plugin,
+				SLN_Plugin::POST_TYPE_ATTENDANT,
+				SLN_AI_AvailabilityCascade::ATTENDANT_META
+			),
+			'service_hours_custom'   => SLN_AI_AvailabilityCascade::contextLines(
+				$plugin,
+				SLN_Plugin::POST_TYPE_SERVICE,
+				SLN_AI_AvailabilityCascade::SERVICE_META
+			),
 			'holidays_summary'       => $holidays->formatHolidaysSummary(is_array($hols) ? $hols : array()),
 			'ecosystem'              => SLN_AI_Ecosystem::contextFields(),
 			'recent_changelog'       => SLN_AI_Changelog::contextFields(),
@@ -213,6 +223,15 @@ class SLN_AI_ContextPack
 		$hours = self::str($context, 'availabilities_summary', '(none)');
 		$hols  = self::str($context, 'holidays_summary', '(none)');
 		$lines[] = "Opening hours:\n" . $hours;
+		$asstHours = isset($context['assistant_hours_custom']) && is_array($context['assistant_hours_custom'])
+			? $context['assistant_hours_custom']
+			: array();
+		$svcHours = isset($context['service_hours_custom']) && is_array($context['service_hours_custom'])
+			? $context['service_hours_custom']
+			: array();
+		$lines[] = 'Custom assistant hours (empty = inherit salon): ' . ( $asstHours ? implode('; ', $asstHours) : '(none)' );
+		$lines[] = 'Custom service hours (empty = inherit salon): ' . ( $svcHours ? implode('; ', $svcHours) : '(none)' );
+		$lines[] = 'Verify a desired timetable: inspect_availabilities with those rules (weekly hours always=true). Apply a timetable: set_salon_availabilities (also aligns blocking assistant/service rules).';
 		$lines[] = "Holidays:\n" . $hols;
 
 		if (! empty($context['multishop_active']) && ! empty($context['shops_detail']) && is_array($context['shops_detail'])) {

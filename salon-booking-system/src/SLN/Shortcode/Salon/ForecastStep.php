@@ -475,14 +475,23 @@ class SLN_Shortcode_Salon_ForecastStep extends SLN_Shortcode_Salon_AbstractUserS
 	 * to 'skip' and the wizard starts one step earlier. After logging in from
 	 * that tab, customers with history are routed back here ('cards' state).
 	 *
-	 * With the default step order (date first) there is no services screen to
-	 * host the login tab as the opening step, so the login state is kept.
+	 * Force guest checkout has the same effect in the default step order
+	 * (date first): skip the dedicated login screen so the wizard opens on
+	 * date/time. Returning customers can still log in from the layout topbar.
+	 *
+	 * With the default step order and force guest checkout off there is no
+	 * services screen to host the login tab as the opening step, so the
+	 * login state is kept.
 	 *
 	 * @return string 'login' | 'cards' | 'skip'
 	 */
 	private function resolveState() {
 		if ( ! is_user_logged_in() ) {
-			return $this->getPlugin()->getSettings()->isFormStepsAltOrder() ? 'skip' : 'login';
+			$settings = $this->getPlugin()->getSettings();
+			if ( $settings->isFormStepsAltOrder() || $settings->get( 'enabled_force_guest_checkout' ) ) {
+				return 'skip';
+			}
+			return 'login';
 		}
 		if ( $this->customerHasSufficientHistory() ) {
 			return 'cards';

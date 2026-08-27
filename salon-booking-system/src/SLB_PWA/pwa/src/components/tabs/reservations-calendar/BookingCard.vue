@@ -108,6 +108,7 @@
         @edit="onEdit"
         @delete="onDelete"
         @view-profile="onViewProfile"
+        @soap-notes="onSoapNotes"
     />
   </div>
 </template>
@@ -263,6 +264,9 @@ export default {
     onEdit() {
       this.$emit('showDetails', this.booking);
       this.$emit('edit', this.booking);
+    },
+    onSoapNotes(booking) {
+      this.$emit('showDetails', booking || { ...this.booking, _openSoap: true });
     },
     onDelete() {
       this.$emit('deleteItem', this.booking.id);

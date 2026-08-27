@@ -16,6 +16,7 @@ use SLN_Enum_CheckoutFields;
 use SLN_Wrapper_Booking;
 use SLN_Helper_RateLimiter;
 use SLN_Helper_RecaptchaVerifier;
+use SLN_Helper_Multilingual;
 
 class Bookings_Controller extends REST_Controller
 {
@@ -1007,6 +1008,7 @@ class Bookings_Controller extends REST_Controller
             'customer_address'    => $booking->getAddress(),
             'customer_photos'     => $customer_photos,
             'customer_personal_note' => $customer_personal_note,
+            'language'            => SLN_Helper_Multilingual::getBookingLanguage($booking),
             'services'            => $services,
             'discounts'           => $booking->getMeta('discounts') ? $booking->getMeta('discounts') : array(),
             'discounts_details'   => $discounts,
@@ -1155,6 +1157,7 @@ class Bookings_Controller extends REST_Controller
             'customer_phone_country_code' => get_user_meta($user->ID, '_sln_sms_prefix', true),
             'customer_phone'      => get_user_meta($user->ID, '_sln_phone', true),
             'customer_address'    => get_user_meta($user->ID, '_sln_address', true),
+            'language'            => SLN_Helper_Multilingual::sanitizeLanguageCode(get_user_meta($user->ID, '_sln_language', true)),
         );
     }
 
@@ -1197,6 +1200,11 @@ class Bookings_Controller extends REST_Controller
 
         if ($request->get_param('customer_phone_country_code') !== null) {
             $meta['_sln_sms_prefix'] = $request->get_param('customer_phone_country_code');
+        }
+
+        $new_customer_lang = SLN_Helper_Multilingual::sanitizeLanguageCode($request->get_param('language'));
+        if ($new_customer_lang) {
+            $meta['_sln_language'] = $new_customer_lang;
         }
 
         foreach ($meta as $key => $value) {
@@ -1372,6 +1380,14 @@ class Bookings_Controller extends REST_Controller
         $bb->set('discounts', $request->get_param('discounts'));
         $bb->set('note', $request->get_param('note'));
 
+        $language = SLN_Helper_Multilingual::sanitizeLanguageCode($request->get_param('language'));
+        if (!$language) {
+            $language = SLN_Helper_Multilingual::sanitizeLanguageCode(SLN_Helper_Multilingual::getCurrentLanguage());
+        }
+        if ($language) {
+            $bb->set('language', $language);
+        }
+
         $booking_fields  = SLN_Enum_CheckoutFields::forBooking();
         $_custom_fields  = $request->get_param('custom_fields') ?: array();
         $custom_fields   = array();
@@ -1448,6 +1464,10 @@ class Bookings_Controller extends REST_Controller
 
         $this->persist_booking_phone_meta($booking->getId(), $request);
         $this->sync_customer_contact_meta($customer_id, $request);
+
+        if ($language) {
+            SLN_Helper_Multilingual::persistLanguage($booking->getId(), $language, $booking->getUserId(), true);
+        }
 
         return array(
 	    'id'	  => $booking->getId(),
@@ -1575,6 +1595,11 @@ class Bookings_Controller extends REST_Controller
 
         $this->persist_booking_phone_meta($id, $request);
         $this->sync_customer_contact_meta($customer_id, $request);
+
+        $language_param = $request->get_param('language');
+        if ($language_param !== null && $language_param !== '') {
+            SLN_Helper_Multilingual::persistLanguage($id, $language_param, $customer_id, true);
+        }
 
         $booking = $this->prepare_item_for_response($id, $request);
 
@@ -1844,6 +1869,14 @@ class Bookings_Controller extends REST_Controller
                     'arg_options' => array(
                         'sanitize_callback' => 'sanitize_text_field',
                         'default'           => '',
+                    ),
+                ),
+                'language' => array(
+                    'description' => __( 'Customer notification language (WPML/Polylang code).', 'salon-booking-system' ),
+                    'type'        => 'string',
+                    'context'     => array( 'view', 'edit' ),
+                    'arg_options' => array(
+                        'sanitize_callback' => 'sanitize_text_field',
                     ),
                 ),
                 'customer_photos' => array(

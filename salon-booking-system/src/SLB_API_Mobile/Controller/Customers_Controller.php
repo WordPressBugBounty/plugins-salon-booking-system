@@ -8,6 +8,7 @@ use WP_Error;
 use SLN_Plugin;
 use WP_User_Query;
 use SLN_Wrapper_Customer;
+use SLN_Helper_Multilingual;
 use WP_Query;
 
 use Gumlet\ImageResize;
@@ -450,6 +451,7 @@ class Customers_Controller extends REST_Controller
             'phone'      => $customer->getMeta('phone'),
             'address'    => $customer->getMeta('address'),
             'note'       => $customer->getMeta('personal_note'),
+            'language'   => SLN_Helper_Multilingual::sanitizeLanguageCode($customer->getMeta('language')),
             'bookings'   => $bookings,
             'total_amount_reservations' => $customer->getAmountOfReservations(),
             'score'      => $fidelity_enabled ? $customer->getFidelityScore() : null,

@@ -4,7 +4,7 @@ Tags: salon, spa, appointment booking, booking system, scheduling
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4.8
-Stable tag: 10.31.3
+Stable tag: 10.31.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -363,6 +363,16 @@ PHP 7.4 and above.
 
 == Changelog ==
 
+
+27.08.2026 - 10.31.4
+
+* New: multilingual bookings (WPML / Polylang) — each reservation and customer profile now stores a language, so emails, service names, staff names and booking statuses use the correct translation
+* New: SOAP notes in the mobile PWA (when the SOAP Notes add-on is active) — add, edit and review structured visit notes, with voice input and photo attachments
+* Improved: AI calendar assistant — conversation scrolling, awareness of assistant and service hours, and a tool to check availability rules
+* Improved: customer preferences are laid out more clearly in booking notification emails
+* Improved: license status after a Dodo Payments migration no longer treats a cancelled EDD subscription as expired when the license is still valid
+* Fixed: forecasted booking step now works correctly when guest checkout is enabled
+* Minor improvements
 
 19.08.2026 - 10.31.3
 

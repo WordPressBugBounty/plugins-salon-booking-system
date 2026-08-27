@@ -110,6 +110,11 @@
           <span class="recent-booking-services">{{ statServiceNames(booking) }}</span>
           <span class="recent-booking-date">{{ dateFormat(booking.date) }} &bull; {{ booking.time }}</span>
           
+          <span v-if="hasSoapNotes(booking)" class="soap-badge" :title="getLabel('soapNotesTitle') || 'SOAP Notes'">
+            <font-awesome-icon icon="fa-solid fa-clipboard-list" />
+            SOAP
+          </span>
+          
           <!-- Rating -->
           <div v-if="booking.rating" class="recent-booking-rating">
             <span class="rating-stars">
@@ -203,6 +208,30 @@
       </b-collapse>
     </div>
 
+    <div class="form-card soap-standing-card" v-if="soapNotesEnabled">
+      <div class="soap-standing-identity">
+        <span class="soap-standing-pin" aria-hidden="true">
+          <font-awesome-icon icon="fa-solid fa-thumbtack" />
+        </span>
+        <div class="soap-standing-copy">
+          <div class="soap-standing-title-row">
+            <span class="soap-standing-title">{{ getLabel('soapNotesStandingTitle') || 'Standing notes' }}</span>
+            <span class="soap-standing-chip">{{ getLabel('soapNotesStandingChip') || 'Every visit' }}</span>
+          </div>
+          <span class="soap-standing-sub">{{ getLabel('soapNotesStandingHint') || 'Saved on this customer and shown on every visit' }}</span>
+        </div>
+      </div>
+      <div class="form-field soap-standing-field">
+        <b-form-textarea
+          v-model="standingText"
+          rows="3"
+          max-rows="8"
+          :placeholder="getLabel('soapNotesStandingPlaceholder') || 'Allergies, contraindications, ongoing plan…'"
+        />
+      </div>
+      <p class="soap-standing-status" v-if="standingSaved">{{ getLabel('soapNotesStandingSaved') || 'Standing notes saved' }}</p>
+    </div>
+
     <!-- Actions -->
     <div class="form-card actions-card">
       <button class="save-btn" type="button" @click="save" :disabled="isLoading">
@@ -269,12 +298,29 @@ export default {
         totalBookingsPages() {
             return Math.ceil(this.allBookings.length / this.bookingsPerPage)
         },
+        soapNotesEnabled() {
+            return window.slnPWA?.soap_notes_enabled === true
+        },
+    },
+    watch: {
+        standingText() {
+            if (!this.standingReady || !this.soapNotesEnabled) {
+                return
+            }
+            if (this.standingTimer) {
+                clearTimeout(this.standingTimer)
+            }
+            this.standingTimer = setTimeout(() => {
+                this.saveStandingNotes()
+            }, 700)
+        },
     },
     mounted() {
         console.log('🔵 CustomerDetails mounted, customerID:', this.customerID)
         this.loadCustomFields()
         this.loadStats()
         this.loadCustomerPhoto()
+        this.loadSoapNotes()
     },
         data: function () {
             return {
@@ -313,6 +359,11 @@ export default {
                 isLoadingMoreBookings: false,
                 customerPhoto: null,
                 isUploadingPhoto: false,
+                soapBookingIds: [],
+                standingText: '',
+                standingSaved: false,
+                standingReady: false,
+                standingTimer: null,
             };
         },
     methods: {
@@ -492,6 +543,40 @@ export default {
             const services = booking.services || []
             if (services.length === 0) return '—'
             return services.map(s => s.service_name).filter(Boolean).join(', ')
+        },
+        hasSoapNotes(booking) {
+            if (booking && booking.has_soap_notes) {
+                return true
+            }
+            return this.soapBookingIds.indexOf(Number(booking && booking.id)) !== -1
+        },
+        loadSoapNotes() {
+            this.soapBookingIds = []
+            this.standingReady = false
+            if (!this.customerID || window.slnPWA?.soap_notes_enabled !== true) {
+                return
+            }
+            this.axios.get('soap-notes/customers/' + this.customerID).then((response) => {
+                const ids = (response.data && response.data.booking_ids) || []
+                this.soapBookingIds = ids.map((id) => Number(id))
+                this.standingText = (response.data && response.data.standing_notes) || ''
+                this.$nextTick(() => {
+                    this.standingReady = true
+                })
+            }).catch(() => {
+                this.soapBookingIds = []
+                this.standingReady = true
+            })
+        },
+        saveStandingNotes() {
+            if (!this.customerID || !this.soapNotesEnabled) {
+                return
+            }
+            this.axios.put('soap-notes/customers/' + this.customerID + '/standing-notes', { text: this.standingText })
+                .then(() => {
+                    this.standingSaved = true
+                    setTimeout(() => { this.standingSaved = false }, 2000)
+                })
         },
         openBookingDetails(booking) {
             console.log('🔵 openBookingDetails called with booking:', booking)
@@ -755,6 +840,20 @@ export default {
   font-size: 12px;
   color: var(--color-text-muted, #94A3B8);
 }
+.soap-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill, 999px);
+  background: #EFF6FF;
+  color: #2563EB;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  width: fit-content;
+}
 .recent-booking-status {
   font-size: 11px;
   font-weight: 600;
@@ -1012,5 +1111,80 @@ export default {
 
 .detail-title {
   text-align: center;
+}
+.soap-standing-hint {
+  font-size: 12px;
+  color: var(--color-text-muted, #94A3B8);
+  margin: 8px 0 0;
+}
+.soap-standing-status {
+  font-size: 12px;
+  color: #16A34A;
+  margin: 6px 0 0;
+}
+.soap-standing-card {
+  background: #FFFBEB;
+  border: 1.5px solid #F6D98B;
+  box-shadow: inset 4px 0 0 #D97706;
+  padding-left: 16px;
+}
+.soap-standing-identity {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.soap-standing-pin {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #FDE68A;
+  color: #B45309;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.soap-standing-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.soap-standing-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #92400E;
+  line-height: 1.2;
+}
+.soap-standing-chip {
+  display: inline-flex;
+  align-items: center;
+  background: #D97706;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 2px 8px;
+  line-height: 1.4;
+}
+.soap-standing-sub {
+  display: block;
+  margin-top: 3px;
+  font-size: 12px;
+  color: #B45309;
+  line-height: 1.35;
+}
+.soap-standing-field { margin-bottom: 0; }
+.soap-standing-card :deep(.form-control) {
+  background: #fff;
+  border-color: #F3D19A;
+}
+.soap-standing-card :deep(.form-control:focus) {
+  border-color: #D97706;
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.15);
 }
 </style>

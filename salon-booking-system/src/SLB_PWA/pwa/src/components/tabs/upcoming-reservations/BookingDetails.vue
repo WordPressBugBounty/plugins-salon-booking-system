@@ -1,5 +1,10 @@
 <template>
-  <div v-show="show" class="booking-detail-screen">
+  <SoapNotesEditor
+    v-if="showSoapEditor"
+    :booking-id="bookingData.id"
+    @close="closeSoapEditor"
+  />
+  <div v-show="show && !showSoapEditor" class="booking-detail-screen">
 
     <!-- Header -->
     <div class="detail-header">
@@ -136,6 +141,32 @@
       </div>
     </div>
 
+    <!-- SOAP Notes add-on -->
+    <div class="detail-card" v-if="soapNotesEnabled">
+      <p class="section-label">{{ getLabel('soapNotesTitle') || 'SOAP Notes' }}</p>
+      <div class="soap-preview" v-if="soapPreviewLines.length">
+        <div class="note-block" v-for="(line, idx) in soapPreviewLines" :key="idx">
+          <span class="note-block-label">{{ line.label }}</span>
+          <p class="note-block-text">{{ line.value }}</p>
+        </div>
+      </div>
+      <div class="soap-photo-strip" v-if="soapPhotos.length">
+        <img
+          v-for="photo in soapPhotos.slice(0, 4)"
+          :key="photo.attachment_id"
+          :src="photo.thumb_url || photo.url"
+          alt=""
+        >
+      </div>
+      <p class="soap-empty" v-if="!soapPreviewLines.length && !soapPhotos.length">{{ getLabel('soapNotesEmpty') || 'No SOAP notes yet' }}</p>
+      <button class="soap-open-btn" type="button" @click="openSoapEditor">
+        <font-awesome-icon icon="fa-solid fa-clipboard-list" />
+        {{ soapPayload && soapPayload.has_notes
+          ? (getLabel('soapNotesEditButton') || 'Edit SOAP notes')
+          : (getLabel('soapNotesFillButton') || 'Fill SOAP notes') }}
+      </button>
+    </div>
+
     <!-- Waiting list (Smart Waitlist add-on) -->
     <div class="detail-card" v-if="waitlist && waitlist.slot">
       <p class="section-label">Waiting list</p>
@@ -243,6 +274,7 @@
 
 <script>
     import PayRemainingAmount from './PayRemainingAmount.vue'
+    import SoapNotesEditor from './SoapNotesEditor.vue'
     import mixins from "@/mixin";
 
     export default {
@@ -349,14 +381,61 @@
                     ? 'This slot is free — notify a customer to offer it to them. Exact time matches are listed first.'
                     : 'These customers are waiting for this day. Notifying is enabled once this booking is cancelled or marked no-show.';
             },
+            soapNotesEnabled() {
+                return window.slnPWA?.soap_notes_enabled === true
+            },
+            soapPhotos() {
+                return (this.soapPayload && Array.isArray(this.soapPayload.photos))
+                    ? this.soapPayload.photos
+                    : []
+            },
+            soapPreviewLines() {
+                const fields = this.soapPayload && Array.isArray(this.soapPayload.fields)
+                    ? this.soapPayload.fields
+                    : []
+                return fields
+                    .filter((field) => {
+                        if (!this.soapPayload || !this.soapPayload.has_notes) {
+                            return false
+                        }
+                        if (field.type === 'interactive-image') {
+                            return Array.isArray(field.pins) && field.pins.length > 0
+                        }
+                        if (field.type === 'checkbox') {
+                            return Array.isArray(field.value) && field.value.length > 0
+                        }
+                        return typeof field.value === 'string' && field.value.trim() !== ''
+                    })
+                    .slice(0, 2)
+                    .map((field) => {
+                        if (field.type === 'interactive-image') {
+                            return { label: field.label, value: (field.pins.length) + ' notes on image' }
+                        }
+                        if (field.type === 'checkbox' || field.type === 'select' || field.type === 'radio') {
+                            const opts = field.options || []
+                            const keys = field.type === 'checkbox' ? field.value : [field.value]
+                            const labels = keys.map((key) => {
+                                const opt = opts.find((o) => String(o.key) === String(key))
+                                return opt ? opt.label : key
+                            })
+                            return { label: field.label, value: labels.join(', ') }
+                        }
+                        const text = String(field.value || '')
+                        return { label: field.label, value: text.length > 140 ? text.slice(0, 140) + '…' : text }
+                    })
+            },
         },
         mounted() {
             this.toggleShow()
             this.update()
+            if (this.booking && this.booking._openSoap && this.soapNotesEnabled) {
+                this.showSoapEditor = true
+            }
             setInterval(() => this.update(), 60000)
         },
         components: {
             PayRemainingAmount,
+            SoapNotesEditor,
         },
         data: function () {
             return {
@@ -373,6 +452,8 @@
                 wlSearching: false,
                 wlSearchTimer: null,
                 addingId: null,
+                showSoapEditor: false,
+                soapPayload: null,
             }
         },
         methods: {
@@ -393,14 +474,43 @@
                     this.bookingData = response.data.items[0]
                 })
                 this.updateWaitlist()
+                this.updateSoapNotes()
+            },
+            updateSoapNotes() {
+                if (!this.bookingData || !this.bookingData.id) {
+                    return
+                }
+                if (window.slnPWA?.soap_notes_enabled !== true) {
+                    this.soapPayload = null
+                    return
+                }
+                this.axios.get('soap-notes/bookings/' + this.bookingData.id).then((response) => {
+                    this.soapPayload = response.data && response.data.enabled ? response.data : null
+                }).catch(() => {
+                    this.soapPayload = null
+                })
+            },
+            openSoapEditor() {
+                this.showSoapEditor = true
+            },
+            closeSoapEditor(result) {
+                this.showSoapEditor = false
+                if (result && typeof result.hasNotes === 'boolean' && this.soapPayload) {
+                    this.soapPayload.has_notes = result.hasNotes
+                }
+                this.updateSoapNotes()
             },
             /**
              * Fetch waiting-list candidates for this booking's slot from the
-             * Smart Waitlist add-on. Degrades silently (no card) when the add-on
-             * is inactive/unlicensed and the route 404s.
+             * Smart Waitlist add-on. Skip the request when the add-on is off
+             * (avoids a console 404). Still degrades silently if the route 404s.
              */
             updateWaitlist() {
                 if (!this.bookingData || !this.bookingData.id) {
+                    return
+                }
+                if (window.slnPWA?.waitlist_enabled !== true) {
+                    this.waitlist = null
                     return
                 }
                 this.axios.get('waitlist/booking/' + this.bookingData.id).then((response) => {
@@ -1050,5 +1160,40 @@
   font-size: 12px;
   color: var(--color-text-muted, #94A3B8);
   margin: 8px 0 0;
+}
+.soap-empty {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--color-text-muted, #94A3B8);
+  margin: 0 0 10px;
+}
+.soap-preview { margin-bottom: 8px; }
+.soap-photo-strip {
+  display: flex;
+  gap: 6px;
+  margin: 0 0 10px;
+}
+.soap-photo-strip img {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: #F1F5F9;
+}
+.soap-open-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  border: none;
+  border-radius: var(--radius-pill, 999px);
+  background: var(--color-primary-light, #EFF6FF);
+  color: var(--color-primary, #2563EB);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 14px;
+  min-height: 40px;
+  cursor: pointer;
 }
 </style>

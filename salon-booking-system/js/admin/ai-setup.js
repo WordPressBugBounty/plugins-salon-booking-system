@@ -633,6 +633,20 @@
 		return out.replace(/\n/g, '<br>');
 	}
 
+	function scrollTranscript(toEl) {
+		var $scroll = $el('.sln-ai-calendar__scroll');
+		var node = $scroll.length ? $scroll[0] : $el('#sln-ai-setup-messages')[0];
+		if (!node) {
+			return;
+		}
+		if (toEl && toEl.length && toEl[0]) {
+			var extra = toEl[0].getBoundingClientRect().top - node.getBoundingClientRect().top;
+			node.scrollTop = Math.max(0, node.scrollTop + extra - 8);
+			return;
+		}
+		node.scrollTop = node.scrollHeight;
+	}
+
 	function appendMessage(role, text) {
 		var $box = $el('#sln-ai-setup-messages');
 		var roleLabel = role === 'user'
@@ -652,9 +666,7 @@
 				.html(formatRichText(text || ''))
 		);
 		$box.append($msg);
-		if ($box.length && $box[0]) {
-			$box.scrollTop($box[0].scrollHeight);
-		}
+		scrollTranscript();
 	}
 
 	function thinkingLabel() {
@@ -692,9 +704,7 @@
 		$inner.append($('<span/>').addClass('sln-ai-setup__thinking-label').text(label));
 		$msg.append($inner);
 		$box.append($msg);
-		if ($box.length && $box[0]) {
-			$box.scrollTop($box[0].scrollHeight);
-		}
+		scrollTranscript();
 	}
 
 	function removeThinking() {
@@ -721,6 +731,7 @@
 		$p.find('#sln-ai-setup-confirm').text((cfg.i18n && cfg.i18n.confirm) || 'Confirm');
 		$p.find('#sln-ai-setup-cancel').text((cfg.i18n && cfg.i18n.cancel) || 'Cancel');
 		$p.removeAttr('hidden');
+		scrollTranscript($p);
 	}
 
 	function updateUndo(enabled) {

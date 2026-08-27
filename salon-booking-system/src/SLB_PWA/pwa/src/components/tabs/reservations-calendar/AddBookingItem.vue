@@ -18,6 +18,7 @@
         :customerPhoneCountryCode="customer ? getBookingPhoneCountryCode(customer) : ''"
         :customerAddress="customer ? customer.address : ''"
         :customerPersonalNotes="customer ? customer.note : ''"
+        :customerLanguage="customer && customer.language ? customer.language : ''"
         status="sln-b-confirmed"
         :shop="shop"
         :isLoading="isLoading"

@@ -3,6 +3,10 @@
 abstract class SLN_Wrapper_Abstract
 {
     protected $object;
+    protected $translationObject;
+    protected $translationObjectId;
+    protected $displayObject;
+    protected $displayObjectLang;
 
     abstract public function getPostType();
 
@@ -250,9 +254,62 @@ abstract class SLN_Wrapper_Abstract
         }
     }
 
+    /**
+     * Post used for customer-facing title/excerpt.
+     * Follows the current (or forced booking) language so emails can show
+     * the WPML/Polylang translation even when the booking stored the default-language ID.
+     *
+     * @return object|null
+     */
+    protected function getTranslatedObject()
+    {
+        if (!$this->object || !SLN_Helper_Multilingual::isMultilingual()) {
+            return $this->object;
+        }
+
+        $current = SLN_Helper_Multilingual::getCurrentLanguage();
+        if ($this->displayObject && $this->displayObjectLang === $current) {
+            return $this->displayObject;
+        }
+
+        $default_id    = $this->getId();
+        $translated_id = $default_id ? SLN_Helper_Multilingual::translateId($default_id, $current) : 0;
+        $object        = ($translated_id && (int) $translated_id !== (int) $default_id)
+            ? get_post($translated_id)
+            : $this->object;
+
+        $this->displayObjectLang = $current;
+        $this->displayObject     = $object ? $object : $this->object;
+
+        return $this->displayObject;
+    }
+
+    /**
+     * Post meta from the current-language WPML/Polylang translation.
+     * Same language rule as getTranslatedObject() / getTitle(), so emails can
+     * read per-language service fields (e.g. custom notices) instead of the
+     * default-language copy the wrapper stores internally.
+     *
+     * @param string $key    Meta key without the _{post_type}_ prefix.
+     * @param bool   $single
+     * @return mixed
+     */
+    public function getTranslatedMeta($key, $single = true)
+    {
+        if (!SLN_Helper_Multilingual::isMultilingual()) {
+            return $this->getMeta($key, false, $single);
+        }
+
+        $object = $this->getTranslatedObject();
+        $id     = ($object && !empty($object->ID)) ? $object->ID : $this->getId();
+        $pt     = $this->getPostType();
+
+        return apply_filters("$pt.$key.get", get_post_meta($id, "_{$pt}_$key", $single), $id);
+    }
+
     public function getTitle()
     {
-        $object = $this->isMultilingual()  ? $this->translationObject : $this->object;
+        $object = $this->getTranslatedObject();
         if ($object) {
             if (strpos($object->post_title, '&lt') !== false || strpos($object->post_title, '&gt') !== false) {
                 // fix XSS when js on attribute 'onerror' or similar on page attendant
@@ -272,7 +329,7 @@ abstract class SLN_Wrapper_Abstract
 
     public function getExcerpt()
     {
-        $object = $this->isMultilingual()  ? $this->translationObject : $this->object;
+        $object = $this->getTranslatedObject();
         if ($object) {
             return $object->post_excerpt;
         }

@@ -126,7 +126,7 @@ a[x-apple-data-detectors] {
               </td>
              </tr>
              <tr>
-              <td class="es-m-p0r es-m-p0l" align="left" style="Margin:0;padding-left:20px;padding-right:20px;padding-top:40px;padding-bottom:40px; display: flex; justify-content: space-between;">
+              <td class="es-m-p0r es-m-p0l" align="left" style="Margin:0;padding-left:20px;padding-right:20px;padding-top:40px;padding-bottom:40px">
                <?php
                if(!$forAdmin){
                   echo $plugin->loadView('mail/_customer_manage_buttons', compact('booking', 'plugin', 'customer', 'payRemainingAmount'));
@@ -134,9 +134,14 @@ a[x-apple-data-detectors] {
                   echo $plugin->loadView('mail/_admin_manage_buttons', compact('plugin', 'booking'));
                 } ?>
               </td>
-             </tr><td>
-             <?php echo $plugin->loadView('mail/_add_to_calendar', compact('booking')) ?>
-               </td><tr>
+             </tr>
+             <?php
+             if (!isset($data)) {
+                 $data = new ArrayObject();
+             }
+             echo $plugin->loadView('mail/_add_to_calendar', compact('booking', 'data'));
+             ?>
+             <tr>
               <td align="left" style="Margin:0;padding-bottom:20px;padding-left:20px;padding-right:20px;padding-top:40px">
                <?php echo $plugin->loadView('mail/_customer_info', compact('booking', 'customer'));
                echo $plugin->loadView('mail/_custom_fields', compact('booking', 'customer')); ?>

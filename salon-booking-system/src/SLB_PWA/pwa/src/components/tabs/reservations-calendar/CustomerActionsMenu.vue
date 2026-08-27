@@ -17,6 +17,23 @@
             </div>
           </div>
 
+          <div class="modal-divider" v-if="soapNotesEnabled"></div>
+
+          <div class="modal-item" v-if="soapNotesEnabled" @click="openSoapNotes">
+            <div class="modal-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                   stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                <line x1="8" y1="13" x2="16" y2="13"></line>
+                <line x1="8" y1="17" x2="13" y2="17"></line>
+              </svg>
+            </div>
+            <div class="modal-text">
+              {{ getLabel('bookingActionSoapNotes') || 'SOAP notes' }}
+            </div>
+          </div>
+
           <div class="modal-divider"></div>
 
           <div class="modal-item" @click="deleteBooking">
@@ -120,6 +137,9 @@ export default {
     },
     hasCustomer() {
       return !!this.booking?.customer_id;
+    },
+    soapNotesEnabled() {
+      return window.slnPWA?.soap_notes_enabled === true;
     }
   },
   watch: {
@@ -138,6 +158,10 @@ export default {
     },
     editBooking() {
       this.$emit('edit', this.booking);
+      this.close();
+    },
+    openSoapNotes() {
+      this.$emit('soap-notes', { ...this.booking, _openSoap: true });
       this.close();
     },
     deleteBooking() {
@@ -177,7 +201,7 @@ export default {
       document.body.style.overflow = this.originalOverflow;
     }
   },
-  emits: ['close', 'edit', 'delete', 'view-profile']
+  emits: ['close', 'edit', 'delete', 'view-profile', 'soap-notes']
 }
 </script>
 

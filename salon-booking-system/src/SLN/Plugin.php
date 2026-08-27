@@ -131,7 +131,33 @@ class SLN_Plugin
 
     public function loadView($view, $data = array())
     {
-        return $this->templating()->loadView($view, $data);
+        $langState = $this->shouldApplyBookingLanguageToView($view, $data)
+            ? $this->applyLanguageContextFromMessageData($data)
+            : array('set' => false);
+        try {
+            return $this->templating()->loadView($view, $data);
+        } finally {
+            $this->restoreLanguageContext($langState);
+        }
+    }
+
+    /**
+     * Customer-facing mail/SMS templates follow the booking (or customer) language.
+     * Admin copies and reports stay in the current request language.
+     *
+     * @param string $view
+     * @param array  $data
+     * @return bool
+     */
+    protected function shouldApplyBookingLanguageToView($view, $data)
+    {
+        if (!empty($data['forAdmin'])) {
+            return false;
+        }
+        if (strpos($view, 'admin') !== false || strpos($view, 'weekly_report') !== false) {
+            return false;
+        }
+        return (strpos($view, 'mail/') === 0 || strpos($view, 'sms/') === 0);
     }
 
     /**
@@ -185,6 +211,64 @@ class SLN_Plugin
         }
     }
 
+    /**
+     * Switch WPML/Polylang + gettext to the booking's stored language so
+     * confirmation/reminder templates and admin-text strings match the customer.
+     *
+     * @param SLN_Wrapper_Booking|mixed $booking
+     * @return array
+     */
+    public function applyLanguageContextFromBooking($booking)
+    {
+        $data = array();
+        if ($booking instanceof SLN_Wrapper_Booking) {
+            $data['booking'] = $booking;
+        }
+        return $this->applyLanguageContextFromMessageData($data);
+    }
+
+    /**
+     * @param array $data Template data that may contain booking and/or customer.
+     * @return array
+     */
+    public function applyLanguageContextFromMessageData($data)
+    {
+        $state = array(
+            'set'  => false,
+            'lang' => null,
+        );
+
+        $code = '';
+        if (!empty($data['booking']) && $data['booking'] instanceof SLN_Wrapper_Booking) {
+            $code = SLN_Helper_Multilingual::getBookingLanguage($data['booking']);
+        }
+        if (!$code && !empty($data['customer']) && $data['customer'] instanceof SLN_Wrapper_Customer && !$data['customer']->isEmpty()) {
+            $code = SLN_Helper_Multilingual::sanitizeLanguageCode($data['customer']->getMeta('language'));
+        }
+        if (!$code) {
+            return $state;
+        }
+
+        $state['set']  = true;
+        $state['lang'] = SLN_Helper_Multilingual::applyLanguage($code);
+        $this->getSettings()->load();
+
+        return $state;
+    }
+
+    /**
+     * @param array $state
+     * @return void
+     */
+    public function restoreLanguageContext($state)
+    {
+        if (empty($state['set'])) {
+            return;
+        }
+        SLN_Helper_Multilingual::restoreLanguage(isset($state['lang']) ? $state['lang'] : array());
+        $this->getSettings()->load();
+    }
+
     public function sendMail($view, $data)
     {
 	$data['data'] = $settings = new ArrayObject($data);
@@ -214,54 +298,59 @@ class SLN_Plugin
             $bookingForShop = $data['booking'];
         }
         $shopState = $this->applyShopContextFromBooking($bookingForShop);
+        $langState = $this->shouldApplyBookingLanguageToView($view, $data)
+            ? $this->applyLanguageContextFromMessageData($data)
+            : array('set' => false);
 
         try {
-            $content = $this->loadView($view, $data);
-        } catch (SLN_Exception $e) {
-            // Template not found - use fallback email and log error
-            self::addLog("EMAIL TEMPLATE MISSING: {$view} - Using fallback email. Error: " . $e->getMessage());
-            
-            // Send error notification to support
-            if (class_exists('SLN_Helper_ErrorNotification')) {
-                SLN_Helper_ErrorNotification::send(
-                    'MISSING_EMAIL_TEMPLATE',
-                    "Email template '{$view}' not found",
-                    "Template path: {$view}\nBooking ID: " . (isset($data['booking']) ? $data['booking']->getId() : 'N/A')
-                );
-            }
-            
-            // Generate fallback email content
-            $content = $this->generateFallbackEmail($view, $data);
-        }
-        if (!function_exists('sln_html_content_type')) {
+            try {
+                $content = $this->loadView($view, $data);
+            } catch (SLN_Exception $e) {
+                // Template not found - use fallback email and log error
+                self::addLog("EMAIL TEMPLATE MISSING: {$view} - Using fallback email. Error: " . $e->getMessage());
 
-            function sln_html_content_type()
-            {
-                return 'text/html';
-            }
-        }
+                // Send error notification to support
+                if (class_exists('SLN_Helper_ErrorNotification')) {
+                    SLN_Helper_ErrorNotification::send(
+                        'MISSING_EMAIL_TEMPLATE',
+                        "Email template '{$view}' not found",
+                        "Template path: {$view}\nBooking ID: " . (isset($data['booking']) ? $data['booking']->getId() : 'N/A')
+                    );
+                }
 
-        add_filter('wp_mail_content_type', 'sln_html_content_type');
-		$headers = array_merge(array(
-			'From: '.$this->getSettings()->getSalonName($bookingForShop).' <'.$this->getSettings()->getSalonEmail().'>',
-			'booking-id: ' . (isset($data['booking']) ? $data['booking']->getId() : '0'),
-			'remind: ' . ($data['remind'] ?? '0'),
-		), isset($settings['headers']) ? $settings['headers'] : array());
-        if(empty($settings['to'])){
+                // Generate fallback email content
+                $content = $this->generateFallbackEmail($view, $data);
+            }
+            if (!function_exists('sln_html_content_type')) {
+
+                function sln_html_content_type()
+                {
+                    return 'text/html';
+                }
+            }
+
+            add_filter('wp_mail_content_type', 'sln_html_content_type');
+            $headers = array_merge(array(
+                'From: '.$this->getSettings()->getSalonName($bookingForShop).' <'.$this->getSettings()->getSalonEmail().'>',
+                'booking-id: ' . (isset($data['booking']) ? $data['booking']->getId() : '0'),
+                'remind: ' . ($data['remind'] ?? '0'),
+            ), isset($settings['headers']) ? $settings['headers'] : array());
+            if(empty($settings['to'])){
+                remove_filter('wp_mail_content_type', 'sln_html_content_type');
+                return;
+                //throw new Exception('Receiver not defined');
+            }
+
+            $admin_users = get_users(array(
+                'role' => 'administrator'
+            ));
+            wp_mail($settings['to'], $settings['subject'], $content, $headers, $settings['attachments']);
+
             remove_filter('wp_mail_content_type', 'sln_html_content_type');
+        } finally {
+            $this->restoreLanguageContext($langState);
             $this->restoreShopContext($shopState);
-            return;
-            //throw new Exception('Receiver not defined');
         }
-
-        $admin_users = get_users(array(
-            'role' => 'administrator'
-        ));
-        wp_mail($settings['to'], $settings['subject'], $content, $headers, $settings['attachments']);
-
-        remove_filter('wp_mail_content_type', 'sln_html_content_type');
-
-        $this->restoreShopContext($shopState);
     }
 
     /**

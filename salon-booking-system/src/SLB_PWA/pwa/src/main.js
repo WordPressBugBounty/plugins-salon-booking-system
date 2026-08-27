@@ -22,7 +22,8 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faList, faCalendarDays, faMagnifyingGlass, faChevronRight, faChevronLeft, faTrash, faCircleXmark,
 faPenToSquare, faCheck, faUsers, faUserAlt, faPlus, faCircleChevronDown, faCircleChevronUp, faChartSimple, faMedal, faUnlock, faLock,
 faPhone, faMessage, faCirclePlus, faStore, faImages, faCamera, faCloudArrowUp,
-faBell, faGlobe, faRotateRight, faArrowRightFromBracket, faArrowLeft, faXmark, faArrowsUpDown, faPuzzlePiece, faRocket} from '@fortawesome/free-solid-svg-icons'
+faBell, faGlobe, faRotateRight, faArrowRightFromBracket, faArrowLeft, faXmark, faArrowsUpDown, faPuzzlePiece, faRocket,
+faClipboard, faClipboardList, faMicrophone, faStop, faThumbtack} from '@fortawesome/free-solid-svg-icons'
 
 import { faAddressBook, faClock, faCircleCheck } from '@fortawesome/free-regular-svg-icons'
 
@@ -32,7 +33,8 @@ import { faWhatsapp } from '@fortawesome/free-brands-svg-icons'
 library.add(faList, faCalendarDays, faAddressBook, faMagnifyingGlass, faClock, faChevronRight, faChevronLeft, faTrash, faCircleXmark,
 faPenToSquare, faCheck, faUsers, faUserAlt, faPlus, faCircleChevronDown, faCircleChevronUp, faChartSimple, faMedal, faUnlock, faLock,
 faPhone, faMessage, faCirclePlus, faWhatsapp, faStore, faImages, faCamera, faCloudArrowUp, faCircleCheck,
-faBell, faGlobe, faRotateRight, faArrowRightFromBracket, faArrowLeft, faXmark, faArrowsUpDown, faPuzzlePiece, faRocket)
+faBell, faGlobe, faRotateRight, faArrowRightFromBracket, faArrowLeft, faXmark, faArrowsUpDown, faPuzzlePiece, faRocket,
+faClipboard, faClipboardList, faMicrophone, faStop, faThumbtack)
 
 import Datepicker from '@vuepic/vue-datepicker';
 

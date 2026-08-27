@@ -139,6 +139,10 @@ class Plugin {
             'license_upgrade_promo'            => PwaLicensePromo::get_for_pwa(),
             /** Smart Waitlist add-on presence: gates the "Waiting list" tab. Set by the add-on. */
             'waitlist_enabled'                 => (bool) apply_filters('sln_pwa_waitlist_enabled', false),
+            /** SOAP Notes add-on presence: gates booking/customer SOAP screens. Set by the add-on. */
+            'soap_notes_enabled'               => (bool) apply_filters('sln_pwa_soap_notes_enabled', false),
+            'languages'                        => \SLN_Helper_Multilingual::getAvailableLanguages(),
+            'default_language'                 => \SLN_Helper_Multilingual::getDefaultLanguage(),
         );
 
         $dist_directory_path = SLN_PLUGIN_DIR . '/src/SLB_PWA/pwa/dist';

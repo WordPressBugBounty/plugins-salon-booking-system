@@ -485,6 +485,15 @@ class SLN_Wrapper_Booking_Builder
             update_post_meta($id, '_'.SLN_Plugin::POST_TYPE_BOOKING.'_'.$k, $v);
         }
 
+        // Front-end / admin creates inherit the current WPML/Polylang language
+        // so later cron reminders can still render in the customer's language.
+        if (empty(get_post_meta($id, '_sln_booking_language', true))) {
+            $fallback_lang = SLN_Helper_Multilingual::sanitizeLanguageCode(SLN_Helper_Multilingual::getCurrentLanguage());
+            if ($fallback_lang) {
+                update_post_meta($id, '_sln_booking_language', $fallback_lang);
+            }
+        }
+
         // Capture device / IP info at booking creation time (stored once, never overwritten).
         // Skipped for admin-created bookings and REST API requests where no real browser UA is present.
         $is_admin_create = is_admin() && !( defined('DOING_AJAX') && DOING_AJAX );
@@ -532,6 +541,10 @@ class SLN_Wrapper_Booking_Builder
         do_action('sln.booking_builder.new_booking_ready', $lastBooking);
 
         $userid = $lastBooking->getUserId();
+        $stored_lang = $lastBooking->getMeta('language');
+        if ($userid && $stored_lang && !get_user_meta($userid, '_sln_language', true)) {
+            update_user_meta($userid, '_sln_language', $stored_lang);
+        }
         if ($userid) {
             $user = new WP_User($userid);
             if (array_search('administrator', $user->roles) === false && array_search(

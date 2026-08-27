@@ -27,6 +27,7 @@ class SLN_AI_ToolRegistry
 		require_once $dir . 'FindDiscount.php';
 		require_once $dir . 'FindCustomer.php';
 		require_once $dir . 'FindCatalog.php';
+		require_once $dir . 'InspectAvailabilities.php';
 		require_once $dir . 'BookingWrite.php';
 		require_once $dir . 'WaveSettings.php';
 		require_once $dir . 'ExtendedSettings.php';
@@ -56,12 +57,39 @@ class SLN_AI_ToolRegistry
 		$simpleObjectShop['properties']['shop_id']   = array('type' => 'integer', 'description' => 'Multi-shop location id');
 		$simpleObjectShop['properties']['shop_name'] = array('type' => 'string', 'description' => 'Multi-shop location name');
 
+		$availabilityRuleItem = array(
+			'type'       => 'object',
+			'required'   => array('days', 'intervals'),
+			'properties' => array(
+				'days'      => array('type' => 'array', 'items' => array('type' => 'integer')),
+				'intervals' => array(
+					'type'     => 'array',
+					'minItems' => 1,
+					'maxItems' => 2,
+					'items'    => array(
+						'type'       => 'object',
+						'required'   => array('from', 'to'),
+						'properties' => array(
+							'from' => array('type' => 'string'),
+							'to'   => array('type' => 'string'),
+						),
+					),
+				),
+				'always' => array(
+					'type'        => 'boolean',
+					'description' => 'Recurring weekly hours. Omit or true. Only false with from_date and to_date.',
+				),
+				'from_date' => array('type' => 'string', 'description' => 'Y-m-d only for a date-limited rule'),
+				'to_date'   => array('type' => 'string', 'description' => 'Y-m-d only for a date-limited rule'),
+			),
+		);
+
 		return array(
 			array(
 				'name'        => 'set_salon_availabilities',
 				'tier'        => 'confirm',
 				'class'       => 'SLN_AI_Tools_SetAvailabilities',
-				'description' => 'Replace salon-level opening hours. Day keys 1=Sun…7=Sat. One interval by default; second only for explicit two shifts. On Multi-shop sites pass shop_id or shop_name.',
+				'description' => 'Set salon opening hours and align assistant/service custom hours that would block the new timetable. Days 1=Sun…7=Sat. Weekly rules are recurring (always=true). Use closed_days + preserve_unmentioned for days not listed. Two intervals only for an explicit lunch break. Multi-shop: shop_id/shop_name.',
 				'parameters'  => array(
 					'type'       => 'object',
 					'required'   => array('rules'),
@@ -70,29 +98,18 @@ class SLN_AI_ToolRegistry
 						'summary'    => array('type' => 'string'),
 						'shop_id'    => array('type' => 'integer', 'description' => 'Multi-shop location id'),
 						'shop_name'  => array('type' => 'string', 'description' => 'Multi-shop location name'),
+						'closed_days' => array(
+							'type'        => 'array',
+							'items'       => array('type' => 'integer'),
+							'description' => 'Weekdays to close (1=Sun…7=Sat)',
+						),
+						'preserve_unmentioned' => array(
+							'type'        => 'boolean',
+							'description' => 'Keep current hours for days not in rules or closed_days',
+						),
 						'rules'   => array(
 							'type'  => 'array',
-							'items' => array(
-								'type'       => 'object',
-								'required'   => array('days', 'intervals'),
-								'properties' => array(
-									'days'      => array('type' => 'array', 'items' => array('type' => 'integer')),
-									'intervals' => array(
-										'type'     => 'array',
-										'minItems' => 1,
-										'maxItems' => 2,
-										'items'    => array(
-											'type'       => 'object',
-											'required'   => array('from', 'to'),
-											'properties' => array(
-												'from' => array('type' => 'string'),
-												'to'   => array('type' => 'string'),
-											),
-										),
-									),
-									'always' => array('type' => 'boolean'),
-								),
-							),
+							'items' => $availabilityRuleItem,
 						),
 					),
 				),
@@ -163,6 +180,29 @@ class SLN_AI_ToolRegistry
 							'type'        => 'integer',
 							'description' => 'Max suggestions (default 5)',
 						),
+					),
+				),
+			),
+			array(
+				'name'        => 'inspect_availabilities',
+				'tier'        => 'guidance',
+				'class'       => 'SLN_AI_Tools_InspectAvailabilities',
+				'description' => 'Read-only audit of salon + assistant + service hours. If the user gives a desired timetable, pass the same rules/closed_days/preserve_unmentioned as set_salon_availabilities so the check is against THAT schedule — not current salon hours. Weekly rules: always=true (omit always). Use for verify/compare/consistent. To apply, use set_salon_availabilities.',
+				'parameters'  => array(
+					'type'       => 'object',
+					'properties' => array(
+						'shop_id'   => array('type' => 'integer'),
+						'shop_name' => array('type' => 'string'),
+						'rules'     => array(
+							'type'        => 'array',
+							'description' => 'Desired opening-hour rules to check against (same shape as set_salon_availabilities; weekly hours always=true)',
+							'items'       => $availabilityRuleItem,
+						),
+						'closed_days' => array(
+							'type'  => 'array',
+							'items' => array('type' => 'integer'),
+						),
+						'preserve_unmentioned' => array('type' => 'boolean'),
 					),
 				),
 			),
@@ -607,7 +647,7 @@ class SLN_AI_ToolRegistry
 				'name'        => 'find_assistant',
 				'tier'        => 'guidance',
 				'class'       => 'SLN_AI_Tools_FindAssistant',
-				'description' => 'List or look up assistants/staff (attendants) by id or name (read-only). Returns contact fields when set, edit links. Prefer before upsert_assistant when listing or opening staff.',
+				'description' => 'List or look up assistants/staff by id or name (read-only). Contact fields + edit links only — not hours. Do NOT use for opening-hours changes or “are availability rules consistent” — use set_salon_availabilities or inspect_availabilities.',
 				'parameters'  => array(
 					'type'       => 'object',
 					'properties' => array(
@@ -888,7 +928,12 @@ class SLN_AI_ToolRegistry
 			. 'Writable (confirm-first when bookability/money/notifications change): hours, holidays, identity, locale, booking rules, '
 			. 'notification schedule, SMS toggles, PRO payment behaviour (no keys), PRO flags, GCal behaviour (if connected), pages, '
 			. 'OneSignal enable, style/checkout copy, email templates, catalog CPTs. '
-			. 'Hours: one interval by default. Holidays: prefer append; full_day true; dates Y-m-d. '
+			. 'Hours: one interval by default; two only for an explicit lunch break. ' .
+			'Opening-hours changes (new timetable, closed days): call set_salon_availabilities with rules + closed_days; set preserve_unmentioned when some weekdays were not mentioned. ' .
+			'That tool inspects shop + assistant + service custom hours and aligns any that would block the new timetable — do NOT call find_assistant/find_service for this. ' .
+			'Verify/compare hours (“are rules consistent with this timetable?”): inspect_availabilities and pass the desired rules with always=true (recurring weekly hours; never always=false unless from_date and to_date are set) — do not compare only against current salon hours, and do not call find_assistant. ' .
+			'To apply a new timetable: set_salon_availabilities. ' .
+			'Holidays: prefer append; full_day true; dates Y-m-d. '
 			. 'Unavailable slot → explain_unavailable_slot (use its summary; if it asks for details, relay those questions). '
 			. 'Find booking → find_booking (includes draft/ERROR). Totals → count_bookings. '
 			. 'Create → create_booking / create_bookings (max 10); collect the customer fields required by checkout settings (email by default) before calling — ask, never invent emails/phones. Edit → update_booking. '

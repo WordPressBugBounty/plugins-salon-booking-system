@@ -76,6 +76,10 @@ class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
 		return $this->getMeta('origin_source');
 	}
 
+	function getLanguage(){
+		return SLN_Helper_Multilingual::sanitizeLanguageCode($this->getMeta('language'));
+	}
+
 	function setOrigin($origin){
 		$this->setMeta('origin_source', $origin);
 	}

@@ -30,6 +30,8 @@
         :errorMessage="errorMessage"
         :customFields="booking.custom_fields"
         :shop="booking.shop"
+        :language="booking.language || ''"
+        :customerLanguage="customer && customer.language ? customer.language : ''"
         @close="close"
         @chooseCustomer="chooseCustomer"
         @error-state="handleErrorState"

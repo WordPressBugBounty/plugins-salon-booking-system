@@ -7,10 +7,24 @@ $user_role_helper = new UserRoleHelper();
 $hide_email = $user_role_helper->is_hide_customer_phone_mail();
 $hide_phone = $user_role_helper->is_hide_customer_email_mail();
 
+$has_preferences = false;
+foreach (SLN_Enum_CheckoutFields::forBooking() as $key => $field) {
+	$value = $field->isCustomer() && $customer ? $field->getValue($customer->getId()) : (
+		! is_null($booking->getMeta($key)) ? $booking->getMeta($key) : (null !== $field['default_value'] ? $field['default_value'] : '')
+	);
+	if ($field->isHidden() || empty($value) || ! $field->isAdditional() || $field['type'] === 'file') {
+		continue;
+	}
+	$has_preferences = true;
+	break;
+}
+$details_width = $has_preferences ? 270 : 560;
+$details_float = $has_preferences ? 'float:left' : '';
+
 ?>
-<table class="es-left" cellspacing="0" cellpadding="0" align="left" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;float:left">
+<table class="es-left" cellspacing="0" cellpadding="0" align="left" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;<?php echo esc_attr($details_float); ?>">
 	<tr>
-		<td class="es-m-p20b" align="left" style="padding:0;Margin:0;width:270px">
+		<td class="es-m-p20b" align="left" style="padding:0;Margin:0;width:<?php echo (int) $details_width; ?>px">
 			<table width="100%" cellspacing="0" cellpadding="0" bgcolor="#F7F8FA" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:separate;border-spacing:0px;background-color:#f7f8fa;border-radius:10px" role="presentation">
 				<tr>
 					<td align="left" style="padding:0;Margin:0;padding-top:10px;padding-left:25px;padding-right:25px">

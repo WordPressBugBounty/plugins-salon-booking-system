@@ -76,7 +76,7 @@
 	display: flex;
 	flex-direction: column;
 	width: min(380px, calc(100vw - 48px));
-	height: min(520px, 68vh);
+	height: min(640px, 80vh);
 	background: #fff;
 	border: none;
 	border-radius: 16px;
@@ -164,7 +164,17 @@
 	flex-direction: column;
 	flex: 1 1 auto;
 	min-height: 0;
+	overflow: hidden;
 	background: #fff;
+}
+
+.sln-ai-calendar__scroll {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow-x: hidden;
+	overflow-y: auto;
+	-webkit-overflow-scrolling: touch;
+	overscroll-behavior: contain;
 }
 
 .sln-ai-calendar .sln-ai-setup__chat-welcome {
@@ -176,9 +186,10 @@
 }
 
 .sln-ai-calendar .sln-ai-setup__messages {
-	flex: 1 1 auto;
-	min-height: 120px;
+	flex: 0 0 auto;
+	min-height: 0;
 	max-height: none;
+	overflow: visible;
 	padding: 16px 14px 8px;
 	background: #fff;
 }
@@ -245,6 +256,15 @@
 	background: color-mix(in srgb, var(--sln-ai-cal-blue) 8%, #fff);
 }
 
+.sln-ai-calendar .sln-ai-setup__preview-actions {
+	position: sticky;
+	bottom: 0;
+	z-index: 1;
+	margin: 0 -12px -12px;
+	padding: 10px 12px 12px;
+	background: color-mix(in srgb, var(--sln-ai-cal-blue) 8%, #fff);
+}
+
 .sln-ai-calendar .sln-ai-setup__preview-actions .button-primary,
 .sln-ai-calendar .sln-ai-setup__composer .button-primary {
 	background: var(--sln-ai-cal-blue) !important;
@@ -265,6 +285,7 @@
 
 /* Composer footer */
 .sln-ai-calendar__composer.sln-ai-setup__composer {
+	flex: 0 0 auto;
 	margin: 0;
 	padding: 12px 12px 10px;
 	border-top: 1px solid var(--sln-ai-cal-border);
@@ -313,6 +334,7 @@
 
 .sln-ai-calendar__footer-actions {
 	display: flex;
+	flex: 0 0 auto;
 	align-items: center;
 	justify-content: flex-end;
 	gap: 8px;
@@ -348,6 +370,6 @@
 
 	.sln-ai-calendar__panel {
 		width: calc(100vw - 32px);
-		height: min(72vh, 540px);
+		height: min(82vh, 640px);
 	}
 }

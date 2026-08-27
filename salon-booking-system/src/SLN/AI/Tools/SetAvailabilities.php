@@ -32,14 +32,22 @@ class SLN_AI_Tools_SetAvailabilities extends SLN_AI_Tools_Abstract
 		}
 		$shop = isset($bound['shop']) ? $bound['shop'] : null;
 
-		$mapped = $this->mapArguments($arguments);
+		$current = SLN_AI_Multishop::getScopedSetting($shop, 'availabilities');
+		if (! is_array($current)) {
+			$current = array();
+		}
+
+		$mapped = $this->resolveProposed($arguments, $current);
 		if (is_wp_error($mapped)) {
 			return $mapped;
 		}
 
-		$current = SLN_AI_Multishop::getScopedSetting($shop, 'availabilities');
-		if (! is_array($current)) {
-			$current = array();
+		$analysis = SLN_AI_AvailabilityCascade::analyze($this->plugin, $mapped);
+		$writes   = SLN_AI_AvailabilityCascade::alignmentWrites($analysis);
+		if ($this->shouldSkipCatalogAlign()) {
+			$cascade = array('assistants' => array(), 'services' => array());
+		} else {
+			$cascade = $this->cascadeWriteArgs($writes);
 		}
 
 		$diff = sprintf(
@@ -52,6 +60,17 @@ class SLN_AI_Tools_SetAvailabilities extends SLN_AI_Tools_Abstract
 		if ($scope !== '') {
 			$diff = $scope . "\n\n" . $diff;
 		}
+		$preserved = $this->preservedDaysNote($current, $mapped, $arguments);
+		if ($preserved !== '') {
+			$diff .= "\n\n" . $preserved;
+		}
+		$diff .= "\n\n" . SLN_AI_AvailabilityCascade::formatAnalysisSummary($analysis);
+		if ($this->shouldSkipCatalogAlign() && ( $writes['assistants'] || $writes['services'] )) {
+			$diff .= "\n\n" . __(
+				'Multi-shop is active with more than one location. Salon hours will update for this shop only; assistant and service custom rules are shared and will not be auto-aligned. Review the conflicts above and update those schedules separately if needed.',
+				'salon-booking-system'
+			);
+		}
 
 		$shopArgs = SLN_AI_Multishop::argsFromShop($shop);
 
@@ -61,13 +80,18 @@ class SLN_AI_Tools_SetAvailabilities extends SLN_AI_Tools_Abstract
 			'proposed'  => $mapped,
 			'current'   => $current,
 			'arguments' => array(
-				'mode'       => 'replace_all',
-				'summary'    => isset($arguments['summary']) ? sanitize_text_field($arguments['summary']) : '',
-				'rules'      => isset($arguments['rules']) ? $arguments['rules'] : array(),
-				'shop_id'    => $shopArgs['shop_id'],
-				'shop_name'  => $shopArgs['shop_name'],
+				'mode'                  => 'replace_all',
+				'summary'               => isset($arguments['summary']) ? sanitize_text_field($arguments['summary']) : '',
+				'rules'                 => SLN_AI_AvailabilityCascade::toToolRules($mapped),
+				'closed_days'           => $this->sanitizeClosedDays($arguments),
+				'preserve_unmentioned'  => empty($arguments['preserve_unmentioned']) ? false : true,
+				'shop_id'               => $shopArgs['shop_id'],
+				'shop_name'             => $shopArgs['shop_name'],
+				'cascade_assistants'    => $cascade['assistants'],
+				'cascade_services'      => $cascade['services'],
 			),
 			'tool'      => $this->getName(),
+			'analysis'  => $analysis,
 		);
 	}
 
@@ -88,23 +112,41 @@ class SLN_AI_Tools_SetAvailabilities extends SLN_AI_Tools_Abstract
 		}
 		$shop = isset($bound['shop']) ? $bound['shop'] : null;
 
-		$mapped = $this->mapArguments($arguments);
+		$beforeSalon = SLN_AI_Multishop::getScopedSetting($shop, 'availabilities');
+		if (! is_array($beforeSalon)) {
+			$beforeSalon = array();
+		}
+
+		$mapped = $this->resolveProposed($arguments, $beforeSalon);
 		if (is_wp_error($mapped)) {
 			return $mapped;
 		}
 
-		$before = SLN_AI_Multishop::getScopedSetting($shop, 'availabilities');
-		if (! is_array($before)) {
-			$before = array();
+		$cascade = $this->normalizeCascadeArgs($arguments);
+		if ($this->shouldSkipCatalogAlign()) {
+			$cascade = array('assistants' => array(), 'services' => array());
+		} elseif (! $cascade['assistants'] && ! $cascade['services']) {
+			$analysis = SLN_AI_AvailabilityCascade::analyze($this->plugin, $mapped);
+			$cascade  = $this->cascadeWriteArgs(SLN_AI_AvailabilityCascade::alignmentWrites($analysis));
 		}
+
+		$beforeAssistants = $this->snapshotCatalogMeta($cascade['assistants'], SLN_AI_AvailabilityCascade::ATTENDANT_META);
+		$beforeServices   = $this->snapshotCatalogMeta($cascade['services'], SLN_AI_AvailabilityCascade::SERVICE_META);
 
 		$processed = SLN_Helper_AvailabilityItems::processSubmission($mapped);
 		if ($shop) {
 			SLN_AI_Multishop::writeShopSetting($shop, 'availabilities', $processed);
-			SLN_AI_Multishop::refreshCaches($shop);
 		} else {
 			$this->settings()->set('availabilities', $processed);
 			$this->settings()->save();
+		}
+
+		$this->applyCatalogHours($cascade['assistants'], SLN_AI_AvailabilityCascade::ATTENDANT_META);
+		$this->applyCatalogHours($cascade['services'], SLN_AI_AvailabilityCascade::SERVICE_META);
+
+		if ($shop) {
+			SLN_AI_Multishop::refreshCaches($shop);
+		} else {
 			$this->refreshBookingCaches();
 		}
 
@@ -113,10 +155,30 @@ class SLN_AI_Tools_SetAvailabilities extends SLN_AI_Tools_Abstract
 		if ($scope !== '') {
 			$msg = $scope . ' — ' . $msg;
 		}
+		$aligned = count($cascade['assistants']) + count($cascade['services']);
+		if ($aligned) {
+			$msg .= ' ' . sprintf(
+				/* translators: %d: number of assistants/services updated */
+				_n(
+					'%d custom assistant/service schedule was aligned so the new hours are bookable.',
+					'%d custom assistant/service schedules were aligned so the new hours are bookable.',
+					$aligned,
+					'salon-booking-system'
+				),
+				$aligned
+			);
+		}
 
 		return array(
 			'ok'      => true,
-			'before'  => SLN_AI_Multishop::wrapSnapshot($shop, $before),
+			'before'  => SLN_AI_Multishop::wrapSnapshot(
+				$shop,
+				array(
+					'salon'      => $beforeSalon,
+					'assistants' => $beforeAssistants,
+					'services'   => $beforeServices,
+				)
+			),
 			'after'   => $processed,
 			'message' => $msg,
 		);
@@ -136,16 +198,31 @@ class SLN_AI_Tools_SetAvailabilities extends SLN_AI_Tools_Abstract
 		if (! is_array($data)) {
 			$data = array();
 		}
-		$processed = SLN_Helper_AvailabilityItems::processSubmission($data);
+
+		$salon      = $data;
+		$assistants = array();
+		$services   = array();
+		if (isset($data['salon'])) {
+			$salon      = isset($data['salon']) && is_array($data['salon']) ? $data['salon'] : array();
+			$assistants = isset($data['assistants']) && is_array($data['assistants']) ? $data['assistants'] : array();
+			$services   = isset($data['services']) && is_array($data['services']) ? $data['services'] : array();
+		}
+
+		$processed = SLN_Helper_AvailabilityItems::processSubmission($salon);
 		if (! is_array($processed)) {
 			$processed = array();
 		}
 		if ($shop) {
 			SLN_AI_Multishop::writeShopSetting($shop, 'availabilities', $processed);
-			SLN_AI_Multishop::refreshCaches($shop);
 		} else {
 			$this->settings()->set('availabilities', $processed);
 			$this->settings()->save();
+		}
+		$this->restoreCatalogMeta($assistants, SLN_AI_AvailabilityCascade::ATTENDANT_META);
+		$this->restoreCatalogMeta($services, SLN_AI_AvailabilityCascade::SERVICE_META);
+		if ($shop) {
+			SLN_AI_Multishop::refreshCaches($shop);
+		} else {
 			$this->refreshBookingCaches();
 		}
 
@@ -169,6 +246,7 @@ class SLN_AI_Tools_SetAvailabilities extends SLN_AI_Tools_Abstract
 			);
 		}
 
+		$arguments = array_merge($arguments, SLN_AI_AvailabilityCascade::normalizeToolRules($arguments));
 		if (empty($arguments['rules']) || ! is_array($arguments['rules'])) {
 			return new WP_Error(
 				'sln_ai_empty_rules',
@@ -184,6 +262,10 @@ class SLN_AI_Tools_SetAvailabilities extends SLN_AI_Tools_Abstract
 			}
 			$row = $this->mapRule($rule);
 			if (is_wp_error($row)) {
+				// Closed / empty-interval rules are already stripped; skip leftovers.
+				if ($row->get_error_code() === 'sln_ai_intervals') {
+					continue;
+				}
 				return $row;
 			}
 			$n++;
@@ -266,28 +348,272 @@ class SLN_AI_Tools_SetAvailabilities extends SLN_AI_Tools_Abstract
 			);
 		}
 
-		$always = ! isset($rule['always']) || $rule['always'];
+		$fromDate = isset($rule['from_date']) ? sanitize_text_field($rule['from_date']) : '';
+		$toDate   = isset($rule['to_date']) ? sanitize_text_field($rule['to_date']) : '';
+		$hasDates = $fromDate !== '' && $toDate !== '';
+		// Weekly opening hours are recurring. always=false without dates is an LLM
+		// artifact (optional boolean), not a date-limited rule.
+		$always = $hasDates ? false : true;
 		$row    = array(
 			'days'                 => $days,
 			'from'                 => $from,
 			'to'                   => $to,
-			'always'               => $always ? true : false,
+			'always'               => $always,
 			// Second shift off unless the user explicitly provided two intervals.
 			'disable_second_shift' => $i < 2,
 		);
 
-		if (! $always) {
-			if (empty($rule['from_date']) || empty($rule['to_date'])) {
-				return new WP_Error(
-					'sln_ai_dates',
-					__('Date-limited rules need from_date and to_date.', 'salon-booking-system')
-				);
-			}
-			$row['from_date'] = sanitize_text_field($rule['from_date']);
-			$row['to_date']   = sanitize_text_field($rule['to_date']);
+		if ($hasDates) {
+			$row['from_date'] = $fromDate;
+			$row['to_date']   = $toDate;
 		}
 
 		return $row;
+	}
+
+	/**
+	 * Map tool args, then merge unmentioned weekdays from current salon hours.
+	 *
+	 * @param array $arguments
+	 * @param array $current
+	 * @return array|WP_Error
+	 */
+	public function resolveProposed(array $arguments, array $current)
+	{
+		$normalized = SLN_AI_AvailabilityCascade::normalizeToolRules($arguments);
+		$arguments  = array_merge($arguments, $normalized);
+
+		if (empty($arguments['rules']) && ! empty($normalized['closed_days'])) {
+			return SLN_AI_AvailabilityCascade::mergeProposed(
+				$current,
+				array(),
+				$normalized['closed_days'],
+				true
+			);
+		}
+
+		$mapped = $this->mapArguments($arguments);
+		if (is_wp_error($mapped)) {
+			return $mapped;
+		}
+
+		$closed    = $this->sanitizeClosedDays($arguments);
+		$preserve  = ! empty($arguments['preserve_unmentioned']);
+		if (! $closed && ! $preserve) {
+			return $mapped;
+		}
+
+		return SLN_AI_AvailabilityCascade::mergeProposed($current, $mapped, $closed, $preserve);
+	}
+
+	/**
+	 * Shared assistant/service hours must not be rewritten from one shop’s timetable.
+	 *
+	 * @return bool
+	 */
+	private function shouldSkipCatalogAlign()
+	{
+		return SLN_AI_Multishop::isActive() && count(SLN_AI_Multishop::listShops()) > 1;
+	}
+
+	/**
+	 * @param array $arguments
+	 * @return int[]
+	 */
+	private function sanitizeClosedDays(array $arguments)
+	{
+		$out = array();
+		if (empty($arguments['closed_days']) || ! is_array($arguments['closed_days'])) {
+			return $out;
+		}
+		foreach ($arguments['closed_days'] as $day) {
+			$day = (int) $day;
+			if ($day >= 1 && $day <= 7) {
+				$out[] = $day;
+			}
+		}
+
+		return array_values(array_unique($out));
+	}
+
+	/**
+	 * @param array $current
+	 * @param array $mapped
+	 * @param array $arguments
+	 * @return string
+	 */
+	private function preservedDaysNote(array $current, array $mapped, array $arguments)
+	{
+		if (empty($arguments['preserve_unmentioned'])) {
+			return '';
+		}
+		$before = SLN_AI_AvailabilityCascade::weekMap($current);
+		$after  = SLN_AI_AvailabilityCascade::weekMap($mapped);
+		$closed = array();
+		foreach ($this->sanitizeClosedDays($arguments) as $day) {
+			$closed[ $day ] = true;
+		}
+		$kept = array();
+		$names = array(
+			1 => __('Sunday', 'salon-booking-system'),
+			2 => __('Monday', 'salon-booking-system'),
+			3 => __('Tuesday', 'salon-booking-system'),
+			4 => __('Wednesday', 'salon-booking-system'),
+			5 => __('Thursday', 'salon-booking-system'),
+			6 => __('Friday', 'salon-booking-system'),
+			7 => __('Saturday', 'salon-booking-system'),
+		);
+		for ($day = 1; $day <= 7; $day++) {
+			if (! empty($closed[ $day ]) || empty($before[ $day ]) || empty($after[ $day ])) {
+				continue;
+			}
+			if (SLN_AI_AvailabilityCascade::diffIssues(array($day => $before[ $day ]), array($day => $after[ $day ]))) {
+				continue;
+			}
+			// Day kept from current and still present after merge.
+			$proposedDays = array();
+			if (! empty($arguments['rules']) && is_array($arguments['rules'])) {
+				foreach ($arguments['rules'] as $rule) {
+					if (! empty($rule['days']) && is_array($rule['days'])) {
+						foreach ($rule['days'] as $d) {
+							$proposedDays[ (int) $d ] = true;
+						}
+					}
+				}
+			}
+			if (empty($proposedDays[ $day ]) && isset($names[ $day ])) {
+				$kept[] = $names[ $day ];
+			}
+		}
+		if (! $kept) {
+			return '';
+		}
+
+		return sprintf(
+			/* translators: %s: weekday list */
+			__('Unmentioned days kept from the current timetable: %s.', 'salon-booking-system'),
+			implode(', ', $kept)
+		);
+	}
+
+	/**
+	 * @param array $writes
+	 * @return array{assistants:array,services:array}
+	 */
+	private function cascadeWriteArgs(array $writes)
+	{
+		$out = array(
+			'assistants' => array(),
+			'services'   => array(),
+		);
+		foreach (array('assistants', 'services') as $kind) {
+			if (empty($writes[ $kind ]) || ! is_array($writes[ $kind ])) {
+				continue;
+			}
+			foreach ($writes[ $kind ] as $row) {
+				if (empty($row['id']) || empty($row['rules'])) {
+					continue;
+				}
+				$out[ $kind ][] = array(
+					'id'    => (int) $row['id'],
+					'name'  => isset($row['name']) ? sanitize_text_field($row['name']) : '',
+					'rules' => $row['rules'],
+				);
+			}
+		}
+
+		return $out;
+	}
+
+	/**
+	 * @param array $arguments
+	 * @return array{assistants:array,services:array}
+	 */
+	private function normalizeCascadeArgs(array $arguments)
+	{
+		$out = array(
+			'assistants' => array(),
+			'services'   => array(),
+		);
+		foreach (array('assistants' => 'cascade_assistants', 'services' => 'cascade_services') as $kind => $key) {
+			if (empty($arguments[ $key ]) || ! is_array($arguments[ $key ])) {
+				continue;
+			}
+			foreach ($arguments[ $key ] as $row) {
+				if (! is_array($row) || empty($row['id']) || empty($row['rules'])) {
+					continue;
+				}
+				$out[ $kind ][] = array(
+					'id'    => (int) $row['id'],
+					'rules' => $row['rules'],
+				);
+			}
+		}
+
+		return $out;
+	}
+
+	/**
+	 * @param array  $rows
+	 * @param string $metaKey
+	 * @return array
+	 */
+	private function snapshotCatalogMeta(array $rows, $metaKey)
+	{
+		$out = array();
+		foreach ($rows as $row) {
+			$id = isset($row['id']) ? (int) $row['id'] : 0;
+			if (! $id) {
+				continue;
+			}
+			$raw = get_post_meta($id, $metaKey, true);
+			$out[] = array(
+				'id'             => $id,
+				'availabilities' => is_array($raw) ? $raw : array(),
+			);
+		}
+
+		return $out;
+	}
+
+	/**
+	 * @param array  $rows
+	 * @param string $metaKey
+	 */
+	private function applyCatalogHours(array $rows, $metaKey)
+	{
+		foreach ($rows as $row) {
+			$id = isset($row['id']) ? (int) $row['id'] : 0;
+			if (! $id || empty($row['rules']) || ! is_array($row['rules'])) {
+				continue;
+			}
+			$mapped = $this->mapArguments(
+				array(
+					'mode'  => 'replace_all',
+					'rules' => $row['rules'],
+				)
+			);
+			if (is_wp_error($mapped)) {
+				continue;
+			}
+			update_post_meta($id, $metaKey, SLN_Helper_AvailabilityItems::processSubmission($mapped));
+		}
+	}
+
+	/**
+	 * @param array  $rows
+	 * @param string $metaKey
+	 */
+	private function restoreCatalogMeta(array $rows, $metaKey)
+	{
+		foreach ($rows as $row) {
+			$id = isset($row['id']) ? (int) $row['id'] : 0;
+			if (! $id) {
+				continue;
+			}
+			$av = isset($row['availabilities']) && is_array($row['availabilities']) ? $row['availabilities'] : array();
+			update_post_meta($id, $metaKey, SLN_Helper_AvailabilityItems::processSubmission($av));
+		}
 	}
 
 	/**
