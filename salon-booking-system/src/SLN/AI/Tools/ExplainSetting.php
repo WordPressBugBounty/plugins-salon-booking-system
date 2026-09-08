@@ -77,7 +77,7 @@ class SLN_AI_Tools_ExplainSetting extends SLN_AI_Tools_Abstract
 			'onesignal'       => array(
 				'label'     => __('OneSignal push', 'salon-booking-system'),
 				'url'       => $base . '&tab=general',
-				'notes'     => __('Configure OneSignal App ID manually under General.', 'salon-booking-system'),
+				'notes'     => __('Configure OneSignal App ID and REST API Key under General.', 'salon-booking-system'),
 				'sensitive' => true,
 				'pro'       => true,
 			),

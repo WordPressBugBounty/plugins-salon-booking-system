@@ -14,6 +14,10 @@ export default {
         this.loadBookingDragResizePref()
         this.loadSettings()
         this.displayBuildVersion()
+        this.resolveOnesignalPlayerId()
+        setTimeout(() => {
+            this.resolveOnesignalPlayerId()
+        }, 1500)
     },
     computed: {
         isShopsEnabled() {
@@ -73,6 +77,43 @@ export default {
             this.$root.settings = {...this.$root.settings, ...this.settings};
           })
         },
+        saveOnesignalPlayerId(userId) {
+            if (!userId) {
+                return
+            }
+            this.axios.put('users', {onesignal_player_id: userId}).catch(() => {})
+        },
+        resolveOnesignalPlayerId() {
+            const onesignal = this.$OneSignal
+            if (!onesignal) {
+                return
+            }
+            const run = () => {
+                if (typeof onesignal.getUserId === 'function') {
+                    try {
+                        const maybePromise = onesignal.getUserId((userId) => {
+                            this.saveOnesignalPlayerId(userId)
+                        })
+                        if (maybePromise && typeof maybePromise.then === 'function') {
+                            maybePromise.then((userId) => {
+                                this.saveOnesignalPlayerId(userId)
+                            }).catch(() => {})
+                        }
+                    } catch (e) { /* ignore */ }
+                }
+                try {
+                    const subscriptionId = onesignal.User && onesignal.User.PushSubscription && onesignal.User.PushSubscription.id
+                    if (subscriptionId) {
+                        this.saveOnesignalPlayerId(subscriptionId)
+                    }
+                } catch (e) { /* ignore */ }
+            }
+            if (typeof onesignal.push === 'function') {
+                onesignal.push(run)
+            } else {
+                run()
+            }
+        },
         applyShop(shop) {
             this.shop = shop
         },
@@ -104,11 +145,7 @@ export default {
             this.$OneSignal.showSlidedownPrompt()
             this.$OneSignal.on('subscriptionChange', (isSubscribed) => {
                 if (isSubscribed) {
-                    this.$OneSignal.getUserId((userId) => {
-                        if (userId) {
-                            this.axios.put('users', {onesignal_player_id: userId})
-                        }
-                    });
+                    this.resolveOnesignalPlayerId()
                 }
             });
         }

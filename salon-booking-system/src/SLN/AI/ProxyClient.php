@@ -1089,6 +1089,26 @@ class SLN_AI_ProxyClient
 			);
 		}
 
+		// Official Help Scout how-to (after admin deep-links so “where do I paste Stripe?” stays explain_setting).
+		$docsQuery = SLN_AI_DocsCatalog::detectIntentQuery($raw);
+		if ($docsQuery) {
+			return array(
+				'message'   => $this->mockMsg(
+					$lang,
+					'docs_lead',
+					__('I’ll look that up in the official documentation.', 'salon-booking-system')
+				),
+				'tool_call' => array(
+					'name'      => 'lookup_docs',
+					'arguments' => array(
+						'query' => $docsQuery,
+						'limit' => 3,
+					),
+				),
+				'draft'     => null,
+			);
+		}
+
 		// Salon identity.
 		if (preg_match('/\b(salon name|my (salon|shop) is called|rename (the )?salon|set (the )?salon name)\b/i', $raw)
 			|| preg_match('/\b(email|phone|address)\b.*\b(salon|shop)\b/i', $message)

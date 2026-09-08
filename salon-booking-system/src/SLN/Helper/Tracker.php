@@ -17,8 +17,9 @@ class SLN_Helper_Tracker
     const CRON_HOOK     = 'sln_tracker_heartbeat';
 
     const OPTION_FIRST_BOOKING  = 'sln_tracker_first_booking_sent';
-    const OPTION_REVIEW_SHOWN   = 'sln_tracker_review_prompt_shown';
-    const OPTION_REVIEW_CLICKED = 'sln_tracker_review_prompt_clicked';
+    const OPTION_REVIEW_SHOWN    = 'sln_tracker_review_prompt_shown';
+    const OPTION_REVIEW_POSITIVE = 'sln_tracker_review_prompt_positive';
+    const OPTION_REVIEW_CLICKED  = 'sln_tracker_review_prompt_clicked';
 
     /**
      * Register cron and booking hooks. Called from SLN_Action_Init.
@@ -262,6 +263,22 @@ class SLN_Helper_Tracker
 
         update_option(self::OPTION_REVIEW_SHOWN, 1, false);
         self::ping('review-prompt', array('action_type' => 'shown'));
+    }
+
+    /**
+     * Step 1 “Yes, it's helping”. Once per site.
+     */
+    public static function sendReviewPromptPositive()
+    {
+        if (!self::isOperationalPingEnabled()) {
+            return;
+        }
+        if (get_option(self::OPTION_REVIEW_POSITIVE)) {
+            return;
+        }
+
+        update_option(self::OPTION_REVIEW_POSITIVE, 1, false);
+        self::ping('review-prompt', array('action_type' => 'positive'));
     }
 
     public static function sendReviewPromptClicked()

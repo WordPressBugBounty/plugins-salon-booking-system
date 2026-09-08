@@ -8,6 +8,13 @@ use SLB_API_Mobile\Third\OnesignalAPI;
 
 class BookingEventsListener
 {
+    /**
+     * Set once a push has been delivered for a booking. sln.booking_builder.create.booking_created
+     * also fires on status transitions and on every admin save, so without this marker the same
+     * booking is announced several times.
+     */
+    const NOTIFIED_META = '_sln_booking_onesignal_notified';
+
     public function __construct()
     {
 	add_action('sln.booking_builder.create.booking_created', array($this, 'event_created'), 10, 1);
@@ -19,6 +26,12 @@ class BookingEventsListener
 	$settings = $plugin->getSettings();
 
 	if ( ! $settings->get('onesignal_new') || ! $booking ) {
+	    return;
+	}
+
+	$booking_id = $booking->getId();
+
+	if ( ! $booking_id || get_post_meta($booking_id, self::NOTIFIED_META, true) ) {
 	    return;
 	}
 
@@ -45,20 +58,29 @@ class BookingEventsListener
 	    $player_ids = array_merge($player_ids, $user_player_ids);
 	}
 
-	$player_ids = array_values(array_unique($player_ids));
+	$player_ids = array_values(array_unique(array_filter($player_ids)));
+	$app_id     = $settings->get('onesignal_app_id');
+	$rest_key   = $settings->get('onesignal_rest_api_key');
 
-	if ( ! $player_ids ) {
+	if ( ! $player_ids && ! $rest_key ) {
+	    SLN_Plugin::addLog('[OneSignal] Skipped booking #' . $booking_id . ': no staff player IDs and no REST API Key');
 	    return;
 	}
 
-	$app_id  = $settings->get('onesignal_app_id');
+	if ( ! $app_id ) {
+	    SLN_Plugin::addLog('[OneSignal] Skipped booking #' . $booking_id . ': App ID is empty');
+	    return;
+	}
+
 	$message = $plugin->loadView('onesignal/notify', compact('booking'));
-        $url     = home_url(add_query_arg(array('tab' => 'reservations-calendar', 'booking_id' => $booking->getId()), 'salon-booking-pwa'));
+        $url     = home_url(add_query_arg(array('tab' => 'reservations-calendar', 'booking_id' => $booking_id), 'salon-booking-pwa'));
 
 	try {
-	    OnesignalAPI::notify($app_id, $player_ids, $message, array('booking_id' => $booking->getId()), $url);
+	    $outcome = OnesignalAPI::notify($app_id, $player_ids, $message, array('booking_id' => $booking_id), $url, $rest_key);
+	    update_post_meta($booking_id, self::NOTIFIED_META, current_time('mysql'));
+	    SLN_Plugin::addLog('[OneSignal] Sent booking #' . $booking_id . ' to ' . $outcome);
 	} catch (\Exception $ex) {
-
+	    SLN_Plugin::addLog('[OneSignal] Failed booking #' . $booking_id . ': ' . $ex->getMessage());
 	}
     }
 

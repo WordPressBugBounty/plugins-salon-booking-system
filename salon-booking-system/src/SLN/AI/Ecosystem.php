@@ -9,7 +9,7 @@
 class SLN_AI_Ecosystem
 {
 	const SITE_URL     = 'https://www.salonbookingsystem.com/';
-	const DOCS_URL     = 'https://www.salonbookingsystem.com/docs/';
+	const DOCS_URL     = 'https://salonbookingsystem.helpscoutdocs.com/';
 	const PRICING_URL  = 'https://www.salonbookingsystem.com/pricing/';
 	const ADDONS_URL   = 'https://www.salonbookingsystem.com/salon-booking-system-add-ons/';
 	const SUPPORT_URL  = 'https://www.salonbookingsystem.com/get-in-touch/';
@@ -36,7 +36,8 @@ class SLN_AI_Ecosystem
 			. 'pricing overview: ' . self::PRICING_URL . '. '
 			. 'Official add-ons (separate products; configure in their own settings, not as secrets in AI Setup): '
 			. implode('; ', $addons) . '. '
-			. 'Docs: ' . self::DOCS_URL . '. Support: ' . self::SUPPORT_URL . '. '
+			. 'Official docs (Help Scout, second source after live tools): ' . self::DOCS_URL . '. Support: ' . self::SUPPORT_URL . '. '
+			. 'How-to / troubleshooting → lookup_docs; live tool results beat articles if they disagree. '
 			. 'When the merchant asks what the product can do, or describes a problem a feature/add-on solves, '
 			. 'call suggest_capability (or explain_setting for a known topic); deep-link to Settings or Extensions; '
 			. 'never invent payment gateway keys or license steps that write secrets.';

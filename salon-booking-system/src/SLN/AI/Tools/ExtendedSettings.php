@@ -514,10 +514,11 @@ class SLN_AI_Tools_SetOnesignalEnabled extends SLN_AI_Tools_SimpleSettings
 		if (is_wp_error($base) || empty($base['ok'])) {
 			return $base;
 		}
-		$appId = (string) $this->settings()->get('onesignal_app_id');
-		if ($appId === '') {
+		$appId  = (string) $this->settings()->get('onesignal_app_id');
+		$restKey = (string) $this->settings()->get('onesignal_rest_api_key');
+		if ($appId === '' || $restKey === '') {
 			$base['summary'] .= "\n\n" . __(
-				'OneSignal App ID is empty — paste it under General settings (explain_setting topic=onesignal). AI never writes the App ID.',
+				'OneSignal App ID or REST API Key is empty — paste them under General settings (explain_setting topic=onesignal). AI never writes those keys.',
 				'salon-booking-system'
 			);
 		}

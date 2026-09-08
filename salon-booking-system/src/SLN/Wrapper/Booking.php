@@ -23,6 +23,148 @@ class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
         return $ret;
     }
 
+    /**
+     * Line total for one booking service: unit price × quantity.
+     * Same rule as evalTotal() / CalcBookingTotal. If the stored line price
+     * is empty, fall back to the current catalogue price (variable-price
+     * aware) unless this line used a prepaid credit or a booking discount
+     * already zeroed it.
+     *
+     * @param SLN_Wrapper_Booking_Service $bookingService
+     * @return float
+     */
+    public function getBookingServiceLineAmount(SLN_Wrapper_Booking_Service $bookingService)
+    {
+        $unit = (float) $bookingService->getPrice();
+        $qty  = max(1, (int) $bookingService->getCountServices());
+
+        if ($unit <= 0.0 && ! $this->bookingServiceUsesCredit($bookingService) && ! $this->hasBookingDiscount()) {
+            $catalog = $this->getBookingServiceCatalogPrice($bookingService);
+            if ($catalog > 0.0) {
+                $unit = $catalog;
+            }
+        }
+
+        $line = $unit * $qty;
+
+        // Corrupt meta (e.g. negative unit price) must never make a positive line
+        // subtract from the total when tips are added later.
+        if ($unit >= 0.0 && $line < 0.0) {
+            $line = abs($unit) * $qty;
+        }
+
+        return (float) $line;
+    }
+
+    /**
+     * Live total from current booking lines (tax, tips, sln.booking.getTotal).
+     * Does not persist. Used by notification emails so the displayed total
+     * matches the service list even when _sln_booking_amount is stale.
+     *
+     * @return float
+     */
+    public function computeTotalFromServices()
+    {
+        $settings = SLN_Plugin::getInstance()->getSettings();
+        $amount   = 0.0;
+
+        foreach ($this->getBookingServices()->getItems() as $bookingService) {
+            $amount += $this->getBookingServiceLineAmount($bookingService);
+        }
+
+        if ($settings->get('enable_booking_tax_calculation') && 'inclusive' !== $settings->get('enter_tax_price')) {
+            $amount = $amount * (1 + floatval($settings->get('tax_value')) / 100);
+        }
+
+        $amount += $this->getTips();
+
+        return (float) apply_filters('sln.booking.getTotal', $amount, $this);
+    }
+
+    /**
+     * Amount to show on customer/admin notification emails.
+     * Prefers the live line-item sum; falls back to stored meta when the
+     * booking has no priced services (or only free ones).
+     *
+     * @param bool $include_fee
+     * @return float
+     */
+    public function getEmailAmount($include_fee = false)
+    {
+        $computed = $this->computeTotalFromServices();
+        $ret      = $computed > 0.0 ? $computed : $this->getAmount();
+
+        if ($include_fee) {
+            $ret += SLN_Helper_TransactionFee::getFee($ret);
+        }
+
+        return $ret;
+    }
+
+    /**
+     * @param SLN_Wrapper_Booking_Service $bookingService
+     * @return bool
+     */
+    protected function bookingServiceUsesCredit(SLN_Wrapper_Booking_Service $bookingService)
+    {
+        $service = $bookingService->getService();
+        if ( ! $service instanceof SLN_Wrapper_ServiceInterface) {
+            return false;
+        }
+
+        $credits = $this->getMeta('service_credit', false, false);
+        if (empty($credits)) {
+            return false;
+        }
+        if ( ! is_array($credits)) {
+            $credits = array($credits);
+        }
+
+        $serviceId = $service->getId();
+
+        return in_array($serviceId, $credits, false) || in_array((string) $serviceId, array_map('strval', $credits), true);
+    }
+
+    /**
+     * @return bool
+     */
+    protected function hasBookingDiscount()
+    {
+        $discount = $this->getMeta('discount');
+        $amount   = $this->getMeta('discount_amount');
+
+        return ! empty($discount) || ( ! empty($amount) && floatval(is_array($amount) ? array_sum((array) $amount) : $amount) > 0);
+    }
+
+    /**
+     * Current catalogue unit price for a booking line (variable-price aware).
+     *
+     * @param SLN_Wrapper_Booking_Service $bookingService
+     * @return float
+     */
+    protected function getBookingServiceCatalogPrice(SLN_Wrapper_Booking_Service $bookingService)
+    {
+        $service = $bookingService->getService();
+        if ( ! $service instanceof SLN_Wrapper_ServiceInterface) {
+            return 0.0;
+        }
+
+        $attendant = $bookingService->getAttendant();
+        $atId      = null;
+        if (is_array($attendant) && ! empty($attendant)) {
+            $first = reset($attendant);
+            $atId  = (is_object($first) && method_exists($first, 'getId')) ? $first->getId() : null;
+        } elseif (is_object($attendant) && method_exists($attendant, 'getId')) {
+            $atId = $attendant->getId();
+        }
+
+        if ($service->getVariablePriceEnabled() && $atId && $service->getVariablePrice($atId) !== '') {
+            return (float) $service->getVariablePrice($atId);
+        }
+
+        return (float) $service->getPrice();
+    }
+
     function getDeposit($include_fee=false)
     {
         $ret = $this->getMeta('deposit');

@@ -62,6 +62,7 @@ class SLN_Admin_SettingTabs_GeneralTab extends SLN_Admin_SettingTabs_AbstractTab
 		'soc_twitter',
 		'soc_google',
 		'onesignal_app_id',
+		'onesignal_rest_api_key',
 		'onesignal_new',
 		'onesignal_notification_message',
 		'google_maps_api_key',
@@ -171,6 +172,10 @@ class SLN_Admin_SettingTabs_GeneralTab extends SLN_Admin_SettingTabs_AbstractTab
 		esc_html($this->submitted['onesignal_notification_message'])
 		:
 		self::getDefaultOnesignalNotificationMessage();
+
+		if (isset($this->submitted['onesignal_rest_api_key'])) {
+			$this->submitted['onesignal_rest_api_key'] = preg_replace('/\s+/', '', (string) $this->submitted['onesignal_rest_api_key']);
+		}
 	}
 
 	protected function postProcess() {

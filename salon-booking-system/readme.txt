@@ -4,7 +4,7 @@ Tags: salon, spa, appointment booking, booking system, scheduling
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4.8
-Stable tag: 10.31.4
+Stable tag: 10.31.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -363,6 +363,14 @@ PHP 7.4 and above.
 
 == Changelog ==
 
+
+08.09.2026 - 10.31.5
+
+* Fixed: booking notification emails now show the live total (and each service price) from the current line items, so a stale stored amount no longer disagrees with the service list
+* Improved: OneSignal push — the mobile PWA registers the device more reliably, and you can save a REST API Key so the server can send to subscribers even when player IDs are missing
+* Improved: the AI assistant can look up official help articles when you ask how to do something
+* Improved: the WordPress.org review reminder now shows how many bookings you have taken, and asks more clearly before sending you to leave a review
+* Fixed: “Add to calendar” links and .ics attachments in booking emails are generated more reliably
 
 27.08.2026 - 10.31.4
 

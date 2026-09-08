@@ -263,6 +263,15 @@ class SLN_AI_ContextPack
 		$lines[] = 'Capability discovery: use suggest_capability for goal→feature/add-on matches; official add-ons: '
 			. ( $addonNames ? implode(', ', $addonNames) : '(see Extensions)' )
 			. '.';
+		$docsUrl = '';
+		if (! empty($context['ecosystem']['docs_url'])) {
+			$docsUrl = (string) $context['ecosystem']['docs_url'];
+		} elseif (class_exists('SLN_AI_DocsCatalog')) {
+			$docsUrl = SLN_AI_DocsCatalog::KB_BASE . '/';
+		}
+		$lines[] = 'Official docs (second source after this site context / tools): lookup_docs. KB: '
+			. ( $docsUrl !== '' ? $docsUrl : 'https://salonbookingsystem.helpscoutdocs.com/' )
+			. ' — do not invent how-to steps; if docs disagree with live settings, trust live settings.';
 
 		return implode("\n", $lines);
 	}

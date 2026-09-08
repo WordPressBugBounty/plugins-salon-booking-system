@@ -19,13 +19,40 @@ class SLN_Action_Ajax_GenerateOnesignalApp extends SLN_Action_Ajax_Abstract
                     'site_name'             => $info['host'],
                     'safari_site_origin'    => $info['scheme'] . '://' . $info['host'],
                 )),
+                'timeout' => 20,
             );
 
             $response = wp_remote_post($url, $args);
-            $body     = json_decode(wp_remote_retrieve_body($response));
+
+            if ( is_wp_error($response) ) {
+                return array(
+                    'success' => false,
+                    'error'   => $response->get_error_message(),
+                );
+            }
+
+            $body = json_decode(wp_remote_retrieve_body($response));
+
+            if ( empty($body->id) ) {
+                $errors = ! empty($body->errors) ? wp_json_encode($body->errors) : wp_remote_retrieve_body($response);
+                return array(
+                    'success' => false,
+                    'error'   => $errors ? $errors : 'OneSignal did not return an App ID',
+                );
+            }
+
+            $rest_key = ! empty($body->basic_auth_key) ? $body->basic_auth_key : '';
+            $settings = $this->plugin->getSettings();
+            $settings->set('onesignal_app_id', $body->id);
+            if ( $rest_key ) {
+                $settings->set('onesignal_rest_api_key', $rest_key);
+            }
+            $settings->save();
 
             return array(
-            'app_id' => $body->id,
+                'success'      => true,
+                'app_id'       => $body->id,
+                'rest_api_key' => $rest_key,
             );
         } else {
             wp_send_json_error('Not authorized',403);

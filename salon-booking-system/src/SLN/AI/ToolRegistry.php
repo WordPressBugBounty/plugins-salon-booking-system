@@ -21,6 +21,7 @@ class SLN_AI_ToolRegistry
 		require_once $dir . 'SimpleSettings.php';
 		require_once $dir . 'ExplainSetting.php';
 		require_once $dir . 'SuggestCapability.php';
+		require_once $dir . 'LookupDocs.php';
 		require_once $dir . 'ExplainUnavailableSlot.php';
 		require_once $dir . 'FindBooking.php';
 		require_once $dir . 'CountBookings.php';
@@ -179,6 +180,29 @@ class SLN_AI_ToolRegistry
 						'limit'  => array(
 							'type'        => 'integer',
 							'description' => 'Max suggestions (default 5)',
+						),
+					),
+				),
+			),
+			array(
+				'name'        => 'lookup_docs',
+				'tier'        => 'guidance',
+				'class'       => 'SLN_AI_Tools_LookupDocs',
+				'description' => 'Search official Help Scout documentation (how-to, troubleshooting, shortcodes). Second source after live site/tools — never let an article override this salon’s settings or invent writes. Use for “how do I”, debug, timezone, CSV export, translations, two-way GCal, password reset, email not arriving. Not for “why isn’t this slot bookable” (explain_unavailable_slot) or “which add-on” (suggest_capability). Guidance only.',
+				'parameters'  => array(
+					'type'       => 'object',
+					'properties' => array(
+						'query'      => array(
+							'type'        => 'string',
+							'description' => 'Keywords or article id, e.g. debug, timezone, csv export, google calendar two-way',
+						),
+						'article_id' => array(
+							'type'        => 'string',
+							'description' => 'Catalog id when a specific article is known',
+						),
+						'limit'      => array(
+							'type'        => 'integer',
+							'description' => 'Max articles (default 3)',
 						),
 					),
 				),
@@ -940,6 +964,7 @@ class SLN_AI_ToolRegistry
 			. 'List discounts/customers/services/assistants → find_*; create/update coupons → upsert_discount. '
 			. 'Calendar UI → explain_setting topic=calendar. Changelog/what\'s new → recent_changelog context or topic=changelog; never invent features. '
 			. 'When the merchant describes a goal a product feature/add-on solves (no-shows→waitlist, walk-in tablet→kiosk, second location→multishop, email campaigns→communicator, import bookings→migrator, “what can I do”→capabilities), call suggest_capability; for a known topic deep-link use explain_setting. '
+			. 'Official docs (Help Scout) are a second source after live tools/settings. How-to / troubleshooting not answered by a write or diagnosis tool → lookup_docs. If an article disagrees with a tool result, trust the tool and say the docs may be outdated. Never invent how-to steps when lookup_docs can run. '
 			. 'Add-ons are guidance-only (never invent install/license steps that write secrets). '
 			. SLN_AI_Edition::instructionsSnippet() . ' '
 			. SLN_AI_Multishop::instructionsSnippet();

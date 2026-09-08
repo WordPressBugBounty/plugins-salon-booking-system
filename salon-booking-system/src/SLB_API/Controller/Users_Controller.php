@@ -32,6 +32,10 @@ class Users_Controller extends REST_Controller
     {
 	$user_id = get_current_user_id();
 
+	if ( ! $user_id ) {
+	    return new WP_Error( 'salon_rest_cannot_view', __( 'Sorry, you must be logged in to register push notifications.', 'salon-booking-system' ), array( 'status' => 401 ) );
+	}
+
         try {
             $this->save_item_user($request, $user_id);
         } catch (\Exception $ex) {
@@ -49,7 +53,7 @@ class Users_Controller extends REST_Controller
 
 	$player_id = $request->get_param('onesignal_player_id');
 
-	if ( $player_id !== null ) {
+	if ( $player_id !== null && $user_id ) {
 
 	    $meta_value = get_user_meta($user_id, '_sln_onesignal_player_id', true);
 	    $player_ids = is_array($meta_value) ? $meta_value : ($meta_value ? array($meta_value) : array());

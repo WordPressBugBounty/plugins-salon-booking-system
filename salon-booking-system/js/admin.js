@@ -672,7 +672,12 @@ jQuery(function ($) {
 			dataType: "json",
 			success: function (response) {
 				$(self).removeClass("loading");
-				$("#salon_settings_onesignal_app_id").val(response.app_id);
+				if (response && response.app_id) {
+					$("#salon_settings_onesignal_app_id").val(response.app_id);
+				}
+				if (response && response.rest_api_key) {
+					$("#salon_settings_onesignal_rest_api_key").val(response.rest_api_key);
+				}
 			},
 		});
 		return false;

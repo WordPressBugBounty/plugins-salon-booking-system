@@ -26,8 +26,17 @@ class SLN_Helper_CalendarLink
 	    wp_schedule_single_event($timestamp, 'sln.helper.calendar_link.remove', array($filename));
     }
 
-	// add_action('sln.helper.calendar_link.remove', 'cronUnlinkCall');
-	$data['attachments'][] = $filepath;
+	if ($data instanceof ArrayAccess) {
+		$attachments   = $data->offsetExists('attachments') ? $data['attachments'] : array();
+		$attachments   = is_array($attachments) ? $attachments : array();
+		$attachments[] = $filepath;
+		$data['attachments'] = $attachments;
+	} elseif (is_array($data)) {
+		if (!isset($data['attachments']) || !is_array($data['attachments'])) {
+			$data['attachments'] = array();
+		}
+		$data['attachments'][] = $filepath;
+	}
 
 	$fileurl = home_url('/wp-content/uploads/' . $filename);
 

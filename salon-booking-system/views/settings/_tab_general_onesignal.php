@@ -23,11 +23,25 @@ if(defined('SLN_VERSION_PAY') && SLN_VERSION_PAY) :
                     <a href="#"  data-nonce="<?php echo wp_create_nonce('ajax_post_validation'); ?>" class="generate-onesignal-app"><?php echo esc_html__('Generate', 'salon-booking-system') ?></a>
                 </div>
             </div>
+            <div class="col-xs-12 sln-input--simple">
+                <?php $helper->row_input_text(
+	'onesignal_rest_api_key',
+	__('REST API Key', 'salon-booking-system'),
+	array(
+		'attrs' => array(
+			'autocomplete' => 'off',
+		),
+	)
+);?>
+                <p class="sln-input-help">
+                    <?php esc_html_e('Required to send push from the server. Copy the App API Key (or legacy REST API Key) from your OneSignal dashboard: Settings → Keys & IDs. Generate fills this automatically.', 'salon-booking-system');?>
+                </p>
+            </div>
             <div class="col-xs-12">
                 <div class="sln-checkbox">
                 <?php $helper->row_input_checkbox('onesignal_new', __('Send Onesignal notification on new bookings', 'salon-booking-system'));?>            
                 <div class="sln-box-maininfo">
-                    <p class="sln-box-info"><?php esc_html_e('Onesignal notification will be sent to a staff member', 'salon-booking-system');?></p>
+                    <p class="sln-box-info"><?php esc_html_e('Push is sent to staff devices registered in the PWA, or to all subscribers of this OneSignal app when a REST API Key is set. Enable debug logs (Settings → Documentation) to see [OneSignal] entries in log.txt.', 'salon-booking-system');?></p>
                 </div>
                 </div>
             </div>

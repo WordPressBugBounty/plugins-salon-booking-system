@@ -911,21 +911,10 @@ echo expirePopup();
             </div>
         </div>
 
-        <div class="row">
-            <?php if (!defined("SLN_VERSION_PAY") && isset($_COOKIE['sln-notice__dismiss']) && $_COOKIE['sln-notice__dismiss']): ?>
-                <div class="col-xs-12 sln-notice__wrapper">
-                    <div class="sln-notice sln-notice--review">
-                        <h2><?php esc_html_e('Are you happy with us?', 'salon-booking-system') ?> <?php _e('Share your love for <strong>Salon Booking System</strong> leaving a positive review.', 'salon-booking-system') ?>
-                            <?php esc_html_e("Let's grow our community.", 'salon-booking-system') ?>
-                            <a href="https://wordpress.org/support/plugin/salon-booking-system/reviews/#new-post" target="_blank" class="sln-notice--action">
-                                <?php esc_html_e('Submit a review', 'salon-booking-system') ?>
-                            </a>
-                        </h2>
-                        <button type="button" class="sln-notice__dismiss"><span class="screen-reader-text">Dismiss this notice.</span></button>
-                    </div>
-                </div>
-            <?php endif; ?>
-        </div>
+        <?php
+        $reviewRequest = new SLN_Admin_ReviewRequest($plugin);
+        $reviewRequest->showCalendarBanner();
+        ?>
         <div class="row">
             <div class="col-xs-12 sln-calendar-view-topbar--secondary">
                 <div class="form-group sln-free-locked-slots-block">

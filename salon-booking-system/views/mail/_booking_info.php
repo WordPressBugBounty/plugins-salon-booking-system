@@ -78,13 +78,16 @@ $bookingDateTime = empty($forAdmin) && $plugin->getSettings()->isDisplaySlotsCus
 			</p>
 		</td>
 	</tr>
-	<?php foreach($booking->getBookingServices()->getItems() as $bookingService): ?>
+	<?php foreach($booking->getBookingServices()->getItems() as $bookingService):
+		$lineAmount = $booking->getBookingServiceLineAmount($bookingService);
+		?>
 		<tr >
 			<td align="left" style="padding:0;Margin:0;padding-left:25px;padding-right:25px">
 				<p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:'source sans pro', 'helvetica neue', helvetica, arial, sans-serif;line-height:38px;color:#333333;font-size:25px"><?php if($bookingService->getService()->getServiceCategory()){
 					echo esc_html__(sprintf('%s', $bookingService->getService()->getServiceCategory()->getName()), 'salon-booking-system'), ' / ';
 				}
 				esc_html_e(sprintf('%s', $bookingService->getService()->getName()), 'salon-booking-system');
+				if ($shopPrices): ?> <span style="font-size:18px">(<?php echo $plugin->format()->moneyFormatted($lineAmount, true, false, true) ?>)</span><?php endif;
 				$attendant = $bookingService->getAttendant(); ?></p>
 			</td>
 		</tr>
@@ -132,7 +135,7 @@ $bookingDateTime = empty($forAdmin) && $plugin->getSettings()->isDisplaySlotsCus
 		<tr>
 			<td align="left" style="padding:0;Margin:0;padding-left:25px;padding-right:25px">
 				<p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:'source sans pro', 'helvetica neue', helvetica, arial, sans-serif;line-height:45px;color:#333333;font-size:30px">
-					<strong><?php echo $plugin->format()->moneyFormatted($booking->getAmount(), true, false, true) ?></strong>
+					<strong><?php echo $plugin->format()->moneyFormatted($booking->getEmailAmount(), true, false, true) ?></strong>
 				</p>
 			</td>
 		</tr>

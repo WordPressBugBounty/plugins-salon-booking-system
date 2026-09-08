@@ -2,6 +2,28 @@
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
+if (!isset($data) || !($data instanceof ArrayAccess)) {
+	$data = new ArrayObject();
+}
+
+$google_link  = '#';
+$ical_link    = '#';
+$outlook_link = '#';
+try {
+	$google_link = SLN_Helper_CalendarLink::getGoogleLink($booking);
+} catch (Exception $e) {
+	SLN_Plugin::addLog('Calendar Google link failed: ' . $e->getMessage());
+}
+try {
+	$ical_link = SLN_Helper_CalendarLink::getICallLink($booking, $data);
+} catch (Exception $e) {
+	SLN_Plugin::addLog('Calendar iCal link failed: ' . $e->getMessage());
+}
+try {
+	$outlook_link = SLN_Helper_CalendarLink::getOutlookLink($booking);
+} catch (Exception $e) {
+	SLN_Plugin::addLog('Calendar Outlook link failed: ' . $e->getMessage());
+}
 ?>
 <tr>
 	<td align="left" style="padding:0;Margin:0;padding-top:20px;padding-right:20px;padding-left:25px">
@@ -9,56 +31,25 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 	</td>
 </tr>
 <tr>
-<td class="esdev-adapt-off" align="left" style="padding:0;Margin:0;padding-top:20px;padding-left:20px;padding-right:20px">
-<table cellpadding="0" cellspacing="0" class="esdev-mso-table" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;width:560px">
-	<tr>
-	<td class="esdev-mso-td" valign="top" style="padding:0;Margin:0">
-	<table cellpadding="0" cellspacing="0" class="es-left" align="left" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;float:left">
-		<tr>
-		<td align="left" style="padding:0;Margin:0;width:167px">
-		<table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
+	<td align="left" style="padding:0;Margin:0;padding-top:20px;padding-left:20px;padding-right:20px">
+		<table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;width:100%;max-width:560px">
 			<tr>
-			<td align="center" style="padding:0;Margin:0;font-size:0px">
-                            <a href="<?php echo SLN_Helper_CalendarLink::getGoogleLink($booking) ?>" target="_blank">
-				<img src="<?php echo SLN_PLUGIN_URL . '/img/email/calendar-google-48.png' ?>" alt="<?php esc_html_e('Google calendar', 'salon-booking-system'); ?>" style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic" width="50" height="49">
-                            </a>
-			</td>
+				<td align="center" valign="top" width="33%" style="padding:0;Margin:0;width:33%">
+					<a href="<?php echo esc_url($google_link) ?>" target="_blank">
+						<img src="<?php echo esc_url(SLN_PLUGIN_URL . '/img/email/calendar-google-48.png') ?>" alt="<?php echo esc_attr__('Google calendar', 'salon-booking-system'); ?>" width="50" height="49" style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;width:50px;height:49px">
+					</a>
+				</td>
+				<td align="center" valign="top" width="33%" style="padding:0;Margin:0;width:33%">
+					<a href="<?php echo esc_url($ical_link) ?>" target="_blank">
+						<img src="<?php echo esc_url(SLN_PLUGIN_URL . '/img/email/calendar-ical-50.png') ?>" alt="<?php echo esc_attr__('iCal calendar', 'salon-booking-system'); ?>" width="50" height="51" style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;width:50px;height:51px">
+					</a>
+				</td>
+				<td align="center" valign="top" width="33%" style="padding:0;Margin:0;width:33%">
+					<a href="<?php echo esc_url($outlook_link) ?>" target="_blank">
+						<img src="<?php echo esc_url(SLN_PLUGIN_URL . '/img/email/calendar-outlook-48.png') ?>" alt="<?php echo esc_attr__('Outlook calendar', 'salon-booking-system'); ?>" width="50" height="50" style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;width:50px;height:50px">
+					</a>
+				</td>
 			</tr>
-		</table></td>
-		</tr>
-	</table></td>
-	<td style="padding:0;Margin:0;width:30px"></td>
-	<td class="esdev-mso-td" valign="top" style="padding:0;Margin:0">
-	<table cellpadding="0" cellspacing="0" class="es-left" align="left" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;float:left">
-		<tr>
-		<td align="left" style="padding:0;Margin:0;width:167px">
-		<table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
-			<tr>
-			<td align="center" style="padding:0;Margin:0;font-size:0px">
-                            <a href="<?php echo SLN_Helper_CalendarLink::getICallLink($booking, $data) ?>" target="_blank">
-				<img src="<?php echo SLN_PLUGIN_URL . '/img/email/calendar-ical-50.png'; ?>" alt="<?php esc_html_e('iCal calendar', 'salon-booking-system'); ?>" style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic" width="50" height="51">
-                            </a>
-                        </td>
-			</tr>
-		</table></td>
-		</tr>
-	</table></td>
-	<td style="padding:0;Margin:0;width:30px"></td>
-	<td class="esdev-mso-td" valign="top" style="padding:0;Margin:0">
-	<table cellpadding="0" cellspacing="0" class="es-right" align="right" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;float:right">
-		<tr>
-		<td align="left" style="padding:0;Margin:0;width:166px">
-		<table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
-			<tr>
-			<td align="center" style="padding:0;Margin:0;font-size:0px">
-                            <a href="<?php echo SLN_Helper_CalendarLink::getOutlookLink($booking) ?>" target="_blank">
-                                <img src="<?php echo SLN_PLUGIN_URL . '/img/email/calendar-outlook-48.png'; ?>" alt="<?php esc_html_e('Outlook calendar', 'salon-booking-system'); ?>" style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic" width="50" height="50">
-                            </a>
-                        </td>
-			</tr>
-		</table></td>
-		</tr>
-	</table></td>
-	</tr>
-</table></td>
+		</table>
+	</td>
 </tr>
