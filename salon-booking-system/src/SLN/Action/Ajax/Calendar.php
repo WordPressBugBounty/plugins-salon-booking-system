@@ -956,7 +956,16 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
     return false;
   }
 
-  public function hasHolidaysDaylyByLine($line, $attId = null)
+  /**
+   * @param int      $line
+   * @param int|null $attId
+   * @param string   $kind 'all' (default), 'manual' to match only locks created from
+   *                       the calendar, or 'external' to match only locks injected by
+   *                       extensions such as the Google Calendar slot locker. The day
+   *                       view uses this split because staff may book over a manual
+   *                       lock but not over an external one.
+   */
+  public function hasHolidaysDaylyByLine($line, $attId = null, $kind = 'all')
   {
     $settings = $this->plugin->getSettings();
     $holidays = $settings->get('holidays_daily') ?: array();
@@ -983,6 +992,13 @@ class SLN_Action_Ajax_Calendar extends SLN_Action_Ajax_Abstract
     foreach ($holidays as $holidayRule) {
       // Skip rules without assistant_id if we're checking for a specific assistant
       if (!empty($attId) && isset($holidayRule['assistant_id']) && $holidayRule['assistant_id'] != $attId) {
+        continue;
+      }
+
+      if ($kind === 'manual' && !empty($holidayRule['gcal_locked'])) {
+        continue;
+      }
+      if ($kind === 'external' && empty($holidayRule['gcal_locked'])) {
         continue;
       }
       

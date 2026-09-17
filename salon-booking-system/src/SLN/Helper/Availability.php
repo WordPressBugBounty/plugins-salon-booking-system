@@ -20,6 +20,8 @@ class SLN_Helper_Availability
     private $itemsWithoutServiceOffset;
     private $holidayItemsWithWeekDayRules;
     private $holidayItems;
+    private $holidayItemsWithoutDailyLocks;
+    private $ignoreDailyLocks = false;
     private $offset;
     protected $initialDate;
     private $excludeHiddenFromFrontend = false;
@@ -1011,7 +1013,7 @@ class SLN_Helper_Availability
         $time = $this->getDayBookings()->getTime($time->format('H'), $time->format('i'));
 
         $avItems = $this->getItemsWithoutServiceOffset();
-        $hItems  = $this->getHolidaysItems();
+        $hItems  = $this->getHolidaysItemsForValidation();
         $duration = null;
         if ($checkBookingAndHolidayRules) {
             if ($checkDuration) {
@@ -1631,11 +1633,36 @@ class SLN_Helper_Availability
 
     public function resetItems()
     {
-        $this->hoursBefore                  = null;
-        $this->items                        = null;
-        $this->itemsWithoutServiceOffset    = null;
-        $this->holidayItems                 = null;
-        $this->holidayItemsWithWeekDayRules = null;
+        $this->hoursBefore                   = null;
+        $this->items                         = null;
+        $this->itemsWithoutServiceOffset     = null;
+        $this->holidayItems                  = null;
+        $this->holidayItemsWithWeekDayRules  = null;
+        $this->holidayItemsWithoutDailyLocks = null;
+    }
+
+    /**
+     * Validate bookings against every rule except the manual locks created from
+     * the day calendar (holidays_daily), so back-end staff can book over a slot
+     * they locked themselves.
+     *
+     * Only doValidateServiceOnTime() honours this. getTimes() deliberately does
+     * not: its result is persisted as free_slots by
+     * SLN_Wrapper_Booking_AbstractCache::processDate() into an option the
+     * front-end reads back, which must keep treating locked slots as busy.
+     *
+     * The per-slot memoization key does not carry the flag, so flipping it drops
+     * the cache to avoid serving results computed under the other mode.
+     *
+     * @param bool $ignore
+     */
+    public function setIgnoreDailyLocks($ignore)
+    {
+        $ignore = (bool) $ignore;
+        if ($ignore !== $this->ignoreDailyLocks) {
+            $this->slotValidationCache = array();
+        }
+        $this->ignoreDailyLocks = $ignore;
     }
 
     /**
@@ -1659,6 +1686,25 @@ class SLN_Helper_Availability
             $this->holidayItems = $this->settings->getHolidayItems();
         }
         return $this->holidayItems;
+    }
+
+    /**
+     * Holiday rules for the slot-validation path: the full set, or — while the
+     * back-end override of setIgnoreDailyLocks() is active — the same set without
+     * the day-calendar manual locks.
+     *
+     * @return SLN_Helper_HolidayItems
+     */
+    private function getHolidaysItemsForValidation()
+    {
+        if (!$this->ignoreDailyLocks) {
+            return $this->getHolidaysItems();
+        }
+        if (!isset($this->holidayItemsWithoutDailyLocks)) {
+            $this->holidayItemsWithoutDailyLocks = $this->settings->getHolidayItemsWithoutDailyLocks();
+        }
+
+        return $this->holidayItemsWithoutDailyLocks;
     }
 
     /**

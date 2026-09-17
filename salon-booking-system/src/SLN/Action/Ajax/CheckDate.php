@@ -211,6 +211,18 @@ class SLN_Action_Ajax_CheckDate extends SLN_Action_Ajax_Abstract
 
         if ($booking instanceof SLN_Wrapper_Booking) {
             $this->setBooking($booking);
+
+            // Multi-Shops: admin-ajax carries no $_GET['shop'], so the add-on never
+            // establishes a current shop and availability is computed unscoped — the
+            // editor then offers slots belonging to no location (a day blocked at one
+            // shop still bookable, an open day reduced to a couple of slots), while
+            // the front-end and the editor's own page-load render, which do have shop
+            // context, stay correct. The booking's shop meta is the authoritative
+            // scope; SLN_Action_Ajax_RescheduleBookingCheckDate pins it the same way.
+            // Deliberately not restored: the rest of this request exists only to
+            // answer for this booking, and checkDateTime()/getIntervalsArray() below
+            // both need the context still in place.
+            $this->plugin->applyShopContextFromBooking($booking);
         }
 
         $services = $this->processAdminServicesSubmission(wp_unslash($_POST['_sln_booking']));
@@ -298,7 +310,11 @@ class SLN_Action_Ajax_CheckDate extends SLN_Action_Ajax_Abstract
     {
 
         $plugin = $this->plugin;
-        if ($this->time && !SLN_Func::isTimeAlignedToInterval($this->time)) {
+        // Staff may check a time off the interval grid; the public form may not.
+        if ($this->time
+            && !SLN_Func::isTimeAlignedToInterval($this->time)
+            && !SLN_Func::userCanSetUnalignedBookingTime()
+        ) {
             $this->addError(
                 __(
                     'The selected time is not valid. Please choose one of the available time slots.',

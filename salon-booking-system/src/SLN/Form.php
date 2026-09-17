@@ -80,8 +80,11 @@ class SLN_Form {
 			}
 
 		}
+		// When the caller allows an unaligned time the stored value is shown as-is,
+		// otherwise the field would silently display something else than the booking.
+		$allowUnaligned = !empty($settings['allow_unaligned']);
 		$value = clone $value;
-        if (!isset($settings['modify_value']) || $settings['modify_value']) {
+        if (!$allowUnaligned && (!isset($settings['modify_value']) || $settings['modify_value'])) {
             $value = SLN_Func::alignDateTimeToInterval($value, $interval);
         }
 		if(!empty($settings['inline'])) {
@@ -90,6 +93,7 @@ class SLN_Form {
 				data-meridian="<?php echo strpos($phpFormat, 'a') !== false ? 'true' : 'false' ?>"
 				data-format="<?php echo $jsFormat ?>" value="<?php echo SLN_plugin::getInstance()->format()->time($value) ?>"
 				data-interval="<?php echo $interval ?>" data-locale="<?php echo SLN_Plugin::getInstance()->getSettings()->getDateLocale() ?>"
+				data-allow-unaligned="<?php echo $allowUnaligned ? '1' : '0' ?>"
                 data-value="<?php echo $value ?>"
 				data-popup-class="<?php echo (isset($settings['popup-class']) ? $settings['popup-class'] : '') ?>"></div></div>
 			</span><?php
@@ -100,6 +104,7 @@ class SLN_Form {
 				required="required" data-format="<?php echo $jsFormat ?>"
 				class="sln-input <?php echo isset($settings['extending-classes']) ? $settings['extending-classes'] : '' ?>"
 				value="<?php echo SLN_plugin::getInstance()->format()->time($value) ?>" data-interval="<?php echo $interval ?>"
+				data-allow-unaligned="<?php echo $allowUnaligned ? '1' : '0' ?>"
 				data-value="<?php echo $value ?>"
 				data-locale="<?php echo SLN_Plugin::getInstance()->getSettings()->getDateLocale() ?>"
 				data-popup-class="<?php echo (isset($settings['popup-class']) ? $settings['popup-class'] : '') ?>"/></div>

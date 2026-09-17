@@ -222,14 +222,28 @@ $isPro = defined('SLN_VERSION_PAY') && SLN_VERSION_PAY;
             <div id="cal-day-panel-hour">
                 <?php for ($line = 0; $line < $lines; $line++): ?>
                     <?php
-                    $isHoliday = $calendar->hasHolidaysByLine($line)
-                        || $calendar->hasHolidaysDaylyByLine($line);
+                    // The three kinds of block are kept apart in the markup: staff may
+                    // add a booking on a manual calendar lock, but not on a row closed
+                    // by a holiday rule or by an external Google Calendar event.
+                    $isHolidayRule = $calendar->hasHolidaysByLine($line);
+                    $isDailyLock = $calendar->hasHolidaysDaylyByLine($line);
+                    // An external lock wins over a manual one covering the same row,
+                    // so a row backed by a real Google Calendar event stays inert.
+                    $isExternalLock = $isDailyLock && $calendar->hasHolidaysDaylyByLine($line, null, 'external');
+                    $isManualLock = $isDailyLock && !$isExternalLock;
+                    $isHoliday = $isHolidayRule || $isDailyLock;
                     $isOutOfSchedule = !$calendar->isLineInWorkingSchedule($line);
 
                     $classes = [];
                     if (!$calendar->getAttendantMode()) {
-                        if ($isHoliday) {
+                        if ($isHolidayRule) {
                             $classes[] = 'blocked blocked-system';
+                        }
+                        if ($isManualLock) {
+                            $classes[] = 'blocked blocked-daily';
+                        }
+                        if ($isExternalLock) {
+                            $classes[] = 'blocked blocked-gcal';
                         }
                         if ($isOutOfSchedule) {
                             $classes[] = 'off-hours';

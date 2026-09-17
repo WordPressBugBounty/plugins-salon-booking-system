@@ -46,17 +46,20 @@ function sln_initTimepickers($) {
             if ($($this).hasClass('started') || $($this).attr('id').indexOf('__new__') > 0) {
                 return;
             } else {
+                // Fields flagged by fieldJSTime accept a time between two slots, so they
+                // step by 5 minutes and must expose the minute view: with a 60 minute
+                // interval minView 1 would offer whole hours only.
+                var allowUnaligned = $($this).data('allow-unaligned') == 1;
                 var picker = $($this)
                     .addClass('started')
                     .datetimepicker({
                         format: $($this).data('format'),
-                        minuteStep: $($this).closest('.sln-booking-holiday-rules-wrapper').length ? $($this).data('interval') : 5,
                         autoclose: true,
-                        minView: $($this).data('interval') == 60 ? 1 : 0,
+                        minView: (!allowUnaligned && $($this).data('interval') == 60) ? 1 : 0,
                         maxView: 1,
                         startView: 1,
                         showMeridian: $($this).data('meridian') ? true : false,
-                        minuteStep: $this.attr('data-interval'),
+                        minuteStep: allowUnaligned ? 5 : $this.attr('data-interval'),
                     })
                     .on('show', function () {
                         $('body').trigger('sln_date');

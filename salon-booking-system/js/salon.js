@@ -3832,21 +3832,11 @@ function sln_applyTipsAmount() {
                     parseFloat(data.tips.replace(/[^0-9.,]/g, "")) === 0
                 );
                 
-                // Update total amount in summary section and non-deposit button strong
                 $(".sln-total-price").html(data.total);
-                
-                // Update Pay button amount.
-                // Deposit button: <strong>£X</strong> (no class) inside .sln-btn__info
-                // No-deposit button: <strong class="sln-total-price">£X</strong> — already updated above.
-                if (data.deposit) {
-                    var depositNum = parseFloat(data.deposit.replace(/[^0-9.,]/g, ""));
-                    if (depositNum > 0) {
-                        var $depositBtn = $(".sln-btn--nextstep .sln-btn__info strong:not(.sln-total-price)");
-                        if ($depositBtn.length) {
-                            $depositBtn.html(data.deposit);
-                            console.log('[Tips] Updated deposit button to:', data.deposit);
-                        }
-                    }
+                // Refresh the amount inside the PAY button (deposit or full total).
+                // Only the .sln-pay-amount span is updated, matching salon-discount.js.
+                if (data.payButtonAmount != undefined) {
+                    $(".sln-btn--nextstep .sln-pay-amount").html(data.payButtonAmount);
                 }
 
                 alertBox = $(

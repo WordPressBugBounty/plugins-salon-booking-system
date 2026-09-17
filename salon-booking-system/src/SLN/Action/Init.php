@@ -146,7 +146,7 @@ class SLN_Action_Init
         new SLN_Admin_Settings($p);
         new SLN_Admin_DeactivationSurvey($p);
 
-        // WP.org review request notice (free version only)
+        // WP.org review request notice (free and PRO; not CodeCanyon)
         $reviewRequest = new SLN_Admin_ReviewRequest($p);
         add_action('admin_notices', array($reviewRequest, 'showNotice'));
         

@@ -81,12 +81,24 @@ class SLN_Action_Ajax_ApplyTipsAmount extends SLN_Action_Ajax_Abstract
 		$totalAmount   = $computedAmount + $fee;
 		$depositAmount = SLN_Helper_PayDepositAdvancedRules::getDeposit($computedAmount, $settings);
 
+		// Same pay-button amount as ApplyDiscountCode / views/payment_method/*/pay.php
+		// so the front-end can refresh .sln-pay-amount after a tip is applied.
+		$payButtonAmount = null;
+		if ($settings->isPayEnabled() && $totalAmount > 0.0) {
+		    $deposit = $settings->isPaymentDepositFixedAmount()
+			? $bb->getDeposit()
+			: $bb->getDeposit(true);
+		    $payAmount       = $deposit > 0 ? $deposit : $bb->getToPayAmount(false);
+		    $payButtonAmount = $plugin->format()->moneyFormatted($payAmount, true, false, null, false);
+		}
+
 		SLN_Plugin::addLog(sprintf(
-		    'ApplyTipsAmount: Calculation details - Computed: %s, ToPayAmount: %s, Tips: %s, Deposit: %s',
+		    'ApplyTipsAmount: Calculation details - Computed: %s, ToPayAmount: %s, Tips: %s, Deposit: %s, PayButton: %s',
 		    $computedAmount,
 		    $totalAmount,
 		    $tipsValue,
-		    $depositAmount
+		    $depositAmount,
+		    $payButtonAmount
 		));
 
 		$ret = array(
@@ -98,6 +110,9 @@ class SLN_Action_Ajax_ApplyTipsAmount extends SLN_Action_Ajax_Abstract
 			__('Tips was applied', 'salon-booking-system')
 		    )
 		);
+		if ($payButtonAmount !== null) {
+		    $ret['payButtonAmount'] = $payButtonAmount;
+		}
 	    }
 
 	    return $ret;

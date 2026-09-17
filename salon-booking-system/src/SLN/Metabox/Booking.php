@@ -2,6 +2,9 @@
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 class SLN_Metabox_Booking extends SLN_Metabox_Abstract
 {
+    /** Transient prefix for the "saved over a locked slot" admin warning. */
+    const LOCK_OVERRIDE_NOTICE_KEY = 'sln_booking_lock_override_';
+
     /** @var  SLN_Wrapper_Booking */
     private $booking;
     /** @var string */
@@ -44,6 +47,7 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
         add_action('trashed_post', array($this, 'trashed_post'), 10, 1);
         add_filter('wp_untrash_post_status', array($this, 'wp_untrash_post_status'), 10, 3);
         add_action('admin_notices', array($this, 'show_booking_trashed_notice'));
+        add_action('admin_notices', array($this, 'show_daily_lock_override_notice'));
 
 	if (!isset($_GET['mode']) || $_GET['mode'] !== 'sln_editor') {
 	    add_action('in_admin_header', array($this, 'in_admin_header'));
@@ -105,7 +109,8 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
                 'booking' => $this->getPlugin()->createBooking($object),
                 'postType' => $this->getPostType(),
                 'helper' => new SLN_Metabox_Helper(),
-                'mode' => isset($_GET['mode']) ? sanitize_text_field(wp_unslash($_GET['mode'])) : '',
+                // Only sln_editor is a valid booking-metabox mode. Do not pass arbitrary GET values into the view.
+                'mode' => (isset($_GET['mode']) && 'sln_editor' === sanitize_text_field(wp_unslash($_GET['mode']))) ? 'sln_editor' : '',
                 'date' => isset($_GET['date']) ? new SLN_DateTime(sanitize_text_field(wp_unslash($_GET['date'])),SLN_TimeFunc::getWpTimezone()) : null,
                 'time' => $time_param,
             )
@@ -560,10 +565,17 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
     /**
      * Align admin-submitted booking time to the configured interval before
      * availability checks and persistence (matches fieldJSTime rounding).
+     *
+     * Skipped for staff saving from the booking editor, who are allowed to enter a
+     * time off the interval grid; availability still validates the slot normally.
      */
     private function normalizeBookingTimeInRequest()
     {
         if (empty($_POST['_sln_booking']['time'])) {
+            return;
+        }
+
+        if (SLN_Func::requestAllowsUnalignedBookingTime()) {
             return;
         }
 
@@ -631,36 +643,154 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
         $availability = $this->getPlugin()->getAvailabilityHelper();
         $availability->setDate($date, $currentBooking);
 
+        // Staff booking from wp-admin may override a slot they locked from the day
+        // calendar; every other rule still applies and the front-end is untouched.
+        $canOverrideLocks = $this->canOverrideDailyLocks();
+        if ($canOverrideLocks) {
+            $availability->setIgnoreDailyLocks(true);
+        }
+
         $errors = array();
 
-        foreach ($bookingServices->getItems() as $bookingService) {
-            $service = $bookingService->getService();
-            if (!$service || !($service instanceof SLN_Wrapper_ServiceInterface)) {
-                continue;
-            }
-
-            $isLast = $bookingServices->isLast($bookingService);
-
-            $serviceErrors = $availability->validateBookingService($bookingService, $isLast);
-            if (!empty($serviceErrors) && is_array($serviceErrors)) {
-                $errors = array_merge($errors, $serviceErrors);
-            }
-
-            $attendant = $bookingService->getAttendant();
-            if ($attendant && !is_array($attendant)) {
-                $attendantErrors = $availability->validateBookingAttendant($bookingService, $isLast);
-                if (!empty($attendantErrors) && is_array($attendantErrors)) {
-                    $errors = array_merge($errors, $attendantErrors);
+        try {
+            foreach ($bookingServices->getItems() as $bookingService) {
+                $service = $bookingService->getService();
+                if (!$service || !($service instanceof SLN_Wrapper_ServiceInterface)) {
+                    continue;
                 }
-            } elseif (is_array($attendant) && !empty($attendant)) {
-                $attendantErrors = $availability->validateBookingAttendants($bookingService, $isLast);
-                if (!empty($attendantErrors) && is_array($attendantErrors)) {
-                    $errors = array_merge($errors, $attendantErrors);
+
+                $isLast = $bookingServices->isLast($bookingService);
+
+                $serviceErrors = $availability->validateBookingService($bookingService, $isLast);
+                if (!empty($serviceErrors) && is_array($serviceErrors)) {
+                    $errors = array_merge($errors, $serviceErrors);
                 }
+
+                $attendant = $bookingService->getAttendant();
+                if ($attendant && !is_array($attendant)) {
+                    $attendantErrors = $availability->validateBookingAttendant($bookingService, $isLast);
+                    if (!empty($attendantErrors) && is_array($attendantErrors)) {
+                        $errors = array_merge($errors, $attendantErrors);
+                    }
+                } elseif (is_array($attendant) && !empty($attendant)) {
+                    $attendantErrors = $availability->validateBookingAttendants($bookingService, $isLast);
+                    if (!empty($attendantErrors) && is_array($attendantErrors)) {
+                        $errors = array_merge($errors, $attendantErrors);
+                    }
+                }
+            }
+        } finally {
+            if ($canOverrideLocks) {
+                $availability->setIgnoreDailyLocks(false);
             }
         }
 
+        if ($canOverrideLocks && empty($errors)) {
+            $this->flagDailyLockOverride($date, $bookingServices);
+        }
+
         return array_values(array_unique($errors));
+    }
+
+    /**
+     * Whether the current request may save a booking over a day-calendar lock.
+     *
+     * Gated on the booking editor's own nonce rather than is_admin(), which is
+     * also true for front-end admin-ajax submissions: only a form rendered by
+     * this metabox can carry it, so a staff account booking from the public form
+     * stays subject to the locks.
+     *
+     * @return bool
+     */
+    private function canOverrideDailyLocks()
+    {
+        if (!current_user_can('manage_salon')) {
+            return false;
+        }
+
+        $nonceField = $this->getPostType() . '_details_meta_nonce';
+        if (!isset($_POST[$nonceField])) {
+            return false;
+        }
+
+        return (bool) wp_verify_nonce(
+            sanitize_text_field(wp_unslash($_POST[$nonceField])),
+            $this->getPostType()
+        );
+    }
+
+    /**
+     * Queue the "saved over a locked slot" warning when the booking span touches a
+     * manual day-calendar lock. Purely informational — the save already succeeded.
+     *
+     * @param SLN_DateTime                 $date            Booking start.
+     * @param SLN_Wrapper_Booking_Services $bookingServices Services being saved.
+     */
+    private function flagDailyLockOverride(SLN_DateTime $date, SLN_Wrapper_Booking_Services $bookingServices)
+    {
+        $settings   = $this->getPlugin()->getSettings();
+        $dailyLocks = new SLN_Helper_HolidayItems($settings->getDailyHolidayItems());
+        if (!$dailyLocks->toArray()) {
+            return;
+        }
+
+        $endsAt = null;
+        foreach ($bookingServices->getItems() as $bookingService) {
+            $serviceEnd = $bookingService->getEndsAt();
+            if ($serviceEnd && (!$endsAt || $serviceEnd > $endsAt)) {
+                $endsAt = $serviceEnd;
+            }
+        }
+        if (!$endsAt) {
+            return;
+        }
+
+        $interval = max(1, (int) $settings->getInterval());
+        $cursor   = clone $date;
+        while ($cursor < $endsAt) {
+            if (!$dailyLocks->isValidTime($cursor->format('Y-m-d H:i'))) {
+                set_transient(
+                    self::LOCK_OVERRIDE_NOTICE_KEY . get_current_user_id(),
+                    array(
+                        'from' => $this->getPlugin()->format()->datetime($date),
+                        'to'   => $endsAt->format('H:i'),
+                    ),
+                    MINUTE_IN_SECONDS
+                );
+                return;
+            }
+            $cursor->modify('+' . $interval . ' minutes');
+        }
+    }
+
+    /**
+     * Warn staff that the booking they just saved overlaps a slot locked from the
+     * day calendar, so the lock is not silently ignored.
+     */
+    public function show_daily_lock_override_notice()
+    {
+        $screen = get_current_screen();
+        if (!$screen || $screen->id !== SLN_Plugin::POST_TYPE_BOOKING) {
+            return;
+        }
+
+        $transient_key = self::LOCK_OVERRIDE_NOTICE_KEY . get_current_user_id();
+        $notice_data   = get_transient($transient_key);
+        if (!$notice_data || !is_array($notice_data)) {
+            return;
+        }
+        delete_transient($transient_key);
+
+        echo '<div class="notice notice-warning is-dismissible">';
+        echo '<p>';
+        printf(
+            // translators: 1: booking start date and time, 2: booking end time
+            esc_html__('This booking was saved on %1$s - %2$s, over a time slot locked from the calendar.', 'salon-booking-system'),
+            '<strong>' . esc_html($notice_data['from']) . '</strong>',
+            '<strong>' . esc_html($notice_data['to']) . '</strong>'
+        );
+        echo '</p>';
+        echo '</div>';
     }
 
 

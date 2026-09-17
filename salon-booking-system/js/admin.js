@@ -618,6 +618,13 @@ jQuery(function ($) {
 			.find(".sln-set-default-booking-status--alert-loading")
 			.removeClass("hide");
 
+		function restoreSetDefaultStatusUi() {
+			self.closest(".sln-set-default-booking-status--block-labels")
+				.find(".sln-set-default-booking-status--alert-loading")
+				.addClass("hide");
+			self.removeClass("hide");
+		}
+
 		jQuery.ajax({
 			url: ajaxurl,
 			type: "POST",
@@ -625,10 +632,20 @@ jQuery(function ($) {
 				action: "salon",
 				method: "setDefaultBookingStatus",
 				status: status,
+				security: salon.ajax_nonce,
 			},
 			cache: false,
 			dataType: "json",
 			success: function (response) {
+				if (!response || !response.success) {
+					restoreSetDefaultStatusUi();
+					alert(
+						response && response.errors && response.errors.length
+							? response.errors.join("\n")
+							: "Error saving the default booking status. Please reload the page and try again."
+					);
+					return;
+				}
 				self.closest(
 					".sln-set-default-booking-status--block-labels"
 				).data("defaultStatus", status);
@@ -650,6 +667,11 @@ jQuery(function ($) {
 				self.closest(".sln-set-default-booking-status--block-labels")
 					.find(".sln-set-default-booking-status--alert-loading")
 					.addClass("hide");
+			},
+			error: function (xhr, textStatus, error) {
+				restoreSetDefaultStatusUi();
+				alert("Error saving the default booking status. Please try again.");
+				console.error("SetDefaultBookingStatus AJAX error:", error);
 			},
 		});
 		return false;

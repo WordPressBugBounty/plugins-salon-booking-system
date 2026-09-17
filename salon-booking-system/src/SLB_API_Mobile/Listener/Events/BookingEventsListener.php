@@ -3,6 +3,7 @@
 namespace SLB_API_Mobile\Listener\Events;
 
 use SLN_Plugin;
+use SLN_Enum_BookingStatus;
 use WP_User_Query;
 use SLB_API_Mobile\Third\OnesignalAPI;
 
@@ -20,6 +21,22 @@ class BookingEventsListener
 	add_action('sln.booking_builder.create.booking_created', array($this, 'event_created'), 10, 1);
     }
 
+    /**
+     * Statuses that mean the customer finished booking. With payments enabled the builder inserts
+     * the booking as auto-draft to hold the slot while the summary page is open (Builder::getCreateStatus)
+     * and fires the create hook right there, so staff must not be alerted for auto-draft or for a
+     * booking still awaiting payment.
+     */
+    protected function notifiableStatuses()
+    {
+	return apply_filters('sln_onesignal_notification_statuses', array(
+	    SLN_Enum_BookingStatus::PENDING,
+	    SLN_Enum_BookingStatus::PAID,
+	    SLN_Enum_BookingStatus::PAY_LATER,
+	    SLN_Enum_BookingStatus::CONFIRMED,
+	));
+    }
+
     public function event_created( $booking ) {
 
 	$plugin   = SLN_Plugin::getInstance();
@@ -31,7 +48,18 @@ class BookingEventsListener
 
 	$booking_id = $booking->getId();
 
-	if ( ! $booking_id || get_post_meta($booking_id, self::NOTIFIED_META, true) ) {
+	if ( ! $booking_id ) {
+	    return;
+	}
+
+	$status = $booking->getStatus();
+
+	if ( ! in_array($status, $this->notifiableStatuses(), true) ) {
+	    SLN_Plugin::addLog('[OneSignal] Skipped booking #' . $booking_id . ': status "' . $status . '" is not a completed booking');
+	    return;
+	}
+
+	if ( get_post_meta($booking_id, self::NOTIFIED_META, true) ) {
 	    return;
 	}
 

@@ -470,6 +470,33 @@ class SLN_Settings {
 	}
 
 	/**
+	 * Same rule set as getHolidayItems(), minus the manual locks created from the
+	 * day calendar (holidays_daily).
+	 *
+	 * Used only by the back-end save path, so staff can book over a slot they
+	 * locked themselves while every other rule (opening hours, global holidays,
+	 * assistant locks, parallel limits) keeps applying. Deliberately not used by
+	 * getTimes(): that output is persisted as free_slots in the shared day cache
+	 * and read back by the front-end, which must keep seeing locked slots as busy.
+	 *
+	 * @return SLN_Helper_HolidayItems
+	 */
+	public function getHolidayItemsWithoutDailyLocks() {
+		$holidays = $this->get('holidays') ?: array();
+
+		$ret = new SLN_Helper_HolidayItems(array_filter($holidays, function ($h) {
+			$toDateTime = new SLN_DateTime($h['to_date'] . ' ' . $h['to_time']);
+			$now = new SLN_DateTime();
+			if ($toDateTime < $now) {
+				return false;
+			}
+			return true;
+		}));
+
+		return apply_filters('sln.settings.availability_holiday_items', $ret);
+	}
+
+	/**
 	 * @return SLN_Helper_HolidayItems
 	 */
 	public function getNewHolidayItems() {

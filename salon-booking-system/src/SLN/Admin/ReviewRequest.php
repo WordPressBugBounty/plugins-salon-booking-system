@@ -1,7 +1,7 @@
 <?php
 
 /**
- * WordPress.org review request (free version only).
+ * WordPress.org review request (free and PRO; not CodeCanyon).
  *
  * One prompt, two placements, same dismiss/snooze state:
  * - Dashboard / Settings: WordPress admin notice
@@ -17,11 +17,8 @@ class SLN_Admin_ReviewRequest
 {
     const REVIEW_URL = 'https://wordpress.org/support/plugin/salon-booking-system/reviews/#new-post';
 
-    /** Minimum successful bookings before asking */
+    /** Minimum successful bookings before asking (also the "established site" signal) */
     const MIN_BOOKINGS = 10;
-
-    /** Minimum days since first check before asking */
-    const MIN_INSTALL_AGE_DAYS = 14;
 
     /** Snooze duration when the user picks "Maybe later" or closes the notice */
     const SNOOZE_DAYS = 30;
@@ -116,15 +113,15 @@ class SLN_Admin_ReviewRequest
     }
 
     /**
-     * Shared eligibility (edition, capability, state, install age, bookings).
+     * Shared eligibility (edition, capability, state, bookings).
      * No screen check — callers decide placement.
      */
     private function isEligible()
     {
         $preview = $this->isPreview();
 
-        // Free version only: the goal is reviews on the WP.org listing.
-        if (!$preview && (defined('SLN_VERSION_PAY') || defined('SLN_VERSION_CODECANYON'))) {
+        // CodeCanyon stays out: those reviews belong on Envato, not WP.org.
+        if (!$preview && defined('SLN_VERSION_CODECANYON')) {
             return false;
         }
 
@@ -145,17 +142,13 @@ class SLN_Admin_ReviewRequest
         }
         // 'positive' stays eligible so step 2 is shown after "Yes".
 
-        // Require a minimum install age so brand-new users are not prompted.
-        $first_seen = (int) get_option(self::OPTION_FIRST_SEEN, 0);
-        if (!$first_seen) {
+        if (!(int) get_option(self::OPTION_FIRST_SEEN, 0)) {
             update_option(self::OPTION_FIRST_SEEN, time());
-
-            return false;
-        }
-        if (time() - $first_seen < self::MIN_INSTALL_AGE_DAYS * DAY_IN_SECONDS) {
-            return false;
         }
 
+        // 10+ bookings already means this is not a day-one install (including
+        // long-time PRO sites that never stamped first_seen while the prompt
+        // was free-only). Skip the 14-day wait in that case.
         return SLN_Helper_Tracker::getSuccessfulBookingsCount() >= self::MIN_BOOKINGS;
     }
 

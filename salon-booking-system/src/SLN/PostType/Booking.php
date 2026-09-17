@@ -375,14 +375,9 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
                 echo esc_html($duration);
                 break;
             case 'booking_date':
-                $startsAt = $obj->getStartsAt();
-                if (!SLN_Func::isTimeAlignedToInterval($startsAt->format('H:i'))) {
-                    $startsAt = SLN_Func::alignDateTimeToInterval(
-                        $startsAt,
-                        (int) $this->getPlugin()->getSettings()->getInterval()
-                    );
-                }
-                echo esc_html($this->getPlugin()->format()->datetime($startsAt));
+                // Shown as stored: an unaligned time saved by staff is a deliberate
+                // choice, so rounding it here would misreport the appointment.
+                echo esc_html($this->getPlugin()->format()->datetime($obj->getStartsAt()));
                 echo '<span style="color:#969494;font-size: 10px;"><br>'.get_the_date('j F Y');
                 echo '<br>'.get_the_time('G:i').'</span>';
                 break;
@@ -891,7 +886,12 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
             return;
         }
 
-        if ($meta_key === '_sln_booking_time' && !self::$aligningBookingTimeMeta) {
+        // Staff saving from the booking editor may deliberately store a time off the
+        // interval grid, so this correction must not undo their choice.
+        if ($meta_key === '_sln_booking_time'
+            && !self::$aligningBookingTimeMeta
+            && !SLN_Func::requestAllowsUnalignedBookingTime()
+        ) {
             $aligned = SLN_Func::alignTimeToInterval($meta_value);
             if ($aligned && $aligned !== $meta_value) {
                 self::$aligningBookingTimeMeta = true;

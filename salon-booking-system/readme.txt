@@ -1,15 +1,15 @@
 === Salon Booking System – Appointment Booking for Salons, Barbershops & Spas ===
 Contributors: Salon Booking System
-Tags: salon, spa, appointment booking, booking system, scheduling
+Tags: salon, hairdresser, barber, beauty salon, appointment booking
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4.8
-Stable tag: 10.31.5
+Stable tag: 10.31.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 
-Appointment booking built for hair salons, barbershops, spas and beauty pros. Online scheduling, SMS and email reminders, Google Calendar sync.
+Appointment booking built only for salons, barbershops and spas. Set it up in minutes by chatting with the AI assistant.
 
 == Description ==
 
@@ -19,14 +19,11 @@ While generic booking plugins try to serve every industry, Salon Booking System 
 
 Since 2015 it has been the booking system of choice for **hairdressers, barbershops, beauty salons, nail studios and spas**, with more than **750,000 downloads**.
 
-**Your bookings. Your clients. 0% commission.**
+**Taking bookings in minutes, not in a weekend.**
 
-Unlike marketplace booking apps, Salon Booking System runs on your own WordPress website:
+Setting up a booking system is where most salons give up. Salon Booking System has an **AI Setup Assistant**, included in the free version: describe your salon in plain language — opening hours, services, staff members, booking rules — and it fills in the settings for you. You get a booking page your clients can use the same day, and you can still adjust every detail by hand afterwards.
 
-* You pay **no commission** on bookings — ever
-* Your client list and booking history **belong to you**
-* Nobody shows competing salons to your customers
-* **Unlimited bookings, services and staff members — free**
+**Unlimited bookings, services and staff members in the free version** — no booking limits, no fee per appointment.
 
 https://www.youtube.com/watch?v=MGW0hSZrV5c
 
@@ -41,6 +38,15 @@ https://www.youtube.com/watch?v=MGW0hSZrV5c
 * **Salon-specific services** — duration, price, categories, conditional "secondary services" (e.g. color + cut), service breaks for processing time, exclusive services.
 * **Two-way Google Calendar sync** — reservations appear in your Google Calendar; add or cancel appointments from there and the plugin stays in sync.
 * **Grow repeat business** — customer archive with full booking history, review invitations after the appointment, unlimited discount coupons.
+
+
+=== Your bookings. Your clients. 0% commission. ===
+
+Unlike marketplace booking apps, Salon Booking System runs on your own WordPress website:
+
+* You pay **no commission** on bookings — ever
+* Your client list and booking history **belong to you**
+* Nobody shows competing salons to your customers
 
 
 
@@ -363,6 +369,15 @@ PHP 7.4 and above.
 
 == Changelog ==
 
+
+16.09.2026 - 10.31.6
+
+* Security fix: allow-listed and escaped the booking editor `mode` parameter so a crafted admin link can no longer inject HTML attributes into the booking metabox (administrator reflected XSS)
+* New: staff can add a booking on a slot they locked from the day calendar; a warning is shown after save. Holiday rules and Google Calendar / external locks still block the booking
+* New: from the back-end booking editor, staff can save a start time that does not snap to the booking interval (for example 14:35 when slots are every 30 minutes). The public booking form is unchanged; this is not available in basic availability mode
+* Fixed: the booking editor now loads available times for the reservation’s own shop (Multi-Shops), so a day closed at one location no longer shows the other location’s slots
+* Fixed: the booking page now opts itself out of full-page caches (WP Rocket, WP Super Cache, W3 Total Cache and others), so two customers no longer share the same in-progress reservation
+* Fixed: staff no longer receive a “new booking” alert while the reservation is still an auto-draft or awaiting payment
 
 08.09.2026 - 10.31.5
 

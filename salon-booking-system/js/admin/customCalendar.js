@@ -361,6 +361,10 @@ function sln_initSalonCalendar(
           (typeof attr !== typeof undefined && attr !== false)
         )
           return;
+        // A manually locked row can be activated to add a booking, but must never
+        // become part of a lock selection.
+        if ($(e.target).hasClass("blocked") && DayCalendarHolydays.selecting)
+          return;
         $(".cal-day-hour-part").removeClass("active");
         if (DayCalendarHolydays.selecting) {
           DayCalendarHolydays.mouseup(e.target);
@@ -374,6 +378,9 @@ function sln_initSalonCalendar(
           $(e.target).hasClass("block_date") ||
           (typeof attr !== typeof undefined && attr !== false)
         )
+          return;
+        // See the non-assistant branch above.
+        if ($(e.target).hasClass("blocked") && DayCalendarHolydays.selecting)
           return;
         $(".att-time-slot").removeClass("active");
         if (DayCalendarHolydays.selecting) {
@@ -635,7 +642,7 @@ function sln_initSalonCalendar(
           window.daily_assistants_rules = data.assistants_rules;
           var els = target.data().els;
           Object.keys(els).forEach(function (key) {
-            $(els[key]).removeClass("blocked");
+            $(els[key]).removeClass("blocked blocked-daily blocked-gcal");
           });
           target.remove();
           if (
@@ -675,7 +682,9 @@ function sln_initSalonCalendar(
           var capturedRules = data.rules;
           
           DayCalendarHolydays.selection.forEach(function (e) {
-            e.addClass("blocked").removeClass("selected");
+            // blocked-daily mirrors the server-side render: these rules are manual
+            // day-calendar locks, which staff may still book over.
+            e.addClass("blocked blocked-daily").removeClass("selected");
           });
           var button = DayCalendarHolydays.createButton;
           var buttonSelection = button.data('selection');
@@ -770,7 +779,11 @@ function sln_initSalonCalendar(
           if (endTomorrow) {
             els = els.add(lastEl);
           }
-          els.addClass("blocked");
+          // Locks injected by Google Calendar are not manual ones: they stay inert,
+          // matching how the server renders them.
+          els.addClass(
+            rule.gcal_locked ? "blocked blocked-gcal" : "blocked blocked-daily",
+          );
           if (
             (firstEl.hasClass("blocked") ||
               firstEl.find(".att-time-slot.blocked").length) &&
@@ -1158,9 +1171,17 @@ function sln_initSalonCalendar(
   // calendar.setLanguage(window.salon_calendar.locale);
   //calendar.view();
 
+  // Rows locked manually from the day calendar stay clickable so staff can still
+  // add a booking on them. Rows closed by a holiday rule remain inert. Assistant
+  // mode is left alone: there .blocked-daily also covers per-assistant locks,
+  // which the save path still rejects.
   $("body").on(
     "click",
-    " .cal-day-hour-part:not(.blocked), .att-time-slot:not(.blocked)",
+    [
+      " .cal-day-hour-part:not(.blocked)",
+      ".att-time-slot:not(.blocked)",
+      ".cal-day-hour-part.blocked-daily:not(.blocked-system):not(.blocked-gcal)",
+    ].join(", "),
     DayCalendarHolydays.click,
   );
   $("body").on("click", " .block_date", DayCalendarHolydays.startSelection);
@@ -1197,7 +1218,7 @@ function sln_initSalonCalendar(
           let els = button.data("els");
           if (els) {
             Object.keys(els).forEach(function (key) {
-              $(els[key]).removeClass("blocked");
+              $(els[key]).removeClass("blocked blocked-daily blocked-gcal");
             });
           }
         });

@@ -290,6 +290,57 @@ class SLN_Func
     }
 
     /**
+     * Whether the current user may work with booking times that do not sit on the
+     * configured interval grid (e.g. 14:30 while "session average duration" is 60).
+     *
+     * Occupancy is tracked on a fixed 5 minute grid built by
+     * SLN_Helper_Availability_AbstractDayBookings, so an off-grid start time is
+     * scheduled and counted correctly. The interval remains a presentation rule for
+     * the public booking form, which keeps offering aligned slots only.
+     *
+     * Excluded in basic availability mode: there every booking lasts exactly one
+     * interval and only the start slot is marked busy, so a 14:30 booking would
+     * leave both 14:00 and 15:00 bookable even though they overlap it.
+     *
+     * @return bool
+     */
+    public static function userCanSetUnalignedBookingTime()
+    {
+        if (!is_user_logged_in() || !current_user_can('manage_salon')) {
+            return false;
+        }
+
+        return 'basic' !== SLN_Plugin::getInstance()->getSettings()->getAvailabilityMode();
+    }
+
+    /**
+     * Same permission, for the paths that persist the value.
+     *
+     * Also requires the booking editor nonce, so that a privileged user filling in
+     * the public booking form is not treated as staff: only a submit coming from
+     * the back-end booking editor can store an unaligned time.
+     *
+     * @return bool
+     */
+    public static function requestAllowsUnalignedBookingTime()
+    {
+        if (!self::userCanSetUnalignedBookingTime()) {
+            return false;
+        }
+
+        $postType   = SLN_Plugin::POST_TYPE_BOOKING;
+        $nonceField = $postType . '_details_meta_nonce';
+        if (empty($_POST[$nonceField])) {
+            return false;
+        }
+
+        return (bool) wp_verify_nonce(
+            sanitize_text_field(wp_unslash($_POST[$nonceField])),
+            $postType
+        );
+    }
+
+    /**
      * @param string $time     Time as H:i.
      * @param int|null $interval Booking interval in minutes; defaults to salon setting.
      */

@@ -630,7 +630,7 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
             data-deposit_amount="<?php echo $settings->getPaymentDepositAmount() ?>"
             data-deposit_is_fixed="<?php echo (int) $settings->isPaymentDepositFixedAmount() ?>"
             data-m_attendant_enabled="<?php echo $settings->get('m_attendant_enabled') ?>"
-            data-mode="<?php echo $mode ?>"
+            data-mode="<?php echo esc_attr($mode) ?>"
             data-required_user_fields="<?php echo $checkoutFields->implode(',') ?>"
             data-customer_fields="<?php echo $customer_fields->implode(',') ?>"
             data-booking_id="<?php echo $booking->getId() ?>">
@@ -639,7 +639,7 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                 data-deposit_amount="<?php echo $settings->getPaymentDepositAmount() ?>"
                 data-deposit_is_fixed="<?php echo (int) $settings->isPaymentDepositFixedAmount() ?>"
                 data-m_attendant_enabled="<?php echo $settings->get('m_attendant_enabled') ?>"
-                data-mode="<?php echo $mode ?>"
+                data-mode="<?php echo esc_attr($mode) ?>"
                 data-required_user_fields="<?php echo $checkoutFields->implode(',') ?>"
                 data-customer_fields="<?php echo $customer_fields->implode(',') ?>"
                 data-booking_id="<?php echo $booking->getId() ?>">
@@ -679,6 +679,9 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
                                 $selectedTime,
                                 array(
                                     'interval' => $plugin->getSettings()->get('interval'),
+                                    // Staff may type a time between two slots (e.g. 14:30
+                                    // with a 60 minute interval); customers may not.
+                                    'allow_unaligned' => SLN_Func::userCanSetUnalignedBookingTime(),
                                     'popup-class' => ($mode === 'sln_editor' ? 'off-sm-md-support' : ''),
                                     'extending-classes' => (isset($_GET['action']) && $_GET['action'] == 'duplicate' ? 'cloned-data' : ''),
                                 )
