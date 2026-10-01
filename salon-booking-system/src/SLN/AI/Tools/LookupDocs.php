@@ -118,14 +118,31 @@ class SLN_AI_Tools_LookupDocs extends SLN_AI_Tools_Abstract
 			)
 		);
 
+		$articles = array();
+		foreach ($hits as $row) {
+			$articles[] = array(
+				'id'             => isset($row['id']) ? $row['id'] : '',
+				'title'          => isset($row['title']) ? $row['title'] : '',
+				'url'            => isset($row['url']) ? $row['url'] : '',
+				'updated_at'     => isset($row['updated_at']) ? $row['updated_at'] : null,
+				'category'       => isset($row['category']) ? $row['category'] : '',
+				'excerpt'        => isset($row['excerpt']) ? $row['excerpt'] : '',
+				'excerpt_source' => isset($row['excerpt_source']) ? $row['excerpt_source'] : 'catalog',
+			);
+		}
+
 		return array(
-			'ok'        => true,
-			'guidance'  => true,
-			'summary'   => implode("\n", $parts),
-			'arguments' => array('query' => $query, 'limit' => $limit),
-			'tool'      => $this->getName(),
-			'tier'      => 'guidance',
-			'hits'      => $hits,
+			'ok'         => true,
+			'guidance'   => true,
+			'summary'    => implode("\n", $parts),
+			'arguments'  => array('query' => $query, 'limit' => $limit),
+			'tool'       => $this->getName(),
+			'tier'       => 'guidance',
+			'hits'       => $hits,
+			'model_data' => array(
+				'source'   => 'help_scout_docs',
+				'articles' => $articles,
+			),
 		);
 	}
 

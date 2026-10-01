@@ -1205,6 +1205,7 @@ function sln_initSalonCalendar(
         "&security=" +
         salon.ajax_nonce,
       type: "POST",
+      data: Object.assign({}, window.dayCalendarHolydaysAjaxData),
       success: function (data) {
         // Update both local cache and window global to keep in sync
         DayCalendarHolydays.rules = data.rules;

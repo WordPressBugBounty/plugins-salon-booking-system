@@ -127,13 +127,13 @@ $hide_email = $user_role_helper->is_hide_customer_email();
 			<div class="sln-box--sub row">
 				<div class="col-xs-12  form-group sln_meta_field sln-input--simple">
 						<label for="_sln_customer_sln_personal_note"><?php esc_html_e('Personal note', 'salon-booking-system') ?></label>
-						<textarea type="text" name="sln_customer_meta[_sln_personal_note]" id="_sln_customer_sln_personal_note" class="form-control" rows="5"><?php echo $customer->get('_sln_personal_note'); ?></textarea>
+						<textarea type="text" name="sln_customer_meta[_sln_personal_note]" id="_sln_customer_sln_personal_note" class="form-control" rows="5"><?php echo esc_textarea($customer->get('_sln_personal_note')); ?></textarea>
 				</div>
 			</div>
 			<div class="sln-box--sub row">
 				<div class="col-xs-12  form-group sln_meta_field sln-input--simple">
 						<label for="_sln_customer_sln_admininstration_note"><?php esc_html_e('Administration note', 'salon-booking-system') ?></label>
-						<textarea type="text" name="sln_customer_meta[_sln_administration_note]" id="_sln_customer_sln_administration_note" class="form-control" rows="5"><?php echo $customer->get('_sln_administration_note'); ?></textarea>
+						<textarea type="text" name="sln_customer_meta[_sln_administration_note]" id="_sln_customer_sln_administration_note" class="form-control" rows="5"><?php echo esc_textarea($customer->get('_sln_administration_note')); ?></textarea>
 				</div>
 			</div>
 		</div>

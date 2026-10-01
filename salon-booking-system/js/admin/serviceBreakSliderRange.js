@@ -64,9 +64,12 @@ function sln_serviceBreakSliderRange($, $elements) {
         if ($(this).prop('checked')) {
             let break_duration_input = $('.sln-slider-break-duration-wrapper #_sln_service_break_duration');
             if ( break_duration_input.val() == '0' ) {
-                break_duration_input.val(+break_duration_input.attr('step'));
-                $('.sln-slider-break-duration-wrapper .sln-slider--break-time-input-from').val(parseInt(+break_duration_input.attr('step') / 2));
-                $('.sln-slider-break-duration-wrapper .sln-slider--break-time-input-to').val(parseInt(+break_duration_input.attr('step') / 2) + +break_duration_input.attr('step'));
+                // step is the booking interval: availability is sampled on that grid, so the
+                // pause starts on it rather than half a step in, which is off-grid.
+                var step = +break_duration_input.attr('step');
+                break_duration_input.val(step);
+                $('.sln-slider-break-duration-wrapper .sln-slider--break-time-input-from').val(step);
+                $('.sln-slider-break-duration-wrapper .sln-slider--break-time-input-to').val(step * 2);
             }
             initSliderRange($elements);
         } else {

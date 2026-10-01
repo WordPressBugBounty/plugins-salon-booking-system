@@ -639,7 +639,7 @@ class Customers_Controller extends REST_Controller
         $meta = array(
             '_sln_phone'         => $request->get_param('phone'),
             '_sln_address'       => $request->get_param('address'),
-            '_sln_personal_note' => $request->get_param('note'),
+            '_sln_personal_note' => sanitize_textarea_field($request->get_param('note')),
         );
 
         foreach ($meta as $key => $value) {

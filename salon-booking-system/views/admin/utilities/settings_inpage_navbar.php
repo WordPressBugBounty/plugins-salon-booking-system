@@ -3,6 +3,8 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 // phpcs:ignoreFile WordPress.Security.NonceVerification.Recommended
 // phpcs:ignoreFile WordPress.WP.I18n.TextDomainMismatch
+// Included by every settings tab: rendering several tabs in one request must not redeclare it.
+if (! function_exists('sum')) {
 function sum(...$items) {
 	?>
 	<div class="sln-inpage_navbar_wrapper <?php if (!$items) {echo " sln-inpage_navbar_wrapper--fk";}?>">
@@ -32,4 +34,5 @@ $index++;}?>
 <?php }?>
 </div>
 <?php
+}
 }?>

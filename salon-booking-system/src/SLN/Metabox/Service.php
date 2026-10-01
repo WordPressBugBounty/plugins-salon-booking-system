@@ -121,6 +121,7 @@ class SLN_Metabox_Service extends SLN_Metabox_Abstract
             // Allow add-ons to sanitize/modify service availability data before saving
             $_POST[$k] = apply_filters('sln.service.availability_data.before_save', $_POST[$k], $post_id);
         }
+        $this->snapBreakWindowToInterval();
         parent::save_post($post_id, $post);
         
         // Force clear ALL caches - WordPress object cache + options
@@ -138,5 +139,57 @@ class SLN_Metabox_Service extends SLN_Metabox_Abstract
         $this->getPlugin()->getBookingCache()->save();
         
         SLN_Plugin::addLog('[Service Save] Cache rebuild and save complete');
+    }
+
+    /**
+     * Align the mid-appointment break window to the booking interval.
+     *
+     * Availability samples the day on that interval, so a window starting off the grid
+     * (the position slider writes any minute it is dragged to) describes work segments
+     * the attendant checks never look at. An overlap hidden there is caught only by the
+     * parallel-bookings cap, and not at all once that cap is raised above 1.
+     */
+    private function snapBreakWindowToInterval()
+    {
+        $key = '_sln_service_break_duration_data';
+        if (!isset($_POST[$key]) || !is_array($_POST[$key])) {
+            return;
+        }
+
+        $interval = intval($this->getPlugin()->getSettings()->getInterval());
+        $break    = isset($_POST['_sln_service_break_duration']) ? intval($_POST['_sln_service_break_duration']) : 0;
+        $from     = isset($_POST[$key]['from']) ? intval($_POST[$key]['from']) : 0;
+        if ($interval < 1 || $break < 1 || $from < 1) {
+            return;
+        }
+
+        $duration = isset($_POST['_sln_service_duration'])
+            ? SLN_Func::getMinutesFromDuration(sanitize_text_field(wp_unslash($_POST['_sln_service_duration'])))
+            : 0;
+
+        $snapped = intval(round($from / $interval)) * $interval;
+        if ($snapped < $interval) {
+            // from = 0 is the legacy "no custom position" marker and is read differently
+            // downstream, so a deliberate pause is never collapsed onto the service start.
+            $snapped = $interval;
+        }
+        if ($duration >= $interval && $snapped > $duration) {
+            $snapped = intval(floor($duration / $interval)) * $interval;
+        }
+        if ($snapped === $from) {
+            return;
+        }
+
+        SLN_Plugin::addLog(sprintf(
+            '[Service Save] Break window snapped to the %d minute interval: %d-%d became %d-%d',
+            $interval,
+            $from,
+            isset($_POST[$key]['to']) ? intval($_POST[$key]['to']) : $from + $break,
+            $snapped,
+            $snapped + $break
+        ));
+
+        $_POST[$key]['from'] = $snapped;
+        $_POST[$key]['to']   = $snapped + $break;
     }
 }

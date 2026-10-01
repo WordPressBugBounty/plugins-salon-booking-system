@@ -4,7 +4,7 @@ Tags: salon, hairdresser, barber, beauty salon, appointment booking
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4.8
-Stable tag: 10.31.6
+Stable tag: 10.31.7
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -369,6 +369,20 @@ PHP 7.4 and above.
 
 == Changelog ==
 
+
+01.10.2026 - 10.31.7
+
+* Security fix: customer and booking personal notes are now sanitized on save (admin and REST API) and escaped on output, preventing stored HTML/script injection
+* Fixed: services with a mid-appointment break — valid start times that overlap another booking's break are no longer rejected, so the day is no longer wrongly shown as fully booked
+* Fixed: the service break window is now aligned to the booking interval, so a break can no longer start off the time grid
+* Fixed: saving a booking with no services selected no longer wipes the services already on the booking; an error asks you to select at least one service or move the booking to the trash
+* Fixed: Multi-Shops — cached availability is now kept separately per shop, so one location's bookings and holidays no longer affect another location's free slots
+* Fixed: unlocking a day locked from the calendar now refreshes availability immediately and works with Multi-Shops
+* Fixed: the PAY button amount now updates after a tip is applied (both deposit and full payment)
+* Fixed: the booking details box in the admin can no longer get stuck collapsed
+* Improved: license deactivation shows clearer feedback, and a notice explains that deactivating does not cancel your subscription or free trial
+* Improved: AI assistant — can look up settings from a built-in reference and report outdated help articles
+* Minor improvements
 
 16.09.2026 - 10.31.6
 

@@ -630,6 +630,8 @@
 			last = m.index + m[0].length;
 		}
 		out += escapeHtml(text.slice(last));
+		// Runs on already-escaped HTML: only the ** markers are turned into tags.
+		out = out.replace(/\*\*([^*\n]+?)\*\*/g, '<strong>$1</strong>');
 		return out.replace(/\n/g, '<br>');
 	}
 
@@ -666,6 +668,56 @@
 				.html(formatRichText(text || ''))
 		);
 		$box.append($msg);
+		scrollTranscript();
+	}
+
+	function openSupportBeacon(support) {
+		if (typeof window.Beacon !== 'function') {
+			return false;
+		}
+		window.Beacon('prefill', {
+			name: support.name || '',
+			email: support.email || '',
+			subject: support.subject || '',
+			text: support.text || ''
+		});
+		window.Beacon('open');
+		window.Beacon('navigate', '/ask/message/');
+		return true;
+	}
+
+	function appendSupportAction(support) {
+		var $body = $el('#sln-ai-setup-messages .sln-ai-setup__msg--assistant .sln-ai-setup__msg-body').last();
+		if (!$body.length) {
+			return;
+		}
+		var i18n = cfg.i18n || {};
+		// Beacon is a queue stub until its script loads (and ad blockers may stop it), so the link below is always shown.
+		var $wrap = $('<div/>').addClass('sln-ai-setup__support').css({ marginTop: '10px' });
+		$('<button type="button"/>')
+			.addClass('sln-ai-setup__chip sln-ai-setup__chip--wide')
+			.text(support.label || i18n.contactSupport || 'Contact support')
+			.on('click', function () {
+				if (!openSupportBeacon(support) && support.fallback_url) {
+					window.open(support.fallback_url, '_blank', 'noopener');
+				}
+			})
+			.appendTo($wrap);
+		if (support.fallback_url) {
+			var fallbackLabel = support.fallback_label || (support.fallback === 'forum'
+				? (i18n.supportForum || 'Or ask on the WordPress.org support forum')
+				: (i18n.supportEmail || 'Or send it by email'));
+			$('<div/>')
+				.css({ marginTop: '6px', fontSize: '12px' })
+				.append(
+					$('<a/>')
+						.addClass('sln-ai-setup__msg-link')
+						.attr({ href: support.fallback_url, target: '_blank', rel: 'noopener noreferrer' })
+						.text(fallbackLabel)
+				)
+				.appendTo($wrap);
+		}
+		$body.append($wrap);
 		scrollTranscript();
 	}
 
@@ -814,6 +866,9 @@
 		}
 		if (data.message) {
 			appendMessage('assistant', data.message);
+		}
+		if (data.support) {
+			appendSupportAction(data.support);
 		}
 		if (!isWidget() && typeof data.can_undo !== 'undefined') {
 			updateUndo(data.can_undo);

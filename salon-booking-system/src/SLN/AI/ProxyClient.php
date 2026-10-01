@@ -175,6 +175,24 @@ class SLN_AI_ProxyClient
 	}
 
 	/**
+	 * Record why a backend was skipped: otherwise the merchant silently gets mock answers.
+	 *
+	 * @param string $backend
+	 * @param string $reason
+	 * @return void
+	 */
+	private function logFallback($backend, $reason)
+	{
+		$line = sprintf('Salon AI: %s unavailable, falling back — %s', $backend, substr(trim((string) $reason), 0, 300));
+		if (class_exists('SLN_Plugin') && method_exists('SLN_Plugin', 'addLog')) {
+			SLN_Plugin::addLog($line);
+		}
+		if (defined('WP_DEBUG') && WP_DEBUG) {
+			error_log($line); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		}
+	}
+
+	/**
 	 * Explicit mock-only mode (wp-config / filter). Default: false — prefer real LLM/proxy.
 	 *
 	 * @return bool
@@ -273,6 +291,7 @@ class SLN_AI_ProxyClient
 			}
 			// Other proxy errors → try optional staging LLM, then mock.
 		}
+		$this->logFallback('proxy', is_wp_error($response) ? $response->get_error_message() : 'HTTP ' . wp_remote_retrieve_response_code($response));
 
 		// 2) Optional direct LLM (Salon staging only — SLN_AI_LLM_API_KEY). Defaults: OpenRouter + gpt-4o-mini.
 		if ($this->hasDirectLlm()) {
@@ -280,10 +299,281 @@ class SLN_AI_ProxyClient
 			if (! is_wp_error($result)) {
 				return $this->tagBackend($result, 'llm');
 			}
+			$this->logFallback('direct LLM (' . $this->getLlmProvider() . ')', $result->get_error_message());
 		}
 
 		// 3) Conversational local fallback.
 		return $this->tagBackend($this->mockChat($payload), 'mock');
+	}
+
+	/**
+	 * One step of the agent loop (protocol 2): the full canonical transcript goes
+	 * out, every tool call (with ids) comes back.
+	 *
+	 * Result keys: protocol (2, or 1 when an old proxy / the mock answered in the
+	 * legacy single-shot shape), message, tool_calls, tool_call, draft, usage, backend.
+	 *
+	 * @param array $payload   messages, tools, instructions, context, last_guidance,
+	 *                         turn_id, final + legacy keys (message, history, draft) for the mock.
+	 * @param bool  $allowMock Only the first step of a turn may degrade to the local mock.
+	 * @return array|WP_Error
+	 */
+	public function chatStep(array $payload, $allowMock = true)
+	{
+		if ($this->forceMock()) {
+			return $allowMock
+				? $this->legacyShape($this->tagBackend($this->mockChat($payload), 'mock'))
+				: new WP_Error('sln_ai_step_unavailable', __('AI service unreachable.', 'salon-booking-system'));
+		}
+
+		$request             = $payload;
+		$request['protocol'] = 2;
+		unset($request['draft']);
+
+		$response = wp_remote_post(
+			$this->getBaseUrl() . '/chat',
+			array(
+				'timeout'   => 45,
+				'sslverify' => true,
+				'headers'   => array(
+					'Content-Type' => 'application/json',
+					'Accept'       => 'application/json',
+				),
+				'body'      => wp_json_encode($this->withAuth($request)),
+			)
+		);
+
+		if (! is_wp_error($response)) {
+			$code = (int) wp_remote_retrieve_response_code($response);
+			$body = json_decode(wp_remote_retrieve_body($response), true);
+
+			if ($code === 402) {
+				return $this->quotaErrorFromBody($body);
+			}
+			if ($code === 429) {
+				$msg = is_array($body) && ! empty($body['code']) && $body['code'] === 'sln_ai_turn_limit' && ! empty($body['message'])
+					? (string) $body['message']
+					: __('AI service rate limit reached. Please try again later.', 'salon-booking-system');
+
+				return new WP_Error('sln_ai_rate_limited', $msg);
+			}
+			if ($code >= 200 && $code < 300 && is_array($body)) {
+				$out = array(
+					'protocol'   => isset($body['protocol']) ? (int) $body['protocol'] : 1,
+					'message'    => isset($body['message']) ? (string) $body['message'] : '',
+					'tool_calls' => isset($body['tool_calls']) && is_array($body['tool_calls']) ? $body['tool_calls'] : array(),
+					'tool_call'  => isset($body['tool_call']) && is_array($body['tool_call']) ? $body['tool_call'] : null,
+					'draft'      => isset($body['draft']) && is_array($body['draft']) ? $body['draft'] : null,
+				);
+				if (! empty($body['usage']) && is_array($body['usage'])) {
+					$out['usage'] = $body['usage'];
+				}
+
+				return $this->tagBackend($out, 'proxy');
+			}
+			if (in_array($code, array(401, 403), true)) {
+				$msg = is_array($body) && ! empty($body['message'])
+					? $body['message']
+					: __('AI service returned an unexpected response.', 'salon-booking-system');
+
+				return new WP_Error('sln_ai_proxy_error', $msg, array('status' => $code));
+			}
+		}
+		$this->logFallback('proxy', is_wp_error($response) ? $response->get_error_message() : 'HTTP ' . wp_remote_retrieve_response_code($response));
+
+		if ($this->hasDirectLlm()) {
+			$result = $this->getLlmProvider() === 'anthropic'
+				? $this->chatStepViaAnthropic($payload)
+				: $this->chatStepViaOpenAi($payload);
+			if (! is_wp_error($result)) {
+				return $this->tagBackend($result, 'llm');
+			}
+			$this->logFallback('direct LLM (' . $this->getLlmProvider() . ')', $result->get_error_message());
+			if (! $allowMock) {
+				return $result;
+			}
+		}
+
+		if (! $allowMock) {
+			return new WP_Error('sln_ai_step_unavailable', __('AI service unreachable.', 'salon-booking-system'));
+		}
+
+		return $this->legacyShape($this->tagBackend($this->mockChat($payload), 'mock'));
+	}
+
+	/**
+	 * @param array $result Single-shot result (message, tool_call, draft).
+	 * @return array
+	 */
+	private function legacyShape(array $result)
+	{
+		$result['protocol']   = 1;
+		$result['tool_calls'] = array();
+
+		return $result;
+	}
+
+	/**
+	 * @param array $payload
+	 * @return array|WP_Error
+	 */
+	private function chatStepViaOpenAi(array $payload)
+	{
+		$messages = array_merge(
+			array(array('role' => 'system', 'content' => $this->buildLlmSystemPrompt($payload))),
+			SLN_AI_MessageFormat::toOpenAi(isset($payload['messages']) && is_array($payload['messages']) ? $payload['messages'] : array())
+		);
+
+		$tools = array();
+		foreach (isset($payload['tools']) && is_array($payload['tools']) ? $payload['tools'] : array() as $tool) {
+			if (empty($tool['name'])) {
+				continue;
+			}
+			$tools[] = array(
+				'type'     => 'function',
+				'function' => array(
+					'name'        => $tool['name'],
+					'description' => isset($tool['description']) ? $tool['description'] : '',
+					'parameters'  => isset($tool['parameters']) ? $tool['parameters'] : array('type' => 'object'),
+				),
+			);
+		}
+
+		$final = ! empty($payload['final']);
+		$body  = array(
+			'model'       => $this->getLlmModel(),
+			'messages'    => $messages,
+			'temperature' => 0.2,
+			'max_tokens'  => 768,
+		);
+		if ($tools) {
+			$body['tools']       = $tools;
+			$body['tool_choice'] = $final ? 'none' : 'auto';
+		}
+
+		$data = $this->postLlm($this->getLlmBase() . '/chat/completions', $this->buildOpenAiCompatibleHeaders(), $body);
+		if (is_wp_error($data)) {
+			return $data;
+		}
+
+		$parsed = SLN_AI_MessageFormat::parseOpenAiChoice(
+			isset($data['choices'][0]['message']) && is_array($data['choices'][0]['message']) ? $data['choices'][0]['message'] : array()
+		);
+
+		return $this->stepResult($parsed, $final);
+	}
+
+	/**
+	 * @param array $payload
+	 * @return array|WP_Error
+	 */
+	private function chatStepViaAnthropic(array $payload)
+	{
+		$tools = array();
+		foreach (isset($payload['tools']) && is_array($payload['tools']) ? $payload['tools'] : array() as $tool) {
+			if (empty($tool['name'])) {
+				continue;
+			}
+			$tools[] = array(
+				'name'         => $tool['name'],
+				'description'  => isset($tool['description']) ? $tool['description'] : '',
+				'input_schema' => isset($tool['parameters']) ? $tool['parameters'] : array('type' => 'object', 'properties' => array()),
+			);
+		}
+
+		$final = ! empty($payload['final']);
+		$body  = array(
+			'model'      => $this->getLlmModel(),
+			'max_tokens' => 768,
+			'system'     => $this->buildLlmSystemPrompt($payload),
+			'messages'   => SLN_AI_MessageFormat::toAnthropic(isset($payload['messages']) && is_array($payload['messages']) ? $payload['messages'] : array()),
+		);
+		// Anthropic rejects tool_use/tool_result history without tool definitions,
+		// so the final answer keeps the tools and forbids new calls instead.
+		if ($tools) {
+			$body['tools'] = $tools;
+			if ($final) {
+				$body['tool_choice'] = array('type' => 'none');
+			}
+		}
+
+		$data = $this->postLlm(
+			$this->getLlmBase() . '/messages',
+			array(
+				'x-api-key'         => $this->getLlmApiKey(),
+				'anthropic-version' => '2023-06-01',
+				'Content-Type'      => 'application/json',
+			),
+			$body
+		);
+		if (is_wp_error($data)) {
+			return $data;
+		}
+
+		$parsed = SLN_AI_MessageFormat::parseAnthropicContent(
+			isset($data['content']) && is_array($data['content']) ? $data['content'] : array()
+		);
+
+		return $this->stepResult($parsed, $final);
+	}
+
+	/**
+	 * @param array $parsed {message, tool_calls}
+	 * @param bool  $final
+	 * @return array
+	 */
+	private function stepResult(array $parsed, $final)
+	{
+		$calls = $final ? array() : $parsed['tool_calls'];
+
+		return array(
+			'protocol'   => 2,
+			'message'    => $parsed['message'],
+			'tool_calls' => $calls,
+			'tool_call'  => $calls ? array('name' => $calls[0]['name'], 'arguments' => $calls[0]['arguments']) : null,
+			'draft'      => null,
+		);
+	}
+
+	/**
+	 * @param string $url
+	 * @param array  $headers
+	 * @param array  $body
+	 * @return array|WP_Error Decoded body.
+	 */
+	private function postLlm($url, array $headers, array $body)
+	{
+		$response = wp_remote_post(
+			$url,
+			array(
+				'timeout' => 45,
+				'headers' => $headers,
+				'body'    => wp_json_encode($body),
+			)
+		);
+
+		if (is_wp_error($response)) {
+			return new WP_Error(
+				'sln_ai_llm_unreachable',
+				sprintf(
+					/* translators: %s: error message */
+					__('AI model unreachable: %s', 'salon-booking-system'),
+					$response->get_error_message()
+				)
+			);
+		}
+
+		$code = (int) wp_remote_retrieve_response_code($response);
+		$data = json_decode(wp_remote_retrieve_body($response), true);
+		if ($code < 200 || $code >= 300 || ! is_array($data)) {
+			$err = is_array($data) && isset($data['error']['message'])
+				? $data['error']['message']
+				: __('AI model returned an unexpected response.', 'salon-booking-system');
+
+			return new WP_Error('sln_ai_llm_error', $err, array('status' => $code));
+		}
+
+		return $data;
 	}
 
 	/**
@@ -352,6 +642,17 @@ class SLN_AI_ProxyClient
 			. "Never invent payment, SMS, or OAuth secrets.\n\n"
 			. SLN_AI_Ecosystem::instructionsSnippet() . "\n\n"
 			. SLN_AI_ContextPack::formatForPrompt($context);
+
+		$lastGuidance = isset($payload['last_guidance']) && is_array($payload['last_guidance']) ? $payload['last_guidance'] : array();
+		if ($lastGuidance) {
+			$system .= "\n\nLast guidance result shown to the merchant (JSON, for short follow-ups):\n"
+				. SLN_AI_MessageFormat::truncate((string) wp_json_encode($lastGuidance), 4000);
+		}
+
+		if (! empty($payload['final'])) {
+			$system .= "\n\nTool budget for this message is exhausted. Do not call tools. "
+				. 'Answer now in the merchant\'s language: state plainly what you found, what you could not verify, and what they can do next.';
+		}
 
 		return $system;
 	}
@@ -1084,6 +1385,20 @@ class SLN_AI_ProxyClient
 				'tool_call' => array(
 					'name'      => 'explain_setting',
 					'arguments' => array('topic' => $guidanceTopic),
+				),
+				'draft'     => null,
+			);
+		}
+
+		if (preg_match('/\b(contact|email|write to|talk to|speak (to|with)|reach)\b.{0,20}\b(support|a human|a person|someone|your team|you guys)\b|\bhuman support\b|\b(contattare|contattarvi|scrivere|scrivervi|mandare|inviare|parlare)\b.{0,30}\b(supporto|assistenza|operatore|persona|voi)\b|\b(mandarvi|inviarvi)\b.{0,15}\b(email|mail)\b|\b(contactar|escribir|hablar)\b.{0,20}\b(soporte|una persona)\b|\b(contacter|écrire|parler)\b.{0,20}\b(support|quelqu)|\b(support|kundendienst)\b.{0,20}\b(kontaktieren|schreiben)\b/iu', $raw)) {
+			return array(
+				'message'   => '',
+				'tool_call' => array(
+					'name'      => 'contact_support',
+					'arguments' => array(
+						'subject' => mb_substr(sanitize_text_field($raw), 0, 80),
+						'summary' => $raw,
+					),
 				),
 				'draft'     => null,
 			);

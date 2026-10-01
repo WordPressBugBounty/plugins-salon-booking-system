@@ -53,8 +53,8 @@ class SLN_Action_Ajax_ImportCustomers extends SLN_Action_Ajax_AbstractImport
 
         add_user_meta($errors, '_sln_phone', $data['mobile_phone']);
         add_user_meta($errors, '_sln_address', $data['address']);
-        add_user_meta($errors, '_sln_personal_note', $data['personal_note']);
-        add_user_meta($errors, '_sln_administration_note', $data['administration_note']);
+        add_user_meta($errors, '_sln_personal_note', sanitize_textarea_field($data['personal_note']));
+        add_user_meta($errors, '_sln_administration_note', sanitize_textarea_field($data['administration_note']));
 
 	    wp_send_new_user_notifications($errors, 'user');
 

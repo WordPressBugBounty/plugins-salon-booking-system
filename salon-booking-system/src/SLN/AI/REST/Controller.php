@@ -93,6 +93,23 @@ class SLN_AI_REST_Controller
 
 		register_rest_route(
 			self::NS,
+			'/ai-setup/docs-discrepancies',
+			array(
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array($this, 'docsDiscrepancies'),
+					'permission_callback' => array($this, 'permissions'),
+				),
+				array(
+					'methods'             => WP_REST_Server::DELETABLE,
+					'callback'            => array($this, 'docsDiscrepanciesClear'),
+					'permission_callback' => array($this, 'permissions'),
+				),
+			)
+		);
+
+		register_rest_route(
+			self::NS,
 			'/ai-setup/telemetry',
 			array(
 				array(
@@ -150,6 +167,35 @@ class SLN_AI_REST_Controller
 	public function telemetryClear(WP_REST_Request $request)
 	{
 		SLN_AI_Telemetry::clear();
+
+		return rest_ensure_response(array('cleared' => true));
+	}
+
+	/**
+	 * Docs-vs-code contradictions reported by the assistant (for fixing the docs).
+	 *
+	 * @param WP_REST_Request $request
+	 * @return WP_REST_Response
+	 */
+	public function docsDiscrepancies(WP_REST_Request $request)
+	{
+		$limit = absint($request->get_param('limit'));
+
+		return rest_ensure_response(
+			array(
+				'discrepancies' => SLN_AI_DocsDiscrepancyLog::recent($limit > 0 ? $limit : 50),
+				'reference'     => SLN_AI_Reference::meta(),
+			)
+		);
+	}
+
+	/**
+	 * @param WP_REST_Request $request
+	 * @return WP_REST_Response
+	 */
+	public function docsDiscrepanciesClear(WP_REST_Request $request)
+	{
+		SLN_AI_DocsDiscrepancyLog::clear();
 
 		return rest_ensure_response(array('cleared' => true));
 	}
@@ -247,62 +293,146 @@ class SLN_AI_REST_Controller
 			return $blocked;
 		}
 
-		$message  = $this->redact($message);
-		$context  = SLN_AI_ContextPack::build($this->plugin);
-		$session  = $store->get($sessionId);
-		$history  = array();
-		if (! empty($session['messages']) && is_array($session['messages'])) {
-			// Keep recent turns only — long histories inflate latency on every request.
-			$slice = array_slice($session['messages'], -6);
-			foreach ($slice as $turn) {
-				if (empty($turn['role']) || empty($turn['content'])) {
-					continue;
-				}
-				$content = (string) $turn['content'];
-				// Cap oversized assistant dumps (e.g. long guidance) in history.
-				if (strlen($content) > 1200) {
-					$content = substr($content, 0, 1199) . '…';
-				}
-				$history[] = array(
-					'role'    => $turn['role'],
-					'content' => $content,
-				);
-			}
-		}
-		$draft = ! empty($session['draft']) && is_array($session['draft']) ? $session['draft'] : null;
+		$message = $this->redact($message);
+		$context = SLN_AI_ContextPack::build($this->plugin);
 
+		// A new message abandons an open confirm card (the UI hides it on send).
+		$this->supersedePendingPreview($store, $sessionId);
+
+		$session  = $store->get($sessionId);
+		$stored   = ! empty($session['messages']) && is_array($session['messages']) ? $session['messages'] : array();
+		$draft    = ! empty($session['draft']) && is_array($session['draft']) ? $session['draft'] : null;
 		$registry = new SLN_AI_ToolRegistry();
 		$proxy    = new SLN_AI_ProxyClient();
 		$lastGuidance = ( ! empty($session['last_guidance']) && is_array($session['last_guidance']) )
 			? $session['last_guidance']
 			: null;
 
-		$result   = $proxy->chat(
+		$agent = new SLN_AI_Agent(
+			$registry,
+			$this->plugin,
+			function (array $payload, $allowMock) use ($proxy) {
+				return $proxy->chatStep($payload, $allowMock);
+			}
+		);
+		if (function_exists('set_time_limit')) {
+			@set_time_limit(max(90, SLN_AI_Agent::TIME_BUDGET + 60)); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		}
+
+		$run = $agent->run(
 			array(
 				'message'       => $message,
-				'context'       => $context,
+				'history'       => SLN_AI_SessionStore::historyWindow($stored),
+				'turn_id'       => wp_generate_uuid4(),
 				'tools'         => $registry->getToolDefinitionsForLlm(),
-				'history'       => $history,
-				'draft'         => $draft,
-				'last_guidance' => $lastGuidance,
 				'instructions'  => $registry->getSystemInstructions(),
+				'context'       => $context,
+				'last_guidance' => $lastGuidance,
+				'legacy'        => array(
+					'message'       => $message,
+					'history'       => SLN_AI_SessionStore::legacyHistory($stored),
+					'draft'         => $draft,
+					'last_guidance' => $lastGuidance,
+				),
 			)
 		);
 
-		if (is_wp_error($result)) {
-			return $this->enrichQuotaError($result);
+		if ($run['status'] === SLN_AI_Agent::STATUS_ERROR) {
+			return $this->enrichQuotaError($run['error']);
 		}
 
-		$backend             = isset($result['backend']) ? $result['backend'] : $proxy->getBackend();
-		$proxyReportedUsage  = ! empty($result['usage']) && is_array($result['usage']);
+		$backend            = $run['backend'] ? $run['backend'] : $proxy->getBackend();
+		$proxyReportedUsage = ! empty($run['usage']) && is_array($run['usage']);
 		$usageSvc->consumeAfterChat($backend, $proxyReportedUsage);
+		$usage = $proxyReportedUsage ? $usageSvc->normalize($run['usage']) : $usageSvc->getUsage();
 
-		if ($proxyReportedUsage) {
-			$usage = $usageSvc->normalize($result['usage']);
-		} else {
-			$usage = $usageSvc->getUsage();
+		if ($run['status'] === SLN_AI_Agent::STATUS_LEGACY) {
+			return $this->legacyChatResponse($store, $sessionId, $session, $registry, $message, $run['legacy'], $backend, $usage);
 		}
 
+		$response = array(
+			'session_id' => $sessionId,
+			'message'    => $run['message'],
+			'preview'    => null,
+			'can_undo'   => $store->canUndo(),
+			'backend'    => $backend,
+			'usage'      => $usage,
+		);
+
+		if ($run['guidance']) {
+			$last = end($run['guidance']);
+			$session['last_guidance'] = $this->buildLastGuidance(
+				$last['name'],
+				isset($last['preview']['summary']) ? trim((string) $last['preview']['summary']) : '',
+				$last['preview'],
+				$last['arguments']
+			);
+			foreach ($run['guidance'] as $item) {
+				if (! empty($item['preview']['support'])) {
+					$response['support'] = $item['preview']['support'];
+				}
+			}
+		}
+		$session['draft'] = null;
+
+		if ($run['status'] === SLN_AI_Agent::STATUS_PREVIEW) {
+			$data                 = $run['preview']['data'];
+			$data['tool']         = isset($data['tool']) ? $data['tool'] : $run['preview']['tool'];
+			$data['tool_call_id'] = $run['preview']['tool_call_id'];
+
+			if ($response['message'] === '' || $this->isGenericConfirmLead($response['message'])) {
+				$response['message'] = SLN_AI_Language::phrase(
+					SLN_AI_Language::detect($message),
+					'confirm_lead',
+					__('I put together a change from what you told me. Please review and confirm.', 'salon-booking-system')
+				);
+			}
+
+			// History must hold the lead-in the merchant actually saw, once, on the proposing assistant turn.
+			$turnMessages = $run['messages'];
+			for ($i = count($turnMessages) - 1; $i >= 0; $i--) {
+				if (! empty($turnMessages[ $i ]['tool_calls'])) {
+					$turnMessages[ $i ]['content'] = $response['message'];
+					break;
+				}
+			}
+
+			// storePreview persists its own copy of the session: save ours first.
+			$session = SLN_AI_SessionStore::appendMessages($session, $turnMessages);
+			$store->save($sessionId, $session);
+			$previewId = $store->storePreview($sessionId, $data);
+
+			$response['preview'] = array(
+				'id'      => $previewId,
+				'summary' => isset($data['summary']) ? $data['summary'] : '',
+				'tool'    => $run['preview']['tool'],
+			);
+
+			return rest_ensure_response($response);
+		}
+
+		$session = SLN_AI_SessionStore::appendMessages($session, $run['messages']);
+		$store->save($sessionId, $session);
+
+		return rest_ensure_response($response);
+	}
+
+	/**
+	 * Single-shot handling (local mock, or a cloud proxy that does not speak
+	 * protocol 2 yet): unchanged pre-agent behaviour.
+	 *
+	 * @param SLN_AI_SessionStore $store
+	 * @param string              $sessionId
+	 * @param array               $session
+	 * @param SLN_AI_ToolRegistry $registry
+	 * @param string              $message
+	 * @param array               $result
+	 * @param string              $backend
+	 * @param array               $usage
+	 * @return WP_REST_Response
+	 */
+	private function legacyChatResponse(SLN_AI_SessionStore $store, $sessionId, array $session, SLN_AI_ToolRegistry $registry, $message, array $result, $backend, array $usage)
+	{
 		$response = array(
 			'session_id' => $sessionId,
 			'message'    => isset($result['message']) ? $result['message'] : '',
@@ -355,6 +485,9 @@ class SLN_AI_REST_Controller
 					// Keep last guidance context for short follow-ups
 					// (“what does full mean?”, “e alle 15?”, “where do I enable it?”).
 					$session['last_guidance'] = $this->buildLastGuidance($name, $toolMsg, $preview, $args);
+					if (! empty($preview['support'])) {
+						$response['support'] = $preview['support'];
+					}
 				} else {
 					$previewId = $store->storePreview($sessionId, $preview);
 					$session   = $store->get($sessionId);
@@ -449,13 +582,23 @@ class SLN_AI_REST_Controller
 			);
 		}
 
+		$toolCallId = isset($preview['tool_call_id']) ? (string) $preview['tool_call_id'] : '';
+
 		if ($cancel) {
 			$store->clearPreview($sessionId);
+			$cancelMsg = __('Change cancelled. Nothing was saved.', 'salon-booking-system');
+			$store->resolveToolResult(
+				$sessionId,
+				$toolCallId,
+				'CANCELLED: the merchant cancelled this change. Nothing was saved.',
+				false,
+				$cancelMsg
+			);
 
 			return rest_ensure_response(
 				array(
 					'session_id' => $sessionId,
-					'message'    => __('Change cancelled. Nothing was saved.', 'salon-booking-system'),
+					'message'    => $cancelMsg,
 					'can_undo'   => $store->canUndo(),
 				)
 			);
@@ -466,6 +609,13 @@ class SLN_AI_REST_Controller
 		if (is_wp_error($result)) {
 			// Drop the pending card so the UI cannot re-confirm a failed proposal.
 			$store->clearPreview($sessionId);
+			$store->resolveToolResult(
+				$sessionId,
+				$toolCallId,
+				'FAILED: the merchant confirmed but saving failed: ' . $result->get_error_message(),
+				true,
+				$result->get_error_message()
+			);
 
 			return $result;
 		}
@@ -485,14 +635,42 @@ class SLN_AI_REST_Controller
 		$store->clearPreview($sessionId);
 		SLN_AI_ContextPack::bustCache();
 
+		$appliedMsg = isset($result['message'])
+			? $result['message']
+			: __('Changes applied.', 'salon-booking-system');
+		$store->resolveToolResult(
+			$sessionId,
+			$toolCallId,
+			'APPLIED: the merchant confirmed and the change was saved. ' . SLN_AI_MessageFormat::truncate(wp_strip_all_tags((string) $appliedMsg), 600),
+			false,
+			$appliedMsg
+		);
+
 		return rest_ensure_response(
 			array(
 				'session_id' => $sessionId,
-				'message'    => isset($result['message'])
-					? $result['message']
-					: __('Changes applied.', 'salon-booking-system'),
+				'message'    => $appliedMsg,
 				'can_undo'   => true,
 			)
+		);
+	}
+
+	/**
+	 * @param SLN_AI_SessionStore $store
+	 * @param string              $sessionId
+	 */
+	private function supersedePendingPreview(SLN_AI_SessionStore $store, $sessionId)
+	{
+		$session = $store->get($sessionId);
+		if (empty($session['pending_preview']) || ! is_array($session['pending_preview'])) {
+			return;
+		}
+		$toolCallId = isset($session['pending_preview']['tool_call_id']) ? (string) $session['pending_preview']['tool_call_id'] : '';
+		$store->clearPreview($sessionId);
+		$store->resolveToolResult(
+			$sessionId,
+			$toolCallId,
+			'NOT CONFIRMED: the merchant sent a new message instead of confirming. Nothing was saved.'
 		);
 	}
 
@@ -531,11 +709,17 @@ class SLN_AI_REST_Controller
 		$store->clearUndoSnapshot();
 		SLN_AI_ContextPack::bustCache();
 
+		$undoneMsg = isset($result['message'])
+			? $result['message']
+			: __('Last AI change undone.', 'salon-booking-system');
+		$sessionId = (string) $request->get_param('session_id');
+		if ($sessionId !== '' && $store->get($sessionId)) {
+			$store->resolveToolResult($sessionId, '', '', false, $undoneMsg);
+		}
+
 		return rest_ensure_response(
 			array(
-				'message'  => isset($result['message'])
-					? $result['message']
-					: __('Last AI change undone.', 'salon-booking-system'),
+				'message'  => $undoneMsg,
 				'can_undo' => false,
 			)
 		);

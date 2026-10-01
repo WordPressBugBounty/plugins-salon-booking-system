@@ -50,7 +50,7 @@ class SLN_Helper_Availability_Cache
      */
     public static function getOrBuildTimeslots($date, $booking = null, $buildCallback = null)
     {
-        $key = $date->format('Y-m-d') . '_' . ($booking ? $booking->getId() : '0');
+        $key = self::buildTimeslotsKey($date, $booking);
         
         // Check cache
         if (isset(self::$cache[$key])) {
@@ -101,12 +101,41 @@ class SLN_Helper_Availability_Cache
      */
     public static function setTimeslots($date, $booking, $timeslots)
     {
-        $key = $date->format('Y-m-d') . '_' . ($booking ? $booking->getId() : '0');
+        $key = self::buildTimeslotsKey($date, $booking);
         self::$cache[$key] = $timeslots;
         
         if (SLN_Plugin::isDebugEnabled()) {
             SLN_Plugin::addLog('[Availability Cache] SET for ' . $key);
         }
+    }
+
+    /**
+     * Timeslots depend on the Multi-Shops current shop (bookings and holidays are
+     * filtered per shop), so the shop must be part of the key. The date must stay
+     * the key prefix: clearDateCache() matches on it.
+     *
+     * @param DateTime                 $date
+     * @param SLN_Wrapper_Booking|null $booking
+     * @return string
+     */
+    private static function buildTimeslotsKey($date, $booking = null)
+    {
+        return $date->format('Y-m-d') . '_' . ($booking ? $booking->getId() : '0') . '_s' . self::getShopScope();
+    }
+
+    /**
+     * Current Multi-Shops shop ID, or 0 when the add-on is inactive or no shop is set.
+     *
+     * @return int
+     */
+    public static function getShopScope()
+    {
+        if (!class_exists('\SalonMultishop\Addon')) {
+            return 0;
+        }
+        $shop = \SalonMultishop\Addon::getInstance()->getCurrentShop();
+
+        return ($shop && method_exists($shop, 'getId')) ? (int) $shop->getId() : 0;
     }
     
     /**

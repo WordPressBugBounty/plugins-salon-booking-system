@@ -1454,7 +1454,7 @@ class Bookings_Controller extends REST_Controller
 	$booking = $bb->getLastBooking();
 
         if ($request->get_param('customer_personal_note') !== null && $customer = $booking->getCustomer()) {
-            $customer->setMeta('personal_note', $request->get_param('customer_personal_note'));
+            $customer->setMeta('personal_note', sanitize_textarea_field($request->get_param('customer_personal_note')));
         }
 
 	    add_post_meta($booking->getId(), '_'.SLN_Plugin::POST_TYPE_BOOKING.'_origin_source', SLN_Enum_BookingOrigin::ORIGIN_MOBILE);
@@ -1662,7 +1662,7 @@ class Bookings_Controller extends REST_Controller
         }
 
         if ($request->get_param('customer_personal_note') !== null && $customer = $booking->getCustomer()) {
-            $customer->setMeta('personal_note', $request->get_param('customer_personal_note'));
+            $customer->setMeta('personal_note', sanitize_textarea_field($request->get_param('customer_personal_note')));
         }
 
 	do_action('sln_api_bookings_update_item_post', $id, $bb);

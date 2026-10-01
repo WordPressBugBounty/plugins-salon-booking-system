@@ -22,6 +22,9 @@ class SLN_AI_ToolRegistry
 		require_once $dir . 'ExplainSetting.php';
 		require_once $dir . 'SuggestCapability.php';
 		require_once $dir . 'LookupDocs.php';
+		require_once $dir . 'LookupReference.php';
+		require_once $dir . 'ReportDocsDiscrepancy.php';
+		require_once $dir . 'ContactSupport.php';
 		require_once $dir . 'ExplainUnavailableSlot.php';
 		require_once $dir . 'FindBooking.php';
 		require_once $dir . 'CountBookings.php';
@@ -203,6 +206,70 @@ class SLN_AI_ToolRegistry
 						'limit'      => array(
 							'type'        => 'integer',
 							'description' => 'Max articles (default 3)',
+						),
+					),
+				),
+			),
+			array(
+				'name'        => 'lookup_reference',
+				'tier'        => 'guidance',
+				'class'       => 'SLN_AI_Tools_LookupReference',
+				'description' => 'Code-generated reference of this plugin version: every setting (option key, admin label, tab/section URL, default, allowed values, current value, PRO flag), admin screens and Free/PRO features. Source of truth over documentation. Use to find where a setting lives or verify a docs claim.',
+				'parameters'  => array(
+					'type'       => 'object',
+					'properties' => array(
+						'query' => array(
+							'type'        => 'string',
+							'description' => 'Plain English words as they appear in the admin UI (translate the merchant\'s words; do not guess an option key), e.g. "customers per session", "cancellation", "reminder"',
+						),
+						'key'   => array(
+							'type'        => 'string',
+							'description' => 'Exact option key when known, e.g. parallels_hour',
+						),
+						'kind'  => array(
+							'type' => 'string',
+							'enum' => array('setting', 'screen', 'feature'),
+						),
+						'limit' => array('type' => 'integer'),
+					),
+				),
+			),
+			array(
+				'name'        => 'report_docs_discrepancy',
+				'tier'        => 'guidance',
+				'class'       => 'SLN_AI_Tools_ReportDocsDiscrepancy',
+				'description' => 'Internal: record that a lookup_docs article contradicts the code reference or live settings. Silent — never mention it to the merchant.',
+				'parameters'  => array(
+					'type'       => 'object',
+					'required'   => array('article_id', 'docs_claim', 'code_truth'),
+					'properties' => array(
+						'article_id'  => array('type' => 'string'),
+						'docs_claim'  => array('type' => 'string'),
+						'code_truth'  => array('type' => 'string'),
+						'setting_key' => array('type' => 'string'),
+					),
+				),
+			),
+			array(
+				'name'        => 'contact_support',
+				'tier'        => 'guidance',
+				'class'       => 'SLN_AI_Tools_ContactSupport',
+				'description' => 'Show a "Contact support" button with a prefilled message to the human support team. Never sends anything itself.',
+				'parameters'  => array(
+					'type'       => 'object',
+					'required'   => array('subject', 'summary'),
+					'properties' => array(
+						'subject'     => array(
+							'type'        => 'string',
+							'description' => 'Short subject in the merchant\'s language',
+						),
+						'summary'     => array(
+							'type'        => 'string',
+							'description' => 'The problem in the merchant\'s language, from the conversation: goal, what happens, relevant settings/tool findings. No passwords or API keys.',
+						),
+						'steps_tried' => array(
+							'type'        => 'string',
+							'description' => 'What was already tried in this conversation',
 						),
 					),
 				),
@@ -420,7 +487,7 @@ class SLN_AI_ToolRegistry
 			),
 			$this->simple('set_salon_identity', 'SLN_AI_Tools_SetSalonIdentity', 'Set salon name, email, phone, address (not logo upload). On Multi-shop pass shop_id/shop_name for that location.', $simpleObjectShop),
 			$this->simple('set_locale_formats', 'SLN_AI_Tools_SetLocaleFormats', 'Set date_format, time_format, week_start, calendar_view.', $simpleObject),
-			$this->simple('set_slot_timing', 'SLN_AI_Tools_SetSlotTiming', 'Set interval, hours_before_*, parallels_*, auto_align_slots.', $simpleObject, 'confirm'),
+			$this->simple('set_slot_timing', 'SLN_AI_Tools_SetSlotTiming', 'Set slot interval, booking window (hours_before_*), how many customers can book the same slot ("Customers per session", parallels_hour) or day (parallels_day), auto_align_slots.', $simpleObject, 'confirm'),
 			$this->simple('set_booking_status', 'SLN_AI_Tools_SetBookingStatus', 'Set confirmation, disabled, disabled_message.', $simpleObject),
 			$this->simple('set_cancellation_policy', 'SLN_AI_Tools_SetCancellationPolicy', 'Set cancellation_enabled, hours_before_cancellation, auto_trash_cancelled.', $simpleObject),
 			$this->simple('set_rescheduling_policy', 'SLN_AI_Tools_SetReschedulingPolicy', 'Set rescheduling_disabled, days_before_rescheduling.', $simpleObject),
@@ -430,7 +497,7 @@ class SLN_AI_ToolRegistry
 			$this->simple('set_booking_form_flow', 'SLN_AI_Tools_SetBookingFormFlow', 'Set form_steps_alt_order and multiple_customers_for_assistant.', $simpleObject, 'confirm'),
 			$this->simple('set_resources_enabled', 'SLN_AI_Tools_SetResourcesEnabled', 'Toggle enable_resources (PRO).', $simpleObject),
 			$this->simple('set_guest_checkout', 'SLN_AI_Tools_SetGuestCheckout', 'Guest checkout flags.', $simpleObject),
-			$this->simple('set_service_selection_limits', 'SLN_AI_Tools_SetServiceSelectionLimits', 'Primary/secondary service selection counts.', $simpleObject),
+			$this->simple('set_service_selection_limits', 'SLN_AI_Tools_SetServiceSelectionLimits', 'How many primary/secondary services a customer can pick in one booking (not a customer capacity limit).', $simpleObject),
 			$this->simple('set_discount_system_enabled', 'SLN_AI_Tools_SetDiscountSystemEnabled', 'Toggle enable_discount_system.', $simpleObject),
 			$this->simple('set_checkout_copy', 'SLN_AI_Tools_SetCheckoutCopy', 'Checkout copy: gen_timetable, last_step_note.', $simpleObject),
 			$this->simple('set_currency_display', 'SLN_AI_Tools_SetCurrencyDisplay', 'Currency display and hide_prices. Does NOT configure payment gateways.', $simpleObject),
@@ -964,7 +1031,10 @@ class SLN_AI_ToolRegistry
 			. 'List discounts/customers/services/assistants → find_*; create/update coupons → upsert_discount. '
 			. 'Calendar UI → explain_setting topic=calendar. Changelog/what\'s new → recent_changelog context or topic=changelog; never invent features. '
 			. 'When the merchant describes a goal a product feature/add-on solves (no-shows→waitlist, walk-in tablet→kiosk, second location→multishop, email campaigns→communicator, import bookings→migrator, “what can I do”→capabilities), call suggest_capability; for a known topic deep-link use explain_setting. '
-			. 'Official docs (Help Scout) are a second source after live tools/settings. How-to / troubleshooting not answered by a write or diagnosis tool → lookup_docs. If an article disagrees with a tool result, trust the tool and say the docs may be outdated. Never invent how-to steps when lookup_docs can run. '
+			. 'You can call several tools in sequence within one message: lookups return their results to you, then decide the next step. Read-only lookups can run in parallel; propose at most one change (write tool) at a time, after the lookups it depends on. A write tool shows a confirmation card and ends your turn; its outcome (applied/cancelled/failed) appears in the tool result on the next message. Base your final answer only on tool results and site context, and copy admin URLs from them verbatim. '
+			. 'Source hierarchy: 1) live site data from tools and site context; 2) lookup_reference (generated from this plugin version\'s code); 3) lookup_docs (Help Scout, may be outdated). '
+			. 'How-to / troubleshooting not answered by a write or diagnosis tool → lookup_docs, and verify setting names/locations with lookup_reference. If an article contradicts the code reference or live data, follow the code, do not repeat the outdated part to the merchant, and call report_docs_discrepancy (silently). Never invent how-to steps when lookup_docs can run. '
+			. 'Human support: when the merchant asks to contact/email/talk to support or a person, or the problem needs the team (bug, license, billing, still broken after the documented steps), call contact_support with a summary of the conversation. It only shows a button: never say the message was sent, never ask for their email. '
 			. 'Add-ons are guidance-only (never invent install/license steps that write secrets). '
 			. SLN_AI_Edition::instructionsSnippet() . ' '
 			. SLN_AI_Multishop::instructionsSnippet();

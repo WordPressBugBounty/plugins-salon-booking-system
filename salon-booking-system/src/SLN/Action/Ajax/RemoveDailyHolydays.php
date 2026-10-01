@@ -22,25 +22,10 @@ class SLN_Action_Ajax_RemoveDailyHolydays extends SLN_Action_Ajax_Abstract
                         $date             = sanitize_text_field(wp_unslash($_GET['date']));
                         $_assistants_mode = sanitize_text_field(wp_unslash($_GET['_assistants_mode']));
                         if ($_assistants_mode == "false" || $_assistants_mode == 'undefined') {
-                            $holidays_rules = $settings->get('holidays_daily');
-                            $search_rule=array();
+                            $applied = apply_filters('sln.remove-daily-holidays.remove-holidays-daily', false, $date);
 
-                            foreach ($holidays_rules as $rule) {
-                                    if(!(
-                                            ($date === $rule['from_date'] ||
-                                            $date === $rule['to_date']) &&
-                                            $rule['daily'] === true
-                                    )) $search_rule[] = $rule;
-                            }
-
-                            $settings->set('holidays_daily',$search_rule);
-                            $settings->save();
-
-                        } else {
-                            $attendants = $plugin->getRepository(SLN_Plugin::POST_TYPE_ATTENDANT)->getAll();
-
-                            foreach ($attendants as $attendant) {
-                                $holidays_rules   = $attendant->getMeta('holidays_daily')?:array();
+                            if (!$applied) {
+                                $holidays_rules = $settings->get('holidays_daily') ?: array();
                                 $search_rule=array();
 
                                 foreach ($holidays_rules as $rule) {
@@ -50,9 +35,34 @@ class SLN_Action_Ajax_RemoveDailyHolydays extends SLN_Action_Ajax_Abstract
                                                 $rule['daily'] === true
                                         )) $search_rule[] = $rule;
                                 }
-                                $attendant->setMeta('holidays_daily', $search_rule);
+
+                                $settings->set('holidays_daily',$search_rule);
+                                $settings->save();
+                            }
+
+                        } else {
+                            $attendants = $plugin->getRepository(SLN_Plugin::POST_TYPE_ATTENDANT)->getAll();
+
+                            $applied = apply_filters('sln.remove-daily-holidays.remove-holidays-daily-assistants', false, $date, $attendants);
+
+                            if (!$applied) {
+                                foreach ($attendants as $attendant) {
+                                    $holidays_rules   = $attendant->getMeta('holidays_daily')?:array();
+                                    $search_rule=array();
+
+                                    foreach ($holidays_rules as $rule) {
+                                            if(!(
+                                                    ($date === $rule['from_date'] ||
+                                                    $date === $rule['to_date']) &&
+                                                    $rule['daily'] === true
+                                            )) $search_rule[] = $rule;
+                                    }
+                                    $attendant->setMeta('holidays_daily', $search_rule);
+                                }
                             }
                         }
+
+                        $plugin->getBookingCache()->refreshAll();
 
 		} else {
 			$this->addError(__("You don't have permissions", 'salon-booking-system'));

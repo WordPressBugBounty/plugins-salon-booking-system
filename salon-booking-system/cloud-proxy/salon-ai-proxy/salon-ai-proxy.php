@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Salon AI Cloud Proxy (billing)
  * Description: Usage ledger, Dodo Payments checkout, and webhooks for Salon Booking AI credits. Deploy on salonbookingsystem.com (namespace salon-ai/v1).
- * Version: 0.1.0
+ * Version: 0.2.0
  * Author: Salon Booking System
  *
  * Install on the STORE site (not merchant sites). Copy config.sample.php → config.php and fill secrets.
@@ -13,7 +13,7 @@ if (! defined('ABSPATH')) {
 }
 
 define('SLN_AI_PROXY_DIR', __DIR__);
-define('SLN_AI_PROXY_VERSION', '0.1.0');
+define('SLN_AI_PROXY_VERSION', '0.2.0');
 
 $configFile = SLN_AI_PROXY_DIR . '/config.php';
 if (is_readable($configFile)) {

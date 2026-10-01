@@ -459,17 +459,19 @@ class SLN_AI_DocsCatalog
 	{
 		$curated = isset($row['excerpt']) ? (string) $row['excerpt'] : '';
 		$row['excerpt_source'] = 'catalog';
+		$row['updated_at']     = null;
 		if (! $fetchLive) {
 			return $row;
 		}
 
-		$live = self::cachedExcerpt($row);
-		if ($live !== '') {
-			$row['excerpt']        = $live;
+		$live = self::cachedArticle($row);
+		if ($live['excerpt'] !== '') {
+			$row['excerpt']        = $live['excerpt'];
 			$row['excerpt_source'] = 'article';
 		} elseif ($curated !== '') {
 			$row['excerpt'] = $curated;
 		}
+		$row['updated_at'] = $live['updated_at'];
 
 		return $row;
 	}
@@ -548,11 +550,15 @@ class SLN_AI_DocsCatalog
 	 * @param array $row
 	 * @return string
 	 */
-	private static function cachedExcerpt(array $row)
+	private static function cachedArticle(array $row)
 	{
-		$url = isset($row['url']) ? (string) $row['url'] : '';
+		$empty = array(
+			'excerpt'    => '',
+			'updated_at' => null,
+		);
+		$url   = isset($row['url']) ? (string) $row['url'] : '';
 		if ($url === '' || strpos($url, self::KB_BASE . '/') !== 0) {
-			return '';
+			return $empty;
 		}
 
 		$allow = true;
@@ -560,18 +566,26 @@ class SLN_AI_DocsCatalog
 			$allow = (bool) apply_filters('sln_ai_docs_fetch_excerpt', true, $row);
 		}
 		if (! $allow) {
-			return '';
+			return $empty;
 		}
 
 		$id        = isset($row['id']) ? sanitize_key($row['id']) : md5($url);
 		$cacheKey  = self::CACHE_PREFIX . $id;
 		$cached    = function_exists('get_transient') ? get_transient($cacheKey) : false;
+		if (is_array($cached) && ! empty($cached['excerpt'])) {
+			return array_merge($empty, $cached);
+		}
+		// Cache entries written before updated_at existed: excerpt only.
 		if (is_string($cached) && $cached !== '') {
-			return $cached;
+			return array_merge($empty, array('excerpt' => $cached));
 		}
 
-		$live = self::fetchLiveExcerpt($url);
-		if ($live !== '' && function_exists('set_transient')) {
+		$html = self::fetchArticleHtml($url);
+		$live = array(
+			'excerpt'    => self::excerptFromHtml($html),
+			'updated_at' => self::updatedAtFromHtml($html),
+		);
+		if ($live['excerpt'] !== '' && function_exists('set_transient')) {
 			set_transient($cacheKey, $live, self::CACHE_TTL);
 		}
 
@@ -579,12 +593,41 @@ class SLN_AI_DocsCatalog
 	}
 
 	/**
+	 * “Last updated” date printed by Help Scout Docs, as Y-m-d.
+	 *
+	 * @param string $html
+	 * @return string|null
+	 */
+	public static function updatedAtFromHtml($html)
+	{
+		$html = (string) $html;
+		if ($html === '') {
+			return null;
+		}
+		$raw = '';
+		if (preg_match('/Last updated[^<]{0,40}<time[^>]*datetime="([^"]+)"/i', $html, $m)
+			|| preg_match('/<time[^>]*class="[^"]*\blu\b[^"]*"[^>]*datetime="([^"]+)"/i', $html, $m)
+			|| preg_match('/<time[^>]*datetime="([^"]+)"[^>]*class="[^"]*\blu\b/i', $html, $m)
+		) {
+			$raw = $m[1];
+		} elseif (preg_match('/Last updated(?: on)?\s*:?\s*([A-Z][a-z]+ \d{1,2},? \d{4})/', wp_strip_all_tags($html), $m)) {
+			$raw = $m[1];
+		}
+		if ($raw === '') {
+			return null;
+		}
+		$ts = strtotime($raw);
+
+		return $ts ? gmdate('Y-m-d', $ts) : null;
+	}
+
+	/**
 	 * Public Help Scout article page — no API key. Fail closed on any error.
 	 *
 	 * @param string $url
-	 * @return string
+	 * @return string Raw HTML or ''.
 	 */
-	private static function fetchLiveExcerpt($url)
+	private static function fetchArticleHtml($url)
 	{
 		if (! function_exists('wp_remote_get')) {
 			return '';
@@ -603,7 +646,23 @@ class SLN_AI_DocsCatalog
 		}
 		$code = (int) wp_remote_retrieve_response_code($response);
 		$html = (string) wp_remote_retrieve_body($response);
-		if ($code < 200 || $code >= 300 || $html === '') {
+		if ($code < 200 || $code >= 300) {
+			return '';
+		}
+
+		return $html;
+	}
+
+	/**
+	 * Article body text from a Help Scout page, capped at EXCERPT_MAX.
+	 *
+	 * @param string $html
+	 * @return string
+	 */
+	public static function excerptFromHtml($html)
+	{
+		$html = (string) $html;
+		if ($html === '') {
 			return '';
 		}
 

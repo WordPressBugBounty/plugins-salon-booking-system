@@ -177,7 +177,7 @@ class SLN_AI_ContextPack
 			self::str($context, 'calendar_view', '(default)')
 		);
 		$lines[] = sprintf(
-			'Slot interval: %s min | Parallels/hour: %s | Availability mode: %s | Assistants enabled: %s',
+			'Slot interval: %s min | Customers per session (parallels_hour): %s | Availability mode: %s | Assistants enabled: %s',
 			self::str($context, 'interval', '?'),
 			self::str($context, 'parallels_hour', '?'),
 			self::str($context, 'availability_mode', '?'),

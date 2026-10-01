@@ -1,0 +1,5229 @@
+{
+    "schema": 1,
+    "plugin_version": "10.31.6",
+    "edition": "pro",
+    "generated_at": "2026-09-30T13:43:19+00:00",
+    "git_commit": "58077fc5be80",
+    "settings": [
+        {
+            "key": "gen_name",
+            "label": "Your salon name",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Salon information",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "text",
+            "default": "",
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": "Leaving this field empty will cause the default site name ({site name}) to be used",
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "gen_email",
+            "label": "Admin notification e-mail(s)",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Salon information",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "text",
+            "default": "",
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": "Enter one or more email addresses separated by commas. Leaving this field empty will use the default site email ({admin email}).",
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "gen_phone",
+            "label": "Salon telephone number",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Salon information",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "text",
+            "default": "",
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": "Leaving this field empty will cause the default site name ({site name}) to be used",
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "gen_address",
+            "label": "Salon address",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Salon information",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "textarea",
+            "default": "",
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": "Provide the full address of your Salon",
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "gen_logo",
+            "label": null,
+            "tab": "general",
+            "tab_label": "General",
+            "section": null,
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "hidden",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "editors_manage_cap",
+            "label": "Enable Editors as administrator",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Administration rules",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "hide_customers_email",
+            "label": "Hide customer email address to assistants",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Administration rules",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "hide_customers_phone",
+            "label": "Hide customer telephone number to assistant",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Administration rules",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "attendant_enabled",
+            "label": "Enable assistant selection",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Assistant selection",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": "1",
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "only_from_backend_attendant_enabled",
+            "label": "Only from back-end",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Assistant selection",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "m_attendant_enabled",
+            "label": "Enable multiple assistants selection",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Assistant selection",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "hide_invalid_attendants_enabled",
+            "label": "Hide unavailable assistants",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Assistant selection",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "skip_attendants_enabled",
+            "label": "Skip assistant selection step",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Assistant selection",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "attendant_email",
+            "label": "Enable assistant email on new bookings",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Assistant selection",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "choose_attendant_for_me_disabled",
+            "label": "Disable \"Choose an assistant for me\"",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Assistant selection",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "auto_attendant_check_enabled",
+            "label": "Smart availability for \"Choose assistant for me\"",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Assistant selection",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "sms_enabled",
+            "label": "Enable SMS verification",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "SMS services",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "sms_account",
+            "label": "Account ID",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "SMS services",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "text",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "sms_password",
+            "label": "Auth Token",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "SMS services",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "text",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "sms_prefix",
+            "label": "Country code",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "SMS services",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "text",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "sms_provider",
+            "label": "Select your service provider",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "SMS services",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "select",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "fake",
+                    "label": "test (sms sent by email to the admin)"
+                },
+                {
+                    "value": "ip1smsv2",
+                    "label": "IP1SMS (API V2)"
+                },
+                {
+                    "value": "ip1smswebservice",
+                    "label": "IP1SMS Webservice/SOAP (DEPRECATED - Migrate to API V2)"
+                },
+                {
+                    "value": "ip1smshttp",
+                    "label": "IP1SMS HTTP (DEPRECATED - Migrate to API V2)"
+                },
+                {
+                    "value": "twilio",
+                    "label": "Twilio"
+                },
+                {
+                    "value": "plivo",
+                    "label": "Plivo"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "sms_from",
+            "label": "Sender ID (Phone Number)",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "SMS services",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "text",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "sms_new",
+            "label": "Send SMS notification on new bookings",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "SMS services",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "sms_new_number",
+            "label": "Staff member notification number",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "SMS services",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "text",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "sms_modified",
+            "label": "Send SMS notification on modified bookings",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "SMS services",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "sms_canceled",
+            "label": "Send SMS notification on canceled bookings",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "SMS services",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "sms_new_attendant",
+            "label": "Send an SMS to selected attendant on new bookings",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "SMS services",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "sms_modified_attendant",
+            "label": "Send an SMS to selected attendant on modified bookings",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "SMS services",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "sms_canceled_attendant",
+            "label": "Send an SMS to selected attendant on canceled bookings",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "SMS services",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "whatsapp_enabled",
+            "label": "Enable Whatsapp notification",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "SMS services",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "sms_notification_message",
+            "label": "Customize the SMS notification message on new bookings (max 160 characters)",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "SMS services",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "textarea",
+            "default": "Hi [NAME],\r\ntake note of your reservation at [SALON NAME] on [DATE] at [TIME].\r\nSee you soon.",
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "sms_notification_message_modified",
+            "label": "Customize the SMS notification message on modified bookings (max 160 characters)",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "SMS services",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "textarea",
+            "default": "Hi [NAME],\r\nyour reservation at [SALON NAME], has been updated.\r\nWe've sent you an email with the details.",
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "sms_notification_message_canceled",
+            "label": "Customize the SMS notification message on canceled bookings (max 160 characters)",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "SMS services",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "textarea",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "sms_remind_message",
+            "label": "Customize the SMS remind notification message on bookings (max 160 characters)",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "SMS services",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "textarea",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "sms_remind",
+            "label": "Remind the appointment to the client with an SMS",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "SMS services",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "sms_remind_interval",
+            "label": "Before the appointment",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "SMS services",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "select",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "+1 hour",
+                    "label": "1 hour"
+                },
+                {
+                    "value": "+2 hours",
+                    "label": "2 hours"
+                },
+                {
+                    "value": "+3 hours",
+                    "label": "3 hours"
+                },
+                {
+                    "value": "+4 hours",
+                    "label": "4 hours"
+                },
+                {
+                    "value": "+6 hours",
+                    "label": "6 hours"
+                },
+                {
+                    "value": "+12 hours",
+                    "label": "12 hours"
+                },
+                {
+                    "value": "+23 hours",
+                    "label": "23 hours"
+                },
+                {
+                    "value": "+24 hours",
+                    "label": "24 hours"
+                },
+                {
+                    "value": "+48 hours",
+                    "label": "48 hours"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "sms_trunk_prefix",
+            "label": "Trunk trailing 0 prefix",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "SMS services",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "sms_ascii_mode",
+            "label": "ASCII mode",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "SMS services",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "email_remind",
+            "label": "Remind the appointment to the client with an Email",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Email notifications service",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "email_remind_interval",
+            "label": "Email Timing",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Email notifications service",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "select",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "+1 hour",
+                    "label": "1 hour"
+                },
+                {
+                    "value": "+2 hours",
+                    "label": "2 hours"
+                },
+                {
+                    "value": "+3 hours",
+                    "label": "3 hours"
+                },
+                {
+                    "value": "+4 hours",
+                    "label": "4 hours"
+                },
+                {
+                    "value": "+6 hours",
+                    "label": "6 hours"
+                },
+                {
+                    "value": "+12 hours",
+                    "label": "12 hours"
+                },
+                {
+                    "value": "+23 hours",
+                    "label": "23 hours"
+                },
+                {
+                    "value": "+24 hours",
+                    "label": "24 hours"
+                },
+                {
+                    "value": "+48 hours",
+                    "label": "48 hours"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "email_subject",
+            "label": "Email Subject",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Email notifications service",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "text",
+            "default": "Your booking reminder for [DATE] at [TIME] at [SALON NAME]",
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "booking_update_message",
+            "label": "Customize the booking reminder message",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Email notifications service",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "textarea",
+            "default": "Hi [NAME],\\r\\ntake note of the details of your reservation at [SALON NAME]",
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "email_nb_subject",
+            "label": "Email Subject",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "New booking email notification to customer",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "text",
+            "default": "Your booking for [DATE] at [TIME] at [SALON NAME]",
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "new_booking_message",
+            "label": "Customize the booking notification message",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "New booking email notification to customer",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "textarea",
+            "default": "Hi [NAME],\\r\\ntake note of the details of your reservation at [SALON NAME]",
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "disable_new_user_welcome_email",
+            "label": "Disable new user welcome email",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "New booking email notification to customer",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "follow_up_email",
+            "label": "by Email",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Automatic follow-up",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": "We'll send a message two days before the next estimated booking",
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "follow_up_sms",
+            "label": "by SMS",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Automatic follow-up",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": "We'll send a message two days before the next estimated booking",
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "follow_up_interval",
+            "label": "Timing",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Automatic follow-up",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "select",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "+1 days",
+                    "label": "1 day"
+                },
+                {
+                    "value": "+2 days",
+                    "label": "2 days"
+                },
+                {
+                    "value": "+3 days",
+                    "label": "3 days"
+                },
+                {
+                    "value": "+4 days",
+                    "label": "4 days"
+                },
+                {
+                    "value": "+5 days",
+                    "label": "5 days"
+                },
+                {
+                    "value": "+1 weeks",
+                    "label": "1 week"
+                },
+                {
+                    "value": "+2 weeks",
+                    "label": "2 weeks"
+                },
+                {
+                    "value": "+3 weeks",
+                    "label": "3 weeks"
+                },
+                {
+                    "value": "+1 months",
+                    "label": "1 month"
+                },
+                {
+                    "value": "+2 months",
+                    "label": "2months"
+                },
+                {
+                    "value": "+3 months",
+                    "label": "3months"
+                },
+                {
+                    "value": "+10 months",
+                    "label": "10months"
+                },
+                {
+                    "value": "+23 months",
+                    "label": "23months"
+                },
+                {
+                    "value": "+24 months",
+                    "label": "24months"
+                },
+                {
+                    "value": "custom",
+                    "label": "Customer habit"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": "We'll send a message two days before the next estimated booking",
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "follow_up_message",
+            "label": "Custom message (max 500 characters)",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Automatic follow-up",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "textarea",
+            "default": "Hi [NAME],\\r\\nIt's been a while since your last visit, would you like to book a new appointment with us?\\r\\n\\r\\nWe look forward to seeing you again.",
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": "We'll send a message two days before the next estimated booking",
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "feedback_email",
+            "label": "by Email",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Automatic feedback reminder If enabled an email/sms will be sent automatically to the customer one day after the last visit to the salon.",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "feedback_sms",
+            "label": "by SMS",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Automatic feedback reminder If enabled an email/sms will be sent automatically to the customer one day after the last visit to the salon.",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "custom_feedback_url",
+            "label": "Feedback submission URL",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Automatic feedback reminder If enabled an email/sms will be sent automatically to the customer one day after the last visit to the salon.",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "text",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "feedback_email_subject",
+            "label": "Subject for feedback mail",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Automatic feedback reminder If enabled an email/sms will be sent automatically to the customer one day after the last visit to the salon.",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "text",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "feedback_message",
+            "label": "Custom message (max 500 characters)",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Automatic feedback reminder If enabled an email/sms will be sent automatically to the customer one day after the last visit to the salon.",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "textarea",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "soc_facebook",
+            "label": null,
+            "tab": "general",
+            "tab_label": "General",
+            "section": null,
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": null,
+            "default": "http://www.facebook.com",
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": false
+        },
+        {
+            "key": "soc_twitter",
+            "label": null,
+            "tab": "general",
+            "tab_label": "General",
+            "section": null,
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": null,
+            "default": "http://www.twitter.com",
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": false
+        },
+        {
+            "key": "soc_google",
+            "label": null,
+            "tab": "general",
+            "tab_label": "General",
+            "section": null,
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": null,
+            "default": "http://www.google.it",
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": false
+        },
+        {
+            "key": "onesignal_app_id",
+            "label": "App ID",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "API services",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "text",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "onesignal_rest_api_key",
+            "label": "REST API Key",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "API services",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "text",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "onesignal_new",
+            "label": "Send Onesignal notification on new bookings",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "API services",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "onesignal_notification_message",
+            "label": "Customize the Onesignal notification message",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "API services",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "textarea",
+            "default": "Hi, the new reservation at [SALON NAME] on [DATE] at [TIME].",
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "google_maps_api_key",
+            "label": "Google Places API Key",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "API services",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "text",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "google_maps_api_key_valid",
+            "label": null,
+            "tab": "general",
+            "tab_label": "General",
+            "section": null,
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "hidden",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "zapier_api_key",
+            "label": "API Key",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "API services",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "text",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "date_format",
+            "label": "Date Format",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Date and Time settings",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "select",
+            "default": "default",
+            "allowed": [
+                {
+                    "value": "default",
+                    "label": "30 Sep 2026"
+                },
+                {
+                    "value": "short",
+                    "label": "30/09/2026"
+                },
+                {
+                    "value": "short_comma",
+                    "label": "30-09-2026"
+                },
+                {
+                    "value": "mm/dd/yyyy",
+                    "label": "09/30/2026"
+                },
+                {
+                    "value": "mysql",
+                    "label": "2026-09-30"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "time_format",
+            "label": "Time Format",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Date and Time settings",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "select",
+            "default": "default",
+            "allowed": [
+                {
+                    "value": "default",
+                    "label": "13:43"
+                },
+                {
+                    "value": "short",
+                    "label": "1:43pm"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "week_start",
+            "label": "Start week on",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Date and Time settings",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "select",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "0",
+                    "label": "Sunday"
+                },
+                {
+                    "value": "1",
+                    "label": "Monday"
+                },
+                {
+                    "value": "2",
+                    "label": "Tuesday"
+                },
+                {
+                    "value": "3",
+                    "label": "Wednesday"
+                },
+                {
+                    "value": "4",
+                    "label": "Thursday"
+                },
+                {
+                    "value": "5",
+                    "label": "Friday"
+                },
+                {
+                    "value": "6",
+                    "label": "Saturday"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "calendar_view",
+            "label": "Default Calendar View",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Date and Time settings",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "select",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "month",
+                    "label": "Month"
+                },
+                {
+                    "value": "week",
+                    "label": "Week"
+                },
+                {
+                    "value": "day",
+                    "label": "Day"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "sms_test_number",
+            "label": "Number",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "SMS services",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "text",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "sms_test_message",
+            "label": "Message",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "SMS services",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "text",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "salon_staff_manage_cap_export_csv",
+            "label": "Allow Assistants to export bookings to CSV",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Administration rules",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "thankyou",
+            "label": "Thank you page",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Salon Booking System required pages",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "select",
+            "default": true,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": "page",
+            "help": "Select a page where to redirect your users after booking completition.",
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "pay",
+            "label": "Booking page",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Salon Booking System required pages",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "select",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": "page",
+            "help": "Select a page with the booking form.",
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "bookingmyaccount",
+            "label": "Booking My Account",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Salon Booking System required pages",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "select",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": "page",
+            "help": "Select a page where your users view their bookings.",
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "recaptcha_enabled",
+            "label": "Enable reCAPTCHA Protection",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Bot Protection",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "recaptcha_site_key",
+            "label": "reCAPTCHA Site Key",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Bot Protection",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "text",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "recaptcha_secret_key",
+            "label": "reCAPTCHA Secret Key",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Bot Protection",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "text",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "recaptcha_score_threshold",
+            "label": "Score Threshold",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Bot Protection",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "text",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "recaptcha_fail_open",
+            "label": "Allow bookings if reCAPTCHA service is unavailable",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Bot Protection",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "rate_limit_enabled",
+            "label": "Enable rate limiting",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Bot Protection",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "display_slots_customer_timezone",
+            "label": "Display slots using customer's time-zone",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "Date and Time settings",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": true,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "ip1sms_api_key",
+            "label": "API Key (Bearer Token)",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "SMS services",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "text",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "zapier_site_url",
+            "label": "Site Url",
+            "tab": "general",
+            "tab_label": "General",
+            "section": "API services",
+            "path": "admin.php?page=salon-settings&tab=general",
+            "type": "text",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": false,
+            "rendered": true
+        },
+        {
+            "key": "confirmation",
+            "label": "Booking confirmation",
+            "tab": "booking",
+            "tab_label": "Booking Rules",
+            "section": "Booking manual confirmation",
+            "path": "admin.php?page=salon-settings&tab=booking",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "reservation_interval_enabled",
+            "label": "Enable offset",
+            "tab": "booking",
+            "tab_label": "Booking Rules",
+            "section": "Offset between reservations",
+            "path": "admin.php?page=salon-settings&tab=booking",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": "Select this option to add an OFF interval between two sequencial reservations",
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "minutes_between_reservation",
+            "label": "Offset duration",
+            "tab": "booking",
+            "tab_label": "Booking Rules",
+            "section": "Offset between reservations",
+            "path": "admin.php?page=salon-settings&tab=booking",
+            "type": "select",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "5",
+                    "label": "5m"
+                },
+                {
+                    "value": "10",
+                    "label": "10m"
+                },
+                {
+                    "value": "15",
+                    "label": "15m"
+                },
+                {
+                    "value": "20",
+                    "label": "20m"
+                },
+                {
+                    "value": "25",
+                    "label": "25m"
+                },
+                {
+                    "value": "30",
+                    "label": "30m"
+                },
+                {
+                    "value": "35",
+                    "label": "35m"
+                },
+                {
+                    "value": "40",
+                    "label": "40m"
+                },
+                {
+                    "value": "45",
+                    "label": "45m"
+                },
+                {
+                    "value": "50",
+                    "label": "50m"
+                },
+                {
+                    "value": "55",
+                    "label": "55m"
+                },
+                {
+                    "value": "60",
+                    "label": "1h"
+                },
+                {
+                    "value": "65",
+                    "label": "1h 5m"
+                },
+                {
+                    "value": "70",
+                    "label": "1h 10m"
+                },
+                {
+                    "value": "75",
+                    "label": "1h 15m"
+                },
+                {
+                    "value": "80",
+                    "label": "1h 20m"
+                },
+                {
+                    "value": "85",
+                    "label": "1h 25m"
+                },
+                {
+                    "value": "90",
+                    "label": "1h 30m"
+                },
+                {
+                    "value": "95",
+                    "label": "1h 35m"
+                },
+                {
+                    "value": "100",
+                    "label": "1h 40m"
+                },
+                {
+                    "value": "105",
+                    "label": "1h 45m"
+                },
+                {
+                    "value": "110",
+                    "label": "1h 50m"
+                },
+                {
+                    "value": "115",
+                    "label": "1h 55h"
+                },
+                {
+                    "value": "120",
+                    "label": "2h"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": "How many minutes lasts this Offset?",
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "availabilities",
+            "label": "Sun",
+            "tab": "booking",
+            "tab_label": "Booking Rules",
+            "section": "On-line booking available days Create one or more rules to limit online reservation to specific days and time range. Leave blank if you want bookings available everydays at every hour Prefer to describe hours in chat? Open AI Setup",
+            "path": "admin.php?page=salon-settings&tab=booking",
+            "type": "text",
+            "default": [
+                {
+                    "days": {
+                        "2": 1,
+                        "3": 1,
+                        "4": 1,
+                        "5": 1,
+                        "6": 1
+                    },
+                    "from": [
+                        "08:00",
+                        "13:00"
+                    ],
+                    "to": [
+                        "13:00",
+                        "20:00"
+                    ]
+                }
+            ],
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "holidays",
+            "label": null,
+            "tab": "booking",
+            "tab_label": "Booking Rules",
+            "section": "Holidays days Set one or more rules for your holidays. Users will not be able to make reservation during these periods Prefer to describe holidays in chat? Open AI Setup",
+            "path": "admin.php?page=salon-settings&tab=booking",
+            "type": "text",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "availability_mode",
+            "label": "Basic (checks only the booking date)",
+            "tab": "booking",
+            "tab_label": "Booking Rules",
+            "section": "Availability mode Select your favourite booking system mode.",
+            "path": "admin.php?page=salon-settings&tab=booking",
+            "type": "radio",
+            "default": "advanced",
+            "allowed": [
+                {
+                    "value": "basic",
+                    "label": "Basic (checks only the booking date)"
+                },
+                {
+                    "value": "advanced",
+                    "label": "Advanced (evaluates also booking duration)"
+                },
+                {
+                    "value": "highend",
+                    "label": "High end (evaluates also service duration and priority)"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "do_not_nest_same_booking_services",
+            "label": null,
+            "tab": "booking",
+            "tab_label": "Booking Rules",
+            "section": null,
+            "path": "admin.php?page=salon-settings&tab=booking",
+            "type": null,
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": false
+        },
+        {
+            "key": "nested_bookings_enabled",
+            "label": null,
+            "tab": "booking",
+            "tab_label": "Booking Rules",
+            "section": null,
+            "path": "admin.php?page=salon-settings&tab=booking",
+            "type": null,
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": false
+        },
+        {
+            "key": "cancellation_enabled",
+            "label": "Booking cancellation",
+            "tab": "booking",
+            "tab_label": "Booking Rules",
+            "section": "User booking cancellation",
+            "path": "admin.php?page=salon-settings&tab=booking",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": "Select this option if you want your users able to cancel a booking from the front-end.",
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "hours_before_cancellation",
+            "label": "Time in advance",
+            "tab": "booking",
+            "tab_label": "Booking Rules",
+            "section": "User booking cancellation",
+            "path": "admin.php?page=salon-settings&tab=booking",
+            "type": "select",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "0.1667",
+                    "label": "10 minutes"
+                },
+                {
+                    "value": "0.25",
+                    "label": "15 minutes"
+                },
+                {
+                    "value": "0.3333",
+                    "label": "20 minutes"
+                },
+                {
+                    "value": "0.5",
+                    "label": "30 minutes"
+                },
+                {
+                    "value": "0.6667",
+                    "label": "40 minutes"
+                },
+                {
+                    "value": "1",
+                    "label": "1h"
+                },
+                {
+                    "value": "2",
+                    "label": "2h"
+                },
+                {
+                    "value": "3",
+                    "label": "3h"
+                },
+                {
+                    "value": "5",
+                    "label": "5h"
+                },
+                {
+                    "value": "12",
+                    "label": "12h"
+                },
+                {
+                    "value": "24",
+                    "label": "24h"
+                },
+                {
+                    "value": "48",
+                    "label": "48h"
+                },
+                {
+                    "value": "72",
+                    "label": "72h"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": "How much time before the appointment the cancellation is still allowed",
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "auto_trash_cancelled",
+            "label": "Auto-trash cancelled bookings",
+            "tab": "booking",
+            "tab_label": "Booking Rules",
+            "section": "User booking cancellation",
+            "path": "admin.php?page=salon-settings&tab=booking",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": "Automatically move cancelled bookings to trash. They will no longer appear in the calendar but can still be restored from the trash.",
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "disabled",
+            "label": "Online Booking Status",
+            "tab": "booking",
+            "tab_label": "Booking Rules",
+            "section": "Pause booking service If OFF the online booking form will be disabled and your users will see a message.",
+            "path": "admin.php?page=salon-settings&tab=booking",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "disabled_message",
+            "label": "Message on disabled booking",
+            "tab": "booking",
+            "tab_label": "Booking Rules",
+            "section": "Pause booking service If OFF the online booking form will be disabled and your users will see a message.",
+            "path": "admin.php?page=salon-settings&tab=booking",
+            "type": "textarea",
+            "default": "Booking is not available at the moment, please contact us at {admin email}",
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "parallels_day",
+            "label": null,
+            "tab": "booking",
+            "tab_label": "Booking Rules",
+            "section": null,
+            "path": "admin.php?page=salon-settings&tab=booking",
+            "type": null,
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": false
+        },
+        {
+            "key": "parallels_hour",
+            "label": "Customers per session",
+            "tab": "booking",
+            "tab_label": "Booking Rules",
+            "section": "Customers per session How many people you can attend during a single time/session?",
+            "path": "admin.php?page=salon-settings&tab=booking",
+            "type": "select",
+            "default": 1,
+            "allowed": null,
+            "allowed_range": {
+                "min": 1,
+                "max": 1000,
+                "step": 1
+            },
+            "allowed_source": null,
+            "help": "Set these options carefully because it will affect the number of bookings you can accept for the same time/session.",
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "hours_before_from",
+            "label": "Range starts",
+            "tab": "booking",
+            "tab_label": "Booking Rules",
+            "section": "Booking time range Define the time range in wich customers may book an appointment",
+            "path": "admin.php?page=salon-settings&tab=booking",
+            "type": "select",
+            "default": "+1 day",
+            "allowed": [
+                {
+                    "value": "+5 minutes",
+                    "label": "5 minutes"
+                },
+                {
+                    "value": "+10 minutes",
+                    "label": "10 minutes"
+                },
+                {
+                    "value": "+15 minutes",
+                    "label": "quarter of an hour"
+                },
+                {
+                    "value": "+20 minutes",
+                    "label": "20 minutes"
+                },
+                {
+                    "value": "+30 minutes",
+                    "label": "half hour"
+                },
+                {
+                    "value": "+1 hour",
+                    "label": "1 hour"
+                },
+                {
+                    "value": "+2 hours",
+                    "label": "2 hours"
+                },
+                {
+                    "value": "+3 hours",
+                    "label": "3 hours"
+                },
+                {
+                    "value": "+4 hours",
+                    "label": "4 hours"
+                },
+                {
+                    "value": "+8 hours",
+                    "label": "8 hours"
+                },
+                {
+                    "value": "+16 hours",
+                    "label": "16 hours"
+                },
+                {
+                    "value": "+1 day",
+                    "label": "1 day"
+                },
+                {
+                    "value": "+2 days",
+                    "label": "2 days"
+                },
+                {
+                    "value": "+3 days",
+                    "label": "3 days"
+                },
+                {
+                    "value": "+4 days",
+                    "label": "4 days"
+                },
+                {
+                    "value": "+1 week",
+                    "label": "1 week"
+                },
+                {
+                    "value": "+2 weeks",
+                    "label": "2 weeks"
+                },
+                {
+                    "value": "+3 weeks",
+                    "label": "3 weeks"
+                },
+                {
+                    "value": "+1 month",
+                    "label": "1 month"
+                },
+                {
+                    "value": "+2 months",
+                    "label": "2 months"
+                },
+                {
+                    "value": "+3 months",
+                    "label": "3 months"
+                },
+                {
+                    "value": "+6 months",
+                    "label": "6 months"
+                },
+                {
+                    "value": "+1 year",
+                    "label": "1 years"
+                },
+                {
+                    "value": "+2 years",
+                    "label": "2 years"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "hours_before_to",
+            "label": "Range ends",
+            "tab": "booking",
+            "tab_label": "Booking Rules",
+            "section": "Booking time range Define the time range in wich customers may book an appointment",
+            "path": "admin.php?page=salon-settings&tab=booking",
+            "type": "select",
+            "default": "+1 month",
+            "allowed": [
+                {
+                    "value": "+5 minutes",
+                    "label": "5 minutes"
+                },
+                {
+                    "value": "+10 minutes",
+                    "label": "10 minutes"
+                },
+                {
+                    "value": "+15 minutes",
+                    "label": "quarter of an hour"
+                },
+                {
+                    "value": "+20 minutes",
+                    "label": "20 minutes"
+                },
+                {
+                    "value": "+30 minutes",
+                    "label": "half hour"
+                },
+                {
+                    "value": "+1 hour",
+                    "label": "1 hour"
+                },
+                {
+                    "value": "+2 hours",
+                    "label": "2 hours"
+                },
+                {
+                    "value": "+3 hours",
+                    "label": "3 hours"
+                },
+                {
+                    "value": "+4 hours",
+                    "label": "4 hours"
+                },
+                {
+                    "value": "+8 hours",
+                    "label": "8 hours"
+                },
+                {
+                    "value": "+16 hours",
+                    "label": "16 hours"
+                },
+                {
+                    "value": "+1 day",
+                    "label": "1 day"
+                },
+                {
+                    "value": "+2 days",
+                    "label": "2 days"
+                },
+                {
+                    "value": "+3 days",
+                    "label": "3 days"
+                },
+                {
+                    "value": "+4 days",
+                    "label": "4 days"
+                },
+                {
+                    "value": "+1 week",
+                    "label": "1 week"
+                },
+                {
+                    "value": "+2 weeks",
+                    "label": "2 weeks"
+                },
+                {
+                    "value": "+3 weeks",
+                    "label": "3 weeks"
+                },
+                {
+                    "value": "+1 month",
+                    "label": "1 month"
+                },
+                {
+                    "value": "+2 months",
+                    "label": "2 months"
+                },
+                {
+                    "value": "+3 months",
+                    "label": "3 months"
+                },
+                {
+                    "value": "+6 months",
+                    "label": "6 months"
+                },
+                {
+                    "value": "+1 year",
+                    "label": "1 years"
+                },
+                {
+                    "value": "+2 years",
+                    "label": "2 years"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "interval",
+            "label": "Minutes per session",
+            "tab": "booking",
+            "tab_label": "Booking Rules",
+            "section": "Session average duration This option will change the minimum hour fraction of the Time picker.",
+            "path": "admin.php?page=salon-settings&tab=booking",
+            "type": "select",
+            "default": 30,
+            "allowed": [
+                {
+                    "value": "4",
+                    "label": "4"
+                },
+                {
+                    "value": "5",
+                    "label": "5"
+                },
+                {
+                    "value": "10",
+                    "label": "10"
+                },
+                {
+                    "value": "15",
+                    "label": "15"
+                },
+                {
+                    "value": "20",
+                    "label": "20"
+                },
+                {
+                    "value": "30",
+                    "label": "30"
+                },
+                {
+                    "value": "45",
+                    "label": "45"
+                },
+                {
+                    "value": "60",
+                    "label": "60"
+                },
+                {
+                    "value": "75",
+                    "label": "75"
+                },
+                {
+                    "value": "90",
+                    "label": "90"
+                },
+                {
+                    "value": "105",
+                    "label": "105"
+                },
+                {
+                    "value": "120",
+                    "label": "120"
+                },
+                {
+                    "value": "135",
+                    "label": "135"
+                },
+                {
+                    "value": "150",
+                    "label": "150"
+                },
+                {
+                    "value": "240",
+                    "label": "240"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": "We suggest you to set this option accordingly with the duration of your shortest service.",
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "auto_align_slots",
+            "label": "Enable auto-align time slots",
+            "tab": "booking",
+            "tab_label": "Booking Rules",
+            "section": "Auto-align time slots Align available time slots with service duration to prevent booking conflicts",
+            "path": "admin.php?page=salon-settings&tab=booking",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": "When enabled, customers will only see time slots aligned with the service duration. For example, a 2-hour service will show slots every 2 hours (09:00, 11:00, 13:00...) instead of every 15 minutes. This prevents customers from booking at misaligned times that would block optimal scheduling.",
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "form_steps_alt_order",
+            "label": "Change order",
+            "tab": "booking",
+            "tab_label": "Booking Rules",
+            "section": "Booking steps order",
+            "path": "admin.php?page=salon-settings&tab=booking",
+            "type": "checkbox",
+            "default": "1",
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "multiple_customers_for_assistant",
+            "label": null,
+            "tab": "booking",
+            "tab_label": "Booking Rules",
+            "section": null,
+            "path": "admin.php?page=salon-settings&tab=booking",
+            "type": null,
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": false
+        },
+        {
+            "key": "rescheduling_disabled",
+            "label": "Disable reschedule",
+            "tab": "booking",
+            "tab_label": "Booking Rules",
+            "section": "Booking rescheduling",
+            "path": "admin.php?page=salon-settings&tab=booking",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": "Select this option if you want disable the RESCHEDULE feature.",
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "days_before_rescheduling",
+            "label": "Time in advance",
+            "tab": "booking",
+            "tab_label": "Booking Rules",
+            "section": "Booking rescheduling",
+            "path": "admin.php?page=salon-settings&tab=booking",
+            "type": "select",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "6",
+                    "label": "6 hours"
+                },
+                {
+                    "value": "12",
+                    "label": "12 hours"
+                },
+                {
+                    "value": "24",
+                    "label": "1 day"
+                },
+                {
+                    "value": "48",
+                    "label": "2 days"
+                },
+                {
+                    "value": "72",
+                    "label": "3 days"
+                },
+                {
+                    "value": "168",
+                    "label": "1 week"
+                },
+                {
+                    "value": "336",
+                    "label": "2 weeks"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": "How many hours before the appointment the rescheduling is still allowed",
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "enable_resources",
+            "label": "Enable “Resources based reservations”",
+            "tab": "booking",
+            "tab_label": "Booking Rules",
+            "section": "Resources",
+            "path": "admin.php?page=salon-settings&tab=booking",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": true,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "enabled_one_click_booking",
+            "label": "Enable one-click booking",
+            "tab": "booking",
+            "tab_label": "Booking Rules",
+            "section": "One-click booking",
+            "path": "admin.php?page=salon-settings&tab=booking",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": "When active, returning customers see a personalised booking proposal as the first step of the booking form, letting them confirm in one click. Guests see a login prompt.",
+            "pro": false,
+            "saved_by_tab": false,
+            "rendered": true
+        },
+        {
+            "key": "one_click_min_bookings",
+            "label": "Minimum past bookings required",
+            "tab": "booking",
+            "tab_label": "Booking Rules",
+            "section": "One-click booking",
+            "path": "admin.php?page=salon-settings&tab=booking",
+            "type": "number",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": "Number of completed bookings a customer must have before the forecast step is shown. Default: 1.",
+            "pro": false,
+            "saved_by_tab": false,
+            "rendered": true
+        },
+        {
+            "key": "enabled_guest_checkout",
+            "label": "Enable guest checkout",
+            "tab": "checkout",
+            "tab_label": "Checkout",
+            "section": "Checkout options",
+            "path": "admin.php?page=salon-settings&tab=checkout",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "enabled_force_guest_checkout",
+            "label": "Enable force guest checkout",
+            "tab": "checkout",
+            "tab_label": "Checkout",
+            "section": "Checkout options",
+            "path": "admin.php?page=salon-settings&tab=checkout",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "skip_checkout_if_logged_in",
+            "label": "Skip the checkout form if user is logged-in",
+            "tab": "checkout",
+            "tab_label": "Checkout",
+            "section": "Checkout options",
+            "path": "admin.php?page=salon-settings&tab=checkout",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "enabled_fb_login",
+            "label": "Enable Facebook login",
+            "tab": "checkout",
+            "tab_label": "Checkout",
+            "section": "Facebook login",
+            "path": "admin.php?page=salon-settings&tab=checkout",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "fb_app_id",
+            "label": "Facebook application ID",
+            "tab": "checkout",
+            "tab_label": "Checkout",
+            "section": "Facebook login",
+            "path": "admin.php?page=salon-settings&tab=checkout",
+            "type": "text",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "fb_app_secret",
+            "label": "Facebook application Secret",
+            "tab": "checkout",
+            "tab_label": "Checkout",
+            "section": "Facebook login",
+            "path": "admin.php?page=salon-settings&tab=checkout",
+            "type": "text",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "primary_services_count",
+            "label": "Primary service",
+            "tab": "checkout",
+            "tab_label": "Checkout",
+            "section": "Services selection limit",
+            "path": "admin.php?page=salon-settings&tab=checkout",
+            "type": "select",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "",
+                    "label": "No limits"
+                },
+                {
+                    "value": "1",
+                    "label": "1"
+                },
+                {
+                    "value": "2",
+                    "label": "2"
+                },
+                {
+                    "value": "3",
+                    "label": "3"
+                },
+                {
+                    "value": "4",
+                    "label": "4"
+                },
+                {
+                    "value": "5",
+                    "label": "5"
+                },
+                {
+                    "value": "6",
+                    "label": "6"
+                },
+                {
+                    "value": "7",
+                    "label": "7"
+                },
+                {
+                    "value": "8",
+                    "label": "8"
+                },
+                {
+                    "value": "9",
+                    "label": "9"
+                },
+                {
+                    "value": "10",
+                    "label": "10"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "secondary_services_count",
+            "label": "Secondary services",
+            "tab": "checkout",
+            "tab_label": "Checkout",
+            "section": "Services selection limit",
+            "path": "admin.php?page=salon-settings&tab=checkout",
+            "type": "select",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "",
+                    "label": "No limits"
+                },
+                {
+                    "value": "1",
+                    "label": "1"
+                },
+                {
+                    "value": "2",
+                    "label": "2"
+                },
+                {
+                    "value": "3",
+                    "label": "3"
+                },
+                {
+                    "value": "4",
+                    "label": "4"
+                },
+                {
+                    "value": "5",
+                    "label": "5"
+                },
+                {
+                    "value": "6",
+                    "label": "6"
+                },
+                {
+                    "value": "7",
+                    "label": "7"
+                },
+                {
+                    "value": "8",
+                    "label": "8"
+                },
+                {
+                    "value": "9",
+                    "label": "9"
+                },
+                {
+                    "value": "10",
+                    "label": "10"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "is_secondary_services_selection_required",
+            "label": "Make service selection required",
+            "tab": "checkout",
+            "tab_label": "Checkout",
+            "section": "Services selection limit",
+            "path": "admin.php?page=salon-settings&tab=checkout",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "enable_discount_system",
+            "label": "Enable",
+            "tab": "checkout",
+            "tab_label": "Checkout",
+            "section": "Advanced Discount System",
+            "path": "admin.php?page=salon-settings&tab=checkout",
+            "type": "checkbox",
+            "default": true,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "checkout_fields",
+            "label": null,
+            "tab": "checkout",
+            "tab_label": "Checkout",
+            "section": "Checkout form fields Use this option to control the form fields to checkout",
+            "path": "admin.php?page=salon-settings&tab=checkout",
+            "type": "text",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "gen_timetable",
+            "label": "Use this field to provide your customers important infos about terms and conditions of their reservation.",
+            "tab": "checkout",
+            "tab_label": "Checkout",
+            "section": "Booking notes",
+            "path": "admin.php?page=salon-settings&tab=checkout",
+            "type": "textarea",
+            "default": "In case of delay we'll keep your \"seat\" for 15 minutes, after that you'll loose your priority.",
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": "Will be displayed on checkout page before booking completition.",
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "last_step_note",
+            "label": "Use this field to provide your customers important infos about terms and conditions of their reservation.",
+            "tab": "checkout",
+            "tab_label": "Checkout",
+            "section": "Last step note",
+            "path": "admin.php?page=salon-settings&tab=checkout",
+            "type": "textarea",
+            "default": "You will receive a booking confirmation by email.If you do not receive an email in 5 minutes, check your Junk Mail or Spam Folder. If you need to change your reservation, please call <strong>[SALON PHONE]</strong> or send an e-mail to <strong>[SALON EMAIL]</strong>.",
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": "Will be displayed on thankyou page. You can use [SALON PHONE], [SALON EMAIL]",
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "disable_summary_skip_countdown",
+            "label": "Disable",
+            "tab": "checkout",
+            "tab_label": "Checkout",
+            "section": "Disable countdown on booking completion",
+            "path": "admin.php?page=salon-settings&tab=checkout",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": true,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "enable_customer_fidelity_score",
+            "label": "Enable",
+            "tab": "checkout",
+            "tab_label": "Checkout",
+            "section": "Customer fidelity score",
+            "path": "admin.php?page=salon-settings&tab=checkout",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": true,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "fb_app_redirect",
+            "label": "Facebook application Redirect URI",
+            "tab": "checkout",
+            "tab_label": "Checkout",
+            "section": "Facebook login",
+            "path": "admin.php?page=salon-settings&tab=checkout",
+            "type": "text",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": false,
+            "rendered": true
+        },
+        {
+            "key": "hide_prices",
+            "label": "Hide Prices",
+            "tab": "payments",
+            "tab_label": "Payments",
+            "section": "Prices visibility",
+            "path": "admin.php?page=salon-settings&tab=payments",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "pay_method",
+            "label": "PayPal",
+            "tab": "payments",
+            "tab_label": "Payments",
+            "section": "Payment methods",
+            "path": "admin.php?page=salon-settings&tab=payments",
+            "type": "radio",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "paypal",
+                    "label": "PayPal"
+                },
+                {
+                    "value": "stripe",
+                    "label": "Stripe"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": true,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "pay_currency",
+            "label": "Set your currency",
+            "tab": "payments",
+            "tab_label": "Payments",
+            "section": "Currency",
+            "path": "admin.php?page=salon-settings&tab=payments",
+            "type": "select",
+            "default": "USD",
+            "allowed": [
+                {
+                    "value": "AUD",
+                    "label": "AUD (A$)"
+                },
+                {
+                    "value": "AOA",
+                    "label": "AOA (Kz)"
+                },
+                {
+                    "value": "AED",
+                    "label": "AED (د.إ)"
+                },
+                {
+                    "value": "AMD",
+                    "label": "AMD (֏)"
+                },
+                {
+                    "value": "ARS",
+                    "label": "ARS (A$)"
+                },
+                {
+                    "value": "AZN",
+                    "label": "AZN (man)"
+                },
+                {
+                    "value": "BRL",
+                    "label": "BRL (R$)"
+                },
+                {
+                    "value": "BGN",
+                    "label": "BGN (лв)"
+                },
+                {
+                    "value": "BAM",
+                    "label": "BAM (KM)"
+                },
+                {
+                    "value": "BYN",
+                    "label": "BYN (Br)"
+                },
+                {
+                    "value": "BD",
+                    "label": "BD (.د.ب)"
+                },
+                {
+                    "value": "BOB",
+                    "label": "BOB (Bs)"
+                },
+                {
+                    "value": "BDT",
+                    "label": "BDT (৳)"
+                },
+                {
+                    "value": "BZD",
+                    "label": "BZD (BZ$)"
+                },
+                {
+                    "value": "CAD",
+                    "label": "CAD ($)"
+                },
+                {
+                    "value": "KYD",
+                    "label": "KYD (CI$)"
+                },
+                {
+                    "value": "CLP",
+                    "label": "CLP ($)"
+                },
+                {
+                    "value": "CVE",
+                    "label": "CVE (Esc)"
+                },
+                {
+                    "value": "CRC",
+                    "label": "CRC (₡)"
+                },
+                {
+                    "value": "CZK",
+                    "label": "CZK (Kč)"
+                },
+                {
+                    "value": "CHF",
+                    "label": "CHF (CHF)"
+                },
+                {
+                    "value": "CFA",
+                    "label": "CFA (CFA)"
+                },
+                {
+                    "value": "XOF",
+                    "label": "XOF (XOF)"
+                },
+                {
+                    "value": "XAF",
+                    "label": "XAF (XAF)"
+                },
+                {
+                    "value": "COP",
+                    "label": "COP ($)"
+                },
+                {
+                    "value": "DKK",
+                    "label": "DKK (kr )"
+                },
+                {
+                    "value": "DOP",
+                    "label": "DOP (RD$)"
+                },
+                {
+                    "value": "DZD",
+                    "label": "DZD (DA)"
+                },
+                {
+                    "value": "CNY",
+                    "label": "CNY (¥)"
+                },
+                {
+                    "value": "EUR",
+                    "label": "EUR (€)"
+                },
+                {
+                    "value": "EGP",
+                    "label": "EGP (E£)"
+                },
+                {
+                    "value": "GEL",
+                    "label": "GEL (ლ)"
+                },
+                {
+                    "value": "HTG",
+                    "label": "HTG (G)"
+                },
+                {
+                    "value": "HRK",
+                    "label": "HRK (kn)"
+                },
+                {
+                    "value": "HKD",
+                    "label": "HKD ($)"
+                },
+                {
+                    "value": "HUF",
+                    "label": "HUF (Ft)"
+                },
+                {
+                    "value": "HNL",
+                    "label": "HNL (L)"
+                },
+                {
+                    "value": "ILS",
+                    "label": "ILS (₪)"
+                },
+                {
+                    "value": "INR",
+                    "label": "INR (₹)"
+                },
+                {
+                    "value": "IDR",
+                    "label": "IDR (Rp)"
+                },
+                {
+                    "value": "ISK",
+                    "label": "ISK (kr)"
+                },
+                {
+                    "value": "JPY",
+                    "label": "JPY (¥)"
+                },
+                {
+                    "value": "JMD",
+                    "label": "JMD (J$)"
+                },
+                {
+                    "value": "KES",
+                    "label": "KES (KSh)"
+                },
+                {
+                    "value": "KZT",
+                    "label": "KZT (₸)"
+                },
+                {
+                    "value": "MMK",
+                    "label": "MMK (K)"
+                },
+                {
+                    "value": "MKD",
+                    "label": "MKD (ден)"
+                },
+                {
+                    "value": "LEU",
+                    "label": "LEU (Leu)"
+                },
+                {
+                    "value": "LKR",
+                    "label": "LKR (₹)"
+                },
+                {
+                    "value": "MXN",
+                    "label": "MXN ($)"
+                },
+                {
+                    "value": "MUR",
+                    "label": "MUR (₨)"
+                },
+                {
+                    "value": "MYR",
+                    "label": "MYR (RM)"
+                },
+                {
+                    "value": "MAD",
+                    "label": "MAD (.د.م)"
+                },
+                {
+                    "value": "NOK",
+                    "label": "NOK (Kr)"
+                },
+                {
+                    "value": "NZD",
+                    "label": "NZD ($)"
+                },
+                {
+                    "value": "NGN",
+                    "label": "NGN (₦)"
+                },
+                {
+                    "value": "OMR",
+                    "label": "OMR (R.O.)"
+                },
+                {
+                    "value": "PEN",
+                    "label": "PEN (S/.)"
+                },
+                {
+                    "value": "PKR",
+                    "label": "PKR (₨)"
+                },
+                {
+                    "value": "PHP",
+                    "label": "PHP (₱)"
+                },
+                {
+                    "value": "PLN",
+                    "label": "PLN (zł)"
+                },
+                {
+                    "value": "RON",
+                    "label": "RON (lei)"
+                },
+                {
+                    "value": "RWF",
+                    "label": "RWF (R₣)"
+                },
+                {
+                    "value": "QAR",
+                    "label": "QAR (﷼)"
+                },
+                {
+                    "value": "GBP",
+                    "label": "GBP (£)"
+                },
+                {
+                    "value": "GHS",
+                    "label": "GHS (₵)"
+                },
+                {
+                    "value": "GTQ",
+                    "label": "GTQ (Q)"
+                },
+                {
+                    "value": "SAR",
+                    "label": "SAR (ر.س)"
+                },
+                {
+                    "value": "SGD",
+                    "label": "SGD ($)"
+                },
+                {
+                    "value": "SRD",
+                    "label": "SRD ($)"
+                },
+                {
+                    "value": "SEK",
+                    "label": "SEK (kr)"
+                },
+                {
+                    "value": "KRW",
+                    "label": "KRW (₩)"
+                },
+                {
+                    "value": "KWD",
+                    "label": "KWD (KD)"
+                },
+                {
+                    "value": "KGS",
+                    "label": "KGS (c)"
+                },
+                {
+                    "value": "TWD",
+                    "label": "TWD (NT$)"
+                },
+                {
+                    "value": "TRY",
+                    "label": "TRY (₺)"
+                },
+                {
+                    "value": "THB",
+                    "label": "THB (฿)"
+                },
+                {
+                    "value": "TND",
+                    "label": "TND (DT)"
+                },
+                {
+                    "value": "TJS",
+                    "label": "TJS (смн)"
+                },
+                {
+                    "value": "TMT",
+                    "label": "TMT (m)"
+                },
+                {
+                    "value": "TTD",
+                    "label": "TTD ($)"
+                },
+                {
+                    "value": "TZS",
+                    "label": "TZS (TSh)"
+                },
+                {
+                    "value": "USD",
+                    "label": "USD ($)"
+                },
+                {
+                    "value": "UZS",
+                    "label": "UZS (сўм)"
+                },
+                {
+                    "value": "UGS",
+                    "label": "UGS (USh)"
+                },
+                {
+                    "value": "UAH",
+                    "label": "UAH (₴)"
+                },
+                {
+                    "value": "UYU",
+                    "label": "UYU ($)"
+                },
+                {
+                    "value": "VND",
+                    "label": "VND (₫)"
+                },
+                {
+                    "value": "RUB",
+                    "label": "RUB (₽)"
+                },
+                {
+                    "value": "RSD",
+                    "label": "RSD (din)"
+                },
+                {
+                    "value": "ZAR",
+                    "label": "ZAR (R)"
+                },
+                {
+                    "value": "XCG",
+                    "label": "XCG (Cg)"
+                },
+                {
+                    "value": "ANG",
+                    "label": "ANG (ƒ)"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "pay_currency_pos",
+            "label": "Set your currency position",
+            "tab": "payments",
+            "tab_label": "Payments",
+            "section": "Currency",
+            "path": "admin.php?page=salon-settings&tab=payments",
+            "type": "select",
+            "default": "right",
+            "allowed": [
+                {
+                    "value": "left",
+                    "label": "on left side"
+                },
+                {
+                    "value": "right",
+                    "label": "on right side"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "pay_decimal_separator",
+            "label": "Decimal separator",
+            "tab": "payments",
+            "tab_label": "Payments",
+            "section": "Currency",
+            "path": "admin.php?page=salon-settings&tab=payments",
+            "type": "text",
+            "default": ".",
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "pay_thousand_separator",
+            "label": "Thousand separator",
+            "tab": "payments",
+            "tab_label": "Payments",
+            "section": "Currency",
+            "path": "admin.php?page=salon-settings&tab=payments",
+            "type": "text",
+            "default": ",",
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "pay_paypal_email",
+            "label": "Your PayPal account e-mail",
+            "tab": "payments",
+            "tab_label": "Payments",
+            "section": "Payment methods",
+            "path": "admin.php?page=salon-settings&tab=payments",
+            "type": "text",
+            "default": "test@test.com",
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": true,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "pay_paypal_test",
+            "label": "Enable PayPal sandbox",
+            "tab": "payments",
+            "tab_label": "Payments",
+            "section": "Payment methods",
+            "path": "admin.php?page=salon-settings&tab=payments",
+            "type": "checkbox",
+            "default": true,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": true,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "pay_cash",
+            "label": "Pay later Status",
+            "tab": "payments",
+            "tab_label": "Payments",
+            "section": "Pay later",
+            "path": "admin.php?page=salon-settings&tab=payments",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": true,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "pay_offset_enabled",
+            "label": "Enable cancellation",
+            "tab": "payments",
+            "tab_label": "Payments",
+            "section": "Unpaid reservations",
+            "path": "admin.php?page=salon-settings&tab=payments",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": "Select this option if you want to automatically cancel unpaid reservations.",
+            "pro": true,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "pay_offset",
+            "label": "Delete unpaid reservations after",
+            "tab": "payments",
+            "tab_label": "Payments",
+            "section": "Unpaid reservations",
+            "path": "admin.php?page=salon-settings&tab=payments",
+            "type": "select",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "3",
+                    "label": "3m"
+                },
+                {
+                    "value": "15",
+                    "label": "15m"
+                },
+                {
+                    "value": "30",
+                    "label": "30m"
+                },
+                {
+                    "value": "60",
+                    "label": "1h"
+                },
+                {
+                    "value": "120",
+                    "label": "2h"
+                },
+                {
+                    "value": "360",
+                    "label": "6h"
+                },
+                {
+                    "value": "720",
+                    "label": "12h"
+                },
+                {
+                    "value": "1440",
+                    "label": "24h"
+                },
+                {
+                    "value": "2880",
+                    "label": "48h"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": "Set the time range to complete the online payment.",
+            "pro": true,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "pay_enabled",
+            "label": "Online payment Status",
+            "tab": "payments",
+            "tab_label": "Payments",
+            "section": "Online paymentAllow users to pay in advance using one of the available payment methods.",
+            "path": "admin.php?page=salon-settings&tab=payments",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": true,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "pay_deposit",
+            "label": "Percentage",
+            "tab": "payments",
+            "tab_label": "Payments",
+            "section": "Pay a deposit",
+            "path": "admin.php?page=salon-settings&tab=payments",
+            "type": "select",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "0",
+                    "label": "entire amount (disabled)"
+                },
+                {
+                    "value": "fixed",
+                    "label": "fixed"
+                },
+                {
+                    "value": "10",
+                    "label": "10%"
+                },
+                {
+                    "value": "15",
+                    "label": "15%"
+                },
+                {
+                    "value": "20",
+                    "label": "20%"
+                },
+                {
+                    "value": "30",
+                    "label": "30%"
+                },
+                {
+                    "value": "40",
+                    "label": "40%"
+                },
+                {
+                    "value": "50",
+                    "label": "50%"
+                },
+                {
+                    "value": "60",
+                    "label": "60%"
+                },
+                {
+                    "value": "70",
+                    "label": "70%"
+                },
+                {
+                    "value": "80",
+                    "label": "80%"
+                },
+                {
+                    "value": "90",
+                    "label": "90%"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": true,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "pay_deposit_fixed_amount",
+            "label": "Fixed amount",
+            "tab": "payments",
+            "tab_label": "Payments",
+            "section": "Pay a deposit",
+            "path": "admin.php?page=salon-settings&tab=payments",
+            "type": "text",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": true,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "pay_deposit_advanced_rules",
+            "label": "Name",
+            "tab": "payments",
+            "tab_label": "Payments",
+            "section": "Advanced rules Set one or more conditions to define the amount of the upfront payment",
+            "path": "admin.php?page=salon-settings&tab=payments",
+            "type": "text",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "less",
+                    "label": "less than"
+                },
+                {
+                    "value": "equal",
+                    "label": "equal to"
+                },
+                {
+                    "value": "more",
+                    "label": "more than"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": true,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "enable_pay_deposit_advanced_rules",
+            "label": "Percentage",
+            "tab": "payments",
+            "tab_label": "Payments",
+            "section": "Pay a deposit",
+            "path": "admin.php?page=salon-settings&tab=payments",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": true,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "disable_first_pending_payment_email_to_customer",
+            "label": "Disable the first email sent to the customer",
+            "tab": "payments",
+            "tab_label": "Payments",
+            "section": "Pending payment email",
+            "path": "admin.php?page=salon-settings&tab=payments",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": true,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "pay_tip_request",
+            "label": "Enable tip field",
+            "tab": "payments",
+            "tab_label": "Payments",
+            "section": "Tip request",
+            "path": "admin.php?page=salon-settings&tab=payments",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": true,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "pay_transaction_fee_amount",
+            "label": "Amount",
+            "tab": "payments",
+            "tab_label": "Payments",
+            "section": "Apply a transaction fee",
+            "path": "admin.php?page=salon-settings&tab=payments",
+            "type": "text",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": true,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "pay_transaction_fee_type",
+            "label": "Select mode",
+            "tab": "payments",
+            "tab_label": "Payments",
+            "section": "Apply a transaction fee",
+            "path": "admin.php?page=salon-settings&tab=payments",
+            "type": "select",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "percent",
+                    "label": "Percentage"
+                },
+                {
+                    "value": "fixed",
+                    "label": "Fixed"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": true,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "pay_minimum_order_amount",
+            "label": "Amount",
+            "tab": "payments",
+            "tab_label": "Payments",
+            "section": "Minimum order amount",
+            "path": "admin.php?page=salon-settings&tab=payments",
+            "type": "text",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": true,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "create_booking_after_pay",
+            "label": null,
+            "tab": "payments",
+            "tab_label": "Payments",
+            "section": null,
+            "path": "admin.php?page=salon-settings&tab=payments",
+            "type": null,
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": false
+        },
+        {
+            "key": "enable_booking_tax_calculation",
+            "label": null,
+            "tab": "payments",
+            "tab_label": "Payments",
+            "section": "Enable TAX calculation",
+            "path": "admin.php?page=salon-settings&tab=payments",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": true,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "enter_tax_price",
+            "label": "Enter tax inclusive prices",
+            "tab": "payments",
+            "tab_label": "Payments",
+            "section": "Enable TAX calculation",
+            "path": "admin.php?page=salon-settings&tab=payments",
+            "type": "radio",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "inclusive",
+                    "label": "Enter tax inclusive prices"
+                },
+                {
+                    "value": "exclusive",
+                    "label": "Enter tax exclusive prices"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": true,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "tax_value",
+            "label": "Enter TAX %",
+            "tab": "payments",
+            "tab_label": "Payments",
+            "section": "Enable TAX calculation",
+            "path": "admin.php?page=salon-settings&tab=payments",
+            "type": "number",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": true,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "pay_stripe_apiKey",
+            "label": "Secret key",
+            "tab": "payments",
+            "tab_label": "Payments",
+            "section": "Payment methods",
+            "path": "admin.php?page=salon-settings&tab=payments",
+            "type": "text",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": true,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "pay_stripe_apiKeyPublic",
+            "label": "Publishable key",
+            "tab": "payments",
+            "tab_label": "Payments",
+            "section": "Payment methods",
+            "path": "admin.php?page=salon-settings&tab=payments",
+            "type": "text",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": true,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "pay_stripe_method",
+            "label": "Select a payment method",
+            "tab": "payments",
+            "tab_label": "Payments",
+            "section": "Payment methods",
+            "path": "admin.php?page=salon-settings&tab=payments",
+            "type": "select",
+            "default": "card",
+            "allowed": [
+                {
+                    "value": "all",
+                    "label": "ALL"
+                },
+                {
+                    "value": "card",
+                    "label": "CREDIT CARD"
+                },
+                {
+                    "value": "bancontact",
+                    "label": "BANCONTACT"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": true,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "style_shortcode",
+            "label": "Small",
+            "tab": "style",
+            "tab_label": "Style",
+            "section": "Select your favorite booking form layout Choose the one that best fits your page",
+            "path": "admin.php?page=salon-settings&tab=style",
+            "type": "radio",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "small",
+                    "label": "Small"
+                },
+                {
+                    "value": "medium",
+                    "label": "Medium"
+                },
+                {
+                    "value": "large",
+                    "label": "Large"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "style_colors_enabled",
+            "label": "Custom colors",
+            "tab": "style",
+            "tab_label": "Style",
+            "section": "Custom colors Choose the one that best fits your page",
+            "path": "admin.php?page=salon-settings&tab=style",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "style_colors",
+            "label": "Background color",
+            "tab": "style",
+            "tab_label": "Style",
+            "section": "Custom colors Choose the one that best fits your page",
+            "path": "admin.php?page=salon-settings&tab=style",
+            "type": "text",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "ajax_enabled",
+            "label": "Enable ajax steps",
+            "tab": "style",
+            "tab_label": "Style",
+            "section": "Booking flow & display Control the steps, screens and details your customers see",
+            "path": "admin.php?page=salon-settings&tab=style",
+            "type": "checkbox",
+            "default": true,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "no_bootstrap",
+            "label": "Disable bootstrap CSS on front-end",
+            "tab": "style",
+            "tab_label": "Style",
+            "section": "Theme compatibility & privacy Resolve conflicts with your theme and meet GDPR requirements",
+            "path": "admin.php?page=salon-settings&tab=style",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "no_bootstrap_js",
+            "label": "Disable bootstrap JS on front-end",
+            "tab": "style",
+            "tab_label": "Style",
+            "section": "Theme compatibility & privacy Resolve conflicts with your theme and meet GDPR requirements",
+            "path": "admin.php?page=salon-settings&tab=style",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "replace_booking_modal_with_popup",
+            "label": "Replace booking modal window with a pop-up",
+            "tab": "style",
+            "tab_label": "Style",
+            "section": "Booking flow & display Control the steps, screens and details your customers see",
+            "path": "admin.php?page=salon-settings&tab=style",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "disable_google_fonts",
+            "label": "Disable Google fonts",
+            "tab": "style",
+            "tab_label": "Style",
+            "section": "Theme compatibility & privacy Resolve conflicts with your theme and meet GDPR requirements",
+            "path": "admin.php?page=salon-settings&tab=style",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "hide_service_duration",
+            "label": "Hide service duration",
+            "tab": "style",
+            "tab_label": "Style",
+            "section": "Booking flow & display Control the steps, screens and details your customers see",
+            "path": "admin.php?page=salon-settings&tab=style",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "disable_forecast_screen",
+            "label": "Disable bookings forecast screen",
+            "tab": "style",
+            "tab_label": "Style",
+            "section": "Booking flow & display Control the steps, screens and details your customers see",
+            "path": "admin.php?page=salon-settings&tab=style",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "google_calendar_enabled",
+            "label": "Google Calendar status",
+            "tab": "gcalendar",
+            "tab_label": "Google Calendar",
+            "section": "Google Calendar settings",
+            "path": "admin.php?page=salon-settings&tab=gcalendar",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": "Synchronize your reservation on your Google Calendar account.",
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "google_outh2_client_id",
+            "label": "Google Client ID",
+            "tab": "gcalendar",
+            "tab_label": "Google Calendar",
+            "section": "Google Calendar settings",
+            "path": "admin.php?page=salon-settings&tab=gcalendar",
+            "type": "text",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": "Synchronize your reservation on your Google Calendar account.",
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "google_outh2_client_secret",
+            "label": "Google Client Secret",
+            "tab": "gcalendar",
+            "tab_label": "Google Calendar",
+            "section": "Google Calendar settings",
+            "path": "admin.php?page=salon-settings&tab=gcalendar",
+            "type": "text",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": "Synchronize your reservation on your Google Calendar account.",
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "google_outh2_redirect_uri",
+            "label": "Redirect URI",
+            "tab": "gcalendar",
+            "tab_label": "Google Calendar",
+            "section": "Google Calendar settings",
+            "path": "admin.php?page=salon-settings&tab=gcalendar",
+            "type": "text",
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": "Synchronize your reservation on your Google Calendar account.",
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "google_client_calendar",
+            "label": null,
+            "tab": "gcalendar",
+            "tab_label": "Google Calendar",
+            "section": null,
+            "path": "admin.php?page=salon-settings&tab=gcalendar",
+            "type": null,
+            "default": null,
+            "allowed": null,
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": false
+        },
+        {
+            "key": "google_calendar_publish_pending_payment",
+            "label": "Publish \"Payment pending\" reservations",
+            "tab": "gcalendar",
+            "tab_label": "Google Calendar",
+            "section": "Google Calendar settings",
+            "path": "admin.php?page=salon-settings&tab=gcalendar",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": "When active even the \"Payment pending\" reservation need to be published on Google Calendar.",
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "google_calendar_lock_slots",
+            "label": "Lock slots for Google Calendar events",
+            "tab": "gcalendar",
+            "tab_label": "Google Calendar",
+            "section": "Google Calendar settings",
+            "path": "admin.php?page=salon-settings&tab=gcalendar",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": "When active, non-booking events on the salon's Google Calendar will lock the corresponding time slots on the booking form.",
+            "pro": true,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "debug",
+            "label": "Show detailed information during checkout",
+            "tab": "documentation",
+            "tab_label": "Support",
+            "section": null,
+            "path": "admin.php?page=salon-settings&tab=documentation",
+            "type": "checkbox",
+            "default": false,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "enable_debug_logs",
+            "label": "Enable debug logs",
+            "tab": "documentation",
+            "tab_label": "Support",
+            "section": null,
+            "path": "admin.php?page=salon-settings&tab=documentation",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        },
+        {
+            "key": "enable_sln_worker_role",
+            "label": "Enable SLN Worker role",
+            "tab": "documentation",
+            "tab_label": "Support",
+            "section": null,
+            "path": "admin.php?page=salon-settings&tab=documentation",
+            "type": "checkbox",
+            "default": null,
+            "allowed": [
+                {
+                    "value": "1",
+                    "label": "on"
+                },
+                {
+                    "value": "0",
+                    "label": "off"
+                }
+            ],
+            "allowed_range": null,
+            "allowed_source": null,
+            "help": null,
+            "pro": false,
+            "saved_by_tab": true,
+            "rendered": true
+        }
+    ],
+    "screens": [
+        {
+            "slug": "salon",
+            "title": "Calendar",
+            "path": "admin.php?page=salon",
+            "capability": "manage_salon"
+        },
+        {
+            "slug": "salon-onboarding",
+            "title": "Setup Wizard",
+            "path": "admin.php?page=salon-onboarding",
+            "capability": "manage_salon"
+        },
+        {
+            "slug": "edit-tags.php?taxonomy=sln_shop_category&post_type=sln_shop",
+            "title": "Shops Categories",
+            "path": "edit-tags.php?taxonomy=sln_shop_category&post_type=sln_shop",
+            "capability": "edit_sln_services"
+        },
+        {
+            "slug": "edit.php?post_type=sln_shop",
+            "title": "Shops",
+            "path": "edit.php?post_type=sln_shop",
+            "capability": "edit_sln_shops"
+        },
+        {
+            "slug": "edit.php?post_type=sln_discount",
+            "title": "Discounts",
+            "path": "edit.php?post_type=sln_discount",
+            "capability": "edit_sln_discounts"
+        },
+        {
+            "slug": "edit-tags.php?taxonomy=sln_service_category&post_type=sln_service",
+            "title": "Services Categories",
+            "path": "edit-tags.php?taxonomy=sln_service_category&post_type=sln_service",
+            "capability": "edit_sln_services"
+        },
+        {
+            "slug": "edit.php?post_type=sln_booking",
+            "title": "Bookings",
+            "path": "edit.php?post_type=sln_booking",
+            "capability": "edit_sln_bookings"
+        },
+        {
+            "slug": "edit.php?post_type=sln_service",
+            "title": "Services",
+            "path": "edit.php?post_type=sln_service",
+            "capability": "edit_sln_services"
+        },
+        {
+            "slug": "edit.php?post_type=sln_attendant",
+            "title": "Assistants",
+            "path": "edit.php?post_type=sln_attendant",
+            "capability": "edit_sln_attendants"
+        },
+        {
+            "slug": "sln-ms-holiday-cleanup",
+            "title": "Holiday Cleanup",
+            "path": "admin.php?page=sln-ms-holiday-cleanup",
+            "capability": "manage_options"
+        },
+        {
+            "slug": "salon-customers",
+            "title": "Customers",
+            "path": "admin.php?page=salon-customers",
+            "capability": "manage_salon"
+        },
+        {
+            "slug": "salon-ai-setup",
+            "title": "AI Setup",
+            "path": "admin.php?page=salon-ai-setup",
+            "capability": "manage_salon"
+        },
+        {
+            "slug": "salon-reports",
+            "title": "Reports",
+            "path": "admin.php?page=salon-reports",
+            "capability": "manage_salon"
+        },
+        {
+            "slug": "salon-settings",
+            "title": "Settings",
+            "path": "admin.php?page=salon-settings",
+            "capability": "manage_salon_settings"
+        },
+        {
+            "slug": "salon-tools",
+            "title": "Tools",
+            "path": "admin.php?page=salon-tools",
+            "capability": "export_reservations_csv_sln_calendar"
+        },
+        {
+            "slug": "salon-extensions",
+            "title": "Extensions",
+            "path": "admin.php?page=salon-extensions",
+            "capability": "manage_salon"
+        },
+        {
+            "slug": "edit.php?post_type=sln_shop",
+            "title": "Shops",
+            "path": "edit.php?post_type=sln_shop",
+            "capability": "edit_sln_shops"
+        },
+        {
+            "slug": "edit.php?post_type=sln_discount",
+            "title": "Discounts",
+            "path": "edit.php?post_type=sln_discount",
+            "capability": "edit_sln_discounts"
+        },
+        {
+            "slug": "edit.php?post_type=sln_booking",
+            "title": "Bookings",
+            "path": "edit.php?post_type=sln_booking",
+            "capability": "edit_sln_bookings"
+        },
+        {
+            "slug": "edit.php?post_type=sln_service",
+            "title": "Services",
+            "path": "edit.php?post_type=sln_service",
+            "capability": "edit_sln_services"
+        },
+        {
+            "slug": "edit.php?post_type=sln_attendant",
+            "title": "Assistants",
+            "path": "edit.php?post_type=sln_attendant",
+            "capability": "edit_sln_attendants"
+        },
+        {
+            "slug": "edit.php?post_type=sln_waitlist_entry",
+            "title": "Waitlist Entries",
+            "path": "edit.php?post_type=sln_waitlist_entry",
+            "capability": "edit_posts"
+        },
+        {
+            "slug": "edit.php?post_type=sln_waitlist_offer",
+            "title": "Waitlist Offers",
+            "path": "edit.php?post_type=sln_waitlist_offer",
+            "capability": "edit_posts"
+        },
+        {
+            "slug": "edit.php?post_type=sln_waitlist_recv",
+            "title": "Waitlist Recoveries",
+            "path": "edit.php?post_type=sln_waitlist_recv",
+            "capability": "edit_posts"
+        }
+    ],
+    "features": [
+        {
+            "id": "calendar",
+            "title": "Back-end calendar",
+            "description": "Monthly, weekly, daily and assistant view. Add and edit reservations.",
+            "pro": false,
+            "settings_tab": "",
+            "path": null
+        },
+        {
+            "id": "assistant_selection",
+            "title": "Assistant selection",
+            "description": "Let customers choose their favourite staff member.",
+            "pro": false,
+            "settings_tab": "general",
+            "path": "admin.php?page=salon-settings&tab=general"
+        },
+        {
+            "id": "customers_per_session",
+            "title": "Customers per session",
+            "description": "How many people you can attend during a single time slot.",
+            "pro": false,
+            "settings_tab": "booking",
+            "path": "admin.php?page=salon-settings&tab=booking"
+        },
+        {
+            "id": "opening_hours",
+            "title": "Opening hours",
+            "description": "Set your open days and time ranges for online booking.",
+            "pro": false,
+            "settings_tab": "booking",
+            "path": "admin.php?page=salon-settings&tab=booking"
+        },
+        {
+            "id": "email_notifications",
+            "title": "Email notifications",
+            "description": "Email notifications on new reservation, reminders, follow-up.",
+            "pro": false,
+            "settings_tab": "general",
+            "path": "admin.php?page=salon-settings&tab=general"
+        },
+        {
+            "id": "sms",
+            "title": "SMS notifications",
+            "description": "SMS notifications and reminders. Twilio, Plivo, 1p1sms supported.",
+            "pro": false,
+            "settings_tab": "general",
+            "path": "admin.php?page=salon-settings&tab=general"
+        },
+        {
+            "id": "payments",
+            "title": "Online payments",
+            "description": "Accept payments with Stripe or PayPal. Deposit and tips.",
+            "pro": true,
+            "settings_tab": "payments",
+            "path": "admin.php?page=salon-settings&tab=payments"
+        },
+        {
+            "id": "google_calendar",
+            "title": "Google Calendar sync",
+            "description": "Two-way sync with Google Calendar.",
+            "pro": false,
+            "settings_tab": "gcalendar",
+            "path": "admin.php?page=salon-settings&tab=gcalendar"
+        },
+        {
+            "id": "discounts",
+            "title": "Discount system",
+            "description": "Create coupon codes and discounts.",
+            "pro": false,
+            "settings_tab": "general",
+            "path": "admin.php?page=salon-settings&tab=general"
+        },
+        {
+            "id": "services",
+            "title": "Services",
+            "description": "Manage services, duration, price, categories.",
+            "pro": false,
+            "settings_tab": "",
+            "path": null
+        },
+        {
+            "id": "assistants",
+            "title": "Assistants / Staff",
+            "description": "Manage staff members and their availability.",
+            "pro": false,
+            "settings_tab": "",
+            "path": null
+        },
+        {
+            "id": "session_duration",
+            "title": "Session duration",
+            "description": "Minutes per session - affects the time picker step.",
+            "pro": false,
+            "settings_tab": "booking",
+            "path": "admin.php?page=salon-settings&tab=booking"
+        },
+        {
+            "id": "holidays",
+            "title": "Holidays",
+            "description": "Set holidays and closed days.",
+            "pro": false,
+            "settings_tab": "booking",
+            "path": "admin.php?page=salon-settings&tab=booking"
+        },
+        {
+            "id": "reports",
+            "title": "Reports",
+            "description": "Stats on reservations and revenues.",
+            "pro": false,
+            "settings_tab": "",
+            "path": null
+        }
+    ],
+    "warnings": []
+}

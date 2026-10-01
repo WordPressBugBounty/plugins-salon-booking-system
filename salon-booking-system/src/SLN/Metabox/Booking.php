@@ -52,6 +52,22 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
 	if (!isset($_GET['mode']) || $_GET['mode'] !== 'sln_editor') {
 	    add_action('in_admin_header', array($this, 'in_admin_header'));
 	}
+
+        // Headers are hidden in admin CSS, so a saved "closed" postbox cannot be reopened.
+        $pt = $this->getPostType();
+        add_filter('postbox_classes_' . $pt . '_' . $pt . '-details', array($this, 'keep_booking_metabox_open'));
+        add_filter('postbox_classes_' . $pt . '_' . $pt . '-actions', array($this, 'keep_booking_metabox_open'));
+    }
+
+    /**
+     * Booking metabox headers are not shown, so never render them collapsed.
+     *
+     * @param string[] $classes
+     * @return string[]
+     */
+    public function keep_booking_metabox_open($classes)
+    {
+        return array_values(array_diff((array) $classes, array('closed')));
     }
 
     public function hookLoadPost()
@@ -165,6 +181,28 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
         $_POST['_sln_booking_services'] = $this->processServicesSubmission(isset($_POST['_sln_booking']) ? $_POST['_sln_booking'] : array());
         $_POST['_sln_booking_services_resources'] = isset($_POST['_sln_booking']['services_resources']) ? $_POST['_sln_booking']['services_resources'] : array();
         if(count($_POST['_sln_booking_services']) == 0){
+            // A booking that already stores services is never deleted here: an empty
+            // payload means the submission lost the service rows (JS failure, truncated
+            // POST, interrupted save), and force-deleting bypasses the trash, so the
+            // booking cannot be recovered. Refuse the save instead — removing a real
+            // booking goes through Trash or the cancelled status.
+            $storedServices = get_post_meta($post_id, '_sln_booking_services', true);
+            if (!empty($storedServices)) {
+                SLN_Plugin::addLog(sprintf(
+                    '[Metabox_Booking] save_post received no services for booking #%d (status %s) - save refused, booking kept',
+                    $post_id,
+                    get_post_status($post_id)
+                ));
+                $this->addError(
+                    __(
+                        'No service was submitted for this booking, so your changes were not saved. Select at least one service, or move the booking to the trash to remove it.',
+                        'salon-booking-system'
+                    )
+                );
+
+                return;
+            }
+
             wp_delete_post($post_id, true);
             if(preg_match('/post\-new\.php/i', $_SERVER['REQUEST_URI'])){
                 wp_redirect(add_query_arg(array('post_type' => 'sln_booking'), admin_url('post-new.php')));

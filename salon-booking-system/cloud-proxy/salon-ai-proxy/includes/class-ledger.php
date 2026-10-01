@@ -8,6 +8,9 @@ class SLN_AI_Proxy_Ledger
 	const OPTION_PREFIX = 'sln_ai_ledger_';
 	const FREE_INCLUDED = 10;
 	const PRO_INCLUDED  = 100;
+	/** Agent loop: max iterations (5) + final answer + retry slack. */
+	const TURN_MAX_CALLS = 8;
+	const TURN_TTL       = 900;
 
 	/**
 	 * @return array<string,array{queries:int,price_cents:int,label:string}>
@@ -248,16 +251,141 @@ class SLN_AI_Proxy_Ledger
 		$edition = isset($auth['edition']) && $auth['edition'] === 'pro' ? 'pro' : 'free';
 
 		if (! self::acquireLock($key)) {
-			return new WP_Error(
-				'sln_ai_ledger_busy',
-				'The usage ledger is busy. Please retry.',
-				array('status' => 503)
-			);
+			return self::busyError();
 		}
 
 		wp_cache_delete($key, 'options');
-		$raw = self::withRollover(get_option($key, array()));
+		$raw     = self::withRollover(get_option($key, array()));
+		$charged = self::chargeOne($auth, $key, $raw, $edition);
+		self::releaseLock($key);
 
+		return $charged;
+	}
+
+	/**
+	 * Bill one query per merchant turn: the first call carrying a turn_id is
+	 * charged, follow-up calls of the same agent loop are free but capped
+	 * (TURN_MAX_CALLS) so a reused turn_id cannot buy unlimited LLM calls.
+	 *
+	 * @param array  $auth
+	 * @param string $turnId
+	 * @return array{usage:array,charged:bool}|WP_Error
+	 */
+	public static function consumeForTurn(array $auth, $turnId)
+	{
+		$key     = self::siteKey($auth);
+		$edition = isset($auth['edition']) && $auth['edition'] === 'pro' ? 'pro' : 'free';
+		$turnKey = self::turnKey($key, $turnId);
+
+		if (! self::acquireLock($key)) {
+			return self::busyError();
+		}
+
+		wp_cache_delete($key, 'options');
+		$raw  = self::withRollover(get_option($key, array()));
+		$turn = get_transient($turnKey);
+
+		if (is_array($turn) && ! empty($turn['charged'])) {
+			$calls = isset($turn['calls']) ? (int) $turn['calls'] : 0;
+			if ($calls >= self::TURN_MAX_CALLS) {
+				self::releaseLock($key);
+
+				return new WP_Error(
+					'sln_ai_turn_limit',
+					'Too many AI calls for a single message. Please send a new message.',
+					array('status' => 429)
+				);
+			}
+			$turn['calls'] = $calls + 1;
+			set_transient($turnKey, $turn, self::TURN_TTL);
+			self::releaseLock($key);
+
+			return array(
+				'usage'   => self::normalize($raw, $edition),
+				'charged' => false,
+			);
+		}
+
+		$usage = self::chargeOne($auth, $key, $raw, $edition);
+		if (! is_wp_error($usage)) {
+			set_transient(
+				$turnKey,
+				array(
+					'charged' => true,
+					'calls'   => 1,
+					'at'      => time(),
+				),
+				self::TURN_TTL
+			);
+		}
+		self::releaseLock($key);
+
+		if (is_wp_error($usage)) {
+			return $usage;
+		}
+
+		return array(
+			'usage'   => $usage,
+			'charged' => true,
+		);
+	}
+
+	/**
+	 * Undo the charge of a turn whose charging call failed, so a retry with the
+	 * same turn_id is billed again exactly once.
+	 *
+	 * @param array  $auth
+	 * @param string $turnId
+	 */
+	public static function refundTurn(array $auth, $turnId)
+	{
+		delete_transient(self::turnKey(self::siteKey($auth), $turnId));
+		self::refundOne($auth);
+	}
+
+	/**
+	 * @param string $turnId
+	 * @return bool
+	 */
+	public static function isValidTurnId($turnId)
+	{
+		return is_string($turnId) && (bool) preg_match('/^[a-f0-9\-]{36}$/i', $turnId);
+	}
+
+	/**
+	 * @param string $siteKey
+	 * @param string $turnId
+	 * @return string
+	 */
+	private static function turnKey($siteKey, $turnId)
+	{
+		// Not "sln_": Salon Booking System on the same site bulk-deletes '_transient_sln_%'.
+		return 'slb_ai_turn_' . md5($siteKey . '|' . strtolower((string) $turnId));
+	}
+
+	/**
+	 * @return WP_Error
+	 */
+	private static function busyError()
+	{
+		return new WP_Error(
+			'sln_ai_ledger_busy',
+			'The usage ledger is busy. Please retry.',
+			array('status' => 503)
+		);
+	}
+
+	/**
+	 * Decrement one query (included first, then credits). Caller holds the lock.
+	 *
+	 * @param array  $auth
+	 * @param string $key
+	 * @param array  $raw
+	 * @param string $edition
+	 * @return array|WP_Error Normalized usage or quota error.
+	 */
+	private static function chargeOne(array $auth, $key, array $raw, $edition)
+	{
 		$limit   = self::includedLimit($edition);
 		$used    = isset($raw['included_used']) ? (int) $raw['included_used'] : 0;
 		$credits = isset($raw['credits']) ? (int) $raw['credits'] : 0;
@@ -267,8 +395,6 @@ class SLN_AI_Proxy_Ledger
 		} elseif ($credits > 0) {
 			$raw['credits'] = $credits - 1;
 		} else {
-			self::releaseLock($key);
-
 			return new WP_Error(
 				'sln_ai_quota_exceeded',
 				'You have used all included AI queries for this month. Buy credits to continue.',
@@ -284,7 +410,6 @@ class SLN_AI_Proxy_Ledger
 		}
 		$raw['edition'] = $edition;
 		update_option($key, $raw, false);
-		self::releaseLock($key);
 
 		return self::normalize($raw, $edition);
 	}

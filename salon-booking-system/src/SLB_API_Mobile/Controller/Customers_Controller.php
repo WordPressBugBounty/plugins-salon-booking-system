@@ -584,7 +584,7 @@ class Customers_Controller extends REST_Controller
         $meta = array(
             '_sln_phone'         => $request->get_param('phone'),
             '_sln_address'       => $request->get_param('address'),
-            '_sln_personal_note' => $request->get_param('note'),
+            '_sln_personal_note' => sanitize_textarea_field($request->get_param('note')),
         );
 
         foreach ($custom_fields as $field) {
@@ -592,6 +592,9 @@ class Customers_Controller extends REST_Controller
         }
 
         foreach ($meta as $key => $value) {
+            if (in_array($key, array('_sln_personal_note', '_sln_administration_note'), true)) {
+                $value = sanitize_textarea_field($value);
+            }
             update_user_meta($id, $key, $value);
         }
 

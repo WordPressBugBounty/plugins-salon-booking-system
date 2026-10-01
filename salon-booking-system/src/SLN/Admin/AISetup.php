@@ -112,6 +112,9 @@ class SLN_Admin_AISetup extends SLN_Admin_AbstractPage
 					SLN_AI_Usage::PRO_INCLUDED
 				),
 				'viewProPlans'    => __('View PRO plans', 'salon-booking-system'),
+				'contactSupport'  => __('Contact support', 'salon-booking-system'),
+				'supportEmail'    => __('Or send it by email', 'salon-booking-system'),
+				'supportForum'    => __('Or ask on the WordPress.org support forum', 'salon-booking-system'),
 			),
 			// State-driven chips: onboarding gaps and add-on discovery first.
 			'suggestions'        => SLN_AI_Proactive::suggestions(SLN_Plugin::getInstance()),
@@ -135,7 +138,7 @@ class SLN_Admin_AISetup extends SLN_Admin_AbstractPage
 	 */
 	public static function enqueueAiAssets($mode = 'page')
 	{
-		$version = SLN_Action_InitScripts::ASSETS_VERSION . '-ai-setup-artifact-v20';
+		$version = SLN_Action_InitScripts::ASSETS_VERSION . '-ai-setup-artifact-v22';
 		$mode    = $mode === 'widget' ? 'widget' : 'page';
 
 		wp_enqueue_style(

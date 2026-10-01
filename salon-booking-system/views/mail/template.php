@@ -102,6 +102,12 @@ a[x-apple-data-detectors] {
                 if(empty($payRemainingAmount)){
                     $payRemainingAmount = isset($data['pay_remaining_amount']) ? $data['pay_remaining_amount'] : false;
                 }
+                if(!isset($service)){
+                    $service = null;
+                }
+                if(!isset($suggestions)){
+                    $suggestions = array();
+                }
                 echo $plugin->loadView('mail/' . $contentTemplate, compact('booking', 'plugin', 'updated_message', 'customer', 'forAdmin', 'updated', 'remind', 'payRemainingAmount', 'service', 'suggestions')) ?>
               </td>
              </tr>
