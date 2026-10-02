@@ -562,6 +562,10 @@ class SLN_Admin_Onboarding extends SLN_Admin_AbstractPage
             }
         }
 
+        // Salon details are optional. When that step was skipped, fill a sender name,
+        // email, and business type from the site so completion still has an identity.
+        $this->applySalonIdentityDefaults();
+
         // Enforce the minimum required setup server-side before anything is marked
         // complete. The wizard UI already gates these, but a hand-crafted request (or a
         // manual #/complete navigation) must not be able to skip them. Services that are
@@ -665,11 +669,13 @@ class SLN_Admin_Onboarding extends SLN_Admin_AbstractPage
     }
 
     /**
-     * Minimal bookable salon so Skip does not land on an empty frontend form.
+     * Name, email, and business type used when the salon-details step is skipped.
+     * Does not invent opening hours or a service.
      */
-    private function applySkipDefaults()
+    private function applySalonIdentityDefaults()
     {
         $settings = $this->plugin->getSettings();
+        $dirty = false;
 
         if (trim((string) get_option('_sln_usage_goal', '')) === '') {
             update_option('_sln_usage_goal', 'skipped');
@@ -678,10 +684,24 @@ class SLN_Admin_Onboarding extends SLN_Admin_AbstractPage
 
         if (trim((string) $settings->get('gen_name')) === '') {
             $settings->set('gen_name', get_bloginfo('name'));
+            $dirty = true;
         }
         if (trim((string) $settings->get('gen_email')) === '') {
             $settings->set('gen_email', (string) get_option('admin_email'));
+            $dirty = true;
         }
+        if ($dirty) {
+            $settings->save();
+        }
+    }
+
+    /**
+     * Minimal bookable salon so Skip does not land on an empty frontend form.
+     */
+    private function applySkipDefaults()
+    {
+        $this->applySalonIdentityDefaults();
+        $settings = $this->plugin->getSettings();
 
         $errors = $this->getOnboardingMinimumErrors();
         if (in_array('availability', $errors, true)) {

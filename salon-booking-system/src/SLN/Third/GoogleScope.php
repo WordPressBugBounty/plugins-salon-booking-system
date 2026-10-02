@@ -871,12 +871,37 @@ class SLN_GoogleScope {
     }
 
     /**
+     * Skip the Google call when no calendar is selected. Writes to the PHP error
+     * log so the skip is visible without Salon debug mode.
+     *
+     * @param object|null $booking
+     * @return bool
+     */
+    private function google_calendar_id_is_set($booking = null) {
+        if (!empty($this->google_client_calendar)) {
+            return true;
+        }
+
+        $suffix = '';
+        if (is_object($booking) && method_exists($booking, 'getId')) {
+            $suffix = ' for booking ' . $booking->getId();
+        }
+        // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+        error_log('[Salon Booking System] Google Calendar sync skipped: no calendar ID configured' . $suffix . '.');
+
+        return false;
+    }
+
+    /**
      * create_event_from_booking
      * @param type $booking
      * @return type
      */
     public function create_event_from_booking($booking, $cancel = false, $error = '') {
         if (!$this->is_connected())
+            return;
+
+        if (!$this->google_calendar_id_is_set($booking))
             return;
 
         $gc_event = new SLN_GoogleCalendarEventFactory();
@@ -911,6 +936,9 @@ class SLN_GoogleScope {
      */
     public function update_event_from_booking($booking, $b_event_id, $cancel = false, $error = '') {
         if (!$this->is_connected())
+            return;
+
+        if (!$this->google_calendar_id_is_set($booking))
             return;
 
         $gc_event = new SLN_GoogleCalendarEventFactory();
@@ -952,6 +980,7 @@ class SLN_GoogleScope {
     public function delete_event_from_booking($event_id) {
         try {
             if(!$this->service) return;
+            if (!$this->google_calendar_id_is_set()) return;
             $this->service->events->delete($this->google_client_calendar, $event_id);
             sln_my_wp_log($event_id);
             sln_my_wp_log($this->google_client_calendar);
@@ -1250,7 +1279,9 @@ function synch_a_booking($booking, $sync = false) {
             if(get_post_meta($booking->getId(),'_sln_booking_shop',true)){
                 $shop_id = get_post_meta($booking->getId(),'_sln_booking_shop',true);
                 $shop_calendar = get_post_meta($shop_id,'_sln_shop_google_client_calendar',true);
-                $GLOBALS['sln_googlescope']->google_client_calendar = $shop_calendar;
+                if (!empty($shop_calendar)) {
+                    $GLOBALS['sln_googlescope']->google_client_calendar = $shop_calendar;
+                }
             }
             try {
 			    $event_id = $GLOBALS['sln_googlescope']->update_event_from_booking($booking, $b_event_id, false, $error);
@@ -1264,7 +1295,9 @@ function synch_a_booking($booking, $sync = false) {
             if(get_post_meta($booking->getId(),'_sln_booking_shop',true)){
                 $shop_id = get_post_meta($booking->getId(),'_sln_booking_shop',true);
                 $shop_calendar = get_post_meta($shop_id,'_sln_shop_google_client_calendar',true);
-                $GLOBALS['sln_googlescope']->google_client_calendar = $shop_calendar;
+                if (!empty($shop_calendar)) {
+                    $GLOBALS['sln_googlescope']->google_client_calendar = $shop_calendar;
+                }
             }
             try {
                 $event_id = $GLOBALS['sln_googlescope']->create_event_from_booking($booking, false, $error);

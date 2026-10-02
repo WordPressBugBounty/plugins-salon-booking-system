@@ -115,6 +115,8 @@ class LabelProvider
             'attendantViewLabel' => __('Assistants view', 'salon-booking-system'),
             'bookingActionEdit' => __('Edit', 'salon-booking-system'),
             'bookingActionDelete' => __('Delete', 'salon-booking-system'),
+            'bookingActionCancel' => __('Cancel booking', 'salon-booking-system'),
+            'cancelBookingConfirmText' => __('Cancel this booking? The customer and the salon will receive a cancellation notification.', 'salon-booking-system'),
             'bookingActionCallCustomer' => __('Call customer', 'salon-booking-system'),
             'bookingActionWhatsappCustomer' => __('Whatsapp customer', 'salon-booking-system'),
             'bookingActionOpenProfile' => __('Open customer profile', 'salon-booking-system'),

@@ -4,7 +4,7 @@ Tags: salon, hairdresser, barber, beauty salon, appointment booking
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4.8
-Stable tag: 10.31.7
+Stable tag: 10.31.8
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -369,6 +369,15 @@ PHP 7.4 and above.
 
 == Changelog ==
 
+
+02.10.2026 - 10.31.8
+
+* New: mobile app — cancel a booking from the reservation card. A confirmation is shown first, and the customer and the salon receive the cancellation notification
+* Fixed: mobile app — a canceled booking now uses the status the rest of the plugin uses, so it is shown as canceled
+* Improved: setup wizard — the steps are now salon details, services, assistants, then opening hours. The time between start slots follows the shortest service, and how many customers can share a start time follows how many assistants you added
+* Fixed: Google Calendar sync is skipped when no calendar is selected, instead of sending a request that fails. A shop without its own calendar no longer clears the main calendar
+* Fixed: a Google Calendar error no longer raises an "Array to string conversion" warning
+* Minor improvements
 
 01.10.2026 - 10.31.7
 

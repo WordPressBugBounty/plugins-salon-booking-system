@@ -3,7 +3,7 @@
 
 class SLN_Action_InitScripts
 {
-    const ASSETS_VERSION = SLN_VERSION . '-20260917-tips-pay-btn';
+    const ASSETS_VERSION = SLN_VERSION . '-20261002-wizard-timing';
 	private static $isInclude = false;
 	private $isAdmin;
 	private $plugin;

@@ -87,6 +87,10 @@
             👎
           </button>
         </div>
+
+        <button class="booking-actions-menu-dots" @click.stop="toggleActionsMenu">
+          &bull;&bull;&bull;
+        </button>
       </div>
     </div>
     
@@ -106,6 +110,7 @@
         :show="showActionsMenu"
         @close="showActionsMenu = false"
         @edit="onEdit"
+        @cancel="onCancel"
         @delete="onDelete"
         @view-profile="onViewProfile"
         @soap-notes="onSoapNotes"
@@ -188,7 +193,7 @@ export default {
         'sln-b-pending': '#D97706',
         'sln-b-pendingpayment': '#D97706',
         'sln-b-paylater': '#0891B2',
-        'sln-b-cancelled': '#DC2626',
+        'sln-b-canceled': '#DC2626',
       };
       return map[this.booking.status] || '#2563EB';
     },
@@ -267,6 +272,9 @@ export default {
     },
     onSoapNotes(booking) {
       this.$emit('showDetails', booking || { ...this.booking, _openSoap: true });
+    },
+    onCancel() {
+      this.cancelBooking();
     },
     onDelete() {
       this.$emit('deleteItem', this.booking.id);
@@ -637,7 +645,10 @@ export default {
         this.isProcessingStatus = false;
       }
     },
-    async rejectBooking() {
+    rejectBooking() {
+      return this.cancelBooking('Booking rejected successfully', 'Failed to reject booking');
+    },
+    async cancelBooking(successMessage = 'Booking cancelled successfully', errorMessage = 'Failed to cancel booking') {
       if (this.isProcessingStatus) return;
       
       this.isProcessingStatus = true;
@@ -645,27 +656,27 @@ export default {
       try {
         // Call the backend API to update booking status to cancelled
         const response = await this.axios.patch(`bookings/${this.booking.id}`, {
-          status: 'sln-b-cancelled'
+          status: 'sln-b-canceled'
         });
         
         if (response.data) {
           // Emit event to parent to refresh the booking
           this.$emit('booking-status-changed', {
             bookingId: this.booking.id,
-            newStatus: 'sln-b-cancelled'
+            newStatus: 'sln-b-canceled'
           });
           
           // Show success message
           this.$root.$emit('show-notification', {
             type: 'success',
-            message: 'Booking rejected successfully'
+            message: successMessage
           });
         }
       } catch (error) {
-        console.error('Error rejecting booking:', error);
+        console.error('Error cancelling booking:', error);
         this.$root.$emit('show-notification', {
           type: 'error',
-          message: 'Failed to reject booking'
+          message: errorMessage
         });
       } finally {
         this.isProcessingStatus = false;
@@ -933,6 +944,11 @@ export default {
   padding: 5px;
   cursor: pointer;
   pointer-events: auto;
+  margin-left: auto;
+}
+
+.approval-actions + .booking-actions-menu-dots {
+  margin-left: 8px;
 }
 
 /* MOBILE-OPTIMIZED RESIZE HANDLE */

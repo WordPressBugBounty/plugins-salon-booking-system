@@ -130,8 +130,12 @@ class REST
             // if we errored out, it should be safe to grab the response body
             $body = (string)$response->getBody();
 
-            // Check if we received errors, and add those to the Exception for convenience
-            throw new GoogleServiceException(esc_html($body), esc_html($code), null, esc_html(self::getResponseErrors($body)));
+            // Check if we received errors, and add those to the Exception for convenience.
+            // Do not escape these values. They are stored on the exception, not printed
+            // as HTML. getResponseErrors() returns an array; esc_html() casts it to the
+            // string "Array" and raises "Array to string conversion".
+            // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            throw new GoogleServiceException($body, $code, null, self::getResponseErrors($body));
         }
 
         // Ensure we only pull the entire body into memory if the request is not
