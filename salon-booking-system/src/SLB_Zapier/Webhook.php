@@ -81,7 +81,7 @@ class Webhook {
     }
 
     protected static function generate_api_key() {
-	return substr(sha1(self::get_url()."|zapier|sln-booking-plugin|".time()), 0, 20);
+	return bin2hex(random_bytes(32));
     }
 
     public function handle_new_booking() {

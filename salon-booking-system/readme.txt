@@ -2,9 +2,9 @@
 Contributors: Salon Booking System
 Tags: salon, hairdresser, barber, beauty salon, appointment booking
 Requires at least: 6.0
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 7.4.8
-Stable tag: 10.31.8
+Stable tag: 10.31.9
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -369,6 +369,13 @@ PHP 7.4 and above.
 
 == Changelog ==
 
+
+03.10.2026 - 10.31.9
+
+* Security fix: API access tokens are now random and stored only as a digest, with a 30-day expiry. Tokens issued by older versions are revoked on update, so staff must open the PWA or log in to the API again
+* Security fix: REST authentication follows the resolved Salon route. A query-string can no longer make a core WordPress endpoint run as a salon user
+* Security fix: new Zapier API keys are random. An existing key is left in place so current Zaps keep working; generate a new one if this site has used Zapier
+* Minor improvements
 
 02.10.2026 - 10.31.8
 

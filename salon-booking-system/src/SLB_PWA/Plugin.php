@@ -230,11 +230,16 @@ class Plugin {
                     );
                 }
 
+                // dist/index.html is a static file under the plugin URL. Do not write
+                // the bearer token into it; the PHP page injects slnPWA itself.
+                $dist_page_data = $data;
+                $dist_page_data['token'] = '';
+
                 file_put_contents(
                     $dist_directory_path . '/index.html',
                     str_replace(
                         array( '{SLN_PWA_DIST_PATH}', '{SLN_PWA_DATA}' ),
-                        array( $dist_url_path, addslashes( wp_json_encode( $data ) ) ),
+                        array( $dist_url_path, addslashes( wp_json_encode( $dist_page_data ) ) ),
                         $tpl_index
                     )
                 );

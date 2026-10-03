@@ -186,7 +186,7 @@ class SLN_Action_Ajax_RescheduleBookingCheckDate extends SLN_Action_Ajax_Abstrac
 		if ( get_post_type( $bookingID ) !== SLN_Plugin::POST_TYPE_BOOKING ) {
 			return array(
 				'success' => 0,
-				'errors'  => array( __( 'Sorry, you cannot reschedule the non-booking.' ) ),
+				'errors'  => array( __( 'Sorry, you cannot reschedule the non-booking.', 'salon-booking-system' ) ),
 			);
 		}
 

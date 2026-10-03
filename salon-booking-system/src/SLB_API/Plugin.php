@@ -30,6 +30,9 @@ class Plugin {
 
     private function __construct()
     {
+        // Revoke legacy predictable tokens before any request can present one.
+        TokenHelper::revokePredictableTokens();
+
 	if ( ! class_exists( '\WP_REST_Server' ) ) {
             return;
         }
@@ -40,7 +43,7 @@ class Plugin {
 
     public function rest_api_init()
     {
-        add_filter('rest_authentication_errors', array($this, 'handle_rest_authentication'), 100, 1);
+        add_filter('rest_pre_dispatch', array($this, 'handle_rest_authentication'), 10, 3);
         $this->register_rest_routes();
     }
 
@@ -71,68 +74,65 @@ class Plugin {
         }
     }
 
-    public function handle_rest_authentication($result)
+    /**
+     * Authenticate Salon desktop API requests from the resolved REST route.
+     *
+     * rest_pre_dispatch receives the WP_REST_Request WordPress will actually
+     * dispatch. A query-string cannot change get_route(), so a core endpoint
+     * cannot be made to look like a Salon route.
+     *
+     * A non-empty return value replaces the REST response. After a successful
+     * login, return the incoming $result (normally null) so dispatch continues.
+     *
+     * @param mixed            $result  Pre-dispatch result.
+     * @param \WP_REST_Server  $server  Server instance.
+     * @param \WP_REST_Request $request Request.
+     * @return mixed
+     */
+    public function handle_rest_authentication($result, $server = null, $request = null)
     {
-        // Resolve whether this request targets a Salon desktop API route BEFORE
-        // deferring to any pre-existing $result. Our Access-Token must stay the
-        // authoritative credential for our own routes: if another plugin/filter on
-        // rest_authentication_errors has already returned true for what is actually
-        // an anonymous (tokenless-cookie) session, deferring here would let the
-        // request reach our endpoints as user 0 and fail the capability check with
-        // "Sorry, you cannot list resources." (HTTP 401) even though a valid
-        // Access-Token was sent.
-        $request_uri  = $_SERVER['REQUEST_URI'] ?? '';
-        $is_salon_api = (stristr($request_uri, self::BASE_API) !== false);
+        unset($server);
 
-        // Not one of our routes: respect whatever any other method decided.
+        if (!$request instanceof \WP_REST_Request) {
+            return $result;
+        }
+
+        $route = strtolower(untrailingslashit((string) $request->get_route()));
+        $prefix = '/' . self::BASE_API;
+        $is_salon_api = ($route === $prefix || strpos($route, $prefix . '/') === 0);
+
+        // Not one of our routes: never switch the current user.
         if (!$is_salon_api) {
             return $result;
         }
 
-        // Allow login endpoint without authentication
-        if (stristr($request_uri, '/login') !== false) {
+        if ($request->get_method() === 'OPTIONS') {
             return $result;
         }
 
-        // Check if user is already logged in via WordPress cookies
-        // This happens when API is called from admin area
-        $current_user_id = get_current_user_id();
-        if ($current_user_id > 0) {
-            // User is authenticated via WordPress session
-            return true;
+        if ($route === $prefix . '/login') {
+            return $result;
         }
 
-        // Respect a deliberate failure from another authentication method (e.g. a
-        // security plugin blocking the request). We only take over a permissive or
-        // undecided result, never override an explicit block.
         if (is_wp_error($result)) {
             return $result;
         }
 
-        // Check for our access token (external API access). This runs even when
-        // $result is already true, so our token resolution — and the matching
-        // wp_set_current_user() — is not skipped by an upstream "true".
-        $token_helper   = new TokenHelper();
-        $request_helper = new RequestHelper();
-
-        $access_token = $request_helper->getAccessToken();
-
-        if (!empty($access_token) && $token_helper->isValidUserAccessToken($access_token)) {
-            // Valid token, set current user
-            $user_id = $token_helper->getUserIdByAccessToken($access_token);
-            if ($user_id) {
-                wp_set_current_user($user_id);
-                return true;
-            }
-        }
-
-        // No valid Salon token. If another method already produced a definitive
-        // (non-error) result, respect it rather than masking it.
-        if ($result !== null) {
+        // Cookie session from wp-admin. Do not return true: that would replace
+        // the REST response on rest_pre_dispatch.
+        if (get_current_user_id() > 0) {
             return $result;
         }
 
-        // No valid authentication found
+        $token_helper   = new TokenHelper();
+        $request_helper = new RequestHelper();
+        $user_id        = $token_helper->getUserIdByAccessToken($request_helper->getAccessToken());
+
+        if ($user_id && get_userdata($user_id)) {
+            wp_set_current_user((int) $user_id);
+            return $result;
+        }
+
         return new WP_Error(
             'salon_rest_cannot_view',
             __('Sorry, you access token incorrect.', 'salon-booking-system'),
