@@ -13,6 +13,7 @@ class SLN_Metabox_Service extends SLN_Metabox_Abstract
         'secondary_parent_services' => '',
         'attendants'     => 'bool',
         'parallel_exec'  => 'bool',
+        'parallel_services' => '',
         'unit'           => 'int',
         'break_duration' => 'int',
         'exec_order'     => 'int',

@@ -239,7 +239,11 @@ class SLN_Action_Ajax_CheckDate extends SLN_Action_Ajax_Abstract
         // builder so admin and front-end agree on the duration filter).
         $sequentialMinutes = 0;
         $maxParallel       = 0;
+        $serviceIds        = array();
         foreach ($bookingServices->getItems() as $bookingService) {
+            if ($bookingService->getService()) {
+                $serviceIds[] = $bookingService->getService()->getId();
+            }
             $d          = $bookingService->getTotalDuration();
             $dInMinutes = (intval($d->format('H')) * 60) + intval($d->format('i'));
             if ($bookingService->getParallelExec()) {
@@ -250,7 +254,8 @@ class SLN_Action_Ajax_CheckDate extends SLN_Action_Ajax_Abstract
                 $sequentialMinutes += $dInMinutes;
             }
         }
-        $minutes = $sequentialMinutes + $maxParallel;
+        $parallelMap = SLN_Wrapper_Service::resolveParallelExecution($serviceIds);
+        $minutes = SLN_Wrapper_Service::combineParallelDurations($sequentialMinutes, $maxParallel, !empty($parallelMap['partner_rules']));
 
         if ($minutes > 0) {
             $this->setDuration(new Time(SLN_Func::convertToHoursMins($minutes)));

@@ -61,11 +61,15 @@ class SLN_AI_ToolRegistry
 		$simpleObjectShop['properties']['shop_id']   = array('type' => 'integer', 'description' => 'Multi-shop location id');
 		$simpleObjectShop['properties']['shop_name'] = array('type' => 'string', 'description' => 'Multi-shop location name');
 
+		$weekdayItem = array(
+			'type' => 'string',
+			'enum' => array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
+		);
 		$availabilityRuleItem = array(
 			'type'       => 'object',
 			'required'   => array('days', 'intervals'),
 			'properties' => array(
-				'days'      => array('type' => 'array', 'items' => array('type' => 'integer')),
+				'days'      => array('type' => 'array', 'items' => $weekdayItem),
 				'intervals' => array(
 					'type'     => 'array',
 					'minItems' => 1,
@@ -93,7 +97,7 @@ class SLN_AI_ToolRegistry
 				'name'        => 'set_salon_availabilities',
 				'tier'        => 'confirm',
 				'class'       => 'SLN_AI_Tools_SetAvailabilities',
-				'description' => 'Set salon opening hours and align assistant/service custom hours that would block the new timetable. Days 1=Sun…7=Sat. Weekly rules are recurring (always=true). Use closed_days + preserve_unmentioned for days not listed. Two intervals only for an explicit lunch break. Multi-shop: shop_id/shop_name.',
+				'description' => 'Set salon opening hours and align assistant/service custom hours that would block the new timetable. Days are English weekday names. Weekly rules are recurring (always=true). Use closed_days + preserve_unmentioned for days not listed. Two intervals only for an explicit lunch break. Multi-shop: shop_id/shop_name.',
 				'parameters'  => array(
 					'type'       => 'object',
 					'required'   => array('rules'),
@@ -104,8 +108,8 @@ class SLN_AI_ToolRegistry
 						'shop_name'  => array('type' => 'string', 'description' => 'Multi-shop location name'),
 						'closed_days' => array(
 							'type'        => 'array',
-							'items'       => array('type' => 'integer'),
-							'description' => 'Weekdays to close (1=Sun…7=Sat)',
+							'items'       => $weekdayItem,
+							'description' => 'Weekdays to close',
 						),
 						'preserve_unmentioned' => array(
 							'type'        => 'boolean',
@@ -291,7 +295,7 @@ class SLN_AI_ToolRegistry
 						),
 						'closed_days' => array(
 							'type'  => 'array',
-							'items' => array('type' => 'integer'),
+							'items' => $weekdayItem,
 						),
 						'preserve_unmentioned' => array('type' => 'boolean'),
 					),
@@ -515,7 +519,7 @@ class SLN_AI_ToolRegistry
 				'name'        => 'upsert_service',
 				'tier'        => 'confirm',
 				'class'       => 'SLN_AI_Tools_UpsertService',
-				'description' => 'Create/update a service: name, price, duration, flags (secondary/exclusive/hide/variable/break/offset/lock), categories, resource links.',
+				'description' => 'Create/update a service: name, price, duration, flags (secondary/exclusive/hide/variable/break/offset/lock), categories, resource links, and optional service-specific weekly hours (rules like set_salon_availabilities). Pass rules whenever the merchant says when the service is bookable (e.g. “only Monday 9–13”).',
 				'parameters'  => array(
 					'type'       => 'object',
 					'required'   => array('name'),
@@ -539,6 +543,11 @@ class SLN_AI_ToolRegistry
 						'category_names'             => array('type' => 'array', 'items' => array('type' => 'string')),
 						'resource_ids'               => array('type' => 'array', 'items' => array('type' => 'integer')),
 						'resource_names'             => array('type' => 'array', 'items' => array('type' => 'string')),
+						'rules'                      => array(
+							'type'        => 'array',
+							'items'       => $availabilityRuleItem,
+							'description' => 'Weekly hours when this service is bookable.',
+						),
 					),
 				),
 			),
@@ -569,7 +578,7 @@ class SLN_AI_ToolRegistry
 					'properties' => array(
 						'service_id' => array('type' => 'integer'),
 						'name'       => array('type' => 'string'),
-						'rules'      => array('type' => 'array'),
+						'rules'      => array('type' => 'array', 'items' => $availabilityRuleItem),
 					),
 				),
 			),
@@ -620,7 +629,7 @@ class SLN_AI_ToolRegistry
 					'properties' => array(
 						'assistant_id' => array('type' => 'integer'),
 						'name'         => array('type' => 'string'),
-						'rules'        => array('type' => 'array'),
+						'rules'        => array('type' => 'array', 'items' => $availabilityRuleItem),
 						'mode'         => array('type' => 'string', 'enum' => array('replace_all')),
 					),
 				),
@@ -1010,7 +1019,7 @@ class SLN_AI_ToolRegistry
 		// Keep this compact: full tool schemas are sent separately; avoid duplicating the tool name list.
 		return 'You help configure Salon Booking System via chat. Keep replies short. '
 			. 'Always reply in the same language as the latest user message. '
-			. 'Tool args: dates Y-m-d, times H:i, day keys 1=Sunday…7=Saturday, English enums/tool names. '
+			. 'Tool args: dates Y-m-d, times H:i, weekdays as English names (Monday…Sunday), English enums/tool names. '
 			. 'If a request is incomplete for a good answer, ask short clarifying questions first — do not invent missing dates, times, services, assistants, or customer details. '
 			. 'Availability problems (“why / come mai / non prenotabile / not bookable / unavailable”): NEVER upsert_service or upsert_assistant — call explain_unavailable_slot with date, time, service, and assistant when present (it may return questions). '
 			. 'If the user asks to explain a prior availability answer (“what does full mean?”, “spiega meglio”), clarify capacity/units-per-hour in their language using that context — do not switch to generic setup help. '
@@ -1024,6 +1033,7 @@ class SLN_AI_ToolRegistry
 			'That tool inspects shop + assistant + service custom hours and aligns any that would block the new timetable — do NOT call find_assistant/find_service for this. ' .
 			'Verify/compare hours (“are rules consistent with this timetable?”): inspect_availabilities and pass the desired rules with always=true (recurring weekly hours; never always=false unless from_date and to_date are set) — do not compare only against current salon hours, and do not call find_assistant. ' .
 			'To apply a new timetable: set_salon_availabilities. ' .
+			'Creating or editing a service together with when it is bookable (“only Monday 9–13”): put those hours in upsert_service rules in the same call — never drop them. ' .
 			'Holidays: prefer append; full_day true; dates Y-m-d. '
 			. 'Unavailable slot → explain_unavailable_slot (use its summary; if it asks for details, relay those questions). '
 			. 'Find booking → find_booking (includes draft/ERROR). Totals → count_bookings. '

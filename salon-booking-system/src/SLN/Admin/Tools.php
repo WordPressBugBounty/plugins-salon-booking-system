@@ -172,6 +172,10 @@ class SLN_Admin_Tools extends SLN_Admin_AbstractPage
             __('STATUS', 'salon-booking-system'),
         );
 
+        if ($this->isMultiShopActive()) {
+            $headers[] = __('SHOP', 'salon-booking-system');
+        }
+
         $checkout_headers = array();
         foreach( $checkout_fields as $key => $field ) {
             switch ( $key ) {
@@ -238,10 +242,14 @@ class SLN_Admin_Tools extends SLN_Admin_AbstractPage
                 $format->datetime($booking->getPostDate()),
                 implode(', ', $servicesAr),
                 $booking->getAttendantsString(),
-                implode('; ', array_values($booking->getCountServices())),
+                implode(', ', array_values($booking->getCountServices())),
                 $total,
                 SLN_Enum_BookingStatus::getLabel($booking->getStatus()),
             );
+
+            if ($this->isMultiShopActive()) {
+                $booking_values[] = $this->bookingShopName($booking);
+            }
 
             $checkout_values = array();
             foreach( $checkout_fields as $key => $field ) {
@@ -272,6 +280,29 @@ class SLN_Admin_Tools extends SLN_Admin_AbstractPage
 
         unlink($tmpfname);
         exit;
+    }
+
+    private function isMultiShopActive()
+    {
+        return class_exists('\SalonMultishop\Addon');
+    }
+
+    /**
+     * Shop title stored on the booking, or an empty string when none is assigned.
+     *
+     * @param SLN_Wrapper_Booking $booking
+     * @return string
+     */
+    private function bookingShopName($booking)
+    {
+        $shopId = (int) get_post_meta($booking->getId(), '_sln_booking_shop', true);
+        if ($shopId <= 0) {
+            return '';
+        }
+        // Raw title: get_the_title() texturizes (& becomes &#038;), and import matches the exact title.
+        $title = get_post_field('post_title', $shopId, 'raw');
+
+        return is_string($title) ? $title : '';
     }
 
     /**

@@ -224,23 +224,7 @@ class SLN_Shortcode_Salon_DetailsStep extends SLN_Shortcode_Salon_AbstractUserSt
                 }
                 wp_update_user( $update );
 
-                $user_meta_fields = SLN_Enum_CheckoutFields::forRegistration()->appendSmsPrefix()->keys();
-                foreach($user_meta_fields as $k){
-                    if(in_array($k,['firstname','lastname', 'sms_prefix'])) continue;
-                    if (SLN_Enum_CheckoutFields::getField($k) && SLN_Enum_CheckoutFields::getField($k)->get('type') === 'file' && isset($values[$k]) && is_array($values[$k])) {
-                        $data = array_map(function($file) {
-                            return array(
-                                'subdir' => wp_upload_dir()['subdir'],
-                                'file'   => basename((string) $file),
-                            );
-                        }, $values[$k]);
-                        update_user_meta($current_user->ID, '_sln_'.$k, $data);
-                    } else {
-                        if(isset($values[$k])){
-                           update_user_meta($current_user->ID, '_sln_'.$k, $values[$k]);
-                        }
-                    }
-                }
+                $this->saveCustomerMeta($current_user->ID, $values);
 		        do_action('sln.shortcode.details.dispatchForm.logged_checkout', $values, $this);
             }
         }

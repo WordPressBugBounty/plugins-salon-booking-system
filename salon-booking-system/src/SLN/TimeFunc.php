@@ -145,8 +145,12 @@ class SLN_TimeFunc
             throw new Exception('Empty date provided to evalPickedDate');
         }
         
-        if (strpos($date, '-'))
+        // Already canonical Y-m-d (or Y-m-d plus a time). Return it unchanged.
+        // Do not treat every hyphenated string as canonical: the d-m-Y format
+        // (08-10-2026) must still be parsed below, or export date ranges are wrong.
+        if (preg_match('/^\d{4}-\d{1,2}-\d{1,2}(?:\s|T|$)/', $date)) {
             return $date;
+        }
         $initial = $date;
         $f = SLN_Plugin::getInstance()->getSettings()->getDateFormat();
         if ($f == SLN_Enum_DateFormat::_DEFAULT) {

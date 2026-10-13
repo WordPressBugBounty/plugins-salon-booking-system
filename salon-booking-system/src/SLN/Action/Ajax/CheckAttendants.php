@@ -48,6 +48,7 @@ class SLN_Action_Ajax_CheckAttendants extends SLN_Action_Ajax_Abstract{
         $attendants_repo = $this->plugin->getRepository(SLN_Plugin::POST_TYPE_ATTENDANT);
         $attendants = $attendants_repo->getIds() ?: array();
         $notAvailCounter = 0;
+        $parallelMap = SLN_Wrapper_Service::resolveParallelExecution($services);
 
         foreach ($attendants as $k => $attendant_id) {
 
@@ -78,7 +79,7 @@ class SLN_Action_Ajax_CheckAttendants extends SLN_Action_Ajax_Abstract{
                 if($service_id == $selected_service_id){
                     continue;
                 }
-                if(get_post_meta($service_id, '_sln_service_parallel_exec', true) == '1' && $service_attId == $attendant_id){
+                if(!empty($parallelMap['parallel'][$service_id]) && $service_attId == $attendant_id){
                     $bookingAttendants = true;
                     break;
                 }

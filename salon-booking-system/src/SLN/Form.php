@@ -319,7 +319,7 @@ foreach ($items as $key => $label) {
     <?php
 }
 	static public function fieldHtml($name, $value, $settings){
-		echo $value;
+		echo wp_kses_post($value);
 	}
 
 	static public function makeID($val) {

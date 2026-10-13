@@ -1128,6 +1128,25 @@ function sln_initDatePickersReschedule($, data) {
   }
 }
 
+// The time picker redraws every interval for the day inside fill(), which runs
+// immediately after changeMinute. Filter that grid and refresh the confirmation
+// line before the click handler returns, so the full day never paints.
+function sln_refreshRescheduleTimeSelection($, data, $input) {
+  sln_renderAvailableTimeslots($, data);
+  if (data.intervals && data.intervals.times) {
+    sln_updateDatepickerTimepickerSlots($, data.intervals, data.booking_id);
+  }
+  var form = $input.closest("form.sln-reschedule-form");
+  if (typeof window.updateSelectedDateTimeDisplay === "function") {
+    window.updateSelectedDateTimeDisplay(form);
+  }
+  form.find(".sln-reschedule-form--save-button").removeClass("disabled");
+  form
+    .find(".sln-notifications")
+    .html("")
+    .removeClass("sln-notifications--active");
+}
+
 function sln_initTimePickersReschedule($, data) {
   $(".sln_timepicker div").each(function () {
     $(this).attr("readonly", "readonly");
@@ -1153,16 +1172,26 @@ function sln_initTimePickersReschedule($, data) {
           $("body").trigger("sln_date");
         })
         .on("changeMinute", function () {
+          var $input = $(this);
+          var dp = $input.data("datetimepicker");
+          if (!dp || !dp.fill || dp._slnRescheduleFill) {
+            return;
+          }
+          // _setDate() fills once, then the click handler fills again. Keep the
+          // wrapper for this turn so the second fill is filtered before paint.
+          var originalFill = dp.fill;
+          dp._slnRescheduleFill = true;
+          dp.fill = function () {
+            var result = originalFill.apply(this, arguments);
+            sln_refreshRescheduleTimeSelection($, data, $input);
+            return result;
+          };
           setTimeout(function () {
-            sln_renderAvailableTimeslots($, data, true);
-
-            $("body").trigger("sln_date");
-
-            $(".sln-reschedule-form--save-button").removeClass("disabled");
-            $(".sln-notifications")
-              .html("")
-              .removeClass("sln-notifications--active");
-          }, 5);
+            if (dp.fill !== originalFill) {
+              dp.fill = originalFill;
+            }
+            dp._slnRescheduleFill = false;
+          }, 0);
         })
         .on("hide", function () {
           if ($(this).is(":focus"));

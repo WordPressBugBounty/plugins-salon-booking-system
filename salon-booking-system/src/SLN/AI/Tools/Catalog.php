@@ -14,11 +14,17 @@ class SLN_AI_Tools_UpsertService extends SLN_AI_Tools_Abstract
 			return $mapped;
 		}
 		$existing = $this->findService($mapped);
+		$unset    = $existing ? '(unchanged)' : '(not set)';
 		$lines    = array(
 			sprintf('%s service "%s"', $existing ? 'Update' : 'Create', $mapped['name']),
-			'price: ' . (isset($mapped['price']) ? $mapped['price'] : '(unchanged)'),
-			'duration: ' . (isset($mapped['duration']) ? $mapped['duration'] : '(unchanged)'),
+			'price: ' . (isset($mapped['price']) ? $mapped['price'] : $unset),
+			'duration: ' . (isset($mapped['duration']) ? $mapped['duration'] : $unset),
 		);
+		$hours = $this->mapHours($mapped);
+		if ($hours) {
+			$formatter = new SLN_AI_Tools_SetAvailabilities($this->plugin);
+			$lines[]   = 'availability: ' . str_replace("\n", '; ', $formatter->formatAvailabilitiesSummary($hours));
+		}
 		foreach (array('secondary', 'exclusive', 'hide_on_frontend', 'variable_duration', 'variable_price_enabled', 'break_duration_enabled', 'offset_for_service', 'lock_for_service') as $flag) {
 			if (isset($mapped[ $flag ])) {
 				$lines[] = $flag . ': ' . $mapped[ $flag ];
@@ -60,6 +66,11 @@ class SLN_AI_Tools_UpsertService extends SLN_AI_Tools_Abstract
 		$before   = $existing
 			? array('id' => $existing->ID, 'title' => $existing->post_title)
 			: array('_created' => true);
+		$hours    = $this->mapHours($mapped);
+		if ($hours && $existing) {
+			$prev                     = get_post_meta($existing->ID, SLN_AI_AvailabilityCascade::SERVICE_META, true);
+			$before['availabilities'] = is_array($prev) ? $prev : array();
+		}
 
 		$postarr = array(
 			'post_type'   => SLN_Plugin::POST_TYPE_SERVICE,
@@ -125,6 +136,9 @@ class SLN_AI_Tools_UpsertService extends SLN_AI_Tools_Abstract
 			// Resources store services[]; update each resource's services list.
 			$this->syncServiceResources((int) $id, $mapped['resource_ids']);
 		}
+		if ($hours) {
+			update_post_meta($id, SLN_AI_AvailabilityCascade::SERVICE_META, SLN_Helper_AvailabilityItems::processSubmission($hours));
+		}
 		$this->refreshBookingCaches();
 
 		return array(
@@ -147,6 +161,13 @@ class SLN_AI_Tools_UpsertService extends SLN_AI_Tools_Abstract
 		// Soft undo: trash created post if we only have create marker.
 		if (! empty($previous['_created'])) {
 			wp_trash_post((int) $previous['id']);
+		} elseif (isset($previous['availabilities']) && is_array($previous['availabilities'])) {
+			update_post_meta(
+				(int) $previous['id'],
+				SLN_AI_AvailabilityCascade::SERVICE_META,
+				SLN_Helper_AvailabilityItems::processSubmission($previous['availabilities'])
+			);
+			$this->refreshBookingCaches();
 		}
 
 		return array('ok' => true, 'message' => __('Service change undo attempted.', 'salon-booking-system'));
@@ -207,8 +228,36 @@ class SLN_AI_Tools_UpsertService extends SLN_AI_Tools_Abstract
 			}
 			$out['resource_ids'] = $ids;
 		}
+		if (! empty($arguments['rules']) && is_array($arguments['rules'])) {
+			$out['rules'] = $arguments['rules'];
+			$hours        = $this->mapHours($out);
+			if (is_wp_error($hours)) {
+				return $hours;
+			}
+		}
 
 		return $out;
+	}
+
+	/**
+	 * Service-specific weekly hours from the optional rules arg.
+	 *
+	 * @param array $mapped
+	 * @return array|WP_Error Availability rows, or an empty array when no rules were given.
+	 */
+	private function mapHours(array $mapped)
+	{
+		if (empty($mapped['rules']) || ! is_array($mapped['rules'])) {
+			return array();
+		}
+		$hours = new SLN_AI_Tools_SetAvailabilities($this->plugin);
+
+		return $hours->mapArguments(
+			array(
+				'mode'  => 'replace_all',
+				'rules' => $mapped['rules'],
+			)
+		);
 	}
 
 	/**

@@ -198,6 +198,143 @@ class SLN_Wrapper_Service extends SLN_Wrapper_Abstract implements SLN_Wrapper_Se
 		return $ret;
 	}
 
+	/**
+	 * Services this one may share a start time with.
+	 * An empty list means "every other service in the booking" (historical behaviour).
+	 *
+	 * @return int[]
+	 */
+	public function getParallelServiceIds() {
+		$ret = $this->getMeta('parallel_services');
+		if (!is_array($ret)) {
+			return array();
+		}
+		$ids = array();
+		foreach ($ret as $id) {
+			$id = intval($id);
+			if ($id > 0 && $id !== intval($this->getId())) {
+				$ids[$id] = $id;
+			}
+		}
+
+		return array_values($ids);
+	}
+
+	/**
+	 * Which services in one booking start at the booking start time.
+	 *
+	 * Parallel execution with an empty partner list keeps the historical behaviour:
+	 * the service always starts with the booking. A partner list limits that to
+	 * bookings that also contain one of those services, and pulls that partner
+	 * onto the same start time so the pair is counted as the longer duration.
+	 *
+	 * partner_scoped is true when that shared start comes from a partner list.
+	 * An empty list stays partner_scoped false, so existing salons are unchanged.
+	 *
+	 * @param int[] $serviceIds
+	 * @return array{parallel: array<int,bool>, partner_scoped: array<int,bool>}
+	 */
+	public static function resolveParallelExecution(array $serviceIds) {
+		$ids = array();
+		foreach ($serviceIds as $id) {
+			$id = intval($id);
+			if ($id > 0) {
+				$ids[$id] = $id;
+			}
+		}
+
+		$enabled = array();
+		$partnersById = array();
+		foreach ($ids as $id) {
+			$service = apply_filters(
+				'sln.booking_services.buildService',
+				SLN_Plugin::getInstance()->createService($id)
+			);
+			$enabled[$id] = $service && method_exists($service, 'isExecutionParalleled') && $service->isExecutionParalleled();
+			$partnersById[$id] = ($service && method_exists($service, 'getParallelServiceIds'))
+				? $service->getParallelServiceIds()
+				: array();
+		}
+
+		return self::applyParallelRules($ids, $enabled, $partnersById);
+	}
+
+	/**
+	 * @param array<int,int> $ids service id => service id
+	 * @param array<int,bool> $enabled parallel execution checkbox
+	 * @param array<int,int[]> $partnersById partner lists; empty means every service
+	 * @return array{parallel: array<int,bool>, partner_scoped: array<int,bool>}
+	 */
+	public static function applyParallelRules(array $ids, array $enabled, array $partnersById) {
+		$parallel = array();
+		$legacyAlways = array();
+		foreach ($ids as $id) {
+			$parallel[$id] = false;
+			$legacyAlways[$id] = false;
+			if (empty($enabled[$id])) {
+				continue;
+			}
+			$partners = isset($partnersById[$id]) ? $partnersById[$id] : array();
+			if (empty($partners)) {
+				$parallel[$id] = true;
+				$legacyAlways[$id] = true;
+				continue;
+			}
+			foreach ($partners as $partnerId) {
+				if (isset($ids[$partnerId])) {
+					$parallel[$id] = true;
+					break;
+				}
+			}
+		}
+
+		foreach ($ids as $id) {
+			if (empty($parallel[$id]) || !empty($legacyAlways[$id])) {
+				continue;
+			}
+			$partners = isset($partnersById[$id]) ? $partnersById[$id] : array();
+			foreach ($partners as $partnerId) {
+				if (isset($ids[$partnerId])) {
+					$parallel[$partnerId] = true;
+				}
+			}
+		}
+
+		$partnerScoped = array();
+		$partnerRules = false;
+		foreach ($ids as $id) {
+			$partnerScoped[$id] = !empty($parallel[$id]) && empty($legacyAlways[$id]);
+			if (!empty($enabled[$id]) && !empty($partnersById[$id])) {
+				$partnerRules = true;
+			}
+		}
+
+		return array(
+			'parallel' => $parallel,
+			'partner_scoped' => $partnerScoped,
+			'partner_rules' => $partnerRules,
+		);
+	}
+
+	/**
+	 * Booking length from sequential and parallel minutes.
+	 *
+	 * Parallel lines and the first sequential line all start at the booking start.
+	 * Without partner lists the historical sum is kept so existing salons see no
+	 * change. With a partner list, a service whose partners are absent runs
+	 * sequentially next to any legacy parallel line, so the overlap is counted once.
+	 *
+	 * @param int  $sequentialMinutes
+	 * @param int  $parallelMaxMinutes
+	 * @param bool $partnerRules
+	 * @return int
+	 */
+	public static function combineParallelDurations($sequentialMinutes, $parallelMaxMinutes, $partnerRules) {
+		return $partnerRules
+			? max($sequentialMinutes, $parallelMaxMinutes)
+			: $sequentialMinutes + $parallelMaxMinutes;
+	}
+
     function isNotAvailableOnDate(SLN_DateTime $date)
     {
         $ret = !$this->getAvailabilityItems()->isValidDatetimeDuration($date, $this->getDuration());

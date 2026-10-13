@@ -166,46 +166,6 @@ class SLN_Helper_Availability_Highend_DayBookings extends SLN_Helper_Availabilit
                             }
 			}
                     }
-
-                    // Bidirectional offset: also reserve the window BEFORE this booking starts,
-                    // so a new appointment cannot END too close to it (break between clients).
-                    // Window is [startsAt - offset, startsAt); filterTimes is start-inclusive/end-exclusive.
-                    $offsetStart = clone $booking->getStartsAt();
-                    $offsetStart->modify('-'.$bookingOffset.' minutes');
-                    $offsetEnd = $booking->getStartsAt();
-                    $times = SLN_Func::filterTimes($this->minutesIntervals, $offsetStart, $offsetEnd);
-                    foreach ($times as $time) {
-                        $time = $time->format('H:i');
-
-                        // PHP 8+ compatibility: Ensure $ret[$time] is initialized
-                        if (!isset($ret[$time])) {
-                            $ret[$time] = array(
-                                'booking'   => array(),
-                                'service'   => array(),
-                                'attendant' => array(),
-                                'holidays'  => array(),
-                                'break'     => array(),
-                            );
-                        }
-
-			if (apply_filters('sln_build_timeslots_add_booking_to_timeslot', true, $time, $booking, $this->bookings)
-			) {
-			    $ret[$time]['booking'][] = $booking->getId();
-                            foreach ($bookingServices->getItems() as $bookingService) {
-                                if ($bookingService->getService()) {
-                                    $serviceId = $bookingService->getService()->getId();
-                                    $ret[$time]['service'][$serviceId] = isset($ret[$time]['service'][$serviceId]) ? $ret[$time]['service'][$serviceId] + 1 : 1;
-                                }
-                                if ($bookingService->getResource() && apply_filters('sln_build_timeslots_add_resource_to_timeslot', true, $time, $bookingService, $booking, $this->bookings)) {
-                                    if ($bookingService->getService() && apply_filters('sln_build_timeslots_add_attendant_to_timeslot', true, $time, $bookingService, $booking, $this->bookings)) {
-                                        $resourceId = $bookingService->getResource()->getId();
-                                        $ret[$time]['resource'][$resourceId] = isset($ret[$time]['resource'][$resourceId]) ? $ret[$time]['resource'][$resourceId] + 1 : 1;
-                                        $ret[$time]['resource_service'][$resourceId][] = $bookingService->getService()->getId();
-                                    }
-                                }
-                            }
-			}
-                    }
                 }
             }
         }
@@ -221,24 +181,49 @@ class SLN_Helper_Availability_Highend_DayBookings extends SLN_Helper_Availabilit
         // In 10.29.6: Break times were excluded from resource/attendant busy marking
         // This fix maintains that behavior while adding multi-attendant protection
         foreach ($bookings as $booking) {
-            // Collect all unique attendants assigned to this booking
+            // Collect all unique attendants assigned to this booking.
+            // An assistant who only works a partner-scoped parallel line stays busy
+            // for that line alone, so a 30 min service frees its assistant while the
+            // paired 60 min service continues. Empty partner lists keep the previous
+            // behaviour: every assistant stays busy for the whole booking.
             $allBookingAttendants = array();
+            $attendantOnOpenLine = array();
             $bookingServices = $booking->getBookingServices();
             foreach ($bookingServices->getItems() as $bookingService) {
+                $partnerScopedLine = $bookingService->getParallelExec() && $bookingService->isParallelPartnerScoped();
+                $lineAttendants = array();
                 $serviceAttendant = $bookingService->getAttendant();
                 if ($serviceAttendant && !is_array($serviceAttendant)) {
-                    $allBookingAttendants[$serviceAttendant->getId()] = $serviceAttendant;
+                    $lineAttendants[$serviceAttendant->getId()] = $serviceAttendant;
                 } elseif (is_array($serviceAttendant)) {
                     foreach ($serviceAttendant as $att) {
-                        $allBookingAttendants[$att->getId()] = $att;
+                        if ($att) {
+                            $lineAttendants[$att->getId()] = $att;
+                        }
+                    }
+                }
+                foreach ($lineAttendants as $attendantId => $attendant) {
+                    $allBookingAttendants[$attendantId] = $attendant;
+                    if (!$partnerScopedLine) {
+                        $attendantOnOpenLine[$attendantId] = true;
                     }
                 }
             }
+            $markAllAttendants = array();
+            foreach ($allBookingAttendants as $attendantId => $attendant) {
+                if (empty($attendantOnOpenLine[$attendantId])) {
+                    continue;
+                }
+                $markAllAttendants[$attendantId] = $attendant;
+            }
             
             // If this booking has multiple attendants, mark ALL of them as busy for the entire booking duration
-            if (count($allBookingAttendants) > 1) {
+            if (count($markAllAttendants) > 1) {
                 // Process each service separately to respect break periods
                 foreach ($bookingServices->getItems() as $bookingService) {
+                    if ($bookingService->getParallelExec() && $bookingService->isParallelPartnerScoped()) {
+                        continue;
+                    }
                     $breakStart = $bookingService->getBreakStartsAt();
                     $breakEnd = $bookingService->getBreakEndsAt();
                     $hasBreak = $breakStart && $breakEnd && $breakStart != $breakEnd;
@@ -271,7 +256,7 @@ class SLN_Helper_Availability_Highend_DayBookings extends SLN_Helper_Availabilit
                         }
                         
                         // Mark all attendants as busy (except during breaks)
-                        foreach ($allBookingAttendants as $attendantId => $attendant) {
+                        foreach ($markAllAttendants as $attendantId => $attendant) {
                             $previousCount = isset($ret[$key]['attendant'][$attendantId]) ? $ret[$key]['attendant'][$attendantId] : 0;
                             $ret[$key]['attendant'][$attendantId] = $previousCount + 1;
                         }
@@ -356,47 +341,6 @@ class SLN_Helper_Availability_Highend_DayBookings extends SLN_Helper_Availabilit
                             );
                         }
                         
-		            	if (apply_filters('sln_build_timeslots_add_booking_to_timeslot', true, $time, $booking, $this->allBookings)
-			            ) {
-                            foreach ($bookingServices->getItems() as $bookingService) {
-                                if ($bookingService->getService() && $bookingService->getAttendant()) {
-                                    $attendant = $bookingService->getAttendant();
-                                    if(!is_array($attendant)){
-                                        $attendantId = $bookingService->getAttendant()->getId();
-                                        $ret[$time]['attendant'][$attendantId] = isset($ret[$time]['attendant'][$attendantId]) ? $ret[$time]['attendant'][$attendantId] + 1 : 1;
-                                        $ret[$time]['attendant_service'][$attendantId][] = $bookingService->getService()->getId();
-                                    }else{
-                                        foreach($attendant as $attObj){
-                                            $attendantId = $attObj->getId();
-                                            $ret[$time]['attendant'][$attendantId] = isset($ret[$time]['attendant'][$attendantId]) ? $ret[$time]['attendant'][$attendantId] + 1 : 1;
-                                            $ret[$time]['attendant_service'][$attendantId][] = $bookingService->getService()->getId();
-                                        }
-                                    }
-                                }
-                            }
-			}
-                    }
-
-                    // Bidirectional offset: mirror the attendant reservation on the window
-                    // BEFORE this booking starts ([startsAt - offset, startsAt)).
-                    $offsetStart = clone $booking->getStartsAt();
-                    $offsetStart->modify('-'.$bookingOffset.' minutes');
-                    $offsetEnd = $booking->getStartsAt();
-                    $times = SLN_Func::filterTimes($this->minutesIntervals, $offsetStart, $offsetEnd);
-                    foreach ($times as $time) {
-                        $time = $time->format('H:i');
-
-                        // PHP 8+ compatibility: Ensure $ret[$time] is initialized
-                        if (!isset($ret[$time])) {
-                            $ret[$time] = array(
-                                'booking'   => array(),
-                                'service'   => array(),
-                                'attendant' => array(),
-                                'holidays'  => array(),
-                                'break'     => array(),
-                            );
-                        }
-
 		            	if (apply_filters('sln_build_timeslots_add_booking_to_timeslot', true, $time, $booking, $this->allBookings)
 			            ) {
                             foreach ($bookingServices->getItems() as $bookingService) {

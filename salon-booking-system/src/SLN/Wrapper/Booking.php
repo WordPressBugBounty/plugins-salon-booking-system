@@ -349,6 +349,13 @@ class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
             $i = 0;
 			$max = 0;
             SLN_Plugin::addLog(__CLASS__.' eval duration of'.$this->getId());
+            $serviceIds = array();
+            foreach ($this->getBookingServices()->getItems() as $bookingService) {
+                if ($bookingService->getService()) {
+                    $serviceIds[] = $bookingService->getService()->getId();
+                }
+            }
+            $parallelMap = SLN_Wrapper_Service::resolveParallelExecution($serviceIds);
             foreach ($this->getBookingServices()->getItems() as $bookingService) {
                 $d = $bookingService->getTotalDuration();
 	            $dInMinutes = (intval($d->format('H')) * 60 + intval($d->format('i'))) * $bookingService->getCountServices();
@@ -361,7 +368,7 @@ class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
 	            }
                 SLN_Plugin::addLog(' - service '.$bookingService.' +'.$d->format('H:i'));
             }
-	        $i += $max;
+	        $i = SLN_Wrapper_Service::combineParallelDurations($i, $max, !empty($parallelMap['partner_rules']));
             if ($i == 0) {
                 $i = $settings->getInterval();
             }

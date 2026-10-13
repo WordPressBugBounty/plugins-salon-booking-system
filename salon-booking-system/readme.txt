@@ -4,7 +4,7 @@ Tags: salon, hairdresser, barber, beauty salon, appointment booking
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4.8
-Stable tag: 10.31.9
+Stable tag: 10.31.10
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -369,6 +369,20 @@ PHP 7.4 and above.
 
 == Changelog ==
 
+
+12.10.2026 - 10.31.10
+
+* Security fix: custom checkout fields of type Html or File can no longer be used to store HTML/script in a customer profile from the public booking form. Values are sanitized on save and escaped on the admin Customers screen
+* Security fix: "Add to calendar" files are no longer saved as public files in the uploads folder. The email link now downloads the .ics through a private booking link, and files left by older versions are deleted
+* New: parallel services — a service can list the services it may run in parallel with. Availability, booking duration and automatic assistant assignment follow that list
+* New: booking CSV import — a SHOP column is supported when Multi-Shops is active, and totals that include paid-deposit text are now read correctly
+* Improved: AI assistant — weekly hours can be set while creating a service
+* Fixed: AI assistant — opening hours no longer shift by one day (Monday saved as Sunday)
+* Fixed: rescheduling — the time slots refresh when the date changes, and Save is enabled after picking a new time
+* Fixed: booking form date step now submits correctly when AJAX loading is disabled
+* Fixed: a day could be wrongly shown as fully booked when its cached availability was incomplete
+* Changed: the break between clients (booking offset) is now applied only after each booking, not before it
+* Minor improvements
 
 03.10.2026 - 10.31.9
 

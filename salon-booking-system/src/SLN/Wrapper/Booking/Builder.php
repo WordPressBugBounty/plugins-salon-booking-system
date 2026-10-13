@@ -686,12 +686,14 @@ class SLN_Wrapper_Booking_Builder
         $h = 0;
         $i = 0;
 		$max = 0;
-        foreach ($this->getServices() as $s) {
+		$bookedServices = $this->getServices();
+		$parallelMap = SLN_Wrapper_Service::resolveParallelExecution(array_keys($bookedServices));
+        foreach ($bookedServices as $s) {
 	        $d = $s->getTotalDuration();
 			// Multiply by quantity so the wizard duration matches the saved booking
 			// (SLN_Wrapper_Booking::evalDuration, which also multiplies by count).
 			$dInMinutes = SLN_Func::getMinutesFromDuration($d) * $this->getCountService($s->getId());
-			if ($s->isExecutionParalleled()) {
+			if (!empty($parallelMap['parallel'][$s->getId()])) {
 				if ($dInMinutes > $max) {
 					$max = $dInMinutes;
 				}
@@ -699,9 +701,8 @@ class SLN_Wrapper_Booking_Builder
 				$i += $dInMinutes;
 			}
         }
-		$i += $max;
 
-        return $i;
+        return SLN_Wrapper_Service::combineParallelDurations($i, $max, !empty($parallelMap['partner_rules']));
     }
 
     /**

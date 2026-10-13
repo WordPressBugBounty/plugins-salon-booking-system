@@ -23,6 +23,9 @@ class SLN_Action_Ajax_ImportBookings extends SLN_Action_Ajax_AbstractImport{
             'total' => __('TOTAL PRICE', 'salon-booking-system'),
             'status' => __('STATUS', 'salon-booking-system'),
         );
+        if (class_exists('\SalonMultishop\Addon')) {
+            $this->fields['shop'] = __('SHOP', 'salon-booking-system');
+        }
         $this->required = array(
             __('CUSTOMER EMAIL', 'salon-booking-system'),
             __('SERVICES', 'salon-booking-system'),
@@ -33,7 +36,12 @@ class SLN_Action_Ajax_ImportBookings extends SLN_Action_Ajax_AbstractImport{
     }
 
     public function getData($key){
-        return $this->data[$this->fields[$key]];
+        if (!isset($this->fields[$key])) {
+            return '';
+        }
+        $label = $this->fields[$key];
+
+        return isset($this->data[$label]) ? $this->data[$label] : '';
     }
 
     public function stepStart(){
@@ -162,6 +170,19 @@ class SLN_Action_Ajax_ImportBookings extends SLN_Action_Ajax_AbstractImport{
         if(empty($this->getData('datetime'))){
             return $this->dataToErrorRespons($data, esc_html__('Invalid date', 'salon-booking-system'));
         }
+
+        $shopName = trim((string) $this->getData('shop'));
+        $shopId = 0;
+        if ($shopName !== '') {
+            $shopIds = $this->findShopIdsByName($shopName);
+            if (count($shopIds) !== 1) {
+                $shopMessage = count($shopIds) > 1
+                    ? esc_html__('One or more shops with the name', 'salon-booking-system')
+                    : esc_html__('Undefined shop', 'salon-booking-system');
+                return $this->dataToErrorRespons($data, $shopMessage . ': ' . $shopName);
+            }
+            $shopId = $shopIds[0];
+        }
         
         $booking_id = wp_insert_post($args);
         
@@ -172,7 +193,7 @@ class SLN_Action_Ajax_ImportBookings extends SLN_Action_Ajax_AbstractImport{
         if (!$date) {
             return $this->dataToErrorRespons($data, esc_html__('Invalid date format', 'salon-booking-system'));
         }
-        $bookingServices = SLN_Wrapper_Booking_Services::build($booking_services, $date, 0, explode(', ', $this->getData('count_services')));
+        $bookingServices = SLN_Wrapper_Booking_Services::build($booking_services, $date, 0, $this->parseCounts($this->getData('count_services')));
         update_post_meta($booking_id, '_'.SLN_Plugin::POST_TYPE_BOOKING.'_services', $bookingServices->toArrayRecursive());
         update_post_meta($booking_id, '_'.SLN_Plugin::POST_TYPE_BOOKING.'_services_processed', 1);
         update_post_meta($booking_id, '_'.SLN_Plugin::POST_TYPE_BOOKING.'_date', $date->format('Y-m-d'));
@@ -182,11 +203,14 @@ class SLN_Action_Ajax_ImportBookings extends SLN_Action_Ajax_AbstractImport{
         update_post_meta($booking_id, '_'.SLN_Plugin::POST_TYPE_BOOKING.'_email', $this->getData('email'));
         update_post_meta($booking_id, '_'.SLN_Plugin::POST_TYPE_BOOKING.'_phone', $this->getData('phone'));
         update_post_meta($booking_id, '_'.SLN_Plugin::POST_TYPE_BOOKING.'_address', $this->getData('address'));
+        if ($shopId) {
+            update_post_meta($booking_id, '_'.SLN_Plugin::POST_TYPE_BOOKING.'_shop', $shopId);
+        }
 
 
         $booking = $this->plugin->createBooking($booking_id);
         $booking->evalDuration();
-        $booking->setMeta('amount', $this->getData('total'));
+        $booking->setMeta('amount', $this->parseAmount($this->getData('total')));
         $booking->setMeta('deposit', 0);
         return true;
     }
@@ -202,6 +226,76 @@ class SLN_Action_Ajax_ImportBookings extends SLN_Action_Ajax_AbstractImport{
         );
     }
     
+    /**
+     * Quantities are comma-separated. Older exports used a semicolon.
+     *
+     * @param string $raw
+     * @return string[]
+     */
+    protected function parseCounts($raw) {
+        $raw = str_replace(';', ',', (string) $raw);
+        $parts = array_map('trim', explode(',', $raw));
+        $parts = array_filter($parts, 'strlen');
+
+        return array_values($parts);
+    }
+
+    /**
+     * Strip a currency symbol so "40.10 $" and "40,10" both become a number.
+     *
+     * @param string $raw
+     * @return string
+     */
+    protected function parseAmount($raw) {
+        $raw = html_entity_decode((string) $raw, ENT_QUOTES, 'UTF-8');
+        // Export appends "(… already paid as deposit)" for paid deposits; the total is before it.
+        $parenthesis = strpos($raw, '(');
+        if ($parenthesis !== false) {
+            $raw = substr($raw, 0, $parenthesis);
+        }
+        $raw = preg_replace('/[^\d,.\-]/', '', $raw);
+        if (!is_string($raw) || $raw === '' || $raw === '-') {
+            return '0';
+        }
+        $lastComma = strrpos($raw, ',');
+        $lastDot = strrpos($raw, '.');
+        if ($lastComma !== false && $lastDot !== false) {
+            if ($lastComma > $lastDot) {
+                $raw = str_replace('.', '', $raw);
+                $raw = str_replace(',', '.', $raw);
+            } else {
+                $raw = str_replace(',', '', $raw);
+            }
+        } elseif ($lastComma !== false) {
+            $raw = str_replace(',', '.', $raw);
+        }
+
+        return is_numeric($raw) ? $raw : '0';
+    }
+
+    /**
+     * Match shops by exact title.
+     *
+     * @param string $name
+     * @return int[]
+     */
+    protected function findShopIdsByName($name) {
+        $shops = get_posts(array(
+            'post_type' => SLN_Plugin::POST_TYPE_SHOP,
+            'post_status' => array('publish', 'private', 'draft', 'pending'),
+            'posts_per_page' => -1,
+            'suppress_filters' => false,
+        ));
+        $matches = array();
+        foreach ($shops as $shop) {
+            if (isset($shop->post_title) && $shop->post_title === $name) {
+                $matches[] = (int) $shop->ID;
+            }
+        }
+
+        return $matches;
+    }
+
     /**
      * Parse datetime string from various formats including localized month names
      * 

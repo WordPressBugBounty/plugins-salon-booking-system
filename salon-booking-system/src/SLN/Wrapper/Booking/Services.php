@@ -94,6 +94,14 @@ final class SLN_Wrapper_Booking_Services {
 		$sequentialOnly = $settings->isDoNotNestSameBookingServicesEnabled();
 		$nestedBookings = $settings->isNestedBookingsEnabled();
 
+		$serviceIds = array();
+		foreach ($data as $i => $item) {
+			$serviceIds[] = self::serviceIdFromItem($i, $item);
+		}
+		$parallelExecution = SLN_Wrapper_Service::resolveParallelExecution($serviceIds);
+		$parallelMap = $parallelExecution['parallel'];
+		$partnerScopedMap = $parallelExecution['partner_scoped'];
+
 		foreach ( $data as $i => $item ) {
 
             $sId      = null;
@@ -171,7 +179,8 @@ final class SLN_Wrapper_Booking_Services {
                 $resource = $resources[$service->getId()];
             }
 
-			$parallelExec = $service->isExecutionParalleled();
+			$parallelExec = !empty($parallelMap[$sId]);
+			$partnerScoped = $parallelExec && !empty($partnerScopedMap[$sId]);
 
             $rawCount = isset($serviceCount[$service->getId()]) ? $serviceCount[$service->getId()] : 1;
             $c        = (int) $rawCount;
@@ -188,6 +197,7 @@ final class SLN_Wrapper_Booking_Services {
 				'price'		=> $price,
 				'exec_order'	=> $service->getExecOrder(),
 				'parallel_exec' => $parallelExec,
+				'parallel_partner_scoped' => $partnerScoped,
                 'count' => $count,
                 'resource'      => $resource,
 			);
@@ -212,6 +222,21 @@ final class SLN_Wrapper_Booking_Services {
 		$ret = new SLN_Wrapper_Booking_Services($services);
 
 		return $ret;
+	}
+
+	/**
+	 * Service id encoded the same way build() reads each row.
+	 *
+	 * @param int|string $i
+	 * @param mixed $item
+	 * @return int
+	 */
+	private static function serviceIdFromItem($i, $item) {
+		if (is_array($item) && array_intersect(array_keys($item), array('service', 'attendant', 'price', 'duration', 'break_duration', 'break_duration_data', 'resource'))) {
+			return isset($item['service']) ? intval($item['service']) : 0;
+		}
+
+		return intval($i);
 	}
 
 }

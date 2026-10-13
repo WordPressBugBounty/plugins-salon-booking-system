@@ -116,6 +116,23 @@ class SLN_Shortcode_Salon_AttendantStep extends SLN_Shortcode_Salon_Step
         $ret = array();
         $unavAttForParallelServices = array();
 
+        // With a partner list, a service whose partners are absent runs sequentially
+        // but still starts with any legacy parallel line, so lines at the booking
+        // start must not share an assistant. Without partner lists nothing changes.
+        $bookedServiceIds = array();
+        $bookingStartTs = null;
+        foreach ($bookingServices->getItems() as $item) {
+            if ($item->getService()) {
+                $bookedServiceIds[] = $item->getService()->getId();
+            }
+            $itemStartTs = $item->getStartsAt()->getTimestamp();
+            if ($bookingStartTs === null || $itemStartTs < $bookingStartTs) {
+                $bookingStartTs = $itemStartTs;
+            }
+        }
+        $parallelRules = SLN_Wrapper_Service::resolveParallelExecution($bookedServiceIds);
+        $partnerRules = !empty($parallelRules['partner_rules']);
+
         foreach ($bookingServices->getItems() as $bookingService) {
             $service = $bookingService->getService();
 
@@ -127,11 +144,14 @@ class SLN_Shortcode_Salon_AttendantStep extends SLN_Shortcode_Salon_Step
                 continue;
             }
 
+            $sharesBookingStart = $bookingService->getParallelExec()
+                || ($partnerRules && $bookingService->getStartsAt()->getTimestamp() === $bookingStartTs);
+
             if (!empty($selected[$service->getId()])) {
                 $attId = $selected[$service->getId()];
             } else {
                 $availAtts = $availAttsForEachService[$service->getId()];
-                if ($service->isExecutionParalleled()) {
+                if ($sharesBookingStart) {
                     $availAtts = array_values(array_diff($availAtts, $unavAttForParallelServices));
                 }
                 $index = mt_rand(0, count($availAtts) - 1);
@@ -170,9 +190,9 @@ class SLN_Shortcode_Salon_AttendantStep extends SLN_Shortcode_Salon_Step
 
             $ret[$service->getId()] = $attId;
 
-            if ($service->isExecutionParalleled() && !$service->isMultipleAttendantsForServiceEnabled()) {
+            if ($sharesBookingStart && !$service->isMultipleAttendantsForServiceEnabled()) {
                 $unavAttForParallelServices[] = $attId;
-            }elseif($service->isExecutionParalleled() && $service->isMultipleAttendantsForServiceEnabled()){
+            }elseif($sharesBookingStart && $service->isMultipleAttendantsForServiceEnabled()){
                 $unavAttForParallelServices = array_merge($unavAttForParallelServices, $attId);
             }
         }

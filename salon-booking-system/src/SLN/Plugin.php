@@ -348,6 +348,9 @@ class SLN_Plugin
 
             remove_filter('wp_mail_content_type', 'sln_html_content_type');
         } finally {
+            if (class_exists('SLN_Helper_CalendarLink')) {
+                SLN_Helper_CalendarLink::deleteTempFiles();
+            }
             $this->restoreLanguageContext($langState);
             $this->restoreShopContext($shopState);
         }

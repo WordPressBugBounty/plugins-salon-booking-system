@@ -81,6 +81,9 @@ final class SLN_Wrapper_Booking_Service
 		if (!empty($data['parallel_exec'])) {
 			$this->data['parallel_exec'] = $data['parallel_exec'];
 		}
+		if (!empty($data['parallel_partner_scoped'])) {
+			$this->data['parallel_partner_scoped'] = true;
+		}
 
         if (isset($data['count'])) {
             $c = (int) $data['count'];
@@ -211,6 +214,16 @@ final class SLN_Wrapper_Booking_Service
 
 	public function getParallelExec() {
 		return !empty($this->data['parallel_exec']) ? $this->data['parallel_exec'] : false;
+	}
+
+	/**
+	 * True when this line shares the booking start only because a partner list matched.
+	 * Legacy "parallel with every service" lines stay false.
+	 *
+	 * @return bool
+	 */
+	public function isParallelPartnerScoped() {
+		return !empty($this->data['parallel_partner_scoped']);
 	}
 
     public function getCountServices() {

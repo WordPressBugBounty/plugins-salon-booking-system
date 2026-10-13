@@ -22,7 +22,7 @@ class SLN_Wrapper_Booking_AbstractCache
     {
         //fix full days incorrect calculation
         foreach($this->settings as $day => $data) {
-            if ($data['status'] === 'full' && !$data['busy_slots'] && !$data['free_slots']) {
+            if (isset($data['status']) && $data['status'] === 'full' && empty($data['busy_slots']) && empty($data['free_slots'])) {
                 unset($this->settings[$day]);
             }
         }
@@ -177,6 +177,7 @@ class SLN_Wrapper_Booking_AbstractCache
             $data['status'] = 'free';
         }
 
+        $data['busy_slots'] = array();
         foreach ($ah->getDayBookings()->getTimeslots() as $k => $v) {
             if (isset($v['booking']) && $v['booking'] || isset($v['service']) && $v['service'] || isset($v['attendant']) && $v['attendant'] || isset($v['holidays']) && $v['holidays']) {
                 $data['busy_slots'][$k] = $v;

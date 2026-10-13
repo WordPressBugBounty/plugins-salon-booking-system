@@ -30,23 +30,7 @@ abstract class SLN_Shortcode_Salon_AbstractUserStep extends SLN_Shortcode_Salon_
             SLN_Plugin::addLog("WARNING: User update failed: " . $update_result->get_error_message());
         }
         
-        $additional_fields = SLN_Enum_CheckoutFields::forRegistration()->appendSmsPrefix()->keys();
-        foreach($additional_fields as $k){
-            if(in_array($k,['firstname','lastname', 'sms_prefix'])) continue;
-            if (SLN_Enum_CheckoutFields::getField($k) && SLN_Enum_CheckoutFields::getField($k)->get('type') === 'file' && isset($values[$k]) && is_array($values[$k])) {
-                $data = array_map(function($file) {
-                    return array(
-                        'subdir' => wp_upload_dir()['subdir'],
-                        'file'   => basename((string) $file),
-                    );
-                }, $values[$k]);
-                update_user_meta($errors, '_sln_'.$k, $data);
-            } else {
-                if(isset($values[$k])){
-                   update_user_meta($errors, '_sln_'.$k, $values[$k]);
-                }
-            }
-        }
+        $this->saveCustomerMeta($errors, $values);
         
         if (!$this->getPlugin()->getSettings()->isDisableNewUserWelcomeEmail()) {
             try {
@@ -62,6 +46,49 @@ abstract class SLN_Shortcode_Salon_AbstractUserStep extends SLN_Shortcode_Salon_
             $this->bindValues($values);
             return false;
         }
+    }
+
+    protected function saveCustomerMeta($user_id, $values)
+    {
+        $user_meta_fields = SLN_Enum_CheckoutFields::forRegistration()->appendSmsPrefix()->keys();
+        foreach ($user_meta_fields as $k) {
+            if (in_array($k, ['firstname', 'lastname', 'sms_prefix']) || !isset($values[$k])) {
+                continue;
+            }
+            $field = SLN_Enum_CheckoutFields::getField($k);
+            $type  = $field ? $field->get('type') : 'text';
+
+            // Html fields are display-only blocks; customers never submit a value for them.
+            if ($type === 'html') {
+                continue;
+            }
+
+            if ($type === 'file') {
+                if (!is_array($values[$k])) {
+                    continue;
+                }
+                $data = array_map(function($file) {
+                    return array(
+                        'subdir' => wp_upload_dir()['subdir'],
+                        'file'   => sanitize_file_name(basename((string) $file)),
+                    );
+                }, $values[$k]);
+            } else {
+                $data = $this->sanitizeCustomerMetaValue($values[$k], $type);
+            }
+            update_user_meta($user_id, '_sln_'.$k, $data);
+        }
+    }
+
+    protected function sanitizeCustomerMetaValue($value, $type)
+    {
+        if (is_array($value)) {
+            return array_map(function($item) use ($type) {
+                return $this->sanitizeCustomerMetaValue($item, $type);
+            }, $value);
+        }
+        $value = (string) $value;
+        return $type === 'textarea' ? sanitize_textarea_field($value) : sanitize_text_field($value);
     }
 
     protected function dispatchAuth($username, $password)

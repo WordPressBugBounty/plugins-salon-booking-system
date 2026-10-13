@@ -643,6 +643,8 @@ class SLN_Action_Init
         //http://codex.wordpress.org/AJAX_in_Plugins
         add_action('wp_ajax_salon', $callback);
         add_action('wp_ajax_nopriv_salon', $callback);
+        add_action('wp_ajax_sln_ics', array('SLN_Helper_CalendarLink', 'serveIcsDownload'));
+        add_action('wp_ajax_nopriv_sln_ics', array('SLN_Helper_CalendarLink', 'serveIcsDownload'));
         add_action('wp_ajax_saloncalendar', $callback);
         add_action('wp_ajax_sln_send_weekly_report', array(new SLN_Action_Ajax_SendWeeklyReport($this->plugin), 'execute'));
         add_action('wp_ajax_sln_send_feedback_email', array(new SLN_Action_Ajax_SendFeedback($this->plugin), 'execute'));
@@ -710,6 +712,7 @@ class SLN_Action_Init
         add_action('sln_cancel_bookings', 'sln_cancel_bookings');
         add_action('sln_email_weekly_report', 'sln_email_weekly_report');
         add_action('sln.helper.calendar_link.remove', array('SLN_Helper_CalendarLink', 'cronUnlinkCall'), 10, 1);
+        add_action('init', array('SLN_Helper_CalendarLink', 'maybeSweepPublicIcsFiles'));
         
         // Clear reminder metadata when booking status changes to prevent reminders for canceled bookings
         add_action('sln.booking.setStatus', array($this, 'clearReminderMetaOnStatusChange'), 10, 3);

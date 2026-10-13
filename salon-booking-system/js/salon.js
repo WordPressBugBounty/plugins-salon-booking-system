@@ -2516,9 +2516,7 @@ function sln_stepDate($) {
     }
 
     function submit() {
-        if (
-            $("#sln-salon-booking #sln-step-submit").data("salon-toggle").length
-        )
+        if (salon.ajax_enabled === "1")
             sln_loadStep(
                 $,
                 $("#salon-step-date").serialize() +
@@ -2531,12 +2529,17 @@ function sln_stepDate($) {
     $(".sln_datepicker div").on("changeDay", function () {
         validate(this, false);
     });
+    // Without AJAX, a validated date must fall through to the native submit:
+    // submit() re-clicks the button so its name/value reaches the server.
     $("#salon-step-date").on("submit", function () {
         if (!isValid) {
             validate(this, true);
-        } else {
-            submit();
+            return false;
         }
+        if (salon.ajax_enabled !== "1") {
+            return true;
+        }
+        submit();
         return false;
     });
 

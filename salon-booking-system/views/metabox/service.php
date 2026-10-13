@@ -180,6 +180,36 @@ $helper->showNonce($postType);
             <div class="sln-clear"></div>
         </div>
         <div class="row">
+            <div class="col-xs-12 col-sm-6 col-lg-4 form-group sln-select">
+                <label><?php esc_html_e('Run in parallel only with', 'salon-booking-system'); ?></label>
+                <?php
+                $parallelServiceItems = array();
+                foreach (SLN_Plugin::getInstance()->getRepository(SLN_Plugin::POST_TYPE_SERVICE)->getAll() as $parallelCandidate) {
+                    if ($service->getId() != $parallelCandidate->getId()) {
+                        $parallelServiceItems[$parallelCandidate->getId()] = $parallelCandidate->getName();
+                    }
+                }
+                SLN_Form::fieldSelect(
+                    $helper->getFieldName($postType, 'parallel_services[]'),
+                    $parallelServiceItems,
+                    $service->getParallelServiceIds(),
+                    array('attrs' => array(
+                        'multiple' => true,
+                        'placeholder' => __('select one or more services', 'salon-booking-system'),
+                        'data-containerCssClass' => 'sln-select-wrapper-no-search',
+                    )),
+                    true
+                );
+                ?>
+            </div>
+            <div class="col-xs-12 col-sm-6 form-group sln-box-maininfo align-top">
+                <div class="sln-input-help">
+                    <p><?php esc_html_e('Used only when Parallel execution is on. Leave this empty to run the service in parallel with every other service in the same booking.', 'salon-booking-system'); ?></p>
+                    <p><?php esc_html_e('Choose one or more services to run it in parallel only when at least one of them is booked together with it. Set the same pairing on each service in the pair, so each assistant is free when their own service ends.', 'salon-booking-system'); ?></p>
+                </div>
+            </div>
+        </div>
+        <div class="row">
             <div
                 class="col-xs-12 col-sm-6 col-lg-4 form-group sln-checkbox sln-profeature <?php echo !defined("SLN_VERSION_PAY") ? 'sln-service-variable-duration-disabled sln-profeature--disabled sln-profeature__tooltip-wrapper' : '' ?>">
                 <?php echo $plugin->loadView(

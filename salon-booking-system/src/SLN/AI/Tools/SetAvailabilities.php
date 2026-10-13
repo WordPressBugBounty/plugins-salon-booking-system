@@ -427,8 +427,8 @@ class SLN_AI_Tools_SetAvailabilities extends SLN_AI_Tools_Abstract
 			return $out;
 		}
 		foreach ($arguments['closed_days'] as $day) {
-			$day = (int) $day;
-			if ($day >= 1 && $day <= 7) {
+			$day = SLN_AI_AvailabilityCascade::normalizeDayToken($day);
+			if ($day) {
 				$out[] = $day;
 			}
 		}
@@ -476,7 +476,10 @@ class SLN_AI_Tools_SetAvailabilities extends SLN_AI_Tools_Abstract
 				foreach ($arguments['rules'] as $rule) {
 					if (! empty($rule['days']) && is_array($rule['days'])) {
 						foreach ($rule['days'] as $d) {
-							$proposedDays[ (int) $d ] = true;
+							$d = SLN_AI_AvailabilityCascade::normalizeDayToken($d);
+							if ($d) {
+								$proposedDays[ $d ] = true;
+							}
 						}
 					}
 				}

@@ -49,7 +49,7 @@ $hide_email = $user_role_helper->is_hide_customer_email();
 						$value = $field->getValue($customer->getId()) ;
 						$method_name= 'field'.ucfirst($field['type']);
 						$width = $field['width'];
-						if ($key === 'sms_prefix') {
+						if ($key === 'sms_prefix' || $field['type'] === 'html') {
 							continue;
 						}
 
@@ -107,7 +107,7 @@ $hide_email = $user_role_helper->is_hide_customer_email();
                                         $file_name = preg_replace('/^[0-9]+_/i', '', $file['file']);
                                     }
 									?>
-								<a href="<?php echo $file_url ?>" download="<?php echo $file_url ?>"><?php echo $file_name; ?></a>
+								<a href="<?php echo esc_url((string) $file_url) ?>" download="<?php echo esc_attr((string) $file_url) ?>"><?php echo esc_html($file_name); ?></a>
 								<?php endforeach; ?>
 								</div></div><?php
 								continue;
