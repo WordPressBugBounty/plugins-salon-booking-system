@@ -254,7 +254,7 @@ class SLB_Discount_Plugin {
 
 				if( is_array( $atId ) ){
 					$items[$sId] = array_merge($atId,array(
-						'price'     => $price - $discountValues[$atId['service']]
+						'price'     => max(0.0, (float) $price - $discountValues[$atId['service']])
 					));
 				} else{
 					$items[$sId] = array( 'service' => $sId,
@@ -395,7 +395,7 @@ class SLB_Discount_Plugin {
 
 				if( is_array( $atId ) ){
 					$items[$sId] = array_merge($atId,array(
-						'price' => $price - $discountValues[$sId]
+						'price' => max(0.0, (float) $price - $discountValues[$sId])
 					));
 				} else{
 					$items[$sId] = array( 'service' => $sId,
@@ -514,7 +514,7 @@ class SLB_Discount_Plugin {
 			// Calculate new service price
 			foreach($bookingServices->getItems() as $bookingService){
 				$serviceID = $bookingService->getService()->getId();
-				$price = $bookingService->getPrice() - $data['discount_amount'][$serviceID];
+				$price = max(0.0, $bookingService->getPrice() - $data['discount_amount'][$serviceID]);
 				$bookingService->setPrice($price);
 			}
 		}
@@ -574,7 +574,7 @@ class SLB_Discount_Plugin {
 	public function hook_booking_builder_getTotal($total, $bb){
 		$discountData = $bb->get('discount');
 		if(!empty($discountData)){
-			$total -= $discountData['amount'];
+			$total = max(0.0, $total - $discountData['amount']);
 		}
 		return $total;
 	}
@@ -616,7 +616,7 @@ class SLB_Discount_Plugin {
 					$items[$sId] = array(
 						'service'   => $sId,
 						'attendant' => $atId,
-						'price'     => $price - $discountValues[$sId],
+						'price'     => max(0.0, (float) $price - $discountValues[$sId]),
 					);
 				}
 

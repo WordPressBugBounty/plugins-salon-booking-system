@@ -125,43 +125,12 @@ class SLN_Action_Ajax_ImportAssistants extends SLN_Action_Ajax_AbstractImport
         }
 
         if (!empty($data['image_url'])) {
-            $imageData = getimagesize($data['image_url']);
-            if(!isset($imageData['mime']) || !in_array($imageData['mime'], self::$availabelImageMime)){
-                return false;
-            }
-            if(!wp_check_filetype($data['image_url'], null)){
-                return false;
-            }
-            $checkImageSuffix = explode('.', sanitize_file_name(basename($data['image_url'])));
-            if(empty($checkImageSuffix[count($checkImageSuffix) - 1]) || !in_array($checkImageSuffix[count($checkImageSuffix) - 1], self::$availabelImageType)){
-                return false;
-            }
-            $filename = $checkImageSuffix[0];
-
-            // phpcs:ignoreFile WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
-            // phpcs:ignoreFile WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
-            $uploaddir  = wp_upload_dir();
-            $uploadfile = $uploaddir['path'] . '/' . $filename .'.' . explode('/', $imageData['mime'])[1];
-
-            $contents = file_get_contents($data['image_url']);
-            file_put_contents($uploadfile, $contents);
-
-
-            $attachment = array(
-                'post_mime_type' => $imageData['mime'],
-                'post_title'     => $filename,
-                'post_content'   => '',
-                'post_status'    => 'inherit',
-            );
-            $attachID = wp_insert_attachment($attachment, $uploadfile, $postID, true);
-            if (is_wp_error($attachID)) {
+            try {
+                $attachID = SLN_Helper_RemoteImage::sideload($data['image_url'], $postID);
+            } catch (Exception $e) {
+                // The assistant is already saved; keep it without a photo.
                 return true;
             }
-
-            $imagenew     = get_post($attachID);
-            $fullsizepath = get_attached_file($imagenew->ID);
-            $attach_data  = wp_generate_attachment_metadata($attachID, $fullsizepath);
-            wp_update_attachment_metadata($attachID, $attach_data);
 
             set_post_thumbnail($postID, $attachID);
         }

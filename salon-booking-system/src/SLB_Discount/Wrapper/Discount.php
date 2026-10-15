@@ -456,6 +456,8 @@ class SLB_Discount_Wrapper_Discount extends SLN_Wrapper_Abstract
                     // For percentage discounts, calculate normally
                     $ret['services'][$serviceId] = $this->calculateDiscount($servicePrice);
                 }
+                // A discount can never exceed the price it applies to (no negative totals).
+                $ret['services'][$serviceId] = min(max(0.0, (float) $ret['services'][$serviceId]), max(0.0, $servicePrice));
             } else {
                 // Service not eligible
                 $ret['services'][$serviceId] = 0.0;

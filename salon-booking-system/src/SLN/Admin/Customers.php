@@ -33,6 +33,9 @@ class SLN_Admin_Customers extends SLN_Admin_AbstractPage {
 
 	public function show_customer_page($user_id) {
 
+            if (!self::current_user_can_manage_customer($user_id)) {
+                wp_die(esc_html__('Sorry, you are not allowed to edit this user.', 'salon-booking-system'), 403);
+            }
 
             $customer = new SLN_Wrapper_Customer(new WP_User($user_id));
 
@@ -76,13 +79,20 @@ class SLN_Admin_Customers extends SLN_Admin_AbstractPage {
             $error->add('missing_email', __('<strong>ERROR</strong>: This email is empty.', 'salon-booking-system'));
             return $error;
         }
-        if (empty($_POST['id'])) {
+        $is_new = empty($_POST['id']);
+        if ($is_new) {
             if(($error = $this->check_email($email))) return $error;
             $user_id = wp_create_user($email, wp_generate_password(), $email);
+            if (is_wp_error($user_id)) {
+                return $user_id;
+            }
             $customer['user_email'] = $email;
         }
         else {
             $user_id = intval($_POST['id']);
+            if (!self::current_user_can_manage_customer($user_id)) {
+                wp_die(esc_html__('Sorry, you are not allowed to edit this user.', 'salon-booking-system'), 403);
+            }
             $user_info = get_userdata($user_id);
             $old_mail = $user_info->user_email;
             if($email !== $old_mail && !array_intersect(['administrator'],$user_info->roles) ){
@@ -93,12 +103,26 @@ class SLN_Admin_Customers extends SLN_Admin_AbstractPage {
 
 
         $customer['ID'] = $user_id;
-        $customer['role'] = SLN_Plugin::USER_ROLE_CUSTOMER;
+        // Existing accounts keep their roles: replacing them here is what let a
+        // salon user strip administrators down to the customer role.
+        if ($is_new) {
+            $customer['role'] = SLN_Plugin::USER_ROLE_CUSTOMER;
+        }
         if(isset($_POST['sln_customer_meta']['_sln_firstname'])) $customer['first_name'] = sanitize_text_field(wp_unslash( $_POST['sln_customer_meta']['_sln_firstname'] ));
         if(isset($_POST['sln_customer_meta']['_sln_lastname'])) $customer['last_name'] = sanitize_text_field(wp_unslash( $_POST['sln_customer_meta']['_sln_lastname'] ));
         wp_update_user($customer);
-        foreach ($_POST['sln_customer_meta'] as $k => $value) {
-            if(strpos($k, 'wp') === 0){
+
+        if (!$is_new && self::is_plain_customer(get_userdata($user_id))) {
+            $wp_user = new WP_User($user_id);
+            if (!in_array(SLN_Plugin::USER_ROLE_CUSTOMER, (array) $wp_user->roles, true)) {
+                $wp_user->add_role(SLN_Plugin::USER_ROLE_CUSTOMER);
+            }
+        }
+
+        $allowed_keys = self::get_allowed_customer_meta_keys();
+        $posted_meta  = isset($_POST['sln_customer_meta']) && is_array($_POST['sln_customer_meta']) ? $_POST['sln_customer_meta'] : array();
+        foreach ($posted_meta as $k => $value) {
+            if (!is_string($k) || !in_array($k, $allowed_keys, true)) {
                 continue;
             }
             $value = is_array($value) ? array_map('sanitize_textarea_field', $value) : sanitize_textarea_field($value);
@@ -125,8 +149,12 @@ class SLN_Admin_Customers extends SLN_Admin_AbstractPage {
 		switch ($table->current_action()) {
                     case 'delete':
                         if (!is_multisite() && !empty($_REQUEST['users']) && is_array($_REQUEST['users'])) {
+                            check_admin_referer('bulk-users');
                             $users =  array_map('intval',$_REQUEST['users']);
                             foreach($users as $userId) {
+                                if ($userId === get_current_user_id() || !self::current_user_can_manage_customer($userId)) {
+                                    continue;
+                                }
                                 wp_delete_user( $userId );
                             }
 
@@ -155,6 +183,66 @@ class SLN_Admin_Customers extends SLN_Admin_AbstractPage {
 	}
 
 
+
+	/**
+	 * Salon users may manage plain customer accounts. Any account with more than a
+	 * customer role (administrators, salon staff, editors…) is only manageable by
+	 * someone WordPress itself allows to edit that user.
+	 *
+	 * @param int $user_id 0 for a new customer.
+	 * @return bool
+	 */
+	public static function current_user_can_manage_customer($user_id) {
+		$user_id = (int) $user_id;
+		if (!$user_id) {
+			return current_user_can('manage_salon');
+		}
+		$user = get_userdata($user_id);
+		if (!$user) {
+			return false;
+		}
+		if (current_user_can('edit_user', $user_id)) {
+			return true;
+		}
+
+		return current_user_can('manage_salon') && self::is_plain_customer($user);
+	}
+
+	/**
+	 * @param WP_User|false $user
+	 * @return bool
+	 */
+	public static function is_plain_customer($user) {
+		if (!$user instanceof WP_User || empty($user->roles)) {
+			return false;
+		}
+		$customer_roles = apply_filters(
+			'sln.admin_customers.customer_roles',
+			array(SLN_Plugin::USER_ROLE_CUSTOMER, 'subscriber', 'customer')
+		);
+		if (array_diff((array) $user->roles, $customer_roles)) {
+			return false;
+		}
+
+		return !user_can($user, 'manage_salon') && !user_can($user, 'edit_posts') && !user_can($user, 'list_users');
+	}
+
+	/**
+	 * User-meta keys the customer form may write.
+	 *
+	 * @return string[]
+	 */
+	public static function get_allowed_customer_meta_keys() {
+		$keys = array('_sln_personal_note', '_sln_administration_note', '_sln_sms_prefix');
+		foreach (SLN_Enum_CheckoutFields::forCustomer()->appendSmsPrefix() as $key => $field) {
+			if (in_array($field['type'], array('html', 'file'), true)) {
+				continue;
+			}
+			$keys[] = '_sln_' . $key;
+		}
+
+		return array_values(array_unique(apply_filters('sln.admin_customers.allowed_meta_keys', $keys)));
+	}
 
 	public static function get_edit_customer_link($user_id) {
 

@@ -27,7 +27,7 @@ abstract class REST_Controller extends WP_REST_Controller
     }
 
     protected function is_image($filename) {
-        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'svg'];
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
 
         $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
 
@@ -41,44 +41,11 @@ abstract class REST_Controller extends WP_REST_Controller
             return;
         }
 
-        $filename  = basename($image_url);
-
-        $uploaddir  = wp_upload_dir();
-        $uploadfile = $uploaddir['path'] . '/' . $filename;
-        $wp_check_image = $this->is_image(basename($filename));
-        if(!$wp_check_image){
+        try {
+            $attach_id = \SLN_Helper_RemoteImage::sideload($image_url, $id);
+        } catch (\Exception $e) {
             throw new \Exception(esc_html__( 'Upload image error.', 'salon-booking-system' ));
         }
-        $contents = file_get_contents($image_url);
-        $savefile = fopen($uploadfile, 'w');
-
-        fwrite($savefile, $contents);
-        fclose($savefile);
-
-        $wp_filetype = wp_check_filetype(basename($filename), null);
-
-        $attachment = array(
-            'post_mime_type' => $wp_filetype['type'],
-            'post_title'     => $filename,
-            'post_content'   => '',
-            'post_status'    => 'inherit',
-        );
-
-        $attach_id = wp_insert_attachment($attachment, $uploadfile, $id, true);
-
-        if (is_wp_error($attach_id)) {
-            throw new \Exception(esc_html__( 'Upload image error.', 'salon-booking-system' ));
-        }
-
-        $imagenew     = get_post($attach_id);
-        $fullsizepath = get_attached_file($imagenew->ID);
-
-        if (!function_exists('wp_generate_attachment_metadata')) {
-            include_once ABSPATH . 'wp-admin/includes/image.php';
-        }
-
-        $attach_data  = wp_generate_attachment_metadata($attach_id, $fullsizepath);
-        wp_update_attachment_metadata($attach_id, $attach_data);
 
         set_post_thumbnail($id, $attach_id);
     }

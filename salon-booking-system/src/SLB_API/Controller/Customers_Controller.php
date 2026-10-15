@@ -615,7 +615,9 @@ class Customers_Controller extends REST_Controller
 
     protected function save_item_user($request, $id = 0)
     {
-        if (!$id) {
+        $is_new = !$id;
+
+        if ($is_new) {
 
             $id = wp_create_user($request->get_param('email'), wp_generate_password(), $request->get_param('email'));
 
@@ -624,13 +626,17 @@ class Customers_Controller extends REST_Controller
             }
         }
 
-        $id = wp_update_user(array(
+        $userdata = array(
             'ID'         => $id,
             'user_email' => $request->get_param('email'),
             'first_name' => $request->get_param('first_name'),
             'last_name'  => $request->get_param('last_name'),
-            'role'       => SLN_Plugin::USER_ROLE_CUSTOMER,
-        ));
+        );
+        if ($is_new) {
+            $userdata['role'] = SLN_Plugin::USER_ROLE_CUSTOMER;
+        }
+
+        $id = wp_update_user($userdata);
 
         if ( is_wp_error($id) ) {
             throw new \Exception(esc_html__( 'Save customer error.', 'salon-booking-system' ));

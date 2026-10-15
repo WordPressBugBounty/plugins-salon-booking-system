@@ -480,7 +480,7 @@ class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
 
         SLN_Plugin::addLog(' - tips +' . $this->getTips());
 
-        $amount = apply_filters('sln.booking.getTotal', $amount, $this);
+        $amount = max(0.0, (float) apply_filters('sln.booking.getTotal', $amount, $this));
 
         $this->setMeta('amount', $amount);
 

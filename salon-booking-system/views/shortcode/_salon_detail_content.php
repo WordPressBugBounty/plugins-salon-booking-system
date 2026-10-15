@@ -103,12 +103,12 @@ foreach($fields as $key => $field){
 if(!is_user_logged_in()): ?>
     <div class="col-xs-12 sln-input sln-input--simple">
         <div class="row">
-            <?echo apply_filters('login_form_middle', '', array()); ?>
+            <?php echo apply_filters('login_form_middle', '', array()); ?>
         </div>
     </div>
     <div class="col-xs-12 sln-input sln-input--simple">
         <div class="row">
-            <?echo apply_filters('login_form_bottom', '', array()); ?>
+            <?php echo apply_filters('login_form_bottom', '', array()); ?>
         </div>
     </div>
 <?php endif;

@@ -4,7 +4,7 @@ Tags: salon, hairdresser, barber, beauty salon, appointment booking
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4.8
-Stable tag: 10.31.10
+Stable tag: 10.31.11
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -369,6 +369,14 @@ PHP 7.4 and above.
 
 == Changelog ==
 
+
+14.10.2026 - 10.31.11
+
+* Security fix: Salon Staff can no longer edit, demote or delete administrators or other non-customer accounts from the Customers screen, and saving a customer no longer resets the account's role. Only the customer form's own fields are written to the user profile (reported by RIA Labs and Utkarsh Choudhary)
+* Security fix: a booking edited by Salon Staff can no longer change the name or e-mail of a non-customer account
+* Security fix: images imported from a URL (REST API assistants/services, assistants CSV import) are downloaded only from public hosts, must be real JPEG/PNG/GIF/WebP images, and are stored through the WordPress media library. SVG is no longer accepted (reported by vuxvinh)
+* Security fix: a discount can no longer exceed the price it applies to, so a booking total can never be negative (reported by vuxvinh)
+* Security fix: the discounts REST routes, and other salon REST reads, now require salon management access instead of being readable by any logged-in user (reported by Andy Urlep)
 
 12.10.2026 - 10.31.10
 

@@ -386,7 +386,7 @@ class SLN_Wrapper_Booking_Builder
 
         $ret = apply_filters('sln.booking_builder.getTotal', $ret, $this);
 
-        return SLN_Func::filter($ret, 'float');
+        return max(0.0, SLN_Func::filter($ret, 'float'));
     }
 
     public function create($bookingStatus = '', $clear = true)

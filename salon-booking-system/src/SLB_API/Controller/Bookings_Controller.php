@@ -391,6 +391,20 @@ class Bookings_Controller extends REST_Controller
     }
 
     /**
+     * Single-booking reads (get_item, pay_remaining_amount) stay open to any
+     * logged-in user because both callbacks enforce current_user_can_access_booking(),
+     * so a customer can only reach their own booking.
+     */
+    public function get_item_permissions_check( $request )
+    {
+        if ( ! current_user_can( 'read' ) ) {
+            return new WP_Error( 'salon_rest_cannot_view', __( 'Sorry, you cannot view resource.', 'salon-booking-system' ), array( 'status' => rest_authorization_required_code() ) );
+        }
+
+        return true;
+    }
+
+    /**
      * Salon staff, shop managers and administrators may list bookings.
      * A plain customer / Subscriber may not.
      */
