@@ -1175,4 +1175,6 @@ echo expirePopup();
     </div>
 </div>
 <?php do_action( 'sln.admin.calendar.footer' ); ?>
+<?php if ( SLN_AI_Access::isEnabledForCurrentUser() ) : ?>
 <?php include dirname( __FILE__ ) . '/_ai_calendar_assistant.php'; ?>
+<?php endif; ?>

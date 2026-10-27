@@ -1775,7 +1775,8 @@ class Bookings_Controller extends REST_Controller
                             ),
                             'assistant_id' => array(
                                 'description' => __( 'The assistant id.', 'salon-booking-system' ),
-                                'type'        => 'integer',
+                                'type'        => array( 'integer', 'array' ),
+                                'items'       => array( 'type' => 'integer' ),
                                 'context'     => array( 'view', 'edit' ),
                                 'arg_options' => array(
                                     'required' => true,

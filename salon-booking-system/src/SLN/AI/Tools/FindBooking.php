@@ -360,9 +360,12 @@ class SLN_AI_Tools_FindBooking extends SLN_AI_Tools_Abstract
 		if ($mapped['query'] !== '') {
 			$parts = preg_split('/\s+/', $mapped['query']);
 			$parts = array_values(array_filter(array_map('sanitize_text_field', $parts)));
+			$searchKeys = SLN_AI_Access::restrictsCustomerData()
+				? array('_sln_booking_firstname', '_sln_booking_lastname')
+				: array('_sln_booking_email', '_sln_booking_firstname', '_sln_booking_lastname', '_sln_booking_phone');
 			foreach ($parts as $part) {
 				$or = array('relation' => 'OR');
-				foreach (array('_sln_booking_email', '_sln_booking_firstname', '_sln_booking_lastname', '_sln_booking_phone') as $key) {
+				foreach ($searchKeys as $key) {
 					$or[] = array(
 						'key'     => $key,
 						'value'   => $part,
@@ -431,11 +434,13 @@ class SLN_AI_Tools_FindBooking extends SLN_AI_Tools_Abstract
 
 		$email = '';
 		$phone = '';
-		try {
-			$email = (string) $booking->getEmail();
-			$phone = (string) $booking->getPhone();
-		} catch (Exception $e) {
-			// ignore
+		if (! SLN_AI_Access::restrictsCustomerData()) {
+			try {
+				$email = (string) $booking->getEmail();
+				$phone = (string) $booking->getPhone();
+			} catch (Exception $e) {
+				// ignore
+			}
 		}
 
 		return array(

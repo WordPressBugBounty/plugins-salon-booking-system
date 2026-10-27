@@ -698,7 +698,9 @@ class SLB_Discount_Plugin {
 	}
 
 	public function hook_history_nav(){
-		echo '<li class="sln-account__nav__item sln-account__nav__discounts" role="presentation"><a href="#sln-account__discount__content" data-target="#sln-account__discount__content" aria-controls="sln-account__discount__content" role="tab" data-toggle="tab"><span>'. esc_html__('Discounts', 'salon-booking-system').'</span></a></li>';
+		echo '<li class="sln-account__nav__item sln-account__nav__discounts" role="presentation"><a href="#sln-account__discount__content" data-target="#sln-account__discount__content" aria-controls="sln-account__discount__content" role="tab" data-toggle="tab">'
+			. '<svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12.2V4.5A1.5 1.5 0 0 1 4.5 3h7.7l8.8 8.8a1.5 1.5 0 0 1 0 2.1l-7.1 7.1a1.5 1.5 0 0 1-2.1 0z"/><circle cx="8" cy="8" r="1.5"/></svg>'
+			. '<span>'. esc_html__('Discounts', 'salon-booking-system').'</span></a></li>';
 	}
 
 	public function hook_history_content($booking_history){

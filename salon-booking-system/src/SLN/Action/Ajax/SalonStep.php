@@ -6,6 +6,14 @@ class SLN_Action_Ajax_SalonStep extends SLN_Action_Ajax_Abstract
 {
     public function execute()
     {
+        $ajaxNonce = isset($_POST['security']) ? sanitize_text_field(wp_unslash($_POST['security'])) : '';
+        if ($ajaxNonce === '' || !wp_verify_nonce($ajaxNonce, 'ajax_post_validation')) {
+            return array(
+                'error'   => true,
+                'message' => __('Your session has expired. Please refresh the page and try again.', 'salon-booking-system'),
+            );
+        }
+
         $requestedStep = null;
         $mode = null;
         if (isset($_POST['sln_step_page'])) {
@@ -55,6 +63,14 @@ class SLN_Action_Ajax_SalonStep extends SLN_Action_Ajax_Abstract
         } elseif (isset($_GET['mode'])) {
             $mode = sanitize_text_field($_GET['mode']);
             $_GET['mode'] = $mode;
+        }
+
+        // Stripe Pay Now posts op=create with the summary form. dispatchThankYou reads $_GET.
+        if (isset($_POST['op'])) {
+            $_GET['op'] = sanitize_text_field(wp_unslash($_POST['op']));
+        }
+        if (isset($_POST['lang'])) {
+            $_GET['lang'] = sanitize_text_field(wp_unslash($_POST['lang']));
         }
 
         if (isset($_POST['pay_remaining_amount'])) {

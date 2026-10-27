@@ -92,7 +92,7 @@ class SLN_AI_ToolRegistry
 			),
 		);
 
-		return array(
+		$catalog = array(
 			array(
 				'name'        => 'set_salon_availabilities',
 				'tier'        => 'confirm',
@@ -715,7 +715,7 @@ class SLN_AI_ToolRegistry
 				'name'        => 'find_customer',
 				'tier'        => 'guidance',
 				'class'       => 'SLN_AI_Tools_FindCustomer',
-				'description' => 'List or look up salon customers (WP users with customer role) by id, name, email, or phone. Read-only; returns edit links to Salon → Customers. Use when the user asks which customers exist or to find a client profile (not the same as find_booking).',
+				'description' => 'Find or list salon customers by id/name/email/phone; sort=oldest|newest by signup date. Returns contact, customer since, bookings.',
 				'parameters'  => array(
 					'type'       => 'object',
 					'properties' => array(
@@ -725,6 +725,8 @@ class SLN_AI_ToolRegistry
 						'name'   => array('type' => 'string'),
 						'email'  => array('type' => 'string'),
 						'phone'  => array('type' => 'string'),
+						'sort'   => array('type' => 'string', 'enum' => array('name', 'oldest', 'newest'), 'description' => 'oldest/newest = by registration date'),
+						'limit'  => array('type' => 'integer', 'description' => 'Max results (1-25)'),
 					),
 				),
 			),
@@ -794,6 +796,8 @@ class SLN_AI_ToolRegistry
 				),
 			),
 		);
+
+		return SLN_AI_Access::filterCatalog($catalog);
 	}
 
 	/**

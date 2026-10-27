@@ -609,11 +609,17 @@ function sln_init($) {
             const isBookingValid = await sln_checkOverbooking(this);
 
             if (!isBookingValid) {
-                // Overbooking: restore the button before alerting so the user can act.
-                button.removeClass('sln-pay-btn--loading');
-                alert(salon.txt_overbooking);
-                location.reload();
-                return false;
+                // Remaining-balance Stripe checkout already holds the slot. A failed
+                // overbooking check must not block Pay Now on that page.
+                const salonData = String(button.attr('data-salon-data') || '');
+                const payingRemaining = new URLSearchParams(window.location.search).has('pay_remaining_amount')
+                    && salonData.indexOf('op=create') !== -1;
+                if (!payingRemaining) {
+                    button.removeClass('sln-pay-btn--loading');
+                    alert(salon.txt_overbooking);
+                    location.reload();
+                    return false;
+                }
             }
         }
 

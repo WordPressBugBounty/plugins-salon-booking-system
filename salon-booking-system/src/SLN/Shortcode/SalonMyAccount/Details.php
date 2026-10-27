@@ -75,6 +75,18 @@ class SLN_Shortcode_SalonMyAccount_Details
 		$historyEnds  = count($historyItems) <= $this->perPage;
 		$historyItems = array_slice($historyItems, 0, $this->perPage);
 
+		$currentUser  = wp_get_current_user();
+		$userInitials = '';
+		foreach (array($currentUser->user_firstname, $currentUser->user_lastname) as $namePart) {
+			if ($namePart !== '') {
+				$userInitials .= function_exists('mb_substr') ? mb_substr($namePart, 0, 1) : substr($namePart, 0, 1);
+			}
+		}
+		if ($userInitials === '') {
+			$userInitials = function_exists('mb_substr') ? mb_substr($currentUser->display_name, 0, 1) : substr($currentUser->display_name, 0, 1);
+		}
+		$userInitials = function_exists('mb_strtoupper') ? mb_strtoupper($userInitials) : strtoupper($userInitials);
+
 		return $this->render('shortcode/salon_my_account/salon_my_account_details',
 				array(
 					'new' => array(
@@ -92,7 +104,8 @@ class SLN_Shortcode_SalonMyAccount_Details
 					'seconds_before_cancellation' => $this->plugin->getSettings()->get('hours_before_cancellation') * 3600,
 					'gen_phone' => $this->plugin->getSettings()->get('gen_phone'),
 					'cancelled' => !empty($_POST['option']) && $_POST['option'] = 'cancelled' ? true : false,
-					'user_name' => wp_get_current_user()->user_firstname,
+					'user_name' => $currentUser->user_firstname,
+					'user_initials' => $userInitials,
 					'gen_name' => $this->plugin->getSettings()->get('gen_name'),
 					'hide_prices' => $this->plugin->getSettings()->get('hide_prices'),
 					'attendant_enabled' => $this->plugin->getSettings()->get('attendant_enabled'),

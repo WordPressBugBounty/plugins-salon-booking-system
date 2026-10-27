@@ -126,6 +126,7 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
         }
         if(!empty($value)){
             $bb->setMeta('note', SLN_Func::filter($value));
+            SLN_Plugin::addLog('[SummaryStep] Saved customer note on booking #' . $bb->getId());
         }
 
         // MULTI-SHOPS: restore the "current shop" from the booking BEFORE any availability

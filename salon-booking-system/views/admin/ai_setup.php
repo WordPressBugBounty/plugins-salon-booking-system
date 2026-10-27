@@ -6,7 +6,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * @var SLN_Plugin $plugin
  */
-$icon_url = SLN_PLUGIN_URL . '/img/ai-setup-calendar-check.png';
+$icon_url      = SLN_PLUGIN_URL . '/img/ai-setup-calendar-check.png';
+$aiEnabled     = SLN_AI_Access::isEnabledForCurrentUser();
+$canManage     = SLN_AI_Access::canManage();
+$accessOptions = SLN_AI_Access::options();
 ?>
 <div id="sln-salon--admin" class="wrap sln-bootstrap sln-ai-setup">
 	<div class="sln-ai-setup__container">
@@ -27,7 +30,19 @@ $icon_url = SLN_PLUGIN_URL . '/img/ai-setup-calendar-check.png';
 			</p>
 		</div>
 
+		<?php if ( filter_input( INPUT_GET, 'ai_access_saved' ) ) : ?>
+			<div class="notice notice-success is-dismissible"><p><?php esc_html_e( 'AI assistant settings saved.', 'salon-booking-system' ); ?></p></div>
+		<?php endif; ?>
+
 		<div class="sln-ai-setup__layout">
+			<?php if ( ! $aiEnabled ) : ?>
+			<div class="sln-ai-setup__chat-panel sln-ai-setup__disabled">
+				<h2><?php esc_html_e( 'The AI assistant is disabled', 'salon-booking-system' ); ?></h2>
+				<p class="description">
+					<?php esc_html_e( 'The AI chat is turned off on this site, including the assistant on the calendar. Uncheck "Disable AI assistant" to turn it back on.', 'salon-booking-system' ); ?>
+				</p>
+			</div>
+			<?php else : ?>
 			<div class="sln-ai-setup__chat-panel">
 				<div class="sln-ai-setup__chat-top">
 					<div class="sln-ai-setup__chat-header">
@@ -91,8 +106,33 @@ $icon_url = SLN_PLUGIN_URL . '/img/ai-setup-calendar-check.png';
 					<button type="submit" class="button button-primary" id="sln-ai-setup-send"></button>
 				</form>
 			</div>
+			<?php endif; ?>
 
 			<aside class="sln-ai-setup__sidebar">
+				<?php if ( $canManage ) : ?>
+				<form class="sln-ai-setup__access" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+					<input type="hidden" name="action" value="<?php echo esc_attr( SLN_AI_Access::SAVE_ACTION ); ?>" />
+					<?php wp_nonce_field( SLN_AI_Access::SAVE_ACTION ); ?>
+					<h3 class="sln-ai-setup__access-title"><?php esc_html_e( 'Access', 'salon-booking-system' ); ?></h3>
+					<label>
+						<input type="checkbox" name="<?php echo esc_attr( SLN_AI_Access::OPT_DISABLED ); ?>" value="1" <?php checked( $accessOptions[ SLN_AI_Access::OPT_DISABLED ] ); ?> />
+						<?php esc_html_e( 'Disable AI assistant', 'salon-booking-system' ); ?>
+					</label>
+					<label>
+						<input type="checkbox" name="<?php echo esc_attr( SLN_AI_Access::OPT_DISABLED_ASSISTANTS ); ?>" value="1" <?php checked( $accessOptions[ SLN_AI_Access::OPT_DISABLED_ASSISTANTS ] ); ?> />
+						<?php esc_html_e( 'Disable for Assistants users only', 'salon-booking-system' ); ?>
+					</label>
+					<label>
+						<input type="checkbox" name="<?php echo esc_attr( SLN_AI_Access::OPT_RESTRICT_CUSTOMER_DATA ); ?>" value="1" <?php checked( $accessOptions[ SLN_AI_Access::OPT_RESTRICT_CUSTOMER_DATA ] ); ?> />
+						<?php esc_html_e( 'Restrict access to customers data for Assistant users', 'salon-booking-system' ); ?>
+					</label>
+					<p class="description">
+						<?php esc_html_e( 'Assistant users are users with the Salon staff role. With restricted customer data they cannot search customers or see customer email and phone.', 'salon-booking-system' ); ?>
+					</p>
+					<button type="submit" class="button button-primary"><?php esc_html_e( 'Save', 'salon-booking-system' ); ?></button>
+				</form>
+				<?php endif; ?>
+				<?php if ( $aiEnabled ) : ?>
 				<div id="sln-ai-setup-backend" class="sln-ai-setup__backend" hidden>
 					<div class="sln-ai-setup__backend-card">
 						<span class="sln-ai-setup__backend-label"></span>
@@ -105,6 +145,7 @@ $icon_url = SLN_PLUGIN_URL . '/img/ai-setup-calendar-check.png';
 						<?php esc_html_e( 'Can apply hours, holidays, identity, catalog, booking rules, style, and more after you confirm. Payments, SMS keys, OAuth, and license are guidance-only — never written by the assistant.', 'salon-booking-system' ); ?>
 					</p>
 				</div>
+				<?php endif; ?>
 			</aside>
 		</div>
 	</div>

@@ -4,7 +4,7 @@ Tags: salon, hairdresser, barber, beauty salon, appointment booking
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4.8
-Stable tag: 10.31.11
+Stable tag: 10.31.13
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -369,6 +369,29 @@ PHP 7.4 and above.
 
 == Changelog ==
 
+
+27.10.2026 - 10.31.13
+
+* New: Booking My Account redesigned, mobile first: new header and tab bar; Appointments with a "Next appointment" card, an Upcoming / Past switch and clear status labels; Discounts as coupon cards with a Copy button and expiry warnings; Packages with a sessions-left progress bar; a cleaner Profile form with show / hide password. The accent colour follows the Style settings
+* Improved: the "Leave a feedback" window has a new design and now says what is missing when the rating or the comment is empty
+* Improved: Booking My Account shows the discount applied to the next appointment
+* Improved: the "New reservation" button in Booking My Account stays at the bottom of the screen while scrolling the appointments
+* New: AI Setup "Access" options: turn the AI assistant off for everyone or only for Assistant users, or hide customer contact details from Assistant users
+* Improved: the AI assistant can sort customers by registration date (e.g. "who is our oldest customer?")
+* Fixed: AI assistant on local and private sites ("Site token mismatch" when several installs share the same local URL)
+* Fixed: a PHP warning on the Booking My Account profile tab
+
+27.10.2026 - 10.31.12
+
+* Security fix: booking form steps sent through AJAX now require a valid security token
+* Fixed: an assistant could be booked on two appointments at the same time. Saving a booking in the back-end, or creating or editing one in the mobile app, is now refused when an assistant is already booked at that time. Opening hours, holidays and the booking window remain warnings only
+* Fixed: bookings outside the booking window (e.g. far in the future) were ignored when checking availability, so an already-booked assistant could be shown as free
+* Fixed: bookings with multi-attendant services (e.g. duo massage) could not be edited or rescheduled in the mobile app ("Invalid parameter(s)" error)
+* Fixed: a booking whose save was refused in the back-end no longer loses its status, and the "Booking updated" notice is no longer shown alongside the error
+* Fixed: Stripe payments of a remaining balance — the Pay Now button stays available during the availability check, and the success and cancel pages return to the right booking page and language
+* New: PWA — booking details show the booking and service durations
+* Improved: PWA calendar — resizing a booking asks for confirmation before saving
+* Fixed: PWA calendar — resizing a booking no longer saves the wrong duration, and the resize handle is no longer blocked
 
 14.10.2026 - 10.31.11
 

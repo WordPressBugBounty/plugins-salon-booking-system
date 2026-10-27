@@ -207,7 +207,7 @@ class SLN_AI_REST_Controller
 	{
 		$cap = apply_filters('salonviews/settings/capability', 'manage_salon');
 
-		return current_user_can($cap);
+		return current_user_can($cap) && SLN_AI_Access::isEnabledForCurrentUser();
 	}
 
 	/**

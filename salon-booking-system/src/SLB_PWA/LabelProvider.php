@@ -50,6 +50,12 @@ class LabelProvider
             'editReservationTitle' => __('Edit the reservation', 'salon-booking-system'),
             'dateTitle' => __('date', 'salon-booking-system'),
             'timeTitle' => __('time', 'salon-booking-system'),
+            'durationTitle' => __('duration', 'salon-booking-system'),
+            'resizeBookingConfirmTitle' => __('Change duration?', 'salon-booking-system'),
+            /* translators: 1: old duration, 2: new duration, 3: start time, 4: new end time */
+            'resizeBookingConfirmText' => __('This booking will change from %s to %s (%s – %s).', 'salon-booking-system'),
+            'resizeBookingConfirmButtonLabel' => __('Change duration', 'salon-booking-system'),
+            'resizeBookingCancelButtonLabel' => __('Cancel', 'salon-booking-system'),
             'customerFirstnamePlaceholder' => __('firstname', 'salon-booking-system'),
             'customerLastnamePlaceholder' => __('lastname', 'salon-booking-system'),
             'customerEmailPlaceholder' => __('email', 'salon-booking-system'),

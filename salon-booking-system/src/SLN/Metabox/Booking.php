@@ -48,6 +48,7 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
         add_filter('wp_untrash_post_status', array($this, 'wp_untrash_post_status'), 10, 3);
         add_action('admin_notices', array($this, 'show_booking_trashed_notice'));
         add_action('admin_notices', array($this, 'show_daily_lock_override_notice'));
+        add_filter('redirect_post_location', array($this, 'redirect_post_location'), 10, 2);
 
 	if (!isset($_GET['mode']) || $_GET['mode'] !== 'sln_editor') {
 	    add_action('in_admin_header', array($this, 'in_admin_header'));
@@ -199,6 +200,7 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
                         'salon-booking-system'
                     )
                 );
+                $this->restoreStatusAfterRefusedSave($post_id);
 
                 return;
             }
@@ -224,6 +226,7 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
             foreach ($availabilityErrors as $error) {
                 $this->addError($error);
             }
+            $this->restoreStatusAfterRefusedSave($post_id);
             return;
         }
 
@@ -262,6 +265,7 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
             'post_status' => SLN_Enum_BookingStatus::getForceStatus($new),
         );
         if (isset($_SESSION['_sln_booking_user_errors'])) {
+            $this->restoreStatusAfterRefusedSave($post_id);
             return;
         }
         $createUser = isset($_POST['_sln_booking_createuser'])  ? boolval($_POST['_sln_booking_createuser']) : false;
@@ -601,6 +605,41 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
     }
 
     /**
+     * Drop WordPress's "Booking updated/published" notice when the save was refused,
+     * so only the error is shown.
+     */
+    public function redirect_post_location($location, $post_id)
+    {
+        if (get_post_type($post_id) === $this->getPostType() && !empty($_SESSION['_sln_booking_user_errors'])) {
+            $location = remove_query_arg('message', $location);
+        }
+
+        return $location;
+    }
+
+    /**
+     * WordPress has already written the editor's post_status ("publish") when
+     * save_post runs; the booking status is only applied at the end of a full save.
+     * When the save is refused, put the previous booking status back, otherwise the
+     * booking drops out of the calendar and availability.
+     *
+     * @param int $post_id
+     */
+    private function restoreStatusAfterRefusedSave($post_id)
+    {
+        if (empty($this->prevStatus) || strpos($this->prevStatus, 'sln-b-') !== 0 || get_post_status($post_id) === $this->prevStatus) {
+            return;
+        }
+
+        $this->disabledSavePost = true;
+        wp_update_post(array(
+            'ID'          => $post_id,
+            'post_status' => $this->prevStatus,
+        ));
+        $this->disabledSavePost = false;
+    }
+
+    /**
      * Align admin-submitted booking time to the configured interval before
      * availability checks and persistence (matches fieldJSTime rounding).
      *
@@ -630,17 +669,31 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
     }
 
     /**
-     * Checks the current booking's services/attendants against live availability.
+     * Refuses a save that puts an assistant on two bookings at the same time.
      * Called before parent::save_post() so an overlap blocks the save entirely.
-     * When editing an existing booking, the booking itself is excluded from the check
-     * via the $booking parameter passed to setDate(), preventing false positives.
      *
-     * @param int   $post_id      The booking post ID (0 when creating a new booking).
+     * Only assistant overlaps are enforced: opening hours, holidays and the booking
+     * window stay warnings in the editor so staff can still book outside them. The
+     * check is skipped when date, time and services are unchanged, so editing the
+     * notes or status of an existing (even past) booking is never blocked.
+     *
+     * @param int   $post_id      The booking post ID.
      * @param array $servicesData Processed services from processServicesSubmission().
      * @return string[]  Array of human-readable error messages (empty = no conflicts).
      */
     private function validateAvailabilityBeforeSave($post_id, array $servicesData)
     {
+        // Without the editor's nonce the metabox fields are not saved at all
+        // (SLN_Metabox_Helper::isValidRequest), so there is nothing to guard.
+        $nonceField = $this->getPostType() . '_details_meta_nonce';
+        if (!isset($_POST[$nonceField]) || !wp_verify_nonce(
+                sanitize_text_field(wp_unslash($_POST[$nonceField])),
+                $this->getPostType()
+            )
+        ) {
+            return array();
+        }
+
         if (empty($_POST['_sln_booking_status'])) {
             return array();
         }
@@ -650,27 +703,47 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
             return array();
         }
 
-        if (
-            empty($_POST['_sln_booking']['date'])
-            || empty($_POST['_sln_booking']['time'])
-        ) {
+        // The editor posts _sln_booking_date / _sln_booking_time ("13 Nov 2026", "10:20").
+        $dateField = SLN_Metabox_Helper::getFieldName($this->getPostType(), 'date');
+        $timeField = SLN_Metabox_Helper::getFieldName($this->getPostType(), 'time');
+        if (empty($_POST[$dateField]) || empty($_POST[$timeField])) {
             return array();
         }
 
         try {
-            $date = new SLN_DateTime(
-                sanitize_text_field(wp_unslash($_POST['_sln_booking']['date']))
-                . ' '
-                . sanitize_text_field(wp_unslash($_POST['_sln_booking']['time'])),
-                SLN_TimeFunc::getWpTimezone()
-            );
+            $day  = SLN_Func::filter(sanitize_text_field(wp_unslash($_POST[$dateField])), 'date');
+            $time = SLN_Func::filter(sanitize_text_field(wp_unslash($_POST[$timeField])), 'time');
+            $date = new SLN_DateTime($day . ' ' . $time, SLN_TimeFunc::getWpTimezone());
         } catch (Exception $e) {
             return array();
         }
 
-        // When editing an existing booking, pass it to setDate() so that its
-        // own occupied slots are excluded and edits don't block themselves.
-        $currentBooking  = $this->getPlugin()->createBooking((int) $post_id);
+        // When editing an existing booking, pass it so that its own occupied
+        // slots are excluded and edits don't block themselves.
+        $currentBooking = $this->getPlugin()->createBooking((int) $post_id);
+
+        $storedServices = array();
+        foreach ((array) $currentBooking->getMeta('services') as $stored) {
+            $storedServices[] = array(
+                'service'   => isset($stored['service']) ? (int) $stored['service'] : 0,
+                'attendant' => isset($stored['attendant']) ? array_map('intval', (array) $stored['attendant']) : array(),
+            );
+        }
+        $submittedServices = array();
+        foreach ($servicesData as $submitted) {
+            $submittedServices[] = array(
+                'service'   => (int) $submitted['service'],
+                'attendant' => array_map('intval', (array) $submitted['attendant']),
+            );
+        }
+        if (
+            $currentBooking->getMeta('date') === $day
+            && $currentBooking->getMeta('time') === $time
+            && $storedServices == $submittedServices
+        ) {
+            return array();
+        }
+
         $bookingServices = SLN_Wrapper_Booking_Services::build(
             $servicesData,
             $date,
@@ -678,56 +751,13 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
             $currentBooking->getCountServices()
         );
 
-        $availability = $this->getPlugin()->getAvailabilityHelper();
-        $availability->setDate($date, $currentBooking);
+        $errors = SLN_Helper_Availability::getAttendantOverlapErrors($bookingServices, $currentBooking);
 
-        // Staff booking from wp-admin may override a slot they locked from the day
-        // calendar; every other rule still applies and the front-end is untouched.
-        $canOverrideLocks = $this->canOverrideDailyLocks();
-        if ($canOverrideLocks) {
-            $availability->setIgnoreDailyLocks(true);
-        }
-
-        $errors = array();
-
-        try {
-            foreach ($bookingServices->getItems() as $bookingService) {
-                $service = $bookingService->getService();
-                if (!$service || !($service instanceof SLN_Wrapper_ServiceInterface)) {
-                    continue;
-                }
-
-                $isLast = $bookingServices->isLast($bookingService);
-
-                $serviceErrors = $availability->validateBookingService($bookingService, $isLast);
-                if (!empty($serviceErrors) && is_array($serviceErrors)) {
-                    $errors = array_merge($errors, $serviceErrors);
-                }
-
-                $attendant = $bookingService->getAttendant();
-                if ($attendant && !is_array($attendant)) {
-                    $attendantErrors = $availability->validateBookingAttendant($bookingService, $isLast);
-                    if (!empty($attendantErrors) && is_array($attendantErrors)) {
-                        $errors = array_merge($errors, $attendantErrors);
-                    }
-                } elseif (is_array($attendant) && !empty($attendant)) {
-                    $attendantErrors = $availability->validateBookingAttendants($bookingService, $isLast);
-                    if (!empty($attendantErrors) && is_array($attendantErrors)) {
-                        $errors = array_merge($errors, $attendantErrors);
-                    }
-                }
-            }
-        } finally {
-            if ($canOverrideLocks) {
-                $availability->setIgnoreDailyLocks(false);
-            }
-        }
-
-        if ($canOverrideLocks && empty($errors)) {
+        if (empty($errors) && $this->canOverrideDailyLocks()) {
             $this->flagDailyLockOverride($date, $bookingServices);
         }
 
-        return array_values(array_unique($errors));
+        return $errors;
     }
 
     /**

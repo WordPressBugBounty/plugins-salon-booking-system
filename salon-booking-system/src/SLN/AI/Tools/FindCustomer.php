@@ -103,6 +103,11 @@ class SLN_AI_Tools_FindCustomer extends SLN_AI_Tools_Abstract
 			if ($row['phone'] !== '') {
 				$lines[] = '  ' . $row['phone'];
 			}
+			$lines[] = '  ' . sprintf(
+				/* translators: %s: registration date */
+				__('Customer since: %s', 'salon-booking-system'),
+				$row['registered']
+			);
 			if ($row['bookings_count'] !== null) {
 				$lines[] = '  ' . sprintf(
 					/* translators: %d: booking count */
@@ -194,9 +199,17 @@ class SLN_AI_Tools_FindCustomer extends SLN_AI_Tools_Abstract
 			}
 		}
 
+		$sort = isset($arguments['sort']) ? sanitize_key((string) $arguments['sort']) : '';
+		if (! in_array($sort, array('oldest', 'newest'), true)) {
+			$sort = 'name';
+		}
+		$limit = isset($arguments['limit']) ? absint($arguments['limit']) : 0;
+
 		return array(
 			'id'    => isset($arguments['id']) ? absint($arguments['id']) : 0,
 			'query' => $query,
+			'sort'  => $sort,
+			'limit' => $limit > 0 ? min($limit, self::MAX_RESULTS) : self::MAX_RESULTS,
 			'name'  => isset($arguments['name']) ? sanitize_text_field((string) $arguments['name']) : '',
 			'email' => isset($arguments['email']) ? sanitize_email((string) $arguments['email']) : '',
 			'phone' => isset($arguments['phone']) ? sanitize_text_field((string) $arguments['phone']) : '',
@@ -274,10 +287,15 @@ class SLN_AI_Tools_FindCustomer extends SLN_AI_Tools_Abstract
 
 		$args = array(
 			'role'   => SLN_Plugin::USER_ROLE_CUSTOMER,
-			'number' => self::MAX_RESULTS,
+			'number' => $mapped['limit'],
 			'orderby'=> 'display_name',
 			'order'  => 'ASC',
 		);
+		// oldest/newest = by registration date (customer since).
+		if ($mapped['sort'] !== 'name') {
+			$args['orderby'] = 'registered';
+			$args['order']   = $mapped['sort'] === 'oldest' ? 'ASC' : 'DESC';
+		}
 
 		$search = $query !== '' ? $query : $name;
 		if ($search !== '') {
@@ -298,7 +316,7 @@ class SLN_AI_Tools_FindCustomer extends SLN_AI_Tools_Abstract
 		}
 
 		// Also match first/last name meta when WP search misses.
-		if ($search !== '' && count($out) < self::MAX_RESULTS) {
+		if ($search !== '' && $mapped['sort'] === 'name' && count($out) < $mapped['limit']) {
 			$byMeta = get_users(
 				array(
 					'role'       => SLN_Plugin::USER_ROLE_CUSTOMER,
@@ -327,7 +345,7 @@ class SLN_AI_Tools_FindCustomer extends SLN_AI_Tools_Abstract
 				if ($row) {
 					$out[] = $row;
 				}
-				if (count($out) >= self::MAX_RESULTS) {
+				if (count($out) >= $mapped['limit']) {
 					break;
 				}
 			}
@@ -369,6 +387,7 @@ class SLN_AI_Tools_FindCustomer extends SLN_AI_Tools_Abstract
 			'email'          => $email,
 			'phone'          => $phone,
 			'bookings_count' => $count,
+			'registered'     => $this->plugin->format()->date($user->user_registered),
 			'edit_url'       => admin_url('admin.php?page=salon-customers&id=' . (int) $user->ID),
 		);
 	}

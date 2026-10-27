@@ -12,6 +12,12 @@ class SLN_Repository_BookingRepository extends SLN_Repository_AbstractWrapperRep
     protected $bookingCache = array();
 
     /**
+     * Booking dates (Y-m-d) already read into $bookingCache, so a date is never
+     * fetched twice and its bookings are never counted twice.
+     */
+    protected $bookingCacheLoadedDates = array();
+
+    /**
      * Discard the per-request booking list so the next availability query
      * re-reads from the database. Call this after any booking status change
      * so cancelled bookings are no longer counted as occupying a slot within
@@ -20,6 +26,7 @@ class SLN_Repository_BookingRepository extends SLN_Repository_AbstractWrapperRep
     public function clearBookingCache()
     {
         $this->bookingCache = array();
+        $this->bookingCacheLoadedDates = array();
     }
 
     public function getWrapperClass()
@@ -134,40 +141,24 @@ class SLN_Repository_BookingRepository extends SLN_Repository_AbstractWrapperRep
         $noTimeStatuses = SLN_Enum_BookingStatus::$noTimeStatuses;
         $ret            = array();
 
-        if (empty($this->bookingCache)) {
+        if (empty($this->bookingCacheLoadedDates)) {
 
             $hb     = new SLN_Helper_HoursBefore(SLN_Plugin::getInstance()->getSettings());
             $from  = $hb->getFromDate();
             $to     = $hb->getToDate();
 
-            // PERFORMANCE OPTIMIZATION: Optimized query for 36K+ bookings
-            // 1. Use IN() instead of multiple OR for post_status (index-friendly)
-            // 2. Avoid DATE() function on meta_value (prevents index use)
-            // 3. Use string comparison directly (meta_value is stored as YYYY-MM-DD)
-            $posts = $wpdb->get_results($wpdb->prepare("
-                SELECT
-                    p.*, pm.meta_value
-                FROM
-                    $wpdb->postmeta pm
-                INNER JOIN
-                    $wpdb->posts p ON pm.post_id = p.ID
-                WHERE
-                    pm.meta_key = '_sln_booking_date'
-                    AND pm.meta_value >= %s
-                    AND pm.meta_value < %s
-                    AND p.post_type = 'sln_booking'
-                    AND p.post_status IN ('sln-b-pendingpayment', 'sln-b-pending', 'sln-b-paid', 'sln-b-paylater', 'sln-b-confirmed')
-                ORDER BY
-                    pm.meta_value, p.post_date DESC
-           ", $from->format('Y-m-d'), $to->modify('+1 day')->format('Y-m-d')));
+            $this->loadBookingsForAvailability($from->format('Y-m-d'), $to->modify('+1 day')->format('Y-m-d'));
+        }
 
-            foreach ($posts as $post) {
-                if (!isset($this->bookingCache[$post->meta_value])) {
-                    $this->bookingCache[$post->meta_value] = array();
-                }
-                $this->bookingCache[$post->meta_value][] = $post;
-            }
-            $this->cacheMultidateBookings($posts);
+        // The prefetch above only covers the customer booking window (hours before
+        // from/to). Staff tools (admin editor, PWA, reschedule) check dates outside
+        // it, e.g. today with a 1-day minimum notice or beyond the max advance limit.
+        // Without loading that day its bookings were invisible and every assistant
+        // looked free, which allowed double bookings.
+        if (!isset($this->bookingCacheLoadedDates[$date->format('Y-m-d')])) {
+            $dayFrom = (clone $date)->modify('-1 day')->format('Y-m-d');
+            $dayTo   = (clone $date)->modify('+2 days')->format('Y-m-d');
+            $this->loadBookingsForAvailability($dayFrom, $dayTo);
         }
 
         $posts = isset($this->bookingCache[$date->format('Y-m-d')]) ? $this->bookingCache[$date->format('Y-m-d')] : array();
@@ -193,6 +184,67 @@ class SLN_Repository_BookingRepository extends SLN_Repository_AbstractWrapperRep
         }
 
         return $ret;
+    }
+
+    /**
+     * Read active bookings dated in [$fromYmd, $toYmd) into $bookingCache, skipping
+     * dates already loaded.
+     *
+     * @param string $fromYmd inclusive
+     * @param string $toYmd   exclusive
+     */
+    protected function loadBookingsForAvailability($fromYmd, $toYmd)
+    {
+        global $wpdb;
+
+        // PERFORMANCE OPTIMIZATION: Optimized query for 36K+ bookings
+        // 1. Use IN() instead of multiple OR for post_status (index-friendly)
+        // 2. Avoid DATE() function on meta_value (prevents index use)
+        // 3. Use string comparison directly (meta_value is stored as YYYY-MM-DD)
+        $posts = $wpdb->get_results($wpdb->prepare("
+            SELECT
+                p.*, pm.meta_value
+            FROM
+                $wpdb->postmeta pm
+            INNER JOIN
+                $wpdb->posts p ON pm.post_id = p.ID
+            WHERE
+                pm.meta_key = '_sln_booking_date'
+                AND pm.meta_value >= %s
+                AND pm.meta_value < %s
+                AND p.post_type = 'sln_booking'
+                AND p.post_status IN ('sln-b-pendingpayment', 'sln-b-pending', 'sln-b-paid', 'sln-b-paylater', 'sln-b-confirmed')
+            ORDER BY
+                pm.meta_value, p.post_date DESC
+       ", $fromYmd, $toYmd));
+
+        $newPosts = array();
+        foreach ($posts as $post) {
+            if (isset($this->bookingCacheLoadedDates[$post->meta_value])) {
+                continue;
+            }
+            $this->addToBookingCache($post->meta_value, $post);
+            $newPosts[] = $post;
+        }
+
+        for ($d = new DateTime($fromYmd); $d->format('Y-m-d') < $toYmd; $d->modify('+1 day')) {
+            $this->bookingCacheLoadedDates[$d->format('Y-m-d')] = true;
+        }
+
+        $this->cacheMultidateBookings($newPosts);
+    }
+
+    protected function addToBookingCache($dateYmd, $post)
+    {
+        if (!isset($this->bookingCache[$dateYmd])) {
+            $this->bookingCache[$dateYmd] = array();
+        }
+        foreach ($this->bookingCache[$dateYmd] as $cached) {
+            if ($cached->ID == $post->ID) {
+                return;
+            }
+        }
+        $this->bookingCache[$dateYmd][] = $post;
     }
 
     protected function cacheMultidateBookings($posts)
@@ -242,11 +294,8 @@ class SLN_Repository_BookingRepository extends SLN_Repository_AbstractWrapperRep
                         $startDate->modify('-' . $lockInterval . ' hours');
                     }
                     while ($startDate <= $endDate) {
-                        if (!isset($this->bookingCache[$startDate->format('Y-m-d')])) {
-                            $this->bookingCache[$startDate->format('Y-m-d')] = array();
-                        }
                         if ($startDate->format('Y-m-d') != $post->meta_value) {
-                            $this->bookingCache[$startDate->format('Y-m-d')][] = $post;
+                            $this->addToBookingCache($startDate->format('Y-m-d'), $post);
                         }
                         $startDate->modify('+1 day');
                     }

@@ -167,10 +167,14 @@ class SLN_AI_ContextPack
 			! empty($context['enable_discount_system']) ? 'yes' : 'no',
 			isset($context['discounts_count']) ? (int) $context['discounts_count'] : 0
 		);
-		$lines[] = sprintf(
-			'Customers (salon role) on site: %s — use find_customer to list/search (no customer PII in this context pack)',
-			isset($context['customers_count']) ? (int) $context['customers_count'] : 0
-		);
+		if (SLN_AI_Access::restrictsCustomerData()) {
+			$lines[] = 'Customer data is restricted for this user: no customer lookup, no customer email/phone. Politely decline such requests.';
+		} else {
+			$lines[] = sprintf(
+				'Customers (salon role) on site: %s — use find_customer to list/search (no customer PII in this context pack)',
+				isset($context['customers_count']) ? (int) $context['customers_count'] : 0
+			);
+		}
 		$lines[] = sprintf(
 			'Admin calendar: %s (default view setting: %s). Open via explain_setting topic=calendar. Bookings on a day → find_booking; create/edit → create_booking / create_bookings / update_booking.',
 			self::str($context, 'calendar_url', ''),

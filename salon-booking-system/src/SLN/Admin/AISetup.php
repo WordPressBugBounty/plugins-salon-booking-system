@@ -13,10 +13,14 @@ class SLN_Admin_AISetup extends SLN_Admin_AbstractPage
 	{
 		parent::__construct($plugin);
 		add_action('in_admin_header', array($this, 'in_admin_header'));
+		add_action('admin_post_' . SLN_AI_Access::SAVE_ACTION, array('SLN_AI_Access', 'handleSave'));
 	}
 
 	public function admin_menu()
 	{
+		if (! SLN_AI_Access::canAccessPage()) {
+			return;
+		}
 		$this->classicAdminMenu(
 			__('AI Setup', 'salon-booking-system'),
 			__('AI Setup', 'salon-booking-system')
@@ -138,7 +142,7 @@ class SLN_Admin_AISetup extends SLN_Admin_AbstractPage
 	 */
 	public static function enqueueAiAssets($mode = 'page')
 	{
-		$version = SLN_Action_InitScripts::ASSETS_VERSION . '-ai-setup-artifact-v22';
+		$version = SLN_Action_InitScripts::ASSETS_VERSION . '-ai-setup-artifact-v23';
 		$mode    = $mode === 'widget' ? 'widget' : 'page';
 
 		wp_enqueue_style(
@@ -160,6 +164,10 @@ class SLN_Admin_AISetup extends SLN_Admin_AbstractPage
 				array('salon-ai-setup'),
 				$version
 			);
+		}
+		// Disabled: keep the styles for the access settings card, skip the chat app.
+		if (! SLN_AI_Access::isEnabledForCurrentUser()) {
+			return;
 		}
 		wp_enqueue_script(
 			'salon-ai-setup',

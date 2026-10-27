@@ -182,6 +182,16 @@
       <span v-else>{{ this.getLabel("noResultTimeslotsLabel") }}</span>
     </div>
 
+    <ConfirmModal
+      v-model="resizeConfirm.visible"
+      :title="getLabel('resizeBookingConfirmTitle') || 'Change duration?'"
+      :message="resizeConfirm.message"
+      :confirm-label="getLabel('resizeBookingConfirmButtonLabel') || 'Change duration'"
+      :cancel-label="getLabel('resizeBookingCancelButtonLabel') || 'Cancel'"
+      @confirm="resolveResizeConfirm(true)"
+      @cancel="resolveResizeConfirm(false)"
+    />
+
   </div>
 </template>
 
@@ -198,6 +208,7 @@ import WeekStrip from './WeekStrip.vue';
 import CalendarBottomSheet from './CalendarBottomSheet.vue';
 import BookingCard from "./BookingCard.vue";
 import AttendantTimeSlots from './AttendantTimeSlots.vue';
+import ConfirmModal from '../../ConfirmModal.vue';
 import mixins from '@/mixin';
 
 // Debug flag - set to false in production
@@ -218,6 +229,7 @@ export default {
     CalendarBottomSheet,
     BookingCard,
     AttendantTimeSlots,
+    ConfirmModal,
   },
   props: {
     modelValue: {
@@ -232,6 +244,8 @@ export default {
   },
   data() {
     return {
+      // In-app resize confirmation (native confirm() is blocked in some WebViews)
+      resizeConfirm: { visible: false, message: '', resolve: null },
       // calendar data
       timeslots: [],
       lockedTimeslots: [],
@@ -1689,7 +1703,15 @@ export default {
         this.revertBookingResize(bookingId);
         return;
       }
-      
+
+      // Nothing changed (e.g. a tap on the handle): don't save anything
+      const originalState = this.originalBookingStates[bookingId];
+      if (originalState && duration === originalState.duration) {
+        this.revertBookingResize(bookingId);
+        this.resizingBookingId = null;
+        return;
+      }
+
       // STEP 1: Validate duration constraints
       const validation = this.validateResizeDuration(booking, duration);
       if (!validation.valid) {
@@ -1709,23 +1731,63 @@ export default {
         return;
       }
       
-      // STEP 3: Set loading state and save
+      // STEP 3: Work out each service's new length. Earlier services keep their
+      // current span; only the last one absorbs the change, so a multi-service
+      // booking ends at the new end time instead of multiplying the duration.
+      const toDurationStr = (minutes) =>
+        `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+      const newEnd = this.getMinutes(booking.time) + duration;
+      const lastIndex = booking.services.length - 1;
+      const serviceDurations = booking.services.map((s, index) => {
+        if (index === lastIndex) {
+          return newEnd - this.getMinutes(s.start_at || booking.time);
+        }
+        return s.start_at && s.end_at ? this.getMinutes(s.end_at) - this.getMinutes(s.start_at) : 0;
+      });
+
+      if (serviceDurations.some(minutes => !(minutes > 0))) {
+        this.showResizeError('Duration too short for the services in this booking');
+        this.revertBookingResize(bookingId);
+        this.resizingBookingId = null;
+        return;
+      }
+
+      // STEP 4: Ask the user to confirm the new duration before saving (in-app popup)
+      const formatMinutes = (minutes) => {
+        const h = Math.floor(minutes / 60);
+        const m = minutes % 60;
+        if (h > 0 && m > 0) return `${h}h ${m}min`;
+        return h > 0 ? `${h}h` : `${m}min`;
+      };
+      const confirmArgs = [
+        formatMinutes(originalState ? originalState.duration : this.getBookingEnd(booking) - this.getBookingStart(booking)),
+        formatMinutes(duration),
+        this.timeFormat(booking.time),
+        this.timeFormat(toDurationStr(newEnd % this.MINUTES_IN_DAY)),
+      ];
+      const confirmText = (this.getLabel('resizeBookingConfirmText') || 'This booking will change from %s to %s (%s – %s).')
+        .replace(/%s/g, (match) => confirmArgs.length ? confirmArgs.shift() : match);
+      if (!(await this.askResizeConfirm(confirmText))) {
+        this.revertBookingResize(bookingId);
+        this.resizingBookingId = null;
+        return;
+      }
+
+      // STEP 5: Set loading state and save
       this.savingBookingIds.add(bookingId);
       this.tempDurations[bookingId] = duration; // Keep visual state during save
-      
+
       try {
-        const hours = Math.floor(duration / 60);
-        const mins = duration % 60;
-        const durationStr = `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
-        
+        const durationStr = toDurationStr(duration);
+
         const payload = {
           date: booking.date,
           time: booking.time,
-          services: booking.services.map(s => ({
+          services: booking.services.map((s, index) => ({
             service_id: s.service_id,
             assistant_id: s.assistant_id || 0,
             resource_id: s.resource_id || 0,
-            duration: durationStr
+            duration: toDurationStr(serviceDurations[index])
           }))
         };
         
@@ -1741,8 +1803,8 @@ export default {
         // Update booking locally to maintain visual state
         const updatedBooking = this.bookingsList.find(b => b.id === bookingId);
         if (updatedBooking && updatedBooking.services && updatedBooking.services.length > 0) {
-          updatedBooking.services.forEach(service => {
-            service.duration = durationStr;
+          updatedBooking.services.forEach((service, index) => {
+            service.duration = toDurationStr(serviceDurations[index]);
           });
         }
         
@@ -2275,6 +2337,20 @@ export default {
       return { hasOverlap: false };
     },
     
+    askResizeConfirm(message) {
+      // A previous prompt still open counts as cancelled
+      this.resolveResizeConfirm(false);
+      return new Promise((resolve) => {
+        this.resizeConfirm = { visible: true, message, resolve };
+      });
+    },
+    resolveResizeConfirm(answer) {
+      const { resolve } = this.resizeConfirm;
+      this.resizeConfirm = { visible: false, message: '', resolve: null };
+      if (resolve) {
+        resolve(answer);
+      }
+    },
     revertBookingResize(bookingId) {
       // Restore original state
       const originalState = this.originalBookingStates[bookingId];

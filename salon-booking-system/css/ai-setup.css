@@ -720,6 +720,58 @@ body.salon_page_salon-ai-setup .sln-help-button-in-header-page {
 	color: var(--sln-ai-muted) !important;
 }
 
+/* Access settings card */
+.sln-ai-setup__access {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	background: var(--sln-ai-card);
+	border: 1px solid var(--sln-ai-border);
+	border-radius: 16px;
+	padding: 22px;
+	box-shadow: var(--sln-ai-shadow);
+}
+
+#sln-salon--admin.sln-ai-setup .sln-ai-setup__access-title {
+	margin: 0 0 4px !important;
+	font-size: 14px !important;
+	font-weight: 600 !important;
+	color: var(--sln-ai-text) !important;
+}
+
+.sln-ai-setup__access label {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	font-size: 13.5px;
+	font-weight: 400 !important;
+	line-height: 1.4;
+	color: var(--sln-ai-text-soft);
+}
+
+.sln-ai-setup__access label input[type="checkbox"] {
+	margin: 1px 0 0;
+}
+
+.sln-ai-setup__access .description {
+	margin: 0 !important;
+	font-size: 12.5px !important;
+	line-height: 1.5 !important;
+	color: var(--sln-ai-muted) !important;
+}
+
+.sln-ai-setup__access .button {
+	align-self: flex-start;
+}
+
+.sln-ai-setup__disabled {
+	padding: 28px;
+}
+
+.sln-ai-setup__disabled .description {
+	color: var(--sln-ai-muted) !important;
+}
+
 /* Usage meter + credit packs */
 .sln-ai-setup__usage {
 	margin: 0 0 14px;

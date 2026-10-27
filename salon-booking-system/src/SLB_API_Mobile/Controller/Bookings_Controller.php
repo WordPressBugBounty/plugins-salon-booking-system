@@ -1296,7 +1296,7 @@ class Bookings_Controller extends REST_Controller
             $data = $this->update_item_post($cloned_request, $booking_id, $customer_id);
 
         } catch (\Exception $ex) {
-            return new WP_Error( 'salon_rest_cannot_update', $ex->getMessage(), array( 'status' => 404 ) );
+            return new WP_Error( 'salon_rest_cannot_update', $ex->getMessage(), array( 'status' => $ex->getCode() ? $ex->getCode() : 404 ) );
         }
 
 	return $this->success_response(array(
@@ -1438,6 +1438,8 @@ class Bookings_Controller extends REST_Controller
 
 	do_action('sln_api_bookings_create_item_post_before_valid', $bb, $request);
 
+        $this->validate_assistants_not_double_booked($bb);
+
 	$this->request	   = $request;
 	$this->customer_id = $customer_id;
 
@@ -1513,6 +1515,8 @@ class Bookings_Controller extends REST_Controller
         $bb->setResources($resources);
 
 	do_action('sln_api_bookings_update_item_post_before_valid', $bb, $request);
+
+        $this->validate_assistants_not_double_booked($bb, new SLN_Wrapper_Booking($id), $services_durations);
 
         $this->booking_id = $id;
 
@@ -1596,6 +1600,13 @@ class Bookings_Controller extends REST_Controller
         $this->persist_booking_phone_meta($id, $request);
         $this->sync_customer_contact_meta($customer_id, $request);
 
+        // Track the last editor and edit time, same as back-end saves (SLN_Metabox_Booking)
+        $current_user_id = get_current_user_id();
+        if ($current_user_id) {
+            update_post_meta($id, '_sln_booking_last_edited_by_user_id', $current_user_id);
+            update_post_meta($id, '_sln_booking_last_edited_at', current_time('mysql'));
+        }
+
         $language_param = $request->get_param('language');
         if ($language_param !== null && $language_param !== '') {
             SLN_Helper_Multilingual::persistLanguage($id, $language_param, $customer_id, true);
@@ -1617,8 +1628,11 @@ class Bookings_Controller extends REST_Controller
                 $service_id = isset($booking_service['service']) ? $booking_service['service'] : null;
                 
                 if ($service_id && isset($services_durations[$service_id])) {
-                    // Apply custom duration
-                    $booking_service['duration'] = $services_durations[$service_id];
+                    // Apply custom duration. The PWA sends the full span of the line,
+                    // but the stored duration is per unit (end = duration * count).
+                    $count = isset($booking_service['count']) ? max(1, (int) $booking_service['count']) : 1;
+                    $minutes = (int) round(\SLN_Func::getMinutesFromDuration($services_durations[$service_id]) / $count);
+                    $booking_service['duration'] = \SLN_Func::convertToHoursMins(max(1, $minutes));
                     // Remove break duration (user set total duration)
                     $booking_service['break_duration'] = '00:00';
                     $booking_service['break_duration_data'] = array('from' => 0, 'to' => 0);
@@ -1671,6 +1685,48 @@ class Bookings_Controller extends REST_Controller
 	    'id'	  => $booking->getId(),
 	    'customer_id' => $booking->getUserId(),
 	);
+    }
+
+    /**
+     * Reject a create/update that puts an assistant on two bookings at the same time.
+     *
+     * The PWA checks this client-side too, but that check misses multi-assistant
+     * (duo) services and bookings of other shops, so the server must enforce it.
+     * See SLN_Helper_Availability::getAttendantOverlapErrors() for what is checked.
+     *
+     * @param SLN_Wrapper_Booking_Builder $bb
+     * @param SLN_Wrapper_Booking|null    $current_booking    Booking being edited, excluded from the check.
+     * @param array                       $services_durations service_id => 'HH:MM' full line span from PWA drag-to-resize.
+     *
+     * @throws \Exception When an assistant is already busy.
+     */
+    protected function validate_assistants_not_double_booked($bb, $current_booking = null, $services_durations = array())
+    {
+        $bookingServices = $bb->getBookingServices();
+        if (!empty($services_durations)) {
+            // Check the timeline that will be saved: same per-unit duration and no break, as update_item_post applies.
+            $counts = $bb->getCountServices();
+            $items  = array();
+            // Builder services are either a list of array('service' => id, 'attendant' => id) or service_id => attendant_id.
+            foreach ($bb->getAttendantsIds() as $key => $item) {
+                $service_id = is_array($item) && isset($item['service']) ? $item['service'] : $key;
+                $item       = is_array($item) && isset($item['service']) ? $item : array('service' => $service_id, 'attendant' => $item);
+                if (isset($services_durations[$service_id])) {
+                    $count   = isset($counts[$service_id]) ? max(1, (int) $counts[$service_id]) : 1;
+                    $minutes = (int) round(\SLN_Func::getMinutesFromDuration($services_durations[$service_id]) / $count);
+                    $item['duration']            = \SLN_Func::convertToHoursMins(max(1, $minutes));
+                    $item['break_duration']      = '00:00';
+                    $item['break_duration_data'] = array('from' => 0, 'to' => 0);
+                }
+                $items[$key] = $item;
+            }
+            $bookingServices = \SLN_Wrapper_Booking_Services::build($items, $bb->getDateTime(), 0, $counts);
+        }
+
+        $errors = \SLN_Helper_Availability::getAttendantOverlapErrors($bookingServices, $current_booking);
+        if (!empty($errors)) {
+            throw new \Exception(esc_html(reset($errors)), 409);
+        }
     }
 
     /**
@@ -1974,7 +2030,8 @@ class Bookings_Controller extends REST_Controller
                             ),
                             'assistant_id' => array(
                                 'description' => __( 'The assistant id.', 'salon-booking-system' ),
-                                'type'        => 'integer',
+                                'type'        => array( 'integer', 'array' ),
+                                'items'       => array( 'type' => 'integer' ),
                                 'context'     => array( 'view', 'edit' ),
                                 'arg_options' => array(
                                     'required' => true,

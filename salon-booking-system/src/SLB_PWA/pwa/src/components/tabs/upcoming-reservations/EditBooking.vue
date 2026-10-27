@@ -880,13 +880,17 @@ export default {
         const existingBookings = await this.getExistingBookings(booking.date);
         const newServiceTimes = this.calculateServiceTimes(booking);
 
+        // assistant_id is an array for services that need several assistants (e.g. duo massage)
+        const toAssistantIds = (id) => (Array.isArray(id) ? id : [id]).map(Number).filter(Boolean);
+        const sharesAssistant = (a, b) => toAssistantIds(a).some(id => toAssistantIds(b).includes(id));
+
         for (const newServiceTime of newServiceTimes) {
-          if (!newServiceTime.assistant_id) {
+          if (!toAssistantIds(newServiceTime.assistant_id).length) {
             continue;
           }
 
           const relevantBookings = existingBookings.filter(b =>
-            b.services.some(s => s.assistant_id === newServiceTime.assistant_id)
+            b.services.some(s => sharesAssistant(s.assistant_id, newServiceTime.assistant_id))
           );
 
           for (const existingBooking of relevantBookings) {
@@ -897,7 +901,7 @@ export default {
             });
 
             for (const existingServiceTime of existingServiceTimes) {
-              if (existingServiceTime.assistant_id !== newServiceTime.assistant_id) {
+              if (!sharesAssistant(existingServiceTime.assistant_id, newServiceTime.assistant_id)) {
                 continue;
               }
 
@@ -909,7 +913,8 @@ export default {
               );
 
               if (isOverlapping) {
-                const assistant = this.attendantsList.find(a => a.value === newServiceTime.assistant_id);
+                const busyId = toAssistantIds(newServiceTime.assistant_id).find(id => toAssistantIds(existingServiceTime.assistant_id).includes(id));
+                const assistant = this.attendantsList.find(a => Number(a.value) === busyId);
                 const assistantName = assistant ? assistant.text : this.getLabel('assistantBusyTitle');
 
                 const errorMessage = `${assistantName} ` + this.sprintf(

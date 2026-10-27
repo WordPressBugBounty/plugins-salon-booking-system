@@ -74,6 +74,9 @@ var sln_myAccount = {
             sln_myAccount.showRateForm(sln_myAccount.feedback_id);
           }
           sln_myAccount.setActiveTab();
+          sln_myAccount.initAppointmentsSwitch();
+          sln_myAccount.initDiscounts();
+          sln_myAccount.initPasswordToggles();
           jQuery(".nav-tabs a").on("show.bs.tab", sln_myAccount.setActiveHash);
           jQuery('#salon-my-account-profile-form input[name="action"]').val(
             "salon",
@@ -527,6 +530,11 @@ var sln_myAccount = {
                     .find(".sln-reschedule-booking--button")
                     .attr("data-message"),
                 );
+
+                // The card's date block and the upcoming order depend on the new date: re-render once the notice is gone.
+                setTimeout(function () {
+                  sln_myAccount.loadContent();
+                }, 3000);
               },
               error: function (data) {
                 alert("error");
@@ -919,6 +927,7 @@ var sln_myAccount = {
       sln_createRaty(jQuery("#ratingModal .rating"));
       jQuery("#ratingModal textarea").attr("id", id);
       jQuery("#ratingModal textarea").val("");
+      jQuery("#ratingModal .sln-account__modal__error").prop("hidden", true);
 
       jQuery("#ratingModal #step2").css("display", "none");
       jQuery("#ratingModal").modal("show");
@@ -932,8 +941,12 @@ var sln_myAccount = {
     if (
       jQuery("#ratingModal .rating").raty("score") == undefined ||
       jQuery("#ratingModal textarea").val() == ""
-    )
+    ) {
+      // Both fields are required: say so instead of ignoring the click.
+      jQuery("#ratingModal .sln-account__modal__error").prop("hidden", false);
       return false;
+    }
+    jQuery("#ratingModal .sln-account__modal__error").prop("hidden", true);
     let post_id = jQuery("#ratingModal textarea").attr("id");
 
     jQuery.ajax({
@@ -983,6 +996,92 @@ var sln_myAccount = {
       },
     });
     return false;
+  },
+
+  // Upcoming / Past switch on the Appointments tab: each button shows the panel named in its aria-controls.
+  initAppointmentsSwitch: function () {
+    var buttons = jQuery(".sln-account__segment__btn");
+    buttons.on("click", function () {
+      var clicked = this;
+      buttons.each(function () {
+        var active = this === clicked;
+        jQuery(this).attr("aria-pressed", active ? "true" : "false");
+        jQuery("#" + jQuery(this).attr("aria-controls")).prop("hidden", !active);
+      });
+    });
+  },
+
+  // Discounts tab: history toggles and the coupon Copy button ("Copied" for 2 s).
+  initDiscounts: function () {
+    // Bootstrap's collapse toggles the "collapsed" class but not aria-expanded on the history buttons.
+    jQuery(".sln-account__usage__history").on(
+      "shown.bs.collapse hidden.bs.collapse",
+      function (e) {
+        jQuery('[aria-controls="' + this.id + '"]').attr(
+          "aria-expanded",
+          e.type === "shown" ? "true" : "false",
+        );
+      },
+    );
+
+    jQuery(".sln-account__coupon__copy").on("click", function () {
+      var button = jQuery(this);
+      var label = button.find(".sln-account__coupon__copy__label");
+      var code = String(button.data("code"));
+      var legacyCopy = function () {
+        var field = jQuery("<textarea readonly>")
+          .val(code)
+          .css({ position: "fixed", opacity: 0 })
+          .appendTo("body");
+        field[0].select();
+        var ok = document.execCommand("copy");
+        field.remove();
+        return ok ? Promise.resolve() : Promise.reject();
+      };
+      // navigator.clipboard only exists on HTTPS (and localhost) and can be denied; fall back to execCommand.
+      var copied = navigator.clipboard
+        ? navigator.clipboard.writeText(code).catch(legacyCopy)
+        : legacyCopy();
+      copied.then(function () {
+        if (!button.data("label")) {
+          button.data("label", label.text());
+        }
+        label.text(button.data("copied"));
+        clearTimeout(button.data("timer"));
+        button.data(
+          "timer",
+          setTimeout(function () {
+            label.text(button.data("label"));
+          }, 2000),
+        );
+      }, function () {
+        // Copying is blocked: select the code so the customer can copy it by hand.
+        var value = button
+          .closest(".sln-account__coupon__code")
+          .find(".sln-account__coupon__code__value")[0];
+        var range = document.createRange();
+        range.selectNodeContents(value);
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(range);
+      });
+    });
+  },
+
+  // Profile tab: eye button that switches a password field between hidden and visible.
+  initPasswordToggles: function () {
+    jQuery(".sln-account__password__toggle").on("click", function () {
+      var button = jQuery(this);
+      var input = jQuery("#" + button.attr("aria-controls"));
+      var show = input.attr("type") === "password";
+      input.attr("type", show ? "text" : "password");
+      // The label alone states the action; aria-pressed would contradict it.
+      button
+        .toggleClass("is-visible", show)
+        .attr(
+          "aria-label",
+          show ? button.data("label-hide") : button.data("label-show"),
+        );
+    });
   },
 
   setActiveHash: function (e) {

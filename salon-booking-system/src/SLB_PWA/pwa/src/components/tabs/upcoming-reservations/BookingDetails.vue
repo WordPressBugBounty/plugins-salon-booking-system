@@ -31,7 +31,14 @@
           <font-awesome-icon icon="fa-regular fa-clock" class="detail-icon" />
           {{ getLabel('timeTitle') }}
         </span>
-        <span class="detail-value">{{ time }}</span>
+        <span class="detail-value">{{ time }}<template v-if="endTime"> – {{ endTime }}</template></span>
+      </div>
+      <div class="detail-row" v-if="totalDuration">
+        <span class="detail-label">
+          <font-awesome-icon icon="fa-solid fa-hourglass-half" class="detail-icon" />
+          {{ getLabel('durationTitle') || 'duration' }}
+        </span>
+        <span class="detail-value">{{ totalDuration }}</span>
       </div>
       <div class="detail-row detail-row--last">
         <span class="detail-label">Status</span>
@@ -81,9 +88,12 @@
         <div class="service-name-price">
           <span class="service-name">{{ service.service_name }}</span>
           <div class="service-price-block">
-            <span class="service-duration" v-if="serviceDurationMinutes(service)">{{ formatDuration(serviceDurationMinutes(service)) }}</span>
             <span class="service-price" v-html="service.service_price + booking.currency"></span>
           </div>
+        </div>
+        <div class="service-time" v-if="service.start_at && service.end_at">
+          {{ timeFormat(service.start_at) }} – {{ timeFormat(service.end_at) }}
+          <span class="service-duration" v-if="serviceDurationMinutes(service)">· {{ formatDuration(serviceDurationMinutes(service)) }}</span>
         </div>
         <div class="service-meta" v-if="service.resource_name || service.assistant_name">
           <span v-if="service.resource_name">{{ service.resource_name }}</span>
@@ -99,7 +109,6 @@
       <div class="detail-row">
         <span class="detail-label">{{ getLabel('totalTitle') }}</span>
         <div class="total-value-block">
-          <span class="total-duration" v-if="totalDuration">{{ totalDuration }}</span>
           <span class="detail-value detail-value--primary" v-html="totalSum"></span>
         </div>
       </div>
@@ -293,6 +302,11 @@
             },
             time() {
                 return this.timeFormat(this.bookingData.time)
+            },
+            endTime() {
+                // Latest service end, so parallel services are covered too
+                const ends = (this.bookingData.services || []).map(s => s.end_at).filter(Boolean).sort();
+                return ends.length ? this.timeFormat(ends[ends.length - 1]) : null;
             },
             customerFirstname() {
                 return this.bookingData.customer_first_name
@@ -899,11 +913,13 @@
   gap: 1px;
   flex-shrink: 0;
 }
+.service-time {
+  font-size: 13px;
+  color: var(--color-text-primary, #0F172A);
+  margin-top: 3px;
+}
 .service-duration {
-  font-size: 11px;
-  font-weight: 400;
-  color: var(--color-text-muted, #94A3B8);
-  line-height: 1.2;
+  font-weight: 600;
 }
 .service-price {
   font-size: 14px;
@@ -921,12 +937,6 @@
   flex-direction: column;
   align-items: flex-end;
   gap: 1px;
-}
-.total-duration {
-  font-size: 11px;
-  font-weight: 400;
-  color: var(--color-text-muted, #94A3B8);
-  line-height: 1.2;
 }
 .pay-remaining-wrap { padding-top: 4px; }
 .collapsible-header {

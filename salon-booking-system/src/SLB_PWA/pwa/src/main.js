@@ -23,7 +23,7 @@ import { faList, faCalendarDays, faMagnifyingGlass, faChevronRight, faChevronLef
 faPenToSquare, faCheck, faUsers, faUserAlt, faPlus, faCircleChevronDown, faCircleChevronUp, faChartSimple, faMedal, faUnlock, faLock,
 faPhone, faMessage, faCirclePlus, faStore, faImages, faCamera, faCloudArrowUp,
 faBell, faGlobe, faRotateRight, faArrowRightFromBracket, faArrowLeft, faXmark, faArrowsUpDown, faPuzzlePiece, faRocket,
-faClipboard, faClipboardList, faMicrophone, faStop, faThumbtack} from '@fortawesome/free-solid-svg-icons'
+faClipboard, faClipboardList, faMicrophone, faStop, faThumbtack, faHourglassHalf} from '@fortawesome/free-solid-svg-icons'
 
 import { faAddressBook, faClock, faCircleCheck } from '@fortawesome/free-regular-svg-icons'
 
@@ -34,7 +34,7 @@ library.add(faList, faCalendarDays, faAddressBook, faMagnifyingGlass, faClock, f
 faPenToSquare, faCheck, faUsers, faUserAlt, faPlus, faCircleChevronDown, faCircleChevronUp, faChartSimple, faMedal, faUnlock, faLock,
 faPhone, faMessage, faCirclePlus, faWhatsapp, faStore, faImages, faCamera, faCloudArrowUp, faCircleCheck,
 faBell, faGlobe, faRotateRight, faArrowRightFromBracket, faArrowLeft, faXmark, faArrowsUpDown, faPuzzlePiece, faRocket,
-faClipboard, faClipboardList, faMicrophone, faStop, faThumbtack)
+faClipboard, faClipboardList, faMicrophone, faStop, faThumbtack, faHourglassHalf)
 
 import Datepicker from '@vuepic/vue-datepicker';
 

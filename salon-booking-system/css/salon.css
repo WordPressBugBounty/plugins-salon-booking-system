@@ -6760,171 +6760,6 @@ body.modal-open {
   }
 }
 
-#sln-salon #sln-salon-my-account .modal-dialog {
-  margin: 60px 15px;
-}
-@media (min-width: 768px) {
-  #sln-salon #sln-salon-my-account .modal-dialog {
-    width: 560px;
-    margin: 60px auto;
-  }
-}
-#sln-salon #sln-salon-my-account .modal-header {
-  border-bottom: none;
-}
-#sln-salon #sln-salon-my-account .modal-footer {
-  border-top: none;
-}
-#sln-salon #sln-salon-my-account .modal-content {
-  border: none;
-  border-radius: 2px;
-  box-shadow: 0 2px 8px rgba(150, 150, 150, 0.3);
-  padding-bottom: 2em;
-}
-#sln-salon #sln-salon-my-account.mobile-version div.modal-content {
-  padding: 0 0 2em 0;
-}
-@media only screen and (min-width: 768px) {
-  #sln-salon #sln-salon-my-account.mobile-version div.modal-content {
-    padding: 0 0 4em 0;
-  }
-}
-#sln-salon #sln-salon-my-account #step1 {
-  margin-top: 15px;
-}
-#sln-salon #sln-salon-my-account #step1 p {
-  margin: 0;
-  padding-bottom: 0;
-}
-@media only screen and (min-width: 768px) {
-  #sln-salon #sln-salon-my-account #step1 {
-    margin-top: 40px;
-  }
-  #sln-salon #sln-salon-my-account #step1 p {
-    padding-bottom: 1em;
-  }
-}
-#sln-salon #sln-salon-my-account #step2 {
-  padding-top: 100px;
-}
-#sln-salon #sln-salon-my-account #step2 p {
-  margin: 0;
-}
-#sln-salon #sln-salon-my-account #step2 p:first-child {
-  color: #0083c3;
-}
-#sln-salon #sln-salon-my-account #step2 p:last-child {
-  margin-top: 20px;
-}
-#sln-salon #sln-salon-my-account .modal-body {
-  padding: 0 30px;
-}
-#sln-salon #sln-salon-my-account .modal-body button {
-  display: block;
-  margin: 0 auto;
-  border-radius: 0 !important;
-  padding: 8px 24px !important;
-  font-variant: normal !important;
-  text-transform: auto;
-  text-transform: initial !important;
-  font-size: 18px;
-  outline: none;
-}
-#sln-salon #sln-salon-my-account .modal-body button.btn-primary {
-  background: #0083c3;
-  margin: 30px auto;
-}
-#sln-salon #sln-salon-my-account .modal-body button.btn-default {
-  background: none;
-  color: #0083c3 !important;
-}
-#sln-salon #sln-salon-my-account .modal {
-  background-color: rgba(220, 220, 220, 0.4);
-  z-index: 99999;
-}
-#sln-salon #sln-salon-my-account .modal button.close,
-#sln-salon #sln-salon-my-account .modal button.close:hover {
-  background: none;
-  border: none;
-  position: relative;
-  color: #fff;
-  opacity: auto;
-  opacity: initial;
-  text-shadow: none;
-  margin: 10px 10px 0 0;
-  width: 40px;
-  height: 40px;
-}
-#sln-salon #sln-salon-my-account .modal button.close:before,
-#sln-salon #sln-salon-my-account .modal button.close:hover:before {
-  content: "×";
-  border-radius: 50%;
-  background: #555555;
-  border: none;
-  width: 20px;
-  height: 20px;
-  position: absolute;
-  z-index: 0;
-  line-height: 20px;
-  font-size: 20px;
-  top: 50%;
-  left: 50%;
-  -webkit-transform: translateX(-50%) translateY(-50%);
-  -ms-transform: translateX(-50%) translateY(-50%);
-  transform: translateX(-50%) translateY(-50%);
-}
-@media only screen and (min-width: 992px) {
-  #sln-salon #sln-salon-my-account .modal button.close,
-  #sln-salon #sln-salon-my-account .modal button.close:hover {
-    width: 20px;
-    height: 20px;
-    margin: 10px 20px 0 0;
-  }
-}
-#sln-salon #sln-salon-my-account .modal textarea {
-  width: 100%;
-  resize: none;
-  margin: 20px 0;
-  border: none;
-  background: #fff;
-  padding: 16px;
-  border-radius: 2px;
-  height: 140px;
-  border-width: 1px;
-  border-style: solid;
-  outline-color: currentColor;
-  outline-width: medium;
-}
-#sln-salon #sln-salon-my-account .modal textarea::-webkit-input-placeholder {
-  color: rgba(0, 66, 88, 0.3);
-}
-#sln-salon #sln-salon-my-account .modal textarea::-moz-placeholder {
-  color: rgba(0, 66, 88, 0.3);
-}
-#sln-salon #sln-salon-my-account .modal textarea:-moz-placeholder {
-  color: rgba(0, 66, 88, 0.3);
-}
-#sln-salon #sln-salon-my-account .modal textarea:-ms-input-placeholder {
-  color: rgba(0, 66, 88, 0.3);
-}
-#sln-salon #sln-salon-my-account .modal textarea::placeholder {
-  color: rgba(0, 66, 88, 0.3);
-}
-#sln-salon #sln-salon-my-account .modal textarea::input-placeholder {
-  color: rgba(0, 66, 88, 0.3);
-}
-#sln-salon #sln-salon-my-account .modal .rating {
-  display: inline-block !important;
-  background: none;
-}
-#sln-salon #sln-salon-my-account .modal .rating i {
-  vertical-align: bottom;
-  font-size: 24px;
-  color: #0083c3;
-}
-#sln-salon #sln-salon-my-account .modal .rating span {
-  font-size: 0.9em;
-}
 #sln-salon #sln-salon-my-account .glyphicon {
   font-family: "FontAwesome";
   font-size: 1em;
@@ -6971,6 +6806,1239 @@ body.modal-open {
 }
 #sln-salon #sln-salon-my-account i.glyphicon {
   font-style: normal;
+}
+
+.sln-account {
+  --sln-accent: #1f6fb2;
+  --sln-accent-hover: #165a92;
+  --sln-on-accent: #fff;
+  --sln-ground: #f2f4f6;
+  --sln-card: #fff;
+  --sln-tint: #c8d6df;
+  --sln-soft: #f5f8fa;
+  --sln-date-block: #eef2f5;
+  --sln-segment: #e3e8ed;
+  --sln-text: #2e3a45;
+  --sln-text-2: #4a5763;
+  --sln-text-3: #5a6976;
+  --sln-on-tint: #34414c;
+  --sln-highlight: #1a3f63;
+  --sln-border: #d5dde3;
+  --sln-divider: #e3e8ed;
+  --sln-input-border: #b9c5cf;
+  --sln-dashed: #9fb3c3;
+  --sln-progress-used: #c3cdd6;
+  --sln-required: #b3261e;
+  --sln-st-confirmed-bg: #e3edf6;
+  --sln-st-confirmed: #1a5c94;
+  --sln-st-paid-bg: #e1f1ea;
+  --sln-st-paid: #1d6b47;
+  --sln-st-paylater-bg: #eef1f4;
+  --sln-st-paylater: #3f4c57;
+  --sln-st-pendingpay-bg: #fcefd9;
+  --sln-st-pendingpay: #7a4a00;
+  --sln-st-pending-bg: #fff;
+  --sln-st-pending: #3f4c57;
+  --sln-st-pending-border: #8a97a3;
+  --sln-pendingpay-border: #f0d9b0;
+  --sln-radius-card: 18px;
+  --sln-radius-card-sm: 16px;
+  --sln-radius-control: 12px;
+  --sln-radius-cta: 14px;
+  --sln-shadow-card: 0 1px 3px rgba(20, 40, 60, 0.08), 0 8px 24px rgba(20, 40, 60, 0.06);
+  --sln-shadow-card-sm: 0 1px 3px rgba(20, 40, 60, 0.08);
+  --sln-focus-ring: 0 0 0 2px #fff, 0 0 0 4px var(--sln-accent);
+  --sln-font: "Open Sans", system-ui, sans-serif;
+}
+
+#sln-salon.sln-salon--m:has(#sln-salon-my-account) {
+  padding-right: 0;
+  padding-left: 0;
+}
+#sln-salon.sln-salon--m:has(#sln-salon-my-account) #sln-salon__content {
+  padding-right: 0;
+  padding-left: 0;
+}
+
+#sln-salon #sln-salon-my-account.sln-account {
+  max-width: 560px;
+  margin: 0 auto;
+  font-family: var(--sln-font);
+  color: var(--sln-text);
+  background-color: var(--sln-ground);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__top {
+  padding: 20px 16px 0;
+  background-color: var(--sln-card);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__top__user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__avatar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: var(--sln-tint);
+  color: var(--sln-text);
+  font-size: 15px;
+  font-weight: 700;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__top__greeting {
+  flex: 1;
+  min-width: 0;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__top__welcome,
+#sln-salon #sln-salon-my-account.sln-account .sln-account__top__name {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-family: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__top__welcome {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--sln-text-3);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__top__name {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--sln-text);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__score {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--sln-highlight);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__iconbtn {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--sln-border);
+  border-radius: var(--sln-radius-control);
+  background-color: var(--sln-card);
+  color: var(--sln-accent);
+  text-decoration: none;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__iconbtn:focus-visible {
+  box-shadow: var(--sln-focus-ring);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__iconbtn:hover {
+  color: var(--sln-accent-hover);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__tabs {
+  margin-top: 16px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__nav {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--sln-divider);
+  list-style: none;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__nav::before, #sln-salon #sln-salon-my-account.sln-account .sln-account__nav::after {
+  content: none;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__nav > li[role] {
+  display: block;
+  float: none;
+  margin: 0 0 -1px;
+  border: 0;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__nav > li[role]::after {
+  content: none;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__nav > li[role] > a[href] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 10px 2px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--sln-text-3);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-decoration: none;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__nav > li[role] > a[href]:focus-visible {
+  box-shadow: var(--sln-focus-ring);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__nav > li[role] > a[href]::before, #sln-salon #sln-salon-my-account.sln-account .sln-account__nav > li[role] > a[href]::after {
+  content: none;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__nav > li[role] > a[href]:hover {
+  color: var(--sln-accent);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__nav > li[role] > a[href] span {
+  width: auto;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__nav > li[role].active > a[href] {
+  border-bottom-color: var(--sln-accent);
+  color: var(--sln-accent);
+  font-weight: 700;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__body {
+  padding: 20px 16px 32px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__tabpanel {
+  padding-bottom: 0;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__tabpanel--bookings.active {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__notice,
+#sln-salon #sln-salon-my-account.sln-account .sln-account__empty {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-family: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--sln-text-2);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__empty {
+  padding: 8px 0;
+  text-align: center;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__section-title {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-family: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sln-text-3);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__btn {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-family: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: var(--sln-radius-control);
+  background: none;
+  box-shadow: none;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__btn:focus-visible {
+  box-shadow: var(--sln-focus-ring);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__btn svg {
+  flex: none;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__btn--primary {
+  min-height: 48px;
+  padding: 0 24px;
+  background-color: var(--sln-accent);
+  color: var(--sln-on-accent);
+  font-size: 15px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__btn--primary:hover, #sln-salon #sln-salon-my-account.sln-account .sln-account__btn--primary:focus {
+  background-color: var(--sln-accent-hover);
+  color: var(--sln-on-accent);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__btn--secondary {
+  border: 1.5px solid var(--sln-accent);
+  background-color: var(--sln-card);
+  color: var(--sln-accent);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__btn--secondary:hover, #sln-salon #sln-salon-my-account.sln-account .sln-account__btn--secondary:focus {
+  border-color: var(--sln-accent-hover);
+  color: var(--sln-accent-hover);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__btn--text {
+  padding: 0 8px;
+  color: var(--sln-accent);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__btn--text:hover, #sln-salon #sln-salon-my-account.sln-account .sln-account__btn--text:focus {
+  color: var(--sln-accent-hover);
+  text-decoration: underline;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__btn--cta {
+  width: 100%;
+  min-height: 52px;
+  border-radius: var(--sln-radius-cta);
+  font-size: 16px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__tabpanel--bookings > .sln-account__btn--cta {
+  position: sticky;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  z-index: 10;
+  order: 99;
+  box-shadow: 0 6px 16px rgba(20, 40, 60, 0.18), 0 12px 32px color-mix(in srgb, var(--sln-accent) 30%, transparent);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__btn--wide {
+  flex-basis: 100%;
+  width: 100%;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__segment {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--sln-radius-control);
+  background-color: var(--sln-segment);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__segment__btn {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-family: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+  min-height: 44px;
+  border-radius: 9px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--sln-text-2);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__segment__btn:focus-visible {
+  box-shadow: var(--sln-focus-ring);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__segment__btn[aria-pressed=true] {
+  background-color: var(--sln-card);
+  box-shadow: 0 1px 2px rgba(20, 40, 60, 0.14);
+  color: var(--sln-text);
+  font-weight: 700;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appts {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appts[hidden] {
+  display: none;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appts__list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__history__scrollformore {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-family: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+  font-size: 13px;
+  text-align: center;
+  color: var(--sln-text-3);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__history__scrollformore::after {
+  content: none;
+}
+#sln-salon #sln-salon-my-account.sln-account :where(.sln-account__appt, .sln-account__coupon, .sln-account__package) :where(p, h3, ul, li) {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-family: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+}
+#sln-salon #sln-salon-my-account.sln-account :where(.sln-account__appt, .sln-account__coupon, .sln-account__package) :where(ul) {
+  list-style: none;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__card.sln-account__appt {
+  margin: 0;
+  border-radius: var(--sln-radius-card-sm);
+  background-color: var(--sln-card);
+  box-shadow: var(--sln-shadow-card-sm);
+  overflow: visible;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__card.sln-account__appt + .sln-account__card {
+  margin-top: 0;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__num {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__datebox {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  width: 64px;
+  padding: 8px 0;
+  border-radius: var(--sln-radius-control);
+  background-color: var(--sln-card);
+  text-align: center;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__datebox__wd,
+#sln-salon #sln-salon-my-account.sln-account .sln-account__datebox__month {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-transform: uppercase;
+  color: var(--sln-text-3);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__datebox__day {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--sln-text);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__datebox--sm {
+  width: 52px;
+  padding: 6px 0;
+  border-radius: 10px;
+  background-color: var(--sln-date-block);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__datebox--sm .sln-account__datebox__wd,
+#sln-salon #sln-salon-my-account.sln-account .sln-account__datebox--sm .sln-account__datebox__month {
+  font-size: 11px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__datebox--sm .sln-account__datebox__day {
+  font-size: 20px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appt__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appt__when {
+  flex: 1;
+  min-width: 0;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appt__time {
+  color: var(--sln-text);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appt__services-line {
+  margin-top: 3px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--sln-text-2);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__chip {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background-color: var(--sln-st-paylater-bg);
+  color: var(--sln-st-paylater);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__chip__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__chip--confirmed {
+  background-color: var(--sln-st-confirmed-bg);
+  color: var(--sln-st-confirmed);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__chip--paid {
+  background-color: var(--sln-st-paid-bg);
+  color: var(--sln-st-paid);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__chip--pendingpay {
+  background-color: var(--sln-st-pendingpay-bg);
+  color: var(--sln-st-pendingpay);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__chip--pending {
+  padding: 3px 10px;
+  border: 1px solid var(--sln-st-pending-border);
+  background-color: var(--sln-st-pending-bg);
+  color: var(--sln-st-pending);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__chip--pending .sln-account__chip__dot {
+  border: 1.5px solid currentColor;
+  background-color: transparent;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__card .sln-account__appt__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 0;
+  border: 0;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__card .sln-account__appt__footer > .sln-reschedule-form,
+#sln-salon #sln-salon-my-account.sln-account .sln-account__card .sln-account__appt__footer > .sln-accout__feedback {
+  flex-basis: 100%;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__card .sln-account__appt__footer > .sln-btn {
+  flex-grow: 0;
+  max-width: none;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appt__meta {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--sln-text-3);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appt__note {
+  flex: 1 1 auto;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appt--compact {
+  padding: 14px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appt--compact .sln-account__appt__time {
+  font-size: 16px;
+  line-height: 1.35;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appt--compact .sln-account__appt__total {
+  font-size: 16px;
+  font-weight: 800;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appt--compact .sln-account__appt__footer {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--sln-date-block);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appt--compact.sln-account__appt--pendingpay {
+  border: 1.5px solid var(--sln-pendingpay-border);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appt--compact.sln-account__appt--pendingpay .sln-account__appt__footer {
+  padding-top: 0;
+  border-top: 0;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appt--compact.sln-account__appt--pendingpay .sln-account__appt__meta {
+  flex-basis: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background-color: var(--sln-st-pendingpay-bg);
+  color: #6b4200;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appt--compact.sln-account__appt--pendingpay .sln-account__chip {
+  padding: 0;
+  background: none;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appt--next {
+  border-radius: var(--sln-radius-card);
+  box-shadow: var(--sln-shadow-card);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appt--next .sln-account__appt__head {
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border-radius: var(--sln-radius-card) var(--sln-radius-card) 0 0;
+  background-color: var(--sln-tint);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appt--next .sln-account__appt__time {
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appt--next .sln-account__appt__shop {
+  margin-top: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--sln-on-tint);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appt--next .sln-account__appt__relative {
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--sln-on-tint);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appt--next .sln-account__chip {
+  align-self: flex-start;
+  background-color: var(--sln-card);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appt--next .sln-account__chip--pending {
+  background-color: var(--sln-st-pending-bg);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appt--next .sln-account__appt__body {
+  padding: 16px 16px 4px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appt--next .sln-account__appt__services {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appt--next .sln-account__service {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0;
+  font-size: 15px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appt--next .sln-account__service__name {
+  font-weight: 600;
+  line-height: 1.4;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appt--next .sln-account__service__assistant {
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--sln-text-3);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appt--next .sln-account__appt__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 0;
+  font-size: 14px;
+  color: var(--sln-text-2);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appt--next .sln-account__appt__discount + .sln-account__card__total {
+  margin-top: 8px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appt--next .sln-account__appt__discount {
+  padding-top: 14px;
+  border-top: 1px solid var(--sln-divider);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appt--next .sln-account__appt__services + .sln-account__card__total {
+  padding-top: 14px;
+  border-top: 1px solid var(--sln-divider);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appt--next .sln-account__appt__total-label {
+  font-weight: 600;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appt--next .sln-account__appt__total {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--sln-text);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__appt--next .sln-account__appt__footer {
+  padding: 12px 16px 16px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-accout__feedback {
+  text-align: left;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-accout__feedback .sln-accout__feedback__text {
+  margin-bottom: 4px;
+  font-size: 14px;
+  color: var(--sln-text-2);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-accout__feedback .sln-accout__feedback__rating {
+  font-size: 1.5em;
+}
+@media (prefers-reduced-motion: reduce) {
+  #sln-salon #sln-salon-my-account.sln-account * {
+    transition: none;
+  }
+}
+
+#sln-salon #sln-salon-my-account.sln-account .sln-account__tabpanel--discounts.active {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__summary {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-family: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--sln-text-2);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__summary strong {
+  color: var(--sln-text);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__card.sln-account__coupon {
+  position: relative;
+  margin: 0;
+  border-radius: var(--sln-radius-card);
+  background-color: var(--sln-card);
+  box-shadow: var(--sln-shadow-card);
+  overflow: hidden;
+  overflow: clip;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__card.sln-account__coupon + .sln-account__card {
+  margin-top: 0;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__coupon__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 18px 18px 0;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__coupon__titles {
+  flex: 1;
+  min-width: 0;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__coupon__amount {
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--sln-highlight);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__card .sln-account__coupon__name {
+  margin-top: 6px;
+  padding: 0;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--sln-text);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__coupon__auto {
+  gap: 6px;
+  padding: 5px 10px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__coupon__label {
+  margin: 10px 18px 6px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--sln-text-3);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__card .sln-account__coupon__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 18px;
+  font-size: 13px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__card .sln-account__coupon__chip {
+  display: inline-flex;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background-color: var(--sln-date-block);
+  color: var(--sln-text);
+  font-size: 13px;
+  line-height: 1.3;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__coupon__code {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 18px 0;
+  padding: 6px 6px 6px 14px;
+  border: 1.5px dashed var(--sln-dashed);
+  border-radius: var(--sln-radius-control);
+  background-color: var(--sln-soft);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__coupon__code__text {
+  flex: 1;
+  min-width: 0;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__coupon__code__label {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sln-text-3);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__coupon__code__value {
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: 0.08em;
+  overflow-wrap: anywhere;
+  color: var(--sln-text);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__coupon__copy {
+  gap: 6px;
+  padding: 0 14px;
+  border: 1px solid var(--sln-border);
+  border-radius: 10px;
+  background-color: var(--sln-card);
+  color: var(--sln-accent);
+  font-weight: 600;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__coupon__copy:hover {
+  color: var(--sln-accent-hover);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__coupon__validity {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 12px 18px 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--sln-text-2);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__coupon__validity svg {
+  flex: none;
+  margin-top: 1px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__coupon__days-left {
+  font-weight: 600;
+  color: var(--sln-st-pendingpay);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__coupon--invalid .sln-account__coupon__amount {
+  color: var(--sln-text-3);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__coupon--invalid .sln-account__coupon__validity {
+  font-weight: 600;
+  color: var(--sln-required);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__ticket-divider {
+  position: relative;
+  margin: 18px 0 6px;
+  border-top: 1.5px dashed var(--sln-border);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__ticket-divider::before, #sln-salon #sln-salon-my-account.sln-account .sln-account__ticket-divider::after {
+  content: "";
+  position: absolute;
+  top: -11px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--sln-ground);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__ticket-divider::before {
+  left: -11px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__ticket-divider::after {
+  right: -11px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__card .sln-account__coupon__footer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 18px 18px;
+  border: 0;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__usage {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: -8px;
+  font-size: 14px;
+  color: var(--sln-text-2);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__usage > svg {
+  flex: none;
+  color: var(--sln-text-3);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__usage strong {
+  color: var(--sln-text);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__usage__count {
+  flex: 1;
+  min-width: 0;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__usage__toggle {
+  gap: 4px;
+  font-weight: 600;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__usage__toggle svg {
+  transform: rotate(180deg);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__usage__toggle .sln-account__card__showmore__display {
+  display: none;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__usage__toggle.collapsed svg {
+  transform: none;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__usage__toggle.collapsed .sln-account__card__showmore__display {
+  display: inline;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__usage__toggle.collapsed .sln-account__card__showmore__hide {
+  display: none;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__card .sln-account__usage__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 6px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background-color: var(--sln-soft);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__card .sln-account__usage__list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--sln-text);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__discounted__booking__price {
+  font-weight: 600;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__coupon__footer > .sln-account__btn--primary {
+  margin-top: 6px;
+}
+
+#sln-salon #sln-salon-my-account.sln-account .sln-account__tabpanel--profile.active {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__profile {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 0;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px;
+  border-radius: var(--sln-radius-card);
+  background-color: var(--sln-card);
+  box-shadow: var(--sln-shadow-card);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__panel__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__panel__head--stacked {
+  flex-direction: column;
+  gap: 4px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__panel__title {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-family: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--sln-text);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__panel__legend,
+#sln-salon #sln-salon-my-account.sln-account .sln-account__hint {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-family: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--sln-text-3);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__required {
+  color: var(--sln-required);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: auto;
+  float: none;
+  margin: 0;
+  padding: 0;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__field > .sln-account__hint {
+  margin-top: 2px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__label {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-family: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--sln-text);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__label::after {
+  content: none;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__field input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=file]),
+#sln-salon #sln-salon-my-account.sln-account .sln-account__field select,
+#sln-salon #sln-salon-my-account.sln-account .sln-account__field textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 48px;
+  margin: 0;
+  padding: 10px 14px;
+  border: 1.5px solid var(--sln-input-border);
+  border-radius: var(--sln-radius-control);
+  background-color: var(--sln-card);
+  box-shadow: none;
+  color: var(--sln-text);
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1.4;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__field input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=file]):focus,
+#sln-salon #sln-salon-my-account.sln-account .sln-account__field select:focus,
+#sln-salon #sln-salon-my-account.sln-account .sln-account__field textarea:focus {
+  border-color: var(--sln-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sln-accent) 25%, transparent);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__field textarea {
+  min-height: 96px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__field .iti {
+  display: block;
+  width: 100%;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__password {
+  position: relative;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__password input {
+  padding-right: 52px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__password__toggle {
+  position: absolute;
+  top: 50%;
+  right: 2px;
+  transform: translateY(-50%);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--sln-text-3);
+  cursor: pointer;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__password__toggle:hover, #sln-salon #sln-salon-my-account.sln-account .sln-account__password__toggle.is-visible {
+  color: var(--sln-accent);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__profile .sln-form-actions {
+  margin: 0;
+  padding: 0;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account--last-update {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-family: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+  font-size: 13px;
+  text-align: center;
+  color: var(--sln-text-3);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__status .sln-alert {
+  margin: 0;
+}
+
+#sln-salon #sln-salon-my-account.sln-account .sln-account__modal {
+  z-index: 99999;
+  background-color: rgba(20, 40, 60, 0.45);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__modal.in {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__modal .modal-dialog {
+  width: auto;
+  max-width: 440px;
+  margin: 16px;
+  flex: 1;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__modal .modal-content {
+  position: relative;
+  padding: 0;
+  border: 0;
+  border-radius: 20px;
+  background-color: var(--sln-card);
+  box-shadow: 0 20px 48px rgba(20, 40, 60, 0.25);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__modal .sln-account__modal__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1;
+  float: none;
+  margin: 0;
+  border-color: transparent;
+  background-color: var(--sln-soft);
+  color: var(--sln-text-2);
+  opacity: 1;
+  text-shadow: none;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__modal .sln-account__modal__close::before {
+  content: none;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__modal .sln-account__modal__close:hover {
+  color: var(--sln-text);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__modal .modal-body {
+  padding: 28px 20px 20px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__modal .sln-account__modal__step {
+  margin: 0;
+  padding: 0;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__modal .sln-account__modal__step > * + * {
+  margin-top: 18px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__modal .sln-account__modal__step > .sln-account__modal__eyebrow + .sln-account__modal__title {
+  margin-top: 4px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__modal .sln-account__modal__eyebrow,
+#sln-salon #sln-salon-my-account.sln-account .sln-account__modal .sln-account__modal__title,
+#sln-salon #sln-salon-my-account.sln-account .sln-account__modal .sln-account__modal__error,
+#sln-salon #sln-salon-my-account.sln-account .sln-account__modal .sln-account__hint {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-family: inherit;
+  letter-spacing: normal;
+  text-transform: none;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__modal .sln-account__modal__eyebrow {
+  padding-right: 48px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--sln-text-3);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__modal .sln-account__modal__title {
+  padding-right: 48px;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.3;
+  color: var(--sln-text);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__modal .sln-account__modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__modal .sln-account__stars .rating {
+  display: flex !important;
+  gap: 6px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__modal .sln-account__stars .rating i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--sln-radius-control);
+  background-color: var(--sln-soft);
+  color: var(--sln-accent);
+  font-size: 24px;
+  cursor: pointer;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__modal .sln-account__stars .rating i:hover {
+  background-color: var(--sln-date-block);
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__modal .sln-account__modal__textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 120px;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1.5px solid var(--sln-input-border);
+  border-radius: var(--sln-radius-control);
+  background-color: var(--sln-card);
+  color: var(--sln-text);
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1.5;
+  resize: vertical;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__modal .sln-account__modal__textarea::placeholder {
+  color: var(--sln-text-3);
+  opacity: 0.8;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__modal .sln-account__modal__textarea:focus {
+  border-color: var(--sln-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sln-accent) 25%, transparent);
+  outline: none;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__modal .sln-account__modal__error {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background-color: #fdecea;
+  color: var(--sln-required);
+  font-size: 14px;
+  font-weight: 600;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__modal .sln-account__modal__error[hidden] {
+  display: none;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__modal .sln-account__modal__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__modal .sln-account__modal__actions .sln-account__btn {
+  margin: 0;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__modal .sln-account__modal__done {
+  padding: 12px 0 8px;
+  text-align: center;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__modal .sln-account__modal__done > * + * {
+  margin-top: 10px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__modal .sln-account__modal__done .sln-account__modal__title {
+  padding: 0;
+  font-size: 18px;
+}
+#sln-salon #sln-salon-my-account.sln-account .sln-account__modal .sln-account__modal__done-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  margin: 0 auto;
+  background-color: var(--sln-st-paid-bg);
+  color: var(--sln-st-paid);
 }
 
 #sln-salon .sln-content__tabs__nav {

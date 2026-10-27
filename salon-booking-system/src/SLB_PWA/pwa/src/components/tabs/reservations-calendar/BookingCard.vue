@@ -384,12 +384,16 @@ export default {
       let startHeight = 0;
       let startDuration = 0;
       let currentY = 0;
-      
+      let hasMoved = false;
+      const RESIZE_MOVE_THRESHOLD_PX = 5;
+
       const handleStart = (e) => {
         // Prevent default to avoid text selection and scrolling
         e.preventDefault();
         e.stopPropagation();
-        
+
+        hasMoved = false;
+
         // Get actual booking duration in minutes (this is the source of truth)
         startDuration = this.getBookingDuration();
         
@@ -449,7 +453,13 @@ export default {
         // Get current Y position
         currentY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
         const deltaY = currentY - startY;
-        
+
+        // Ignore jitter from a tap so it is not treated as a resize
+        if (!hasMoved && Math.abs(deltaY) < RESIZE_MOVE_THRESHOLD_PX) {
+          return;
+        }
+        hasMoved = true;
+
         // Calculate new height
         let newHeight = startHeight + deltaY;
         
@@ -457,10 +467,10 @@ export default {
         let newDurationMinutes = newHeight / pxPerMin;
         
         // Apply min/max duration constraints
-        // ✅ Use derived slotInterval (no hardcoded fallbacks)
-        const minDuration = slotInterval;
+        // Bookings shorter than one slot may keep their original length
+        const minDuration = Math.min(slotInterval, startDuration);
         const maxDuration = this.maxDurationMinutes || (24 * 60);
-        
+
         newDurationMinutes = Math.max(minDuration, Math.min(maxDuration, newDurationMinutes));
         
         // SNAP TO SLOT BOUNDARIES: Round to nearest slot interval
@@ -539,11 +549,12 @@ export default {
         // Snap to slot boundaries one final time
         const snappedFinalMinutes = Math.round(finalDurationMinutes / slotInterval) * slotInterval;
         
-        // Ensure within bounds
-        // ✅ Use derived slotInterval (no hardcoded fallbacks)
-        const minDuration = slotInterval;
+        // Ensure within bounds; a tap without dragging keeps the original duration
+        const minDuration = Math.min(slotInterval, startDuration);
         const maxDuration = this.maxDurationMinutes || (24 * 60);
-        const finalDuration = Math.max(minDuration, Math.min(maxDuration, snappedFinalMinutes));
+        const finalDuration = hasMoved
+          ? Math.max(minDuration, Math.min(maxDuration, snappedFinalMinutes))
+          : startDuration;
         
         // Update the card height to match the final snapped duration (ensure consistency)
         const finalSnappedHeight = finalDuration * pxPerMin;
@@ -932,6 +943,13 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  /* The bar overlaps the resize handle on short bookings: only its buttons
+     take clicks, so the empty area lets drags through to the handle. */
+  pointer-events: none;
+}
+
+.booking-actions-bottom > * {
+  pointer-events: auto;
 }
 
 .booking-actions-menu-dots {

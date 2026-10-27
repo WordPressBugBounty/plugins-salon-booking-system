@@ -1413,6 +1413,66 @@ class SLN_Helper_Availability
         return array($error);
     }
 
+    /**
+     * Assistants of $bookingServices that are already booked by another booking at
+     * the same time. Only occupancy is checked (no opening hours, holidays or booking
+     * window), so staff tools can still book outside those rules but never put an
+     * assistant on two bookings at once. Uses the same day model as the booking
+     * form, so service breaks, buffers, multi-assistant services and bookings of
+     * other shops are all taken into account. Assistants allowed to serve multiple
+     * customers at once are skipped.
+     *
+     * @param SLN_Wrapper_Booking_Services $bookingServices
+     * @param SLN_Wrapper_Booking|null     $currentBooking Booking being edited, excluded from the check.
+     * @return string[] One message per conflict, empty when there is none.
+     */
+    public static function getAttendantOverlapErrors(SLN_Wrapper_Booking_Services $bookingServices, SLN_Wrapper_Booking $currentBooking = null)
+    {
+        $plugin = SLN_Plugin::getInstance();
+        // A fresh instance: the shared helper may hold a day model built without $currentBooking excluded.
+        $ah     = new self($plugin);
+        $errors = array();
+
+        foreach ($bookingServices->getItems() as $bookingService) {
+            $attendants = $bookingService->getAttendant();
+            if (empty($attendants)) {
+                continue;
+            }
+            $attendants = is_array($attendants) ? $attendants : array($attendants);
+
+            $startsAt   = $bookingService->getStartsAt();
+            $endsAt     = $bookingService->getEndsAt();
+            $breakStart = $bookingService->getBreakStartsAt();
+            $breakEnd   = $bookingService->getBreakEndsAt();
+            $hasBreak   = $breakStart && $breakEnd && $breakStart != $breakEnd;
+
+            $ah->setDate($startsAt, $currentBooking);
+            $dayBookings = $ah->getDayBookings();
+
+            foreach (SLN_Func::filterTimes($ah->getMinutesIntervals(), $startsAt, $endsAt) as $time) {
+                if ($time >= $endsAt || ($hasBreak && $time >= $breakStart && $time < $breakEnd)) {
+                    continue;
+                }
+                $busy = $dayBookings->countAttendantsByHour($time->format('H'), $time->format('i'));
+                foreach ($attendants as $key => $attendant) {
+                    if (empty($attendant) || empty($busy[$attendant->getId()]) || $attendant->canMultipleCustomers()) {
+                        continue;
+                    }
+                    $errors[] = sprintf(
+                        // translators: %1$s assistant name, %2$s time
+                        __('%1$s is already booked at %2$s.', 'salon-booking-system'),
+                        $attendant->getName(),
+                        $plugin->format()->time($time)
+                    );
+                    // One message per assistant and service line is enough.
+                    unset($attendants[$key]);
+                }
+            }
+        }
+
+        return $errors;
+    }
+
     public function getAvailableAttendantForService($availAtts = null, SLN_Wrapper_Booking_Service $bookingService = null)
     {
         $intersect = $this->getAvailableAttsIdsForBookingService($bookingService);

@@ -120,7 +120,7 @@ class SLN_Admin_Calendar extends SLN_Admin_AbstractPage
             SLB_RevenueGuard_Plugin::enqueueQueueScripts( 'salon_page_salon' );
         }
 
-        if ( class_exists( 'SLN_Admin_AISetup' ) ) {
+        if ( class_exists( 'SLN_Admin_AISetup' ) && SLN_AI_Access::isEnabledForCurrentUser() ) {
             SLN_Admin_AISetup::enqueueAiAssets( 'widget' );
         }
     }
