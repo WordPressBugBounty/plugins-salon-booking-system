@@ -143,7 +143,7 @@ class SLN_Action_Ajax_SalonStep extends SLN_Action_Ajax_Abstract
         // Get transient data if exists
         $transientData = null;
         if ($clientId) {
-            $transientKey = 'sln_booking_builder_' . $clientId;
+            $transientKey = SLN_Service_BookingPersistence::TRANSIENT_PREFIX . $clientId;
             $transientData = get_transient($transientKey);
         }
         

@@ -141,6 +141,8 @@ class Plugin {
             'waitlist_enabled'                 => (bool) apply_filters('sln_pwa_waitlist_enabled', false),
             /** SOAP Notes add-on presence: gates booking/customer SOAP screens. Set by the add-on. */
             'soap_notes_enabled'               => (bool) apply_filters('sln_pwa_soap_notes_enabled', false),
+            /** AI assistant floating chat; talks to the ai/* mobile routes (see SLB_API_Mobile Ai_Controller). */
+            'ai'                               => $this->get_ai_config(),
             'languages'                        => \SLN_Helper_Multilingual::getAvailableLanguages(),
             'default_language'                 => \SLN_Helper_Multilingual::getDefaultLanguage(),
         );
@@ -289,5 +291,26 @@ class Plugin {
     </html>
     <?php
         exit();
+    }
+
+    /**
+     * @return array
+     */
+    private function get_ai_config()
+    {
+        if ( ! class_exists( '\SLN_AI_Access' ) || ! \SLN_AI_Access::isEnabledForCurrentUser()
+            || ! current_user_can( apply_filters( 'salonviews/settings/capability', 'manage_salon' ) ) ) {
+            return array( 'enabled' => false );
+        }
+
+        $usage = new \SLN_AI_Usage();
+
+        return array(
+            'enabled'     => true,
+            'usage'       => $usage->getBootstrapUsage(),
+            'speech_lang' => \SLN_AI_Language::speechBcp47(),
+            'icon_url'    => esc_url_raw( SLN_PLUGIN_URL . '/img/ai-calendar-launcher.png' ),
+            'setup_url'   => \SLN_AI_Access::canAccessPage() ? admin_url( 'admin.php?page=' . \SLN_Admin_AISetup::PAGE ) : '',
+        );
     }
 }

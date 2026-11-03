@@ -739,6 +739,7 @@ class SLN_Action_Init
         SLN_Shortcode_SalonAssistant::init($p);
         SLN_Shortcode_SalonServices::init($p);
         SLN_Shortcode_SalonRecentComments::init($p);
+        SLN_WeeklySchedule_Module::init();
 
         SLN_Enum_AvailabilityModeProvider::init();
         $this->plugin->addRepository(

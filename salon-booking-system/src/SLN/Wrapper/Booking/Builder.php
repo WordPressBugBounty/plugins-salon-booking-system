@@ -417,6 +417,13 @@ class SLN_Wrapper_Booking_Builder
 
 	$args = apply_filters('sln.booking_builder.create.getPostArgs', $args);
 
+	// wp_insert_post() defaults the author to the logged-in user, which would
+	// make a staff member the customer of a booking made for someone else.
+	$customerIdForStaff = isset($args['post_author']) ? null : $this->getCustomerIdForStaffBooking();
+	if ($customerIdForStaff !== null) {
+	    $args['post_author'] = $customerIdForStaff;
+	}
+
 	// DEBUG: Log args after filter to see if post_status was removed
 	SLN_Plugin::addLog(sprintf(
 	    'Builder::create() - After getPostArgs filter: post_status=%s',
@@ -470,6 +477,10 @@ class SLN_Wrapper_Booking_Builder
 	// Extensions affected: SLB_Discount, SalonMultishop, and any hooking into this action
 	// Related docs: FIX_NULL_BOOKING_REFERENCE.md, CRITICAL_FIX_MULTISHOP_GETLASTBOOKING_ERROR.md
 	$this->lastId = $id;
+
+	if ($customerIdForStaff !== null) {
+	    update_post_meta($id, '_'.SLN_Plugin::POST_TYPE_BOOKING.'_created_by_user_id', get_current_user_id());
+	}
 
         do_action('sln.booking_builder.create', $this);
 
@@ -562,6 +573,25 @@ class SLN_Wrapper_Booking_Builder
         }
         $this->plugin->getBookingCache()->processBooking($lastBooking, true);
 
+    }
+
+    /**
+     * Resolve the customer of a booking a logged-in staff member makes for someone else.
+     *
+     * @return int|null Customer ID, 0 for a guest, null when it is not such a booking.
+     */
+    private function getCustomerIdForStaffBooking()
+    {
+        $operator = wp_get_current_user();
+        $email    = $this->get('email');
+
+        if (!$email || !SLN_Wrapper_Customer::isStaff($operator) || 0 === strcasecmp($email, $operator->user_email)) {
+            return null;
+        }
+
+        $customer = get_user_by('email', $email);
+
+        return $customer && !SLN_Wrapper_Customer::isStaff($customer) ? $customer->ID : 0;
     }
 
     /**
@@ -913,6 +943,13 @@ class SLN_Wrapper_Booking_Builder
             implode(', ', array_keys($this->data))
         ));
         
+        // Staff can save a booking with only a name (Mobile Web App). Never fill the
+        // gaps with their own profile or the customer's notifications reach them.
+        if (SLN_Wrapper_Customer::isStaff(wp_get_current_user())) {
+            SLN_Plugin::addLog('[Booking Validation] Booking made by staff - not loading customer data from their profile');
+            return;
+        }
+
         // DEFENSIVE FALLBACK: Try to load from logged-in user profile
         if (is_user_logged_in()) {
             SLN_Plugin::addLog('[Booking Validation] Attempting to load customer data from logged-in user profile...');

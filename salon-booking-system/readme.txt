@@ -4,7 +4,7 @@ Tags: salon, hairdresser, barber, beauty salon, appointment booking
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4.8
-Stable tag: 10.31.13
+Stable tag: 10.31.14
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -370,8 +370,32 @@ PHP 7.4 and above.
 == Changelog ==
 
 
+03.11.2026 - 10.31.14
+
+* New: weekly class schedule. The [salon_booking_weekly_schedule] shortcode and the "Weekly schedule" Elementor widget show the week's classes from the services' availability rules, with assistant, duration, category color and remaining spots; "Book" opens the booking form with service, assistant, date and time already selected. Holidays and closures hide the classes, full or past classes can't be booked
+* New: optional color for service categories, used by the weekly schedule
+* Fixed: with the 12-hour time format, saving a booking after changing its time in the Mobile Web App failed with "Invalid parameter(s): time", and calendar slots couldn't be locked or unlocked
+* New: the Reports dashboard can be filtered by assistant. Revenue shows the assistant's share of each booking (split when a service has more than one assistant), useful for commissions
+* New: the bookings CSV export (Calendar page and the Reports dashboard "Export" button, which now works) can be limited to one assistant and adds their share per booking and a period total
+* Fixed: on the Reports dashboard, changing a filter while data was loading could show the results of the previous filter
+* Fixed: the new Booking My Account texts ("Welcome back", "Upcoming", "Past", "No upcoming appointments"…) couldn't be translated with Loco Translate because they were missing from the translation template. Added the Dutch and Italian translations
+* Fixed: on sites with many bookings, confirming a booking could fail with "Server error occurred" (PHP out of memory) because a one-time phone number update restarted after every booking change
+* Fixed: every new or changed booking also cleared unrelated temporary data, such as customer login links sent by email, a Google Calendar connection in progress and the license check cache
+* Fixed: in the Reports dashboard assistants table, services paid with package credits were counted at their full price
+* New: Salon > Tools can now find bookings assigned to a staff account and move them to the right customer
+* Fixed: staff WordPress profiles (name, phone, email) were overwritten with the customer's details when booking for a customer from the front-end form or editing that booking in the back-end
+* Fixed: bookings saved in the Mobile Web App without a customer email or phone used the logged-in staff member's details, sending the customer's notifications to staff
+* Fixed: staff accounts could be set as the booking customer through the API
+* Fixed: free time slots stayed hidden on the booking form after a booking was moved, resized or deleted from the Mobile Web App or rescheduled by the customer
+* Fixed: with Multi-Shops, a shop's own "parallel bookings" limit was ignored after a booking was saved from the back-end, hiding free slots
+* Fixed: customers were sometimes sent back to the services step without a confirmation because another booking change erased their booking in progress
+* Fixed: the "parameter error" when editing bookings with several assistants (duo services) in the Mobile Web App
+* Fixed: plugin updates failing with "Unauthorized" for non-main licenses
+* Fixed: the redirect after cancelling a booking when the booking page is not set
+
 27.10.2026 - 10.31.13
 
+* New: the AI assistant is now available in the Mobile Web App: tap the blue button to ask, confirm or undo changes, also by voice. It uses the same access options and AI credits as the WordPress admin
 * New: Booking My Account redesigned, mobile first: new header and tab bar; Appointments with a "Next appointment" card, an Upcoming / Past switch and clear status labels; Discounts as coupon cards with a Copy button and expiry warnings; Packages with a sessions-left progress bar; a cleaner Profile form with show / hide password. The accent colour follows the Style settings
 * Improved: the "Leave a feedback" window has a new design and now says what is missing when the rating or the comment is empty
 * Improved: Booking My Account shows the discount applied to the next appointment

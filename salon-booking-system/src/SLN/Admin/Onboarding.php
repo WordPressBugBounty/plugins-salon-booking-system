@@ -405,8 +405,7 @@ class SLN_Admin_Onboarding extends SLN_Admin_AbstractPage
             SLN_Helper_Availability_Cache::clearCache();
             $this->plugin->getBookingCache()->refreshAll();
             $this->plugin->getBookingCache()->save();
-            global $wpdb;
-            $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_sln_%'");
+            SLN_Helper_Availability_Cache::clearTransients();
 
             wp_send_json_success();
         }

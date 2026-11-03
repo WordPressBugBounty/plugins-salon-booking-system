@@ -1141,6 +1141,31 @@ echo expirePopup();
                                     <label for="<?php echo SLN_Form::makeID("export[to]") ?>"><?php esc_html_e('to', 'salon-booking-system') ?></label>
                                 </div>
                             </div>
+                            <?php $exportAssistants = $plugin->getRepository(SLN_Plugin::POST_TYPE_ATTENDANT)->getAll(); ?>
+                            <?php if (!empty($exportAssistants)): ?>
+                            <style>
+                                .sln-calendar__export__assistant__field select.sln-input {
+                                    height: auto;
+                                    padding: 0.75rem;
+                                    border: 2px solid #eff4f7;
+                                    border-radius: 5px;
+                                    background-color: #e7edf2;
+                                    color: #000;
+                                    font-size: 18px;
+                                }
+                            </style>
+                            <div class="sln-calendar__export__assistant__field">
+                                <div class="form-group sln-input--simple sln-input--simple25">
+                                    <select class="form-control sln-input" id="<?php echo esc_attr(SLN_Form::makeID("export[assistant]")) ?>" name="export[assistant]">
+                                        <option value="0"><?php esc_html_e('All assistants', 'salon-booking-system') ?></option>
+                                        <?php foreach ($exportAssistants as $exportAssistant): ?>
+                                            <option value="<?php echo esc_attr($exportAssistant->getId()) ?>"><?php echo esc_html($exportAssistant->getName()) ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <label for="<?php echo esc_attr(SLN_Form::makeID("export[assistant]")) ?>"><?php esc_html_e('assistant', 'salon-booking-system') ?></label>
+                                </div>
+                            </div>
+                            <?php endif; ?>
                             <button type="submit" id="action" name="sln-tools-export-bookings" value="export"
                                 class="sln-btn sln-btn--main25 sln-btn--big25 sln-btn--fullwidth sln-calendar__export__bookings__button">
                                 <?php esc_html_e('Export bookings to a CSV file', 'salon-booking-system') ?></button>

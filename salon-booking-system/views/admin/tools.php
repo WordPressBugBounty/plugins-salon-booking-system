@@ -38,6 +38,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 		'admin/_tools_break_availability_diagnostics',
 		compact( 'break_av_diag_report', 'break_av_diag_error', 'break_av_diag_booking_a', 'break_av_diag_booking_b' )
 	);
+	include __DIR__ . '/_tools_staff_bookings_repair.php';
 	?>
 
 	<form method="post" action="<?php echo admin_url('admin.php?page=' . SLN_Admin_Tools::PAGE)?>">

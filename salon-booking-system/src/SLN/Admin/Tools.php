@@ -153,6 +153,27 @@ class SLN_Admin_Tools extends SLN_Admin_AbstractPage
         );
         $criteria['@query']    = true;
 
+        // Optional filters sent by the Reports dashboard and the calendar export form
+        $shopId = isset($data['export']['shop']) ? (int) $data['export']['shop'] : 0;
+        if ($shopId > 0 && $this->isMultiShopActive()) {
+            $criteria['@wp_query']['meta_query'][] = array(
+                'key'     => '_sln_booking_shop',
+                'value'   => $shopId,
+                'compare' => '=',
+            );
+        }
+
+        $assistantId = isset($data['export']['assistant']) ? (int) $data['export']['assistant'] : 0;
+        $assistant   = null;
+        if ($assistantId > 0) {
+            $assistant = $this->plugin->createAttendant($assistantId);
+            if ($assistant->isEmpty()) {
+                $assistant   = null;
+                $assistantId = 0;
+            }
+        }
+        $criteria['@wp_query'] = SLN_Helper_AssistantReport::filterQueryArgs($criteria['@wp_query'], $assistantId);
+
         /** @var SLN_Repository_BookingRepository $repo */
         $repo     = $this->plugin->getRepository(SLN_Plugin::POST_TYPE_BOOKING);
         $bookings = $repo->get(apply_filters('sln_tools_export_criteria', $criteria));
@@ -171,6 +192,10 @@ class SLN_Admin_Tools extends SLN_Admin_AbstractPage
             __('TOTAL PRICE', 'salon-booking-system'),
             __('STATUS', 'salon-booking-system'),
         );
+
+        if ($assistant) {
+            array_splice($headers, 7, 0, array(__('ASSISTANT SHARE', 'salon-booking-system')));
+        }
 
         if ($this->isMultiShopActive()) {
             $headers[] = __('SHOP', 'salon-booking-system');
@@ -208,16 +233,27 @@ class SLN_Admin_Tools extends SLN_Admin_AbstractPage
 
         fwrite( $fh, chr( 239 ) . chr( 187 ) . chr( 191 ) );
 
-        fputcsv(
-            $fh,
-            array(
-                __('Reservations', 'salon-booking-system'),
-                __('from', 'salon-booking-system'),
-                __('to', 'salon-booking-system'),
-            )
+        $title_row = array(
+            __('Reservations', 'salon-booking-system'),
+            __('from', 'salon-booking-system'),
+            __('to', 'salon-booking-system'),
         );
-        fputcsv($fh, array('', $format->date($from), $format->date($to)));
+        $period_row = array('', $format->date($from), $format->date($to));
+        if ($assistant) {
+            $title_row[]  = __('Assistant', 'salon-booking-system');
+            $period_row[] = $assistant->getName();
+        }
+        fputcsv($fh, $title_row);
+        fputcsv($fh, $period_row);
         fputcsv($fh, array(''));
+
+        // Same statuses the Reports dashboard counts as revenue
+        $revenue_statuses = array(
+            SLN_Enum_BookingStatus::PAID,
+            SLN_Enum_BookingStatus::PAY_LATER,
+            SLN_Enum_BookingStatus::CONFIRMED,
+        );
+        $assistant_total = 0.0;
         fputcsv(
             $fh,
             apply_filters('sln_tools_export_headers', $headers)
@@ -247,6 +283,14 @@ class SLN_Admin_Tools extends SLN_Admin_AbstractPage
                 SLN_Enum_BookingStatus::getLabel($booking->getStatus()),
             );
 
+            if ($assistant) {
+                $share = SLN_Helper_AssistantReport::getBookingShare($booking, $assistantId);
+                if (in_array($booking->getStatus(), $revenue_statuses, true)) {
+                    $assistant_total += $share;
+                }
+                array_splice($booking_values, 7, 0, array($format->money($share, false, false, true, true)));
+            }
+
             if ($this->isMultiShopActive()) {
                 $booking_values[] = $this->bookingShopName($booking);
             }
@@ -267,6 +311,14 @@ class SLN_Admin_Tools extends SLN_Admin_AbstractPage
                 apply_filters('sln_tools_export_booking_values', $booking_values, $booking)
             );
         }
+
+        if ($assistant) {
+            fputcsv($fh, array(''));
+            fputcsv($fh, array(
+                __('Total assistant share (paid, confirmed and pay later bookings)', 'salon-booking-system'),
+                $format->money($assistant_total, false, false, true, true),
+            ));
+        }
         fclose($fh);
 
         header("Pragma: public");
@@ -274,7 +326,8 @@ class SLN_Admin_Tools extends SLN_Admin_AbstractPage
         header("Cache-Control: must-revalidate, post-check=0, pre-check=0");
         header("Cache-Control: private", false);
         header("Content-Type: application/octet-stream");
-        header("Content-Disposition: attachment; filename=\"export.csv\";");
+        $filename = $assistant ? 'export-' . sanitize_file_name(sanitize_title($assistant->getName())) . '.csv' : 'export.csv';
+        header("Content-Disposition: attachment; filename=\"" . $filename . "\";");
         header("Content-Transfer-Encoding: binary");
         echo file_get_contents($tmpfname);
 

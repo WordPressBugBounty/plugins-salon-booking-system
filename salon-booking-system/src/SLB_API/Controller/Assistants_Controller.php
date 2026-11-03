@@ -696,11 +696,13 @@ class Assistants_Controller extends REST_Controller
         $order = $request->get_param('order');
         $shop_id = (int) $request->get_param('shop');
 
-        // Get all assistants
+        // Get all assistants, or only the one selected on the dashboard
+        $assistant_id = $this->get_report_assistant_id($request);
         $assistants_query = new WP_Query(array(
             'post_type'      => self::POST_TYPE,
             'post_status'    => 'publish',
             'posts_per_page' => -1,
+            'post__in'       => $assistant_id ? array($assistant_id) : array(),
         ));
 
         $assistants_stats = array();
@@ -795,35 +797,15 @@ class Assistants_Controller extends REST_Controller
                     $service_assistants = is_array($attendant) ? $attendant : array($attendant);
                     $num_assistants = count($service_assistants);
                     
-                    // ✅ FIX: Get service price with fallback for missing prices
-                    $service_price = $bookingService->getPrice();
-                    
-                    // ✅ FALLBACK: If price is 0 or missing, calculate from service base price
-                    // This handles older bookings where individual service prices weren't stored
-                    if (empty($service_price) || $service_price == 0) {
+                    // Stored service price (0 for package credits), falling back to the service
+                    // price for older bookings without one; negative discounts clamp to 0
+                    if (!$bookingService->hasPrice()) {
                         $service = $bookingService->getService();
                         if ( null === $service || $service->isEmpty() ) {
                             continue;
                         }
-                        
-                        // Get variable price by attendant if enabled, otherwise use base price
-                        $attendant_id = is_array($attendant) ? (isset($attendant[0]) ? $attendant[0]->getId() : null) : $attendant->getId();
-                        if ($service->getVariablePriceEnabled() && $attendant_id && $service->getVariablePrice($attendant_id) !== '') {
-                            $service_price = floatval($service->getVariablePrice($attendant_id));
-                        } else {
-                            $service_price = floatval($service->getPrice());
-                        }
-                        
-                        // Apply quantity multiplier for variable duration services
-                        $variable_duration = get_post_meta($service->getId(), '_sln_service_variable_duration', true);
-                        if ($variable_duration) {
-                            $service_price = $service_price * $bookingService->getCountServices();
-                        }
                     }
-                    
-                    // ✅ FIX: Handle negative prices from excessive discounts (clamp to 0)
-                    // Negative prices occur when discounts exceed service price (e.g., 100%+ discounts)
-                    $service_price = max(0, $service_price);
+                    $service_price = \SLN_Helper_AssistantReport::getServicePrice($bookingService);
                     
                     // ✅ FIX: Split service price evenly among assistants for this service
                     $revenue_share = $num_assistants > 0 ? $service_price / $num_assistants : 0;

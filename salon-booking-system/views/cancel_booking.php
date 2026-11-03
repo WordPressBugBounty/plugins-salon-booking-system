@@ -38,11 +38,13 @@ $format = $plugin->format();
 					<div class="sln-cancel-booking-block__body__action__booking-cancelled">
 						<?php esc_html_e('Booking is cancelled', 'salon-booking-system'); ?>
 					</div>
+				<?php if (!empty($booking_url)): ?>
 				<script>
 					setTimeout(function () {
 					window.location.href = <?php echo wp_json_encode($booking_url); ?>;
 					}, 1000);
 				</script>
+				<?php endif; ?>
 					<?php elseif (!$cancellation_enabled): ?>
 					<div class="sln-cancel-booking-block__body__action__cancellation-disabled">
 						<?php esc_html_e('Cancellation is disabled', 'salon-booking-system'); ?>

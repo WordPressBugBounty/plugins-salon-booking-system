@@ -218,6 +218,33 @@ class SLN_Helper_Availability_Cache
     }
     
     /**
+     * Delete the persisted transients derived from bookings (date step intervals,
+     * customer forecasts, Mobile App availability stats), with their timeouts.
+     *
+     * Only these key shapes: other sln_ transients (customer login links, Google
+     * Calendar OAuth state, license data, migrations) must survive booking changes.
+     *
+     * @return int Rows deleted.
+     */
+    public static function clearTransients()
+    {
+        global $wpdb;
+
+        $deleted = 0;
+        foreach (array('_transient_', '_transient_timeout_') as $prefix) {
+            $deleted += (int) $wpdb->query($wpdb->prepare(
+                "DELETE FROM {$wpdb->options}
+                 WHERE option_name REGEXP %s OR option_name LIKE %s OR option_name LIKE %s",
+                '^' . $prefix . 'sln_[0-9a-f]{32}$',
+                $wpdb->esc_like($prefix . 'sln_forecast_') . '%',
+                $wpdb->esc_like($prefix . 'sln_pwa_avst_') . '%'
+            ));
+        }
+
+        return $deleted;
+    }
+
+    /**
      * Clear cache for specific date
      * More efficient than clearing all cache
      * 

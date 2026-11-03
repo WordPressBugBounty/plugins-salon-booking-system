@@ -213,18 +213,21 @@ class SLN_Shortcode_Salon_DetailsStep extends SLN_Shortcode_Salon_AbstractUserSt
                     }
                 }
             }else{
-                $update = [
-                    'ID' => $current_user->ID,
-                ];
-                if(isset($values['firstname'])){
-                    $update['first_name'] = $values['firstname'];
-                }
-                if(isset($values['lastname'])){
-                    $update['last_name'] = $values['lastname'];
-                }
-                wp_update_user( $update );
+                // Staff filling in the form are booking for a customer: keep their own profile untouched.
+                if (!SLN_Wrapper_Customer::isStaff($current_user)) {
+                    $update = [
+                        'ID' => $current_user->ID,
+                    ];
+                    if(isset($values['firstname'])){
+                        $update['first_name'] = $values['firstname'];
+                    }
+                    if(isset($values['lastname'])){
+                        $update['last_name'] = $values['lastname'];
+                    }
+                    wp_update_user( $update );
 
-                $this->saveCustomerMeta($current_user->ID, $values);
+                    $this->saveCustomerMeta($current_user->ID, $values);
+                }
 		        do_action('sln.shortcode.details.dispatchForm.logged_checkout', $values, $this);
             }
         }

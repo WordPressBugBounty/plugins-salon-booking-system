@@ -156,6 +156,14 @@ class SLN_Admin_Reports extends SLN_Admin_AbstractPage
             }
         }
         
+        $assistants = array();
+        foreach ($this->plugin->getRepository(SLN_Plugin::POST_TYPE_ATTENDANT)->getAll() as $assistant) {
+            $assistants[] = array(
+                'id'   => $assistant->getId(),
+                'name' => $assistant->getName(),
+            );
+        }
+
         // Pass configuration to JavaScript
         wp_localize_script('sln-reports-dashboard', 'salonDashboard', array(
             'nonce'           => wp_create_nonce('wp_rest'),
@@ -170,6 +178,9 @@ class SLN_Admin_Reports extends SLN_Admin_AbstractPage
             'canViewRgMoney'  => class_exists('SLB_RevenueGuard_License') && SLB_RevenueGuard_License::canViewMonetaryKpis(),
             'managerShopId'   => $manager_shop_id,   // Default shop ID for manager
             'managerShopIds'  => !empty($manager_shop_ids) ? $manager_shop_ids : array(), // All assigned shop IDs
+            'assistants'      => $assistants,
+            'exportUrl'       => admin_url('admin.php?page=' . SLN_Admin_Tools::PAGE),
+            'canExport'       => current_user_can('manage_salon') && current_user_can('export_reservations_csv_sln_calendar'),
         ));
 
         parent::enqueueAssets();

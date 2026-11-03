@@ -224,7 +224,7 @@ class SLN_Admin_Customers extends SLN_Admin_AbstractPage {
 			return false;
 		}
 
-		return !user_can($user, 'manage_salon') && !user_can($user, 'edit_posts') && !user_can($user, 'list_users');
+		return !SLN_Wrapper_Customer::isStaff($user);
 	}
 
 	/**

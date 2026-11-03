@@ -332,6 +332,29 @@ abstract class REST_Controller extends WP_REST_Controller
     }
 
     /**
+     * Assistant selected on the Reports dashboard (0 = all assistants)
+     *
+     * @param \WP_REST_Request $request
+     * @return int
+     */
+    protected function get_report_assistant_id($request)
+    {
+        return max(0, (int) $request->get_param('assistant'));
+    }
+
+    /**
+     * Restrict booking WP_Query args to the selected assistant's bookings, if any
+     *
+     * @param array $query_args
+     * @param \WP_REST_Request $request
+     * @return array
+     */
+    protected function apply_assistant_filter(array $query_args, $request)
+    {
+        return \SLN_Helper_AssistantReport::filterQueryArgs($query_args, $this->get_report_assistant_id($request));
+    }
+
+    /**
      * Get all assigned shop IDs for filtering queries (for managers with multiple shops)
      * 
      * @return array|null Array of shop IDs for IN query, or null if not applicable

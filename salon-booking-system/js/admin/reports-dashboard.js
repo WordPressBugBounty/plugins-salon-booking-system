@@ -56,6 +56,14 @@
                     params.shop = shopId;
                 }
             }
+
+            // Add assistant filter to all requests
+            if (typeof AssistantManager !== 'undefined') {
+                const assistantId = AssistantManager.getCurrentAssistant();
+                if (assistantId > 0) {
+                    params.assistant = assistantId;
+                }
+            }
             
             // Add cache-busting timestamp to prevent browser caching
             params._t = Date.now();
@@ -433,7 +441,8 @@
                 const shopNameSpan = document.createElement('span');
                 shopNameSpan.className = 'sln-current-shop-name';
                 shopNameSpan.textContent = ' - ' + shopName;
-                titleElement.appendChild(shopNameSpan);
+                // Keep the shop before the assistant name; insertBefore(null) appends
+                titleElement.insertBefore(shopNameSpan, titleElement.querySelector('.sln-current-assistant-name'));
             } else {
                 console.warn('Cannot update title - shop option not loaded yet or is "All Shops"');
             }
@@ -514,6 +523,71 @@
          */
         getCurrentShop() {
             return this.currentShop;
+        }
+    };
+
+    /**
+     * Assistant Manager - filters the whole dashboard by one assistant
+     */
+    const AssistantManager = {
+        currentAssistant: 0,
+
+        /**
+         * Populate the selector and bind its change event
+         */
+        init() {
+            const select = document.getElementById('sln-assistant-selector');
+            if (!select) return;
+
+            const assistants = (window.salonDashboard && window.salonDashboard.assistants) || [];
+            if (!assistants.length) {
+                select.closest('.sln-assistant-filter-group').style.display = 'none';
+                return;
+            }
+
+            assistants.forEach(assistant => {
+                const option = document.createElement('option');
+                option.value = assistant.id;
+                option.textContent = assistant.name;
+                select.appendChild(option);
+            });
+
+            select.addEventListener('change', (e) => {
+                this.currentAssistant = parseInt(e.target.value) || 0;
+                this.updateDashboardTitle(e.target);
+
+                if (typeof DashboardUI !== 'undefined' && DashboardUI.loadDashboard) {
+                    DashboardUI.loadDashboard();
+                }
+            });
+        },
+
+        /**
+         * Show the selected assistant's name in the dashboard title
+         */
+        updateDashboardTitle(selectElement) {
+            const titleElement = document.querySelector('.sln-dashboard-title');
+            if (!titleElement) return;
+
+            const existing = titleElement.querySelector('.sln-current-assistant-name');
+            if (existing) {
+                existing.remove();
+            }
+
+            if (!this.currentAssistant) return;
+
+            const selectedOption = selectElement.options[selectElement.selectedIndex];
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'sln-current-assistant-name';
+            nameSpan.textContent = ' - ' + selectedOption.textContent;
+            titleElement.appendChild(nameSpan);
+        },
+
+        /**
+         * Get currently selected assistant ID (0 = all)
+         */
+        getCurrentAssistant() {
+            return this.currentAssistant;
         }
     };
 
@@ -711,6 +785,12 @@
             // Initialize Shop Manager if Multi-Shop is active
             if (document.getElementById('sln-shop-selector')) {
                 ShopManager.init();
+            }
+
+            AssistantManager.init();
+
+            if (!(window.salonDashboard && window.salonDashboard.canExport)) {
+                $('#sln-dashboard-export').hide();
             }
             
             this.bindEvents();
@@ -978,6 +1058,8 @@
          * Load dashboard data
          */
         loadDashboard: async function() {
+            // Filters can change while a load is in flight; only the latest load may render
+            const loadId = this.loadId = (this.loadId || 0) + 1;
             this.showLoading();
 
             try {
@@ -1034,6 +1116,14 @@
                 
                 const [stats, services, assistants, customers, peakTimes, retention, frequencyCLV, utilization, forecastStats, revenueGuardStats, noShowStats, noShowRate] = await Promise.all(apiCalls);
 
+                if (loadId !== this.loadId) {
+                    return;
+                }
+
+                // Revenue Guard and forecast adoption are salon-wide, not per assistant
+                $('#sln-rg-reports-section, .sln-forecast-stats-section')
+                    .toggleClass('sln-hidden-for-assistant', AssistantManager.getCurrentAssistant() > 0);
+
                 // Update UI components
                 this.updateKPICards(stats, retention, customers);
                 this.updateRevenueChart(stats);
@@ -1061,6 +1151,9 @@
 
                 this.hideLoading();
             } catch (error) {
+                if (loadId !== this.loadId) {
+                    return;
+                }
                 console.error('Failed to load dashboard:', error);
                 this.showError('Failed to load dashboard data. Please try again.');
                 this.hideLoading();
@@ -2400,10 +2493,39 @@
         },
 
         /**
-         * Export data (placeholder)
+         * Export the bookings of the selected period, shop and assistant to CSV
+         * (same export as the calendar page, posted to the Tools page)
          */
         exportData: function() {
-            alert(__('Export functionality coming soon!', 'salon-booking-system'));
+            const settings = window.salonDashboard || {};
+            if (!settings.exportUrl) {
+                return;
+            }
+
+            const dates = DateRangeManager.getCurrentDates();
+            const fields = {
+                'export[from]': dates.start,
+                'export[to]': dates.end,
+                'export[shop]': typeof ShopManager !== 'undefined' ? ShopManager.getCurrentShop() : 0,
+                'export[assistant]': AssistantManager.getCurrentAssistant(),
+                'sln-tools-export-bookings': 'export'
+            };
+
+            const form = document.createElement('form');
+            form.method = 'post';
+            form.action = settings.exportUrl;
+            form.style.display = 'none';
+            Object.keys(fields).forEach(name => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = name;
+                input.value = fields[name];
+                form.appendChild(input);
+            });
+
+            document.body.appendChild(form);
+            form.submit();
+            form.remove();
         }
     };
 

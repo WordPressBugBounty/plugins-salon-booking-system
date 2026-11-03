@@ -49,7 +49,8 @@ class AvailabilityAssistants_Controller extends REST_Controller
                                 'type' => 'integer',
                             ),
                             'assistant_id' =>  array(
-                                'type' => 'integer',
+                                'type' => array( 'integer', 'array' ),
+                                'items' => array( 'type' => 'integer' ),
                             ),
                         ),
                     ),
@@ -120,7 +121,8 @@ class AvailabilityAssistants_Controller extends REST_Controller
             $availAttsForService = $ah->getAvailableAttsIdsForBookingService($bookingService);
 
             $tmpAssistants       = array();
-            $selectedAttendantId = $services[$serviceId];
+            // A duo service carries an array with one ID per assistant.
+            $selectedAttendantIds = array_filter((array) $services[$serviceId]);
 
             foreach ($availAttsForService as $attId) {
 
@@ -130,12 +132,16 @@ class AvailabilityAssistants_Controller extends REST_Controller
                     'assistant_id'   => $attendant->getId(),
                     'assistant_name' => $attendant->getName(),
                     'available'      => true,
-                    'selected'       => $attId === $selectedAttendantId,
+                    'selected'       => in_array($attId, $selectedAttendantIds, true),
                     'error'          => '',
                 );
             }
 
-            if ( $selectedAttendantId && ! in_array($selectedAttendantId, $availAttsForService) ) {
+            foreach ($selectedAttendantIds as $selectedAttendantId) {
+
+                if ( in_array($selectedAttendantId, $availAttsForService) ) {
+                    continue;
+                }
 
                 $attendant = SLN_Plugin::getInstance()->createAttendant($selectedAttendantId);
 

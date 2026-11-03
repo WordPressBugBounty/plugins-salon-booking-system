@@ -57,6 +57,13 @@ if (process.env.NODE_ENV === 'development' && typeof window.slnPWA === 'undefine
             kind: 'free_pro',
             href: 'https://www.salonbookingsystem.com/plugin-pricing-2/',
         },
+        /** Dev: AI assistant floating chat (the mock API does not answer ai/* routes). */
+        ai: {
+            enabled: true,
+            usage: {total_remaining: 50, can_chat: true},
+            speech_lang: 'en-US',
+            setup_url: '',
+        },
         onesignal_app_id: null,
         mock_user: {
             id: 1,

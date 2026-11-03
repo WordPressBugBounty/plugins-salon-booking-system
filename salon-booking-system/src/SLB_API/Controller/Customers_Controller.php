@@ -820,7 +820,7 @@ class Customers_Controller extends REST_Controller
         );
 
         // Query all bookings in period
-        $bookings_query = new WP_Query(array(
+        $bookings_query = new WP_Query($this->apply_assistant_filter(array(
             'post_type'      => SLN_Plugin::POST_TYPE_BOOKING,
             'post_status'    => array(
                 SLN_Enum_BookingStatus::PAID,
@@ -829,7 +829,8 @@ class Customers_Controller extends REST_Controller
             ),
             'posts_per_page' => -1,
             'meta_query'     => $meta_query,
-        ));
+        ), $request));
+        $assistant_id = $this->get_report_assistant_id($request);
 
         // Get customers from bookings
         $customer_stats = array();
@@ -899,7 +900,7 @@ class Customers_Controller extends REST_Controller
             
             // Update stats
             $customer_stats[$customer_id]['bookings_count']++;
-            $customer_stats[$customer_id]['total_spent'] += $booking->getAmount();
+            $customer_stats[$customer_id]['total_spent'] += \SLN_Helper_AssistantReport::getBookingAmount($booking, $assistant_id);
             
             $booking_date = $booking->getDate()->format('Y-m-d');
             if (!$customer_stats[$customer_id]['last_booking_date'] || 
@@ -1007,7 +1008,7 @@ class Customers_Controller extends REST_Controller
             'meta_query'     => $meta_query,
         );
 
-        $bookings_query = new WP_Query($query_args);
+        $bookings_query = new WP_Query($this->apply_assistant_filter($query_args, $request));
         $bookings = $bookings_query->posts;
 
         // Track customers and their bookings
@@ -1032,7 +1033,7 @@ class Customers_Controller extends REST_Controller
             }
             
             $customer_bookings[$customer_id]['dates'][] = $booking_date;
-            $customer_bookings[$customer_id]['total_spent'] += $booking->getAmount();
+            $customer_bookings[$customer_id]['total_spent'] += \SLN_Helper_AssistantReport::getBookingAmount($booking, $this->get_report_assistant_id($request));
         }
 
         // Calculate rebooking metrics
@@ -1172,7 +1173,7 @@ class Customers_Controller extends REST_Controller
             'meta_query'     => $meta_query,
         );
 
-        $bookings_query = new WP_Query($query_args);
+        $bookings_query = new WP_Query($this->apply_assistant_filter($query_args, $request));
         $bookings = $bookings_query->posts;
 
         // Calculate period length in days
@@ -1191,7 +1192,7 @@ class Customers_Controller extends REST_Controller
             $booking_date = $booking->getDate();
             if (!$booking_date) continue;
             
-            $amount = $booking->getAmount();
+            $amount = \SLN_Helper_AssistantReport::getBookingAmount($booking, $this->get_report_assistant_id($request));
             
             if (!isset($customer_data[$customer_id])) {
                 $customer_data[$customer_id] = array(

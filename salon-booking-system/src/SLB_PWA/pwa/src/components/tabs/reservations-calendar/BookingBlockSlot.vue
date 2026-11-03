@@ -124,6 +124,7 @@ export default {
     },
     normalizeTime(time) {
       if (time === this.END_OF_DAY) return this.END_OF_DAY;
+      if (/^\d{2}:\d{2}$/.test(time)) return time;
       return this.moment(time, this.getTimeFormat()).format('HH:mm');
     }
   },

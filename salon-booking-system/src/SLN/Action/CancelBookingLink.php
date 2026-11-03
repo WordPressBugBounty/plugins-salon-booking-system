@@ -126,12 +126,19 @@ class SLN_Action_CancelBookingLink {
 	    $this->plugin->sendMail('mail/status_canceled', $args);
 	}
 
+	// get_permalink() returns false when the booking page is unset or unpublished,
+	// which would make the view redirect to a relative "/false" URL.
+	$bookingUrl = $settings->getPayPageId() ? get_permalink($settings->getPayPageId()) : false;
+	if (!$bookingUrl) {
+	    $bookingUrl = home_url('/');
+	}
+
 	echo $this->plugin->loadView('cancel_booking', array(
 	    'cancellation_enabled'  => $cancellationEnabled,
 	    'out_of_time'	    => $outOfTime,
 	    'booking'		    => $booking,
 	    'cancel_until'	    => $this->plugin->format()->datetime($cancelUntil->format('Y-m-d H:i')),
-	    'booking_url'	    => get_permalink($settings->getPayPageId()),
+	    'booking_url'	    => esc_url_raw($bookingUrl),
 	));
 
 	header('HTTP/1.1 200 OK');

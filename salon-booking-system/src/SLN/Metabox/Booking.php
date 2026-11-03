@@ -286,7 +286,7 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
             $user_id = (int) $_REQUEST['post_author'];
             $userdata = get_userdata( $user_id );
 
-	    if ( $userdata && SLN_Admin_Customers::current_user_can_manage_customer( $user_id ) ) {
+	    if ( $userdata && ! SLN_Wrapper_Customer::isStaff( $userdata ) && SLN_Admin_Customers::current_user_can_manage_customer( $user_id ) ) {
 		foreach (['email'=>'user_email','firstname'=>'first_name','lastname'=>'last_name'] as $field => $wp_field) {
 		    $value = sanitize_text_field($_POST['_sln_booking_'.$field]);
 		    if($field === 'email' ){
@@ -352,7 +352,7 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
 		    $booking->setMeta('last_edited_at', current_time('mysql'));
 	    }
 
-        if(($customer = $booking->getCustomer())){
+        if(($customer = $booking->getCustomer()) && !SLN_Wrapper_Customer::isStaff($booking->getUserId())){
             $fields = SLN_Enum_CheckoutFields::forBookingAndCustomer()->keys();
             if($fields){
                 foreach ($fields as $field) {

@@ -562,7 +562,7 @@ export default {
       if (time === this.END_OF_DAY || time === '24:00') return this.MINUTES_IN_DAY;
       const jsFormat = this.$root.settings?.time_format?.js_format;
       if (jsFormat && jsFormat.toLowerCase() === 'h:iip' && /[ap]m/i.test(time)) {
-        const momentTime = this.moment(time, 'h:mm A');
+        const momentTime = this.moment(time.replace(/\s+/g, '').toUpperCase(), 'h:mmA');
         return momentTime.hours() * 60 + momentTime.minutes();
       }
       const [hours, minutes] = time.split(':').map(Number);
@@ -783,7 +783,7 @@ export default {
         // AM/PM display format: input may be a user-visible "9:00 AM" or an
         // internally stored 24h time like "9:00" / "19:00".
         if (/[ap]m/i.test(time)) {
-          return this.moment(time, 'h:mm A').format('HH:mm');
+          return this.moment(time.replace(/\s+/g, '').toUpperCase(), 'h:mmA').format('HH:mm');
         }
         // Stored 24h time — parse with H:mm to avoid Invalid Date.
         return this.moment(time, 'H:mm').format('HH:mm');

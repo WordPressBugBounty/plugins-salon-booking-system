@@ -153,7 +153,7 @@ class NoShow_Controller extends REST_Controller
         }
 
         // Get all bookings in date range
-        $all_bookings = get_posts($args);
+        $all_bookings = get_posts($this->apply_assistant_filter($args, $request));
         $total_bookings = count($all_bookings);
 
         // Count no-shows manually (meta_query doesn't work reliably)
@@ -170,7 +170,7 @@ class NoShow_Controller extends REST_Controller
         $no_show_rate = $total_bookings > 0 ? round(($no_show_count / $total_bookings) * 100, 2) : 0;
 
         // Get recent no-shows (last 10)
-        $recent_no_shows = $this->get_recent_no_shows($start_date, $end_date, $shop, 10);
+        $recent_no_shows = $this->get_recent_no_shows($start_date, $end_date, $shop, 10, $this->get_report_assistant_id($request));
 
         return new WP_REST_Response(array(
             'total_bookings'   => $total_bookings,
@@ -194,7 +194,7 @@ class NoShow_Controller extends REST_Controller
         $shop = intval($request->get_param('shop'));
         $limit = intval($request->get_param('limit'));
 
-        $bookings = $this->get_recent_no_shows($start_date, $end_date, $shop, $limit);
+        $bookings = $this->get_recent_no_shows($start_date, $end_date, $shop, $limit, $this->get_report_assistant_id($request));
 
         return new WP_REST_Response(array(
             'bookings' => $bookings,
@@ -263,7 +263,7 @@ class NoShow_Controller extends REST_Controller
                 );
             }
 
-            $period_bookings = get_posts($args);
+            $period_bookings = get_posts($this->apply_assistant_filter($args, $request));
             $total = count($period_bookings);
             $no_shows = 0;
 
@@ -304,7 +304,7 @@ class NoShow_Controller extends REST_Controller
     /**
      * Helper function to get recent no-shows
      */
-    private function get_recent_no_shows($start_date, $end_date, $shop, $limit)
+    private function get_recent_no_shows($start_date, $end_date, $shop, $limit, $assistant_id = 0)
     {
         // Get all bookings in date range (no meta_query, we'll filter manually)
         // Note: Don't filter by post_status - SLN uses custom statuses (sln-b-*)
@@ -331,7 +331,7 @@ class NoShow_Controller extends REST_Controller
             );
         }
 
-        $all_bookings = get_posts($args);
+        $all_bookings = get_posts(\SLN_Helper_AssistantReport::filterQueryArgs($args, $assistant_id));
         
         // Manually filter for no-shows and collect with metadata
         $no_show_posts = array();

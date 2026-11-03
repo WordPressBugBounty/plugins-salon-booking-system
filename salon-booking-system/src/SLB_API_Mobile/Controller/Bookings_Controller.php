@@ -14,6 +14,7 @@ use SLN_Wrapper_Booking_Builder;
 use SLN_Metabox_Helper;
 use SLN_Enum_CheckoutFields;
 use SLN_Wrapper_Booking;
+use SLN_Wrapper_Customer;
 use SLN_Helper_RateLimiter;
 use SLN_Helper_RecaptchaVerifier;
 use SLN_Helper_Multilingual;
@@ -1116,6 +1117,8 @@ class Bookings_Controller extends REST_Controller
 		$customer_id = $this->create_new_customer($request);
 	    }
 
+            $this->validate_customer_id($customer_id);
+
             if ( $customer_id ) {
                 $customer_data  = $this->get_customer_data_by_id($customer_id);
             }
@@ -1140,6 +1143,21 @@ class Bookings_Controller extends REST_Controller
         $response->set_status(201);
 
         return $response;
+    }
+
+    /**
+     * Staff accounts are booking operators: don't let one become the customer.
+     * A booking they already own stays editable.
+     *
+     * @param int $customer_id
+     * @param int $current_customer_id
+     * @throws \Exception
+     */
+    protected function validate_customer_id($customer_id, $current_customer_id = 0)
+    {
+        if ( $customer_id && $customer_id != $current_customer_id && SLN_Wrapper_Customer::isStaff((int)$customer_id) ) {
+            throw new \Exception(esc_html__( 'A staff account cannot be set as the booking customer.', 'salon-booking-system' ), 400);
+        }
     }
 
     protected function get_customer_data_by_id($customer_id)
@@ -1172,7 +1190,7 @@ class Bookings_Controller extends REST_Controller
 	$user = get_user_by('email', $email);
 
 	if ( $user ) {
-	    return $user->ID;
+	    return SLN_Wrapper_Customer::isStaff($user) ? 0 : $user->ID;
 	}
 
         $id = wp_create_user($email, wp_generate_password(), $email);
@@ -1283,6 +1301,8 @@ class Bookings_Controller extends REST_Controller
 	    if ( ! $customer_id  && $request->get_param('customer_email') && $request->get_param('save_as_new_customer') ) {
 		$customer_id = $this->create_new_customer($request);
 	    }
+
+            $this->validate_customer_id($customer_id, $booking['customer_id']);
 
             if ( $customer_id && $booking['customer_id'] != $customer_id ) {
                 $customer_data  = $this->get_customer_data_by_id($customer_id);
@@ -1401,7 +1421,7 @@ class Bookings_Controller extends REST_Controller
                 continue;
             }
             $value = $custom_fields[$field['key']] ? $custom_fields[$field['key']] : '';
-            if ($field->isCustomer() && $customer_id) {
+            if ($field->isCustomer() && $customer_id && !SLN_Wrapper_Customer::isStaff((int)$customer_id)) {
                 update_user_meta($customer_id, '_sln_' . $field['key'], $value);
             } else {
                 $bb->set($field['key'], $value);
@@ -1562,7 +1582,7 @@ class Bookings_Controller extends REST_Controller
                 continue;
             }
             $value = $custom_fields[$field['key']] ? $custom_fields[$field['key']] : '';
-            if ($field->isCustomer() && $customer_id) {
+            if ($field->isCustomer() && $customer_id && !SLN_Wrapper_Customer::isStaff((int)$customer_id)) {
                 update_user_meta($customer_id, '_sln_' . $field['key'], $value);
             } else {
                 $meta['_sln_booking_' . $field['key']] = $value;
@@ -1756,7 +1776,7 @@ class Bookings_Controller extends REST_Controller
      */
     protected function sync_customer_contact_meta($customer_id, $request)
     {
-        if (!$customer_id) {
+        if (!$customer_id || SLN_Wrapper_Customer::isStaff((int)$customer_id)) {
             return;
         }
 

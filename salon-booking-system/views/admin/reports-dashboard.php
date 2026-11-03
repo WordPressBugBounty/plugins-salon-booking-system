@@ -82,6 +82,15 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
             </select>
         </div>
         <?php endif; ?>
+
+        <!-- Assistant Selector -->
+        <div class="sln-dashboard-filter-group sln-assistant-filter-group">
+            <label for="sln-assistant-selector"><?php esc_html_e('Assistant:', 'salon-booking-system') ?></label>
+            <select id="sln-assistant-selector" class="sln-assistant-selector">
+                <option value="0"><?php esc_html_e('All Assistants', 'salon-booking-system') ?></option>
+                <!-- Populated by JavaScript -->
+            </select>
+        </div>
         
         <!-- Action Buttons -->
         <button id="sln-dashboard-refresh" class="button button-secondary sln-btn-icon">
@@ -630,7 +639,12 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
     gap: 0;
 }
 
-.sln-current-shop-name {
+.sln-hidden-for-assistant {
+    display: none !important;
+}
+
+.sln-current-shop-name,
+.sln-current-assistant-name {
     color: #666;
     font-weight: 400;
     font-size: 0.85em;
@@ -719,7 +733,8 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
     color: #333;
 }
 
-.sln-shop-selector {
+.sln-shop-selector,
+.sln-assistant-selector {
     padding: 8px 12px;
     border: 1px solid #ddd;
     border-radius: 4px;
@@ -730,13 +745,15 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
     transition: border-color 0.2s ease;
 }
 
-.sln-shop-selector:focus {
+.sln-shop-selector:focus,
+.sln-assistant-selector:focus {
     outline: none;
     border-color: #2171B1;
     box-shadow: 0 0 0 1px #2171B1;
 }
 
-.sln-shop-selector:hover {
+.sln-shop-selector:hover,
+.sln-assistant-selector:hover {
     border-color: #2171B1;
 }
 

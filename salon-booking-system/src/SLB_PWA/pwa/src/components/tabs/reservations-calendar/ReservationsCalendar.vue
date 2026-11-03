@@ -1587,9 +1587,14 @@ export default {
       if (!time) return time;
       if (time === this.END_OF_DAY || time === '24:00') return this.END_OF_DAY;
 
-      if (this.$root.settings?.time_format?.js_format === 'h:iip') {
-        const momentTime = this.moment(time, 'h:mm A');
-        return momentTime.format('HH:mm');
+      const jsFormat = this.$root.settings?.time_format?.js_format;
+      if (jsFormat && jsFormat.toLowerCase() === 'h:iip') {
+        // AM/PM display format: input may be a user-visible "1:00pm" or an
+        // internally stored 24h time like "13:00" (timeslots, lock rules).
+        if (/[ap]m/i.test(time)) {
+          return this.moment(time.replace(/\s+/g, '').toUpperCase(), 'h:mmA').format('HH:mm');
+        }
+        return this.moment(time, 'H:mm').format('HH:mm');
       }
 
       const momentFormat = this.getTimeFormat();

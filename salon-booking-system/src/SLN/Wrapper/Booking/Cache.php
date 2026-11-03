@@ -13,6 +13,13 @@ class SLN_Wrapper_Booking_Cache extends SLN_Wrapper_Booking_AbstractCache
 
     public function processBooking(SLN_Wrapper_Booking $booking, $isNew = false)
     {
+        // Availability checks made earlier in this request memoized the day as it was
+        // BEFORE the change. Rebuilding from that state stores old bookings in
+        // free_slots, which the front-end reuses for every future day.
+        $this->plugin->getRepository(SLN_Plugin::POST_TYPE_BOOKING)->clearBookingCache();
+        SLN_Helper_Availability_Cache::clearCache();
+        $this->ah->invalidateDayBookings();
+
         do_action('sln.booking_cache.processBooking', $booking, $isNew);
 
         return parent::processBooking($booking, $isNew);

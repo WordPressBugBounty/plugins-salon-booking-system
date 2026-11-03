@@ -38,7 +38,8 @@ final class SLN_Wrapper_Booking_Service
 
 	$this->data['price'] = null;
 
-	if(!empty($data['price'])) $this->data['price'] = $data['price'];
+	// Keep a stored 0 (package credits): only a missing price stays null, see hasPrice().
+	if(isset($data['price']) && $data['price'] !== '') $this->data['price'] = $data['price'];
         if(!empty($data['exec_order'])) $this->data['exec_order'] = $data['exec_order'];
 
         $this->data['service'] = apply_filters('sln.booking_services.buildService', $this->data['service']);
@@ -140,6 +141,17 @@ final class SLN_Wrapper_Booking_Service
     public function getPrice()
     {
         return floatval($this->data['price']);
+    }
+
+    /**
+     * False for older bookings that did not store a price. A stored 0 (a service
+     * covered by package credits, a free service) is a price.
+     *
+     * @return bool
+     */
+    public function hasPrice()
+    {
+        return isset($this->data['price']) && $this->data['price'] !== '';
     }
 
     public function setPrice($price)

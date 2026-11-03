@@ -8,15 +8,17 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
     public $hide_email;
 
     /**
-     * Per-request set of "Y-m-d" days whose persisted salon_cache entry must be
-     * rebuilt, populated when a booking's date/time meta is written outside the
-     * normal Builder flow (CSV importer, external migrators, programmatic
-     * wp_insert_post / update_post_meta). The actual rebuild is deferred to
-     * shutdown so it runs once per request, after ALL meta is written.
+     * Per-request set of bookings whose persisted salon_cache days must be rebuilt,
+     * populated when a booking's date, time, duration or services meta is written
+     * (PWA/REST edits, customer reschedule, CSV importer, external migrators,
+     * programmatic wp_insert_post / update_post_meta). The actual rebuild is deferred
+     * to shutdown so it runs once per request, after ALL meta is written.
+     *
+     * Maps booking ID => true when the booking was updated, false when it was inserted.
      *
      * @var array
      */
-    private static $dirtyCacheDates = array();
+    private static $dirtyCacheBookings = array();
 
     /** @var bool guard so the shutdown flush is registered only once per request */
     private static $cacheShutdownHooked = false;
@@ -762,6 +764,12 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
                 SLN_Helper_Availability_Cache::clearDateCache($booking->getDate());
                 $this->clearIntervalsCache($booking);
 
+                // Trashing from the PWA/REST API or the AI assistant frees the slot too,
+                // and SLN_Metabox_Booking::trashed_post() only covers wp-admin.
+                if ($new_status === 'trash') {
+                    $this->queueSalonCacheRefresh($booking);
+                }
+
                 // When a booking is cancelled/errored via any WP-native path (Quick Edit,
                 // wp_update_post, WP-CLI, etc.) the per-request booking cache and the
                 // persisted salon_cache must be refreshed so the freed slot is immediately
@@ -842,15 +850,8 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
      * @param SLN_Wrapper_Booking $booking
      */
     private function clearIntervalsCache($booking) {
-        global $wpdb;
-        
-        // Clear all intervals transients
-        // These are cached in DateStep::getViewData() with keys like 'sln_[hash]'
-        $deleted = $wpdb->query(
-            "DELETE FROM {$wpdb->options} 
-             WHERE option_name LIKE '_transient_sln_%'"
-        );
-        
+        $deleted = SLN_Helper_Availability_Cache::clearTransients();
+
         if (SLN_Plugin::isDebugEnabled()) {
             SLN_Plugin::addLog(sprintf(
                 '[DateStep Performance] Cleared %d intervals cache entries due to booking #%d status change',
@@ -941,11 +942,14 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
 
                 SLN_Helper_Availability_Cache::clearDateCache($booking->getDate());
                 $this->clearIntervalsCache($booking);
+
+                // A resize keeps the date and time, so nothing else rebuilds free_slots.
+                $this->queueSalonCacheRefresh($booking);
             }
         }
 
         // Also clear when date or time changes (booking rescheduled)
-        if (in_array($meta_key, array('_sln_booking_date', '_sln_booking_time'))) {
+        if (in_array($meta_key, array('_sln_booking_date', '_sln_booking_time', '_sln_booking_duration'))) {
             $booking = $this->getPlugin()->createBooking($post_id);
 
             if ($booking && $booking->getDate()) {
@@ -961,32 +965,31 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
                 $this->clearIntervalsCache($booking);
 
                 // The clears above only drop the transient/in-memory availability
-                // caches; they do NOT rebuild the persisted salon_cache option that
-                // getCachedDays() uses to decide which calendar days are selectable.
-                // The normal booking flow rebuilds it via Builder::processBooking(),
-                // but bookings created with raw wp_insert_post + update_post_meta
-                // (CSV importer, external migrators, WP-CLI, programmatic inserts)
-                // bypass the Builder entirely, leaving salon_cache stale — fully booked
-                // days keep showing as available until Settings are re-saved. Queue a
-                // deferred rebuild of the affected day so those paths stay consistent.
-                $this->queueSalonCacheRefresh($booking->getDate());
+                // caches; they do NOT rebuild the persisted salon_cache option. That
+                // option feeds the calendar days and, for every day after today, the
+                // list of bookable times (see SLN_Helper_Availability::getCachedTimes()).
+                // Only the Builder and the admin metabox rebuild it themselves, so
+                // PWA/REST edits, customer reschedules and raw imports would otherwise
+                // keep hiding freed slots and offering taken days.
+                $this->queueSalonCacheRefresh($booking);
             }
         }
     }
 
     /**
-     * Mark a day for a persisted salon_cache rebuild and register a single
+     * Mark a booking for a persisted salon_cache rebuild and register a single
      * shutdown flush. Deferring to shutdown guarantees every meta field has been
      * written before we recompute (avoids the importer's "date set after
      * wp_insert_post" timing gap) and collapses a bulk insert that touches many
-     * days into one option write per request.
+     * days into one rebuild per day.
      *
-     * @param DateTime $date
+     * @param SLN_Wrapper_Booking $booking
      */
-    private function queueSalonCacheRefresh($date)
+    private function queueSalonCacheRefresh($booking)
     {
-        $ymd = $date->format('Y-m-d');
-        self::$dirtyCacheDates[$ymd] = $ymd;
+        $isUpdate = !doing_action('added_post_meta');
+        $id = $booking->getId();
+        self::$dirtyCacheBookings[$id] = $isUpdate || !empty(self::$dirtyCacheBookings[$id]);
 
         if (!self::$cacheShutdownHooked) {
             self::$cacheShutdownHooked = true;
@@ -995,33 +998,42 @@ class SLN_PostType_Booking extends SLN_PostType_Abstract
     }
 
     /**
-     * Rebuild the persisted salon_cache for every day queued during this request.
+     * Rebuild the persisted salon_cache for every booking queued during this request.
      * Runs once on shutdown (after the HTTP response work is done) so importing or
      * migrating bookings stays responsive while availability is kept correct.
+     *
+     * Goes through processBooking() because it also updates the cache of the booking's
+     * shop and, for an updated booking, the day it was moved away from. Inserted
+     * bookings of the same shop and day share one rebuild.
      */
     public function flushSalonCacheRefresh()
     {
-        if (empty(self::$dirtyCacheDates)) {
+        if (empty(self::$dirtyCacheBookings)) {
             return;
         }
 
-        $dates = self::$dirtyCacheDates;
-        self::$dirtyCacheDates = array();
+        $dirtyBookings = self::$dirtyCacheBookings;
+        self::$dirtyCacheBookings = array();
 
         try {
             $plugin = $this->getPlugin();
-
-            // processDate() recomputes the day from live bookings via
-            // getForAvailabilityBookings(), which is memoised per request. Clear
-            // that cache first so the booking just written is actually counted
-            // (mirrors the cancellation path in onBookingSetStatus()).
-            $plugin->getRepository(SLN_Plugin::POST_TYPE_BOOKING)->clearBookingCache();
-
             $bc = $plugin->getBookingCache();
-            foreach ($dates as $ymd) {
-                $bc->processDate(\Salon\Util\Date::create($ymd));
+            $rebuiltDays = array();
+
+            foreach ($dirtyBookings as $id => $isUpdate) {
+                if (get_post_type($id) !== SLN_Plugin::POST_TYPE_BOOKING) {
+                    continue;
+                }
+
+                $booking = $plugin->createBooking($id);
+                $dayKey = $booking->getMeta('shop') . '|' . $booking->getDate()->format('Y-m-d');
+                if (!$isUpdate && isset($rebuiltDays[$dayKey])) {
+                    continue;
+                }
+
+                $rebuiltDays[$dayKey] = true;
+                $bc->processBooking($booking, !$isUpdate);
             }
-            $bc->save();
         } catch (Exception $e) {
             SLN_Plugin::addLog('[Cache Invalidation] flushSalonCacheRefresh failed: ' . $e->getMessage());
         }

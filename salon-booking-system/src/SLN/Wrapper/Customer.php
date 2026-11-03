@@ -591,6 +591,24 @@ class SLN_Wrapper_Customer {
 		}
 	}
 
+	/**
+	 * Staff accounts operate bookings for customers: they are never assigned
+	 * as customer and their profile must not receive a customer's details.
+	 *
+	 * @param WP_User|int $object
+	 * @return bool
+	 */
+	public static function isStaff($object) {
+		if (!is_object($object)) {
+			$object = get_user_by('id', $object);
+			if (!$object) {
+				return false;
+			}
+		}
+
+		return user_can($object, 'manage_salon') || user_can($object, 'edit_posts') || user_can($object, 'list_users');
+	}
+
         public function getCountOfYearsCustomerExists() {
 
             $countYears = 0;

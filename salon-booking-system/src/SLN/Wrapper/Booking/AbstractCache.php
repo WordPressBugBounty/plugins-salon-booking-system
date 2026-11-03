@@ -15,7 +15,10 @@ class SLN_Wrapper_Booking_AbstractCache
 
     public function load()
     {
-        $this->settings = get_option($this->getKey());
+        // A missing option returns false, which crashed removeOld()/save() on PHP 8
+        // while saving a booking.
+        $settings = get_option($this->getKey());
+        $this->settings = is_array($settings) ? $settings : array();
     }
 
     public function save()

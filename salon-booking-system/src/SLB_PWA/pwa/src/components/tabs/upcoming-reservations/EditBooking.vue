@@ -622,7 +622,7 @@ export default {
     },
     timeslots(newTimeslots) {
       if (newTimeslots.length && !this.elTime) {
-        this.elTime = this.moment(newTimeslots[0], this.getTimeFormat()).format('HH:mm');
+        this.elTime = newTimeslots[0];
       }
     },
     bookingServices() {
@@ -1121,6 +1121,9 @@ export default {
           })
           .then(response => {
             this.availabilityServices = response.data.services;
+          })
+          .catch(() => {
+            this.availabilityServices = [];
           });
     },
     loadAvailabilityAttendants(service_id) {
@@ -1135,6 +1138,9 @@ export default {
           })
           .then(response => {
             this.availabilityAttendants = response.data.assistants;
+          })
+          .catch(() => {
+            this.availabilityAttendants = [];
           });
     },
     loadAvailabilityResources(service_id) {
@@ -1149,6 +1155,9 @@ export default {
           })
           .then(response => {
             this.availabilityResources = response.data.resources;
+          })
+          .catch(() => {
+            this.availabilityResources = [];
           });
     },
     loadAvailableDates() {
@@ -1296,7 +1305,7 @@ export default {
       this.showTimeslots = true;
     },
     setTime(timeslot) {
-      this.elTime = this.moment(timeslot, this.getTimeFormat()).format('HH:mm');
+      this.elTime = timeslot;
       this.showTimeslots = false;
       this.loadAvailabilityServices();
       this.loadDiscounts();

@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 /*
 Plugin Name: Salon Booking System - Free Version
 Description: Let your customers book you services through your website. Perfect for hairdressing salons, barber shops and beauty centers.
-Version: 10.31.13
+Version: 10.31.14
 Requires at least: 6.0
 Requires PHP: 7.4.8
 Plugin URI: http://salonbookingsystem.com/
@@ -49,7 +49,7 @@ if (defined('SLN_PLUGIN_BASENAME')) {
 define('SLN_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('SLN_PLUGIN_DIR', untrailingslashit(dirname(__FILE__)));
 define('SLN_PLUGIN_URL', untrailingslashit(plugins_url('', __FILE__)));
-define('SLN_VERSION', '10.31.13');
+define('SLN_VERSION', '10.31.14');
 define('SLN_STORE_URL', 'https://salonbookingsystem.com');
 define('SLN_PRICING_URL', 'https://www.salonbookingsystem.com/plugin-pricing-2/');
 define('SLN_AUTHOR', 'Salon Booking');
@@ -59,9 +59,9 @@ define('SLN_ITEM_SLUG', 'salon-booking-wordpress-plugin');
 define('SLN_ITEM_NAME', 'Salon booking wordpress plugin');
 define('SLN_ITEM_ID', 'salon-booking-wordpress-plugin');
 // Numeric EDD download ID of the main "Salon booking wordpress plugin" product.
-// All paid editions (Pro, Basic/SE, ...) are price options of this single download,
-// so validating the license by item_id (which EDD prioritises over item_name) lets
-// every license issued for this product activate on any edition build.
+// Validating the license by item_id (which EDD prioritises over item_name) lets every
+// price option of this download activate on any edition build. Business Plan, Agency
+// Pass and Basic / Branded are separate downloads: see SLN_Update_Manager::LICENSED_DOWNLOADS.
 define('SLN_ITEM_DOWNLOAD_ID', 23261);
 define('SLN_API_KEY', '0b47c255778d646aaa89b6f40859b159');
 define('SLN_API_TOKEN', '7c901a98fa10dd3af65b038d6f5f190c');

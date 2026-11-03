@@ -12,6 +12,7 @@ use SLN_Enum_BookingStatus;
 use SLN_Wrapper_Booking_Builder;
 use SLN_Metabox_Helper;
 use SLN_Wrapper_Booking;
+use SLN_Wrapper_Customer;
 use SLN_Helper_RateLimiter;
 use SLN_Helper_RecaptchaVerifier;
 
@@ -1000,6 +1001,8 @@ class Bookings_Controller extends REST_Controller
 		$customer_id = $this->create_new_customer($request);
 	    }
 
+            $this->validate_customer_id($customer_id);
+
             if ( $customer_id ) {
                 $customer_data  = $this->get_customer_data_by_id($customer_id);
             }
@@ -1024,6 +1027,21 @@ class Bookings_Controller extends REST_Controller
         $response->set_status(201);
 
         return $response;
+    }
+
+    /**
+     * Staff accounts are booking operators: don't let one become the customer.
+     * A booking they already own stays editable.
+     *
+     * @param int $customer_id
+     * @param int $current_customer_id
+     * @throws \Exception
+     */
+    protected function validate_customer_id($customer_id, $current_customer_id = 0)
+    {
+        if ( $customer_id && $customer_id != $current_customer_id && SLN_Wrapper_Customer::isStaff((int)$customer_id) ) {
+            throw new \Exception(esc_html__( 'A staff account cannot be set as the booking customer.', 'salon-booking-system' ), 400);
+        }
     }
 
     protected function get_customer_data_by_id($customer_id)
@@ -1055,7 +1073,7 @@ class Bookings_Controller extends REST_Controller
 	$user = get_user_by('email', $email);
 
 	if ( $user ) {
-	    return $user->ID;
+	    return SLN_Wrapper_Customer::isStaff($user) ? 0 : $user->ID;
 	}
 
         $id = wp_create_user($email, wp_generate_password(), $email);
@@ -1215,6 +1233,8 @@ class Bookings_Controller extends REST_Controller
 	    if ( ! $customer_id  && $request->get_param('customer_email') ) {
 		$customer_id = $this->create_new_customer($request);
 	    }
+
+            $this->validate_customer_id($customer_id, $booking['customer_id']);
 
             if ( $customer_id && $booking['customer_id'] != $customer_id ) {
                 $customer_data  = $this->get_customer_data_by_id($customer_id);
@@ -1552,7 +1572,7 @@ class Bookings_Controller extends REST_Controller
      */
     protected function sync_customer_contact_meta($customer_id, $request)
     {
-        if (!$customer_id) {
+        if (!$customer_id || SLN_Wrapper_Customer::isStaff((int)$customer_id)) {
             return;
         }
 
@@ -1963,6 +1983,7 @@ class Bookings_Controller extends REST_Controller
             );
         }
 
+        $forecast_args     = $this->apply_assistant_filter( $forecast_args, $request );
         $forecast_query    = new \WP_Query( $forecast_args );
         $forecast_bookings = $forecast_query->found_posts;
 
@@ -2190,8 +2211,9 @@ class Bookings_Controller extends REST_Controller
             'meta_query'     => $meta_query,
         );
 
-        $bookings_query = new WP_Query($query_args);
+        $bookings_query = new WP_Query($this->apply_assistant_filter($query_args, $request));
         $bookings = $bookings_query->posts;
+        $assistant_id = $this->get_report_assistant_id($request);
 
         // Initialize stats
         $total_revenue = 0.0;
@@ -2207,7 +2229,7 @@ class Bookings_Controller extends REST_Controller
         foreach ($bookings as $post) {
             $booking = SLN_Plugin::getInstance()->createBooking($post->ID);
             $status = $booking->getStatus();
-            $amount = $booking->getAmount();
+            $amount = \SLN_Helper_AssistantReport::getBookingAmount($booking, $assistant_id);
             $date = $booking->getDate()->format('Y-m-d');
             $customer_id = $booking->getUserId();
 
@@ -2262,13 +2284,13 @@ class Bookings_Controller extends REST_Controller
             );
         }
 
-        $noshow_query = new WP_Query(array(
+        $noshow_query = new WP_Query($this->apply_assistant_filter(array(
             'post_type'      => self::POST_TYPE,
             'post_status'    => $statuses,
             'posts_per_page' => -1,
             'meta_query'     => $noshow_meta_query,
             'fields'         => 'ids', // Only need IDs for counting
-        ));
+        ), $request));
 
         // Add no-shows to by_status with zero revenue
         if ($noshow_query->found_posts > 0) {
@@ -2585,7 +2607,7 @@ class Bookings_Controller extends REST_Controller
             'meta_query'     => $meta_query,
         );
 
-        $bookings_query = new WP_Query($query_args);
+        $bookings_query = new WP_Query($this->apply_assistant_filter($query_args, $request));
         
         // Initialize heatmap data structures
         $daily_heatmap = array(); // day_of_week => count
@@ -2649,6 +2671,7 @@ class Bookings_Controller extends REST_Controller
         );
 
         // Query canceled bookings
+        $all_query_args = $this->apply_assistant_filter($all_query_args, $request);
         $canceled_query_args = $all_query_args;
         $canceled_query_args['post_status'] = array('canceled');
 
@@ -2701,7 +2724,7 @@ class Bookings_Controller extends REST_Controller
                 ),
             );
             
-            $service_total = new WP_Query($service_total_query);
+            $service_total = new WP_Query($this->apply_assistant_filter($service_total_query, $request));
             $service_total_count = $service_total->post_count;
             
             if ($service_total_count > 0) {
@@ -2765,8 +2788,9 @@ class Bookings_Controller extends REST_Controller
             'meta_query'     => $meta_query,
         );
 
-        $bookings_query = new \WP_Query($query_args);
+        $bookings_query = new \WP_Query($this->apply_assistant_filter($query_args, $request));
         $bookings = $bookings_query->posts;
+        $assistant_id = $this->get_report_assistant_id($request);
 
         // Initialize tracking arrays
         $by_day_of_week = array(
@@ -2794,7 +2818,7 @@ class Bookings_Controller extends REST_Controller
             
             if (!$starts_at) continue;
 
-            $amount = $booking->getAmount();
+            $amount = \SLN_Helper_AssistantReport::getBookingAmount($booking, $assistant_id);
             $day_name = $starts_at->format('l'); // Monday, Tuesday, etc.
             $hour = (int) $starts_at->format('G'); // 0-23
 
@@ -2806,6 +2830,9 @@ class Bookings_Controller extends REST_Controller
                 // Calculate booking duration in minutes
                 $duration_minutes = 0;
                 foreach ($booking->getBookingServices()->getItems() as $bookingService) {
+                    if ($assistant_id && !in_array($assistant_id, \SLN_Helper_AssistantReport::getServiceAssistantIds($bookingService), true)) {
+                        continue;
+                    }
                     $service = $bookingService->getService();
                     if ($service) {
                         $duration = $service->getDuration();

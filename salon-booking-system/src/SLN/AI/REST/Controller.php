@@ -10,10 +10,16 @@ class SLN_AI_REST_Controller
 	/** @var SLN_Plugin */
 	private $plugin;
 
-	public function __construct(SLN_Plugin $plugin)
+	/**
+	 * @param SLN_Plugin $plugin
+	 * @param bool       $registerRoutes False when another API (the PWA mobile bridge) only reuses the handlers.
+	 */
+	public function __construct(SLN_Plugin $plugin, $registerRoutes = true)
 	{
 		$this->plugin = $plugin;
-		add_action('rest_api_init', array($this, 'registerRoutes'));
+		if ($registerRoutes) {
+			add_action('rest_api_init', array($this, 'registerRoutes'));
+		}
 	}
 
 	public function registerRoutes()
@@ -222,7 +228,8 @@ class SLN_AI_REST_Controller
 		$proxy     = new SLN_AI_ProxyClient();
 		$usage     = new SLN_AI_Usage();
 
-		$welcome = SLN_AI_Language::welcomeMessage('page', SLN_AI_Multishop::isActive());
+		$variant = $request->get_param('variant') === 'widget' ? 'widget' : 'page';
+		$welcome = SLN_AI_Language::welcomeMessage($variant, SLN_AI_Multishop::isActive());
 
 		return rest_ensure_response(
 			array(

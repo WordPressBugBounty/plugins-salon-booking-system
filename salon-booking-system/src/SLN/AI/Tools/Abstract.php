@@ -62,8 +62,7 @@ abstract class SLN_AI_Tools_Abstract
 		$this->plugin->getBookingCache()->refreshAll();
 		$this->plugin->getBookingCache()->save();
 
-		global $wpdb;
-		$wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_sln_%'");
+		SLN_Helper_Availability_Cache::clearTransients();
 	}
 
 	/**

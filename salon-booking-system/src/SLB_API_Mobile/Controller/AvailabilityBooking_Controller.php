@@ -87,7 +87,8 @@ class AvailabilityBooking_Controller extends REST_Controller
 								'type' => 'integer',
 							),
 							'assistant_id' =>  array(
-								'type' => 'integer',
+								'type' => array( 'integer', 'array' ),
+								'items' => array( 'type' => 'integer' ),
 							),
 						),
 					),
@@ -141,7 +142,8 @@ class AvailabilityBooking_Controller extends REST_Controller
 								'type' => 'integer',
 							),
 							'assistant_id' =>  array(
-								'type' => 'integer',
+								'type' => array( 'integer', 'array' ),
+								'items' => array( 'type' => 'integer' ),
 							),
 						),
 					),
@@ -195,7 +197,8 @@ class AvailabilityBooking_Controller extends REST_Controller
 								'type' => 'integer',
 							),
 							'assistant_id' =>  array(
-								'type' => 'integer',
+								'type' => array( 'integer', 'array' ),
+								'items' => array( 'type' => 'integer' ),
 							),
 						),
 					),

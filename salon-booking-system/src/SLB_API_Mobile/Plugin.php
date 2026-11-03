@@ -109,6 +109,7 @@ class Plugin {
             '\\SLB_API_Mobile\\Controller\\Timeslots_Controller',
             '\\SLB_API_Mobile\\Controller\\Account_Controller',
             '\\SLB_API_Mobile\\Controller\\CustomFields_Controller',
+            '\\SLB_API_Mobile\\Controller\\Ai_Controller',
         );
 
         foreach ( $controllers as $controller ) {

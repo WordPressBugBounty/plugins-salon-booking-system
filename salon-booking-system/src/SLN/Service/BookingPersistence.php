@@ -2,7 +2,11 @@
 
 class SLN_Service_BookingPersistence
 {
-    const TRANSIENT_PREFIX = 'sln_booking_builder_';
+    // Keep OUT of the "sln_" transient namespace: every booking change runs
+    // DELETE ... LIKE '_transient_sln_%' (see SLN_PostType_Booking::clearIntervalsCache),
+    // which would wipe the bookings other customers are still filling in and send them
+    // back to the services step.
+    const TRANSIENT_PREFIX = 'slb_booking_builder_';
     const TRANSIENT_TTL    = 3 * HOUR_IN_SECONDS; // Extended to 3 hours to prevent premature expiration
 
     // Server-side recovery anchor: the active client_id is mirrored into the PHP session so the

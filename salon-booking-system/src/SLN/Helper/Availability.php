@@ -15,6 +15,8 @@ class SLN_Helper_Availability
     private $dayBookings;
     /** @var int Multi-Shops shop the current $dayBookings was built for. */
     private $dayBookingsShopScope = 0;
+    /** @var bool Forces setDate() to rebuild $dayBookings even for the same day. */
+    private $dayBookingsStale = false;
     /** @var  SLN_Helper_HoursBefore */
     private $hoursBefore;
     private $attendantsEnabled;
@@ -612,7 +614,7 @@ class SLN_Helper_Availability
     public function  setDate(DateTime $date, SLN_Wrapper_Booking $booking = null)
     {
         $shopScope = SLN_Helper_Availability_Cache::getShopScope();
-        if (empty($this->date) || ($this->date->format('Ymd') != $date->format('Ymd')) || $this->dayBookingsShopScope !== $shopScope) {
+        if ($this->dayBookingsStale || empty($this->date) || ($this->date->format('Ymd') != $date->format('Ymd')) || $this->dayBookingsShopScope !== $shopScope) {
             $mode = $this->settings->getAvailabilityMode();
             SLN_Plugin::addLog('');
             SLN_Plugin::addLog('==================================================');
@@ -640,6 +642,7 @@ class SLN_Helper_Availability
             SLN_Plugin::addLog(__CLASS__.sprintf(' - Booking: %s', $booking ? '#'.$booking->getId() : 'none'));
             $this->dayBookings = $obj;
             $this->dayBookingsShopScope = $shopScope;
+            $this->dayBookingsStale = false;
             // A new day model invalidates all memoized per-minute validations.
             $this->slotValidationCache = array();
         }
@@ -647,6 +650,16 @@ class SLN_Helper_Availability
         $this->date = $date;
 
         return $this;
+    }
+
+    /**
+     * Make the next setDate() reload the day, for when a booking changed in this request.
+     *
+     * @return void
+     */
+    public function invalidateDayBookings()
+    {
+        $this->dayBookingsStale = true;
     }
 
     /**

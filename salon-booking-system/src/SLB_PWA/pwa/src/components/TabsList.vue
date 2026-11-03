@@ -1,6 +1,7 @@
 <template>
     <div :class="{'hide-tabs-header': isHideTabsHeader}" >
         <ProUpgradeModal v-model="proUpgradeModalVisible" @dismiss-to-upcoming="goToUpcomingReservations" />
+        <AiAssistant :hidden="isHideTabsHeader" @changed="reloadTabs" />
         <b-tabs
             :key="'sln-pwa-tabs-' + tabsMountKey"
             v-model="tabModelIndex"
@@ -94,6 +95,7 @@
     import { defineAsyncComponent, h } from 'vue'
     import ShopTitle from './tabs/shops/ShopTitle.vue'
     import ProUpgradeModal from './ProUpgradeModal.vue'
+    import AiAssistant from './AiAssistant.vue'
 
     const PwaTabLoading = {
         name: 'PwaTabLoading',
@@ -118,6 +120,7 @@
             },
         },
         components: {
+            AiAssistant,
             UpcomingReservationsTab: defineAsyncComponent({
                 loader: () => import('./tabs/UpcomingReservationsTab.vue'),
                 ...asyncOpts,
@@ -280,6 +283,14 @@
                     }
                     this.proUpgradeModalVisible = true
                 }
+            },
+            /** Remount the tabs so they refetch after the AI assistant changed data. */
+            reloadTabs() {
+                const idx = this.tabModelIndex
+                this.tabsMountKey += 1
+                this.$nextTick(() => {
+                    this.tabModelIndex = idx
+                })
             },
             resyncTabModelToHash() {
                 this.isSyncingTabs = true

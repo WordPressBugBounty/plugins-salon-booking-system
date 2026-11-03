@@ -845,7 +845,7 @@ class Services_Controller extends REST_Controller
         );
 
         // Query all bookings in period
-        $bookings_query = new WP_Query(array(
+        $bookings_query = new WP_Query($this->apply_assistant_filter(array(
             'post_type'      => SLN_Plugin::POST_TYPE_BOOKING,
             'post_status'    => array(
                 SLN_Enum_BookingStatus::PAID,
@@ -854,7 +854,8 @@ class Services_Controller extends REST_Controller
             ),
             'posts_per_page' => -1,
             'meta_query'     => $meta_query,
-        ));
+        ), $request));
+        $assistant_id = $this->get_report_assistant_id($request);
 
         // Initialize stats for each service
         foreach ($services_query->posts as $service_post) {
@@ -875,6 +876,9 @@ class Services_Controller extends REST_Controller
             $booking = SLN_Plugin::getInstance()->createBooking($booking_post->ID);
             
             foreach ($booking->getBookingServices()->getItems() as $bookingService) {
+                if ($assistant_id && !in_array($assistant_id, \SLN_Helper_AssistantReport::getServiceAssistantIds($bookingService), true)) {
+                    continue;
+                }
                 $service = $bookingService->getService();
                 if ( null === $service || $service->isEmpty() ) {
                     continue;
