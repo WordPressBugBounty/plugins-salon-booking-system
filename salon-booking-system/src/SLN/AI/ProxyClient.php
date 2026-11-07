@@ -4,14 +4,14 @@
  * Cloud LLM proxy client for AI Setup.
  *
  * Merchants need no wp-config LLM settings. Chat goes to the Salon Booking cloud proxy;
- * the store server holds the OpenRouter key and calls gpt-4o-mini.
+ * the store server holds the OpenRouter key and calls gpt-5.6-luna.
  *
  * Priority:
  * 1. Salon Booking cloud proxy (production — default)
  * 2. Optional direct LLM when SLN_AI_LLM_API_KEY is set (Salon staging / emergency only)
  * 3. Conversational local fallback
  *
- * Built-in LLM defaults (no merchant config): OpenRouter + openai/gpt-4o-mini.
+ * Built-in LLM defaults (no merchant config): OpenRouter + openai/gpt-5.6-luna.
  * Optional overrides via wp-config / filters are for Salon engineering only.
  */
 class SLN_AI_ProxyClient
@@ -22,13 +22,13 @@ class SLN_AI_ProxyClient
 	const DEFAULT_LLM_BASE_OPENROUTER = 'https://openrouter.ai/api/v1';
 	/** Default direct-LLM stack when a staging key is present (merchants never set this). */
 	const DEFAULT_LLM_PROVIDER       = 'openrouter';
-	const DEFAULT_MODEL_OPENAI       = 'gpt-4o-mini';
+	const DEFAULT_MODEL_OPENAI       = 'gpt-5.6-luna';
 	const DEFAULT_MODEL_ANTHROPIC    = 'claude-haiku-4-5';
-	const DEFAULT_MODEL_OPENROUTER   = 'openai/gpt-4o-mini';
+	const DEFAULT_MODEL_OPENROUTER   = 'openai/gpt-5.6-luna';
 	/** @deprecated Use DEFAULT_LLM_BASE_OPENAI */
 	const DEFAULT_LLM_BASE = 'https://api.openai.com/v1';
 	/** @deprecated Use DEFAULT_MODEL_OPENROUTER */
-	const DEFAULT_MODEL    = 'openai/gpt-4o-mini';
+	const DEFAULT_MODEL    = 'openai/gpt-5.6-luna';
 
 	/**
 	 * @return string
@@ -293,7 +293,7 @@ class SLN_AI_ProxyClient
 		}
 		$this->logFallback('proxy', is_wp_error($response) ? $response->get_error_message() : 'HTTP ' . wp_remote_retrieve_response_code($response));
 
-		// 2) Optional direct LLM (Salon staging only — SLN_AI_LLM_API_KEY). Defaults: OpenRouter + gpt-4o-mini.
+		// 2) Optional direct LLM (Salon staging only — SLN_AI_LLM_API_KEY). Defaults: OpenRouter + gpt-5.6-luna.
 		if ($this->hasDirectLlm()) {
 			$result = $this->chatViaLlm($payload);
 			if (! is_wp_error($result)) {

@@ -192,6 +192,16 @@
       @cancel="resolveResizeConfirm(false)"
     />
 
+    <ConfirmModal
+      v-model="bookingConflictConfirm.visible"
+      :title="getLabel('bookingConflictTitle') || 'Possible conflict'"
+      :message="bookingConflictConfirm.message"
+      :confirm-label="getLabel('bookingConflictConfirmButtonLabel') || 'Save anyway'"
+      :cancel-label="getLabel('bookingConflictCancelButtonLabel') || 'Cancel'"
+      @confirm="resolveBookingConflictConfirm(true)"
+      @cancel="resolveBookingConflictConfirm(false)"
+    />
+
   </div>
 </template>
 
@@ -210,13 +220,14 @@ import BookingCard from "./BookingCard.vue";
 import AttendantTimeSlots from './AttendantTimeSlots.vue';
 import ConfirmModal from '../../ConfirmModal.vue';
 import mixins from '@/mixin';
+import { bookingConflictMixin } from '@/utils/bookingConflicts';
 
 // Debug flag - set to false in production
 const DEBUG = process.env.NODE_ENV === 'development';
 
 export default {
   name: "ReservationsCalendar",
-  mixins: [mixins],
+  mixins: [mixins, bookingConflictMixin],
   components: {
     AssistantFilterChips,
     TimeAxis,
@@ -1726,16 +1737,9 @@ export default {
         return;
       }
       
-      // STEP 2: Check for overlaps
-      const overlapCheck = this.checkBookingOverlap(booking, duration);
-      if (overlapCheck.hasOverlap) {
-        const conflictName = `${overlapCheck.conflictingBooking.customer_first_name} ${overlapCheck.conflictingBooking.customer_last_name}`;
-        this.showResizeError(`Time slot conflicts with another booking (${conflictName})`);
-        this.revertBookingResize(bookingId);
-        this.resizingBookingId = null;
-        return;
-      }
-      
+      // Overlaps with other bookings are not blocked here: the server reports
+      // them when saving and the user may keep the new duration anyway.
+
       // STEP 3: Work out each service's new length. Earlier services keep their
       // current span; only the last one absorbs the change, so a multi-service
       // booking ends at the new end time instead of multiplying the duration.
@@ -1800,8 +1804,15 @@ export default {
           console.log('📤 SENDING PUT request:', payload);
         }
         
-        const response = await this.axios.put(`bookings/${bookingId}`, payload);
-        
+        const response = await this.saveBookingAllowingConflicts(
+          (extra) => this.axios.put(`bookings/${bookingId}`, {...payload, ...extra})
+        );
+        if (!response) {
+          // Conflict warning cancelled: keep the old duration
+          this.revertBookingResize(bookingId);
+          return;
+        }
+
         console.log('📥 PUT response:', response.data);
         console.log(`✅ Duration saved: ${durationStr} (${duration} min)`);
         
@@ -2310,36 +2321,6 @@ export default {
       }
       
       return { valid: true };
-    },
-    
-    checkBookingOverlap(booking, newDuration) {
-      // Calculate new end time
-      const bookingStart = this.getMinutes(booking.time);
-      const newEndTime = bookingStart + newDuration;
-      
-      // Get list of other bookings to check against
-      const bookingsToCheck = this.isAttendantView 
-        ? this.processedBookings.filter(b => {
-            // In attendant view, only check bookings with same assistant
-            return b.id !== booking.id && b._assistantId === booking._assistantId;
-          })
-        : this.bookingsList.filter(b => b.id !== booking.id);
-      
-      // Check for overlaps
-      for (const otherBooking of bookingsToCheck) {
-        const otherStart = this.getBookingStart(otherBooking);
-        const otherEnd = this.getBookingEnd(otherBooking);
-        
-        // Check if time ranges overlap
-        if (bookingStart < otherEnd && newEndTime > otherStart) {
-          return {
-            hasOverlap: true,
-            conflictingBooking: otherBooking,
-          };
-        }
-      }
-      
-      return { hasOverlap: false };
     },
     
     askResizeConfirm(message) {

@@ -50,7 +50,7 @@ if ($plugin->getSettings()->isDisabled()) {
 	<div class="tab-content sln-services-tabs__content">
 	<div id="sln-services-tab--book" class="tab-pane<?php echo $loginTabActive ? '' : ' active' ?>">
 	<?php endif; ?>
-	<form id="salon-step-services" method="post" action="<?php echo esc_html($formAction) ?>" role="form"
+	<form id="salon-step-services" method="post" action="<?php echo esc_url($formAction) ?>" role="form"
 		<?php if (isset($_GET['sln_step_page']) && $_GET['sln_step_page'] === 'services'): ?>data-sln-direct-nav="1"<?php endif; ?>>
 	<?php
 	include '_errors.php';
@@ -99,7 +99,7 @@ if ($plugin->getSettings()->isDisabled()) {
 	<?php if ($showLoginTab): ?>
 	</div><!-- /#sln-services-tab--book -->
 	<div id="sln-services-tab--login" class="tab-pane<?php echo $loginTabActive ? ' active' : '' ?>">
-		<form id="salon-step-services-login" method="post" action="<?php echo esc_html($formAction) ?>" role="form">
+		<form id="salon-step-services-login" method="post" action="<?php echo esc_url($formAction) ?>" role="form">
 			<?php include '_services_login_tab.php'; ?>
 		</form>
 	</div>

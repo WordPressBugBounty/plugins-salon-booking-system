@@ -39,6 +39,13 @@ class Bookings_Controller extends REST_Controller
     protected $customer_id;
     protected $request;
 
+    /**
+     * Assistant conflicts found by the last create/update, returned with the 409.
+     *
+     * @var string[]
+     */
+    protected $conflicts = array();
+
     public function register_routes() {
 
         register_rest_route( $this->namespace, '/' . $this->rest_base, array(
@@ -1132,6 +1139,9 @@ class Bookings_Controller extends REST_Controller
             $data = $this->create_item_post($cloned_request, $customer_id);
 
         } catch (\Exception $ex) {
+            if ( ! empty( $this->conflicts ) ) {
+                return $this->conflict_error();
+            }
             return new WP_Error( 'salon_rest_cannot_create', $ex->getMessage(), array( 'status' => $ex->getCode() ? $ex->getCode() : 404 ) );
         }
 
@@ -1316,6 +1326,9 @@ class Bookings_Controller extends REST_Controller
             $data = $this->update_item_post($cloned_request, $booking_id, $customer_id);
 
         } catch (\Exception $ex) {
+            if ( ! empty( $this->conflicts ) ) {
+                return $this->conflict_error();
+            }
             return new WP_Error( 'salon_rest_cannot_update', $ex->getMessage(), array( 'status' => $ex->getCode() ? $ex->getCode() : 404 ) );
         }
 
@@ -1458,7 +1471,7 @@ class Bookings_Controller extends REST_Controller
 
 	do_action('sln_api_bookings_create_item_post_before_valid', $bb, $request);
 
-        $this->validate_assistants_not_double_booked($bb);
+        $this->validate_assistants_not_double_booked($bb, null, array(), $request);
 
 	$this->request	   = $request;
 	$this->customer_id = $customer_id;
@@ -1536,7 +1549,7 @@ class Bookings_Controller extends REST_Controller
 
 	do_action('sln_api_bookings_update_item_post_before_valid', $bb, $request);
 
-        $this->validate_assistants_not_double_booked($bb, new SLN_Wrapper_Booking($id), $services_durations);
+        $this->validate_assistants_not_double_booked($bb, new SLN_Wrapper_Booking($id), $services_durations, $request);
 
         $this->booking_id = $id;
 
@@ -1708,20 +1721,26 @@ class Bookings_Controller extends REST_Controller
     }
 
     /**
-     * Reject a create/update that puts an assistant on two bookings at the same time.
+     * Warn about a create/update that puts an assistant on two bookings at the same time.
      *
-     * The PWA checks this client-side too, but that check misses multi-assistant
-     * (duo) services and bookings of other shops, so the server must enforce it.
+     * The conflicting save is refused with a 409 (code salon_rest_booking_conflict,
+     * data.conflicts = messages) so the PWA can tell the user. Like the back-end, the
+     * salon staff always have the last word: resending the request with
+     * ignore_conflicts=true saves the booking anyway. Public (non-staff) requests
+     * cannot skip the check.
      * See SLN_Helper_Availability::getAttendantOverlapErrors() for what is checked.
      *
      * @param SLN_Wrapper_Booking_Builder $bb
      * @param SLN_Wrapper_Booking|null    $current_booking    Booking being edited, excluded from the check.
      * @param array                       $services_durations service_id => 'HH:MM' full line span from PWA drag-to-resize.
+     * @param WP_REST_Request|null        $request
      *
-     * @throws \Exception When an assistant is already busy.
+     * @throws \Exception When an assistant is already busy and the conflict was not confirmed.
      */
-    protected function validate_assistants_not_double_booked($bb, $current_booking = null, $services_durations = array())
+    protected function validate_assistants_not_double_booked($bb, $current_booking = null, $services_durations = array(), $request = null)
     {
+        $this->conflicts = array();
+
         $bookingServices = $bb->getBookingServices();
         if (!empty($services_durations)) {
             // Check the timeline that will be saved: same per-unit duration and no break, as update_item_post applies.
@@ -1744,9 +1763,40 @@ class Bookings_Controller extends REST_Controller
         }
 
         $errors = \SLN_Helper_Availability::getAttendantOverlapErrors($bookingServices, $current_booking);
-        if (!empty($errors)) {
-            throw new \Exception(esc_html(reset($errors)), 409);
+        if (empty($errors)) {
+            return;
         }
+
+        if ($request && rest_sanitize_boolean($request->get_param('ignore_conflicts')) && $this->current_user_can_list_bookings()) {
+            SLN_Plugin::addLog(sprintf(
+                '[Mobile API] Booking %s saved over assistant conflicts by user #%d: %s',
+                $current_booking ? '#' . $current_booking->getId() : '(new)',
+                get_current_user_id(),
+                implode(' ', $errors)
+            ));
+            return;
+        }
+
+        $this->conflicts = array_values(array_map('wp_strip_all_tags', $errors));
+        throw new \Exception(esc_html(reset($errors)), 409);
+    }
+
+    /**
+     * The 409 returned when the booking conflicts with other bookings.
+     *
+     * @return WP_Error
+     */
+    protected function conflict_error()
+    {
+        return new WP_Error(
+            'salon_rest_booking_conflict',
+            implode(' ', $this->conflicts),
+            array(
+                'status'    => 409,
+                'conflicts' => $this->conflicts,
+                'can_force' => $this->current_user_can_list_bookings(),
+            )
+        );
     }
 
     /**

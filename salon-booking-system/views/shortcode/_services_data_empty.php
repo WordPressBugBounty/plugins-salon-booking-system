@@ -28,7 +28,7 @@ ob_start();
     <?php if($ajaxEnabled): ?>
         data-salon-data="<?php echo "sln_step_page=".$step ?>" data-salon-toggle="direct"
     <?php endif?>
-   href="<?php echo $backUrl ?> ">
+   href="<?php echo esc_url($backUrl) ?> ">
     <i class="glyphicon glyphicon-chevron-left"></i> <?php esc_html_e('Back', 'salon-booking-system') ?>
 </a>
 <?php

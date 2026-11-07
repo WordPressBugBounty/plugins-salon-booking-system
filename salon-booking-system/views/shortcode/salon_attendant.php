@@ -18,7 +18,7 @@ $wrapperClass = $isMultipleAttSelection ? 'sln-attendants-wrapper sln-attendants
 $additional_errors = !empty($additional_errors)? $additional_errors : $step->getAddtitionalErrors();
 $errors = !empty($errors) ? $errors : $step->getErrors();
 ?>
-<form id="salon-step-attendant" method="post" action="<?php echo esc_html($formAction); ?>" role="form">
+<form id="salon-step-attendant" method="post" action="<?php echo esc_url($formAction); ?>" role="form">
     <?php
     include '_errors.php';
     include '_additional_errors.php';

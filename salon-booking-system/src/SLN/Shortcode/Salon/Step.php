@@ -50,8 +50,8 @@ abstract class SLN_Shortcode_Salon_Step
         }
 
         return array(
-            'formAction'        => add_query_arg(array('sln_step_page' => $this->shortcode->getCurrentStep()), SLN_Func::currPageUrl()),
-            'backUrl'           => apply_filters('sln_shortcode_step_view_data_back_url', add_query_arg(array('sln_step_page' => $this->shortcode->getPrevStep())), $this->step),
+            'formAction'        => esc_url_raw(add_query_arg(array('sln_step_page' => $this->shortcode->getCurrentStep()), SLN_Func::currPageUrl())),
+            'backUrl'           => esc_url_raw(apply_filters('sln_shortcode_step_view_data_back_url', add_query_arg(array('sln_step_page' => $this->shortcode->getPrevStep())), $this->step)),
             'submitName'        => 'submit_' . $step,
             'step'              => $this,
             'errors'            => $this->errors,

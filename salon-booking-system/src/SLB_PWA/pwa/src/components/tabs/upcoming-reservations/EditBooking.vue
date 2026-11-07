@@ -822,141 +822,6 @@ export default {
       }
       return '';
     },
-    convertDurationToMinutes(duration) {
-      const [hours, minutes] = duration.split(':').map(Number);
-      return hours * 60 + minutes;
-    },
-    isOverlapping(startA, endA, startB, endB) {
-      return startA.isBefore(endB) && endA.isAfter(startB);
-    },
-    calculateServiceTimes(booking) {
-      const serviceTimes = [];
-      let currentStartTime = this.moment(`${booking.date} ${booking.time}`, 'YYYY-MM-DD HH:mm');
-
-      booking.services.forEach((service) => {
-        const serviceData = this.servicesList.find(s => s.value === service.service_id);
-
-        if (!serviceData) {
-          return;
-        }
-
-        const durationMinutes = this.convertDurationToMinutes(serviceData.duration);
-        const endTime = this.moment(currentStartTime).add(durationMinutes, 'minute');
-
-        const serviceTime = {
-          service_id: service.service_id,
-          assistant_id: service.assistant_id,
-          resource_id: service.resource_id,
-          start: currentStartTime.clone(),
-          end: endTime.clone(),
-          duration: durationMinutes,
-          serviceName: serviceData.serviceName
-        };
-
-        serviceTimes.push(serviceTime);
-        currentStartTime = endTime.clone();
-      });
-
-      return serviceTimes;
-    },
-    calculateServiceTimesFromApi(booking) {
-      // Use actual start_at/end_at from the API response so that parallel services
-      // (same start time, different assistants or concurrent slots) are not mistakenly
-      // treated as sequential. Falls back to catalog-based calculation when times are missing.
-      const hasApiTimes = booking.services.every(s => s.start_at && s.end_at);
-      if (!hasApiTimes) {
-        return this.calculateServiceTimes(booking);
-      }
-      return booking.services.map(service => ({
-        service_id: service.service_id,
-        assistant_id: service.assistant_id,
-        resource_id: service.resource_id,
-        start: this.moment(`${booking.date} ${service.start_at}`, 'YYYY-MM-DD HH:mm'),
-        end:   this.moment(`${booking.date} ${service.end_at}`,   'YYYY-MM-DD HH:mm'),
-      }));
-    },
-    async validateAssistantAvailability(booking) {
-      try {
-        const existingBookings = await this.getExistingBookings(booking.date);
-        const newServiceTimes = this.calculateServiceTimes(booking);
-
-        // assistant_id is an array for services that need several assistants (e.g. duo massage)
-        const toAssistantIds = (id) => (Array.isArray(id) ? id : [id]).map(Number).filter(Boolean);
-        const sharesAssistant = (a, b) => toAssistantIds(a).some(id => toAssistantIds(b).includes(id));
-
-        for (const newServiceTime of newServiceTimes) {
-          if (!toAssistantIds(newServiceTime.assistant_id).length) {
-            continue;
-          }
-
-          const relevantBookings = existingBookings.filter(b =>
-            b.services.some(s => sharesAssistant(s.assistant_id, newServiceTime.assistant_id))
-          );
-
-          for (const existingBooking of relevantBookings) {
-            const existingServiceTimes = this.calculateServiceTimesFromApi({
-              date: existingBooking.date,
-              time: existingBooking.time,
-              services: existingBooking.services
-            });
-
-            for (const existingServiceTime of existingServiceTimes) {
-              if (!sharesAssistant(existingServiceTime.assistant_id, newServiceTime.assistant_id)) {
-                continue;
-              }
-
-              const isOverlapping = this.isOverlapping(
-                newServiceTime.start,
-                newServiceTime.end,
-                existingServiceTime.start,
-                existingServiceTime.end
-              );
-
-              if (isOverlapping) {
-                const busyId = toAssistantIds(newServiceTime.assistant_id).find(id => toAssistantIds(existingServiceTime.assistant_id).includes(id));
-                const assistant = this.attendantsList.find(a => Number(a.value) === busyId);
-                const assistantName = assistant ? assistant.text : this.getLabel('assistantBusyTitle');
-
-                const errorMessage = `${assistantName} ` + this.sprintf(
-                  this.getLabel('assistantBusyMessage'),
-                  existingServiceTime.start.format('HH:mm'),
-                  existingServiceTime.end.format('HH:mm')
-                );
-
-                throw new Error(errorMessage);
-              }
-            }
-          }
-        }
-
-        return true;
-      } catch (error) {
-        this.$emit('error-state', {
-          isError: true,
-          errorMessage: error.message,
-        })
-        return error;
-      }
-    },
-    async getExistingBookings(date) {
-      try {
-        const response = await this.axios.get('bookings', {
-          params: {
-            start_date: this.moment(date).format('YYYY-MM-DD'),
-            end_date: this.moment(date).format('YYYY-MM-DD'),
-            per_page: -1,
-            shop: this.shop?.id || null,
-          },
-        });
-
-        return Array.isArray(response.data.items)
-            ? response.data.items.filter(b => String(b.id) !== String(this.bookingID))
-            : [];
-      } catch (error) {
-        console.error('Error getting existing bookings:', error);
-        return [];
-      }
-    },
     clearServices() {
       this.elServices = [];
       this.serviceSearch = [];
@@ -1012,11 +877,8 @@ export default {
         booking.shop = {id: this.shop.id};
       }
 
-      const availabilityCheck = await this.validateAssistantAvailability(booking);
-      if (availabilityCheck instanceof Error) {
-        return;
-      }
-
+      // Conflicts with other bookings are checked by the server when saving: they
+      // are shown as a warning the user can override (see utils/bookingConflicts).
       this.$emit('error-state', {
         isError: false,
         errorMessage: ''

@@ -9751,14 +9751,14 @@ msgid "Local assistant"
 msgstr "Assistente locale"
 
 #: src/SLN/Admin/AISetup.php:89
-msgid "Connected via Salon staging LLM (OpenRouter gpt-4o-mini by default)."
-msgstr "Connesso tramite l'LLM di staging di Salon (OpenRouter gpt-4o-mini come predefinito)."
+msgid "Connected via Salon staging LLM (OpenRouter gpt-5.6-luna by default)."
+msgstr "Connesso tramite l'LLM di staging di Salon (OpenRouter gpt-5.6-luna come predefinito)."
 
 #: src/SLN/Admin/AISetup.php:90
 msgid ""
-"Using the Salon Booking cloud AI (gpt-4o-mini). No site-side API key "
+"Using the Salon Booking cloud AI (gpt-5.6-luna). No site-side API key "
 "required."
-msgstr "Usa l'AI in cloud di Salon Booking (gpt-4o-mini). Non serve nessuna chiave API sul sito."
+msgstr "Usa l'AI in cloud di Salon Booking (gpt-5.6-luna). Non serve nessuna chiave API sul sito."
 
 #: src/SLN/Admin/AISetup.php:91
 msgid "Offline local assistant (cloud AI unreachable)."

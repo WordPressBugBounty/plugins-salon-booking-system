@@ -442,8 +442,12 @@ class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
                         
                         SLN_Plugin::addLog('Prepaid service applied - Service #' . $service_id . ' price set from ' . $original_price . ' to 0 (Package Order #' . $packageOrderId . ' has ' . $creditsAvailable . ' credits)');
                         
-                        // Mark this service as using a credit
-                        $this->addMeta('service_credit', $service_id);
+                        // Mark this service as using a credit (once: evalTotal() runs several
+                        // times per booking and every entry is consumed by setPrepaidServices())
+                        $usedCredits = array_map('strval', (array) $this->getMeta('service_credit', false, false));
+                        if ( ! in_array((string) $service_id, $usedCredits, true)) {
+                            $this->addMeta('service_credit', $service_id);
+                        }
                     }
                 }
             }
@@ -712,14 +716,19 @@ class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
             return;
         }
 
-        foreach ($services_credits as $service_credit) {
-            foreach ($prepaid_services as $package_order=>$ps){
-                if($prepaid_services[$package_order][$service_credit] > 0){
-                    $prepaid_services[$package_order][$service_credit] -= 1;
-                    $this->setMeta('service_credit_package',$package_order);
-                    break;
+        // Consume package credits only once per booking: this method runs from the
+        // summary step and again from markPaid() for the same booking.
+        if ( ! $this->getMeta('service_credit_consumed') && is_array($prepaid_services)) {
+            foreach (array_unique(array_map('intval', (array) $services_credits)) as $service_credit) {
+                foreach ($prepaid_services as $package_order => $ps) {
+                    if (is_array($ps) && isset($ps[$service_credit]) && $ps[$service_credit] > 0) {
+                        $prepaid_services[$package_order][$service_credit] -= 1;
+                        $this->setMeta('service_credit_package', $package_order);
+                        break;
+                    }
                 }
             }
+            $this->setMeta('service_credit_consumed', 1);
         }
         
         // CRITICAL FIX (Feb 10, 2026): Don't override status for zero-amount bookings

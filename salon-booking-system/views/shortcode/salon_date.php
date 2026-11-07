@@ -23,7 +23,7 @@ if ($plugin->getSettings()->isDisabled()) {
 
     ?>
 
-    <form method="post" action="<?php echo $formAction ?>" id="salon-step-date"
+    <form method="post" action="<?php echo esc_url($formAction) ?>" id="salon-step-date"
             data-intervals="<?php echo esc_attr(wp_json_encode($intervalsArray)); ?>"
             <?php if((bool)SLN_Plugin::getInstance()->getSettings()->get('debug') && current_user_can( 'administrator' ) ): ?>
             data-debug="<?php echo esc_attr( wp_json_encode( SLN_Helper_Availability_AdminRuleLog::getInstance()->getDateLog() ) ); ?>"

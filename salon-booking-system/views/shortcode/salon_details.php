@@ -49,14 +49,14 @@ $preferNewCustomerTab = !empty($bb->get('skip_forecast'))
         </ul>
         <div class="tab-content">
         <div id="sln-details-tab--login" class="tab-pane<?php echo $preferNewCustomerTab ? '' : ' active' ?>">
-        <form method="post" action="<?php echo esc_html($formAction) ?>" role="form" enctype="multipart/form-data" id="salon-step-details">
+        <form method="post" action="<?php echo esc_url($formAction) ?>" role="form" enctype="multipart/form-data" id="salon-step-details">
             <?php 
             include '_salon_detail_login.php'; ?>
         </form>
         </div>
         <div id="sln-details-tab--new" class="tab-pane<?php echo $preferNewCustomerTab ? ' active' : '' ?>">
     <?php endif; ?>
-    <form method="post" action="<?php echo esc_html($formAction) ?>" role="form" enctype="multipart/form-data" id="salon-step-details-new">
+    <form method="post" action="<?php echo esc_url($formAction) ?>" role="form" enctype="multipart/form-data" id="salon-step-details-new">
         <div class="row">
             <?php if($plugin->getSettings()->get('enabled_force_guest_checkout')): ?>
                 <?php SLN_Form::fieldCheckbox(
@@ -130,7 +130,7 @@ $preferNewCustomerTab = !empty($bb->get('skip_forecast'))
     <?php endif; ?>
 <?php else: ?>
 
-    <form method="post" action="<?php echo esc_html($formAction) ?>" role="form" enctype="multipart/form-data">
+    <form method="post" action="<?php echo esc_url($formAction) ?>" role="form" enctype="multipart/form-data">
         <?php
         $fields = SLN_Enum_CheckoutFields::forDetailsStep()->filter('booking_hidden',false);
         foreach($fields as $field) { //remove excessive quotes escaping

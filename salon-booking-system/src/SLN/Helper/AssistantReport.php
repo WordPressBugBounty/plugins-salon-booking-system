@@ -99,37 +99,91 @@ class SLN_Helper_AssistantReport
     }
 
     /**
-     * Price of a booking service, falling back to the service price for older
-     * bookings that did not store it, and never negative. A stored 0 (package
-     * credits) stays 0.
+     * Line price of a booking service: unit price × quantity, as in
+     * SLN_Wrapper_Booking::evalTotal(). Older bookings that did not store a
+     * price fall back to the service price. A stored 0 (package credits)
+     * stays 0, never negative.
      *
      * @param SLN_Wrapper_Booking_Service $bookingService
      * @return float
      */
     public static function getServicePrice($bookingService)
     {
-        $price = $bookingService->getPrice();
-
         if (!$bookingService->hasPrice()) {
-            $service = $bookingService->getService();
-            if (null === $service || $service->isEmpty()) {
-                return 0.0;
-            }
-
-            $assistantIds = self::getServiceAssistantIds($bookingService);
-            $assistantId  = $assistantIds ? $assistantIds[0] : null;
-            if ($service->getVariablePriceEnabled() && $assistantId && $service->getVariablePrice($assistantId) !== '') {
-                $price = floatval($service->getVariablePrice($assistantId));
-            } else {
-                $price = floatval($service->getPrice());
-            }
-
-            if (get_post_meta($service->getId(), '_sln_service_variable_duration', true)) {
-                $price = $price * $bookingService->getCountServices();
-            }
+            return self::getCatalogPrice($bookingService);
         }
 
-        return max(0.0, (float) $price);
+        return max(0.0, (float) $bookingService->getPrice()) * $bookingService->getCountServices();
+    }
+
+    /**
+     * Current service price × quantity (variable-price aware).
+     *
+     * @param SLN_Wrapper_Booking_Service $bookingService
+     * @return float
+     */
+    private static function getCatalogPrice($bookingService)
+    {
+        $service = $bookingService->getService();
+        if (null === $service || $service->isEmpty()) {
+            return 0.0;
+        }
+
+        $assistantIds = self::getServiceAssistantIds($bookingService);
+        $assistantId  = $assistantIds ? $assistantIds[0] : null;
+        if ($service->getVariablePriceEnabled() && $assistantId && $service->getVariablePrice($assistantId) !== '') {
+            $price = floatval($service->getVariablePrice($assistantId));
+        } else {
+            $price = floatval($service->getPrice());
+        }
+
+        return max(0.0, $price) * $bookingService->getCountServices();
+    }
+
+    /**
+     * What each service of the booking brought in, keyed like getBookingServices()->getItems().
+     *
+     * The booking total without tips is spread over its services in proportion
+     * to their value, so the assistants' parts always add up to the booking
+     * total the unfiltered reports show. Line prices are used as they are when
+     * they add up to that total (a 0 line is then really free, e.g. package
+     * credits). Many bookings store 0 or out-of-date line prices (back-end
+     * edits, booking-wide discounts, price changes): then a 0 line not paid
+     * with a package credit is valued at the current service price, and when
+     * nothing has a price the services share the total evenly.
+     *
+     * @param SLN_Wrapper_Booking $booking
+     * @return float[]
+     */
+    public static function getServiceAmounts($booking)
+    {
+        $items   = $booking->getBookingServices()->getItems();
+        $total   = max(0.0, (float) $booking->getAmount() - $booking->getTips());
+        $weights = array();
+        foreach ($items as $i => $bookingService) {
+            $weights[$i] = self::getServicePrice($bookingService);
+        }
+        if (abs(array_sum($weights) - $total) > 0.01) {
+            $credits = array_map('strval', (array) $booking->getMeta('service_credit', false, false));
+            foreach ($items as $i => $bookingService) {
+                $service = $bookingService->getService();
+                $credit  = $service && in_array((string) $service->getId(), $credits, true);
+                if ($weights[$i] <= 0 && !$credit) {
+                    $weights[$i] = self::getCatalogPrice($bookingService);
+                }
+            }
+        }
+        if (array_sum($weights) <= 0) {
+            $weights = array_fill_keys(array_keys($items), 1.0);
+        }
+
+        $sum     = array_sum($weights);
+        $amounts = array();
+        foreach ($weights as $i => $weight) {
+            $amounts[$i] = $sum > 0 ? $total * $weight / $sum : 0.0;
+        }
+
+        return $amounts;
     }
 
     /**
@@ -141,28 +195,49 @@ class SLN_Helper_AssistantReport
      */
     public static function getBookingShare($booking, $assistantId)
     {
-        $assistantId = (int) $assistantId;
-        $share       = 0.0;
-        $counted     = array();
-
-        foreach ($booking->getBookingServices()->getItems() as $bookingService) {
-            $assistantIds = self::getServiceAssistantIds($bookingService);
-            if (!in_array($assistantId, $assistantIds, true)) {
-                continue;
-            }
-
-            // One share per service, like the assistants table.
-            $service    = $bookingService->getService();
-            $serviceKey = ($service && !$service->isEmpty()) ? $service->getId() : 'deleted';
-            if (isset($counted[$serviceKey])) {
-                continue;
-            }
-            $counted[$serviceKey] = true;
-
-            $share += self::getServicePrice($bookingService) / count($assistantIds);
+        $amounts = self::getServiceAmounts($booking);
+        $share   = 0.0;
+        foreach (self::getAssistantServices($booking, $assistantId) as $i => $bookingService) {
+            $share += self::getServiceShare($bookingService, $amounts[$i]);
         }
 
         return $share;
+    }
+
+    /**
+     * Booking services the assistant performed, keyed like getBookingServices()->getItems().
+     * A service booked twice is two lines with their own amounts.
+     *
+     * @param SLN_Wrapper_Booking $booking
+     * @param int                 $assistantId
+     * @return SLN_Wrapper_Booking_Service[]
+     */
+    public static function getAssistantServices($booking, $assistantId)
+    {
+        $assistantId = (int) $assistantId;
+        $items       = array();
+
+        foreach ($booking->getBookingServices()->getItems() as $i => $bookingService) {
+            if (in_array($assistantId, self::getServiceAssistantIds($bookingService), true)) {
+                $items[$i] = $bookingService;
+            }
+        }
+
+        return $items;
+    }
+
+    /**
+     * One assistant's part of a booking service: its amount split evenly among its assistants.
+     *
+     * @param SLN_Wrapper_Booking_Service $bookingService
+     * @param float                       $amount From getServiceAmounts()
+     * @return float
+     */
+    public static function getServiceShare($bookingService, $amount)
+    {
+        $assistants = count(self::getServiceAssistantIds($bookingService));
+
+        return $assistants > 0 ? $amount / $assistants : 0.0;
     }
 
     /**

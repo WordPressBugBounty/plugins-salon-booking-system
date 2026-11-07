@@ -151,6 +151,7 @@ export default {
     margin: 0 0 1.25rem;
     line-height: 1.45;
     text-align: left;
+    white-space: pre-line;
 }
 
 .sln-confirm-modal__confirm {

@@ -100,7 +100,7 @@ if ($errors && in_array(SLN_Shortcode_Salon_SummaryStep::SLOT_UNAVAILABLE, $erro
     echo $plugin->loadView('shortcode/_services_data_empty', array('step' => $step));
 }else{
 ?>
-<form method="post" action="<?php echo $formAction ?>" role="form" id="salon-step-summary">
+<form method="post" action="<?php echo esc_url($formAction) ?>" role="form" id="salon-step-summary">
     <!-- Add mode parameter for form submission -->
     <input type="hidden" name="mode" value="confirm">
     <?php

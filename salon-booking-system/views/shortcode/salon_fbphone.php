@@ -7,7 +7,7 @@ $bb = $plugin->getBookingBuilder();
 $current     = $step->getShortcode()->getCurrentStep();
 $ajaxEnabled = $plugin->getSettings()->isAjaxEnabled();
  ?>
-    <form method="post" action="<?php echo esc_html($formAction) ?>" role="form" id="salon-step-details">
+    <form method="post" action="<?php echo esc_url($formAction) ?>" role="form" id="salon-step-details">
         <h2 class="salon-step-title"> <?php esc_html_e('Please, insert your phone number.', 'salon-booking-system') ?> </h2>
 
                 <div class="row">

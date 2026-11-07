@@ -786,10 +786,10 @@ class Assistants_Controller extends REST_Controller
         foreach ($bookings_query->posts as $booking_post) {
             $booking = SLN_Plugin::getInstance()->createBooking($booking_post->ID);
             
-            $processed_assistants = array();
             $counted_bookings_per_assistant = array();
+            $service_amounts = \SLN_Helper_AssistantReport::getServiceAmounts($booking);
             
-            foreach ($booking->getBookingServices()->getItems() as $bookingService) {
+            foreach ($booking->getBookingServices()->getItems() as $service_index => $bookingService) {
                 $attendant = $bookingService->getAttendant();
                 $service_duration = $bookingService->getDuration(); // Get service-specific duration
                 
@@ -797,15 +797,8 @@ class Assistants_Controller extends REST_Controller
                     $service_assistants = is_array($attendant) ? $attendant : array($attendant);
                     $num_assistants = count($service_assistants);
                     
-                    // Stored service price (0 for package credits), falling back to the service
-                    // price for older bookings without one; negative discounts clamp to 0
-                    if (!$bookingService->hasPrice()) {
-                        $service = $bookingService->getService();
-                        if ( null === $service || $service->isEmpty() ) {
-                            continue;
-                        }
-                    }
-                    $service_price = \SLN_Helper_AssistantReport::getServicePrice($bookingService);
+                    // The service's part of the booking total (see SLN_Helper_AssistantReport::getServiceAmounts)
+                    $service_price = $service_amounts[$service_index];
                     
                     // ✅ FIX: Split service price evenly among assistants for this service
                     $revenue_share = $num_assistants > 0 ? $service_price / $num_assistants : 0;
@@ -820,13 +813,7 @@ class Assistants_Controller extends REST_Controller
                                 $counted_bookings_per_assistant[] = $att_id;
                             }
                             
-                            // Revenue deduplication: one revenue share per service per assistant
-                            $bs_service = $bookingService->getService();
-                            $service_key = $att_id . '_' . ( ( $bs_service && ! $bs_service->isEmpty() ) ? $bs_service->getId() : 'deleted' );
-                            if (!in_array($service_key, $processed_assistants)) {
-                                $assistants_stats[$att_id]['total_revenue'] += $revenue_share;
-                                $processed_assistants[] = $service_key;
-                            }
+                            $assistants_stats[$att_id]['total_revenue'] += $revenue_share;
                             
                             // Add hours (convert duration to hours using plugin helper)
                             if ($service_duration) {

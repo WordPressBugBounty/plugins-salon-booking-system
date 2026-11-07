@@ -163,6 +163,10 @@ class SLN_Admin_Reports extends SLN_Admin_AbstractPage
                 'name' => $assistant->getName(),
             );
         }
+        // Alphabetical, so similar names (e.g. "Latoya" and "Latoya H.") sit together in a predictable order
+        usort($assistants, function ($a, $b) {
+            return strnatcasecmp($a['name'], $b['name']);
+        });
 
         // Pass configuration to JavaScript
         wp_localize_script('sln-reports-dashboard', 'salonDashboard', array(

@@ -194,7 +194,8 @@ class SLN_Admin_Tools extends SLN_Admin_AbstractPage
         );
 
         if ($assistant) {
-            array_splice($headers, 7, 0, array(__('ASSISTANT SHARE', 'salon-booking-system')));
+            // Rows describe only the assistant's part of each booking
+            $headers[6] = __('ASSISTANT SHARE', 'salon-booking-system');
         }
 
         if ($this->isMultiShopActive()) {
@@ -284,11 +285,14 @@ class SLN_Admin_Tools extends SLN_Admin_AbstractPage
             );
 
             if ($assistant) {
-                $share = SLN_Helper_AssistantReport::getBookingShare($booking, $assistantId);
+                $assistant_values = $this->assistantBookingValues($booking, $assistantId);
                 if (in_array($booking->getStatus(), $revenue_statuses, true)) {
-                    $assistant_total += $share;
+                    $assistant_total += $assistant_values['share'];
                 }
-                array_splice($booking_values, 7, 0, array($format->money($share, false, false, true, true)));
+                $booking_values[3] = $assistant_values['services'];
+                $booking_values[4] = $assistant_values['assistants'];
+                $booking_values[5] = $assistant_values['counts'];
+                $booking_values[6] = $format->money($assistant_values['share'], false, false, true, true);
             }
 
             if ($this->isMultiShopActive()) {
@@ -333,6 +337,52 @@ class SLN_Admin_Tools extends SLN_Admin_AbstractPage
 
         unlink($tmpfname);
         exit;
+    }
+
+    /**
+     * Services, assistants, quantities and amount of the assistant's part of a booking.
+     * A service shared by N assistants is marked "(1/N)" and counts for 1/N of its price.
+     *
+     * @param SLN_Wrapper_Booking $booking
+     * @param int                 $assistantId
+     * @return array
+     */
+    private function assistantBookingValues($booking, $assistantId)
+    {
+        $services   = array();
+        $assistants = array();
+        $counts     = array();
+        $share      = 0.0;
+
+        $amounts = SLN_Helper_AssistantReport::getServiceAmounts($booking);
+        foreach (SLN_Helper_AssistantReport::getAssistantServices($booking, $assistantId) as $i => $bookingService) {
+            $service = $bookingService->getService();
+            $name    = ($service && !$service->isEmpty()) ? $service->getName() : '';
+
+            $attendants = $bookingService->getAttendant();
+            $attendants = is_array($attendants) ? $attendants : array($attendants);
+            foreach ($attendants as $attendant) {
+                if ($attendant instanceof SLN_Wrapper_AttendantInterface) {
+                    $assistants[$attendant->getId()] = $attendant->getName();
+                }
+            }
+
+            $shared = count(SLN_Helper_AssistantReport::getServiceAssistantIds($bookingService));
+            if ($shared > 1) {
+                $name .= ' (1/' . $shared . ')';
+            }
+
+            $services[] = $name;
+            $counts[]   = $bookingService->getCountServices();
+            $share     += SLN_Helper_AssistantReport::getServiceShare($bookingService, $amounts[$i]);
+        }
+
+        return array(
+            'services'   => implode(', ', $services),
+            'assistants' => implode(', ', $assistants),
+            'counts'     => implode(', ', $counts),
+            'share'      => $share,
+        );
     }
 
     private function isMultiShopActive()

@@ -24,7 +24,7 @@ $size = SLN_Enum_ShortcodeStyle::getSize($style);
 <?php endif ?>
 <h2 class="sln-sms-message-title"><?php esc_html_e('SMS Verification', 'salon-booking-system') ?></h2>
 <h2 class="sln-sms-message-text"><?php esc_html_e('We have sent an SMS text on your mobile phone.', 'salon-booking-system') ?></h2>
-<form method="post" action="<?php echo esc_html($formAction) ?>" role="form">
+<form method="post" action="<?php echo esc_url($formAction) ?>" role="form">
     <?php if ($valid): ?>
         <div class="alert alert-success">
             <p><?php esc_html_e('Your telephone number is verified', 'salon-booking-system') ?></p>
@@ -44,7 +44,7 @@ $size = SLN_Enum_ShortcodeStyle::getSize($style);
                         <div class="col-xs-12 col-md-6">
                 <div class="form-group">
                    <?php SLN_Form::fieldText('sln_verification', '', array('required' => true)) ?>
-                    <a href="<?php echo esc_html($formAction) ?>&resend=1" class="recover"
+                    <a href="<?php echo esc_url($formAction) ?>&resend=1" class="recover"
                         <?php if($ajaxEnabled): ?>
                         data-salon-data="<?php echo esc_html($ajaxData).'&resend=1' ?>" data-salon-toggle="direct"
                         <?php endif ?>>

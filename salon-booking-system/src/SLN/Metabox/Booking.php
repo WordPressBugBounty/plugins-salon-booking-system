@@ -5,10 +5,15 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
     /** Transient prefix for the "saved over a locked slot" admin warning. */
     const LOCK_OVERRIDE_NOTICE_KEY = 'sln_booking_lock_override_';
 
+    /** Transient prefix for the "saved over an assistant conflict" admin warning. */
+    const ASSISTANT_CONFLICT_NOTICE_KEY = 'sln_booking_assistant_conflict_';
+
     /** @var  SLN_Wrapper_Booking */
     private $booking;
     /** @var string */
     private $prevStatus;
+    /** @var array Services of the current save, as built by processServicesSubmission(). */
+    private $submittedServices = array();
 
     protected $fields = array(
             'amount' => 'float',
@@ -48,6 +53,7 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
         add_filter('wp_untrash_post_status', array($this, 'wp_untrash_post_status'), 10, 3);
         add_action('admin_notices', array($this, 'show_booking_trashed_notice'));
         add_action('admin_notices', array($this, 'show_daily_lock_override_notice'));
+        add_action('admin_notices', array($this, 'show_assistant_conflict_notice'));
         add_filter('redirect_post_location', array($this, 'redirect_post_location'), 10, 2);
 
 	if (!isset($_GET['mode']) || $_GET['mode'] !== 'sln_editor') {
@@ -221,13 +227,21 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
             $is_modified = true;
         }
 
-        $availabilityErrors = $this->validateAvailabilityBeforeSave($post_id, $_POST['_sln_booking_services']);
-        if (!empty($availabilityErrors)) {
-            foreach ($availabilityErrors as $error) {
-                $this->addError($error);
-            }
-            $this->restoreStatusAfterRefusedSave($post_id);
-            return;
+        // The salon staff can always book: an assistant already busy at that time is
+        // reported after the save, never a reason to refuse it.
+        $assistantConflicts = $this->getAssistantConflictsBeforeSave($post_id, $this->submittedServices);
+        if (!empty($assistantConflicts)) {
+            SLN_Plugin::addLog(sprintf(
+                '[Metabox_Booking] Booking #%d saved over assistant conflicts by user #%d: %s',
+                $post_id,
+                get_current_user_id(),
+                implode(' ', $assistantConflicts)
+            ));
+            set_transient(
+                self::ASSISTANT_CONFLICT_NOTICE_KEY . get_current_user_id(),
+                array_values($assistantConflicts),
+                MINUTE_IN_SECONDS
+            );
         }
 
         $old_booking = $this->getPlugin()->createFromPost($post_id);
@@ -540,6 +554,7 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
                 'resource' => isset($data['services_resources'][$serviceId]) ? $data['services_resources'][$serviceId] : '',
             );
         }
+        $this->submittedServices = $services;
         return $services;
     }
 
@@ -669,19 +684,18 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
     }
 
     /**
-     * Refuses a save that puts an assistant on two bookings at the same time.
-     * Called before parent::save_post() so an overlap blocks the save entirely.
-     *
-     * Only assistant overlaps are enforced: opening hours, holidays and the booking
-     * window stay warnings in the editor so staff can still book outside them. The
-     * check is skipped when date, time and services are unchanged, so editing the
-     * notes or status of an existing (even past) booking is never blocked.
+     * Assistants that the booking being saved puts on two bookings at the same time.
+     * Called before parent::save_post(), while the stored booking still holds the
+     * old date, time and services. The conflicts are only reported to the user:
+     * like opening hours, holidays and the booking window, they never block a save
+     * from the booking editor. The check is skipped when date, time and services are
+     * unchanged, so editing the notes or status of a booking doesn't warn again.
      *
      * @param int   $post_id      The booking post ID.
      * @param array $servicesData Processed services from processServicesSubmission().
-     * @return string[]  Array of human-readable error messages (empty = no conflicts).
+     * @return string[]  Array of human-readable conflict messages (empty = no conflicts).
      */
-    private function validateAvailabilityBeforeSave($post_id, array $servicesData)
+    private function getAssistantConflictsBeforeSave($post_id, array $servicesData)
     {
         // Without the editor's nonce the metabox fields are not saved at all
         // (SLN_Metabox_Helper::isValidRequest), so there is nothing to guard.
@@ -753,7 +767,7 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
 
         $errors = SLN_Helper_Availability::getAttendantOverlapErrors($bookingServices, $currentBooking);
 
-        if (empty($errors) && $this->canOverrideDailyLocks()) {
+        if ($this->canOverrideDailyLocks()) {
             $this->flagDailyLockOverride($date, $bookingServices);
         }
 
@@ -858,6 +872,35 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
             '<strong>' . esc_html($notice_data['to']) . '</strong>'
         );
         echo '</p>';
+        echo '</div>';
+    }
+
+
+    /**
+     * Warn staff that the booking they just saved puts an assistant on two
+     * bookings at the same time. The save itself went through.
+     */
+    public function show_assistant_conflict_notice()
+    {
+        $screen = get_current_screen();
+        if (!$screen || $screen->id !== SLN_Plugin::POST_TYPE_BOOKING) {
+            return;
+        }
+
+        $transient_key = self::ASSISTANT_CONFLICT_NOTICE_KEY . get_current_user_id();
+        $conflicts     = get_transient($transient_key);
+        if (!$conflicts || !is_array($conflicts)) {
+            return;
+        }
+        delete_transient($transient_key);
+
+        echo '<div class="notice notice-warning is-dismissible">';
+        echo '<p><strong>' . esc_html__('Booking saved with a possible conflict:', 'salon-booking-system') . '</strong></p>';
+        echo '<ul style="list-style:disc;margin-left:1.5em">';
+        foreach ($conflicts as $conflict) {
+            echo '<li>' . esc_html($conflict) . '</li>';
+        }
+        echo '</ul>';
         echo '</div>';
     }
 

@@ -37,8 +37,8 @@ class SLN_Shortcode_Salon_DateStep extends SLN_Shortcode_Salon_Step
             $this->addError(__('No more slots available until', 'salon-booking-system'). ' '. $plugin->format()->datetime($hb));
         }
         return array(
-            'formAction' => add_query_arg(array('sln_step_page' => $this->getStep())),
-            'backUrl'           => apply_filters('sln_shortcode_step_view_data_back_url', add_query_arg(array('sln_step_page' => $this->getShortcode()->getPrevStep())), $this->getStep()),
+            'formAction' => esc_url_raw(add_query_arg(array('sln_step_page' => $this->getStep()))),
+            'backUrl'           => esc_url_raw(apply_filters('sln_shortcode_step_view_data_back_url', add_query_arg(array('sln_step_page' => $this->getShortcode()->getPrevStep())), $this->getStep())),
             'submitName'        => 'submit_' . $step,
             'step'              => $this,
             'errors'            => $this->getErrors(),

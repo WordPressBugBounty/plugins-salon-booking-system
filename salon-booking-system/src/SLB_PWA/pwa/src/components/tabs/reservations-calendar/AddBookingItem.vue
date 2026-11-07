@@ -30,17 +30,28 @@
         @error-state="handleErrorState"
         @save="save"
     />
+    <ConfirmModal
+        v-model="bookingConflictConfirm.visible"
+        :title="getLabel('bookingConflictTitle') || 'Possible conflict'"
+        :message="bookingConflictConfirm.message"
+        :confirm-label="getLabel('bookingConflictConfirmButtonLabel') || 'Save anyway'"
+        :cancel-label="getLabel('bookingConflictCancelButtonLabel') || 'Cancel'"
+        @confirm="resolveBookingConflictConfirm(true)"
+        @cancel="resolveBookingConflictConfirm(false)"
+    />
   </div>
 </template>
 
 <script>
 
 import EditBooking from './../upcoming-reservations/EditBooking.vue'
+import ConfirmModal from '../../ConfirmModal.vue'
 import mixins from '@/mixin'
+import { bookingConflictMixin } from '@/utils/bookingConflicts'
 
 export default {
   name: 'AddBookingItem',
-  mixins: [mixins],
+  mixins: [mixins, bookingConflictMixin],
   props: {
     date: {
       default: function () {
@@ -68,6 +79,7 @@ export default {
   },
   components: {
     EditBooking,
+    ConfirmModal,
   },
   data: function () {
     return {
@@ -92,9 +104,17 @@ export default {
       this.isError = false
       this.$emit('chooseCustomer');
     },
-    save(booking) {
+    async save(booking) {
       this.isLoading = true
-      this.axios.post('bookings', booking).then((response) => {
+      this.isError = false
+      try {
+        const response = await this.saveBookingAllowingConflicts(
+            (extra) => this.axios.post('bookings', {...booking, ...extra}),
+            () => { this.isLoading = false }
+        )
+        if (!response) {
+          return
+        }
         this.isSaved = true
         setTimeout(() => {
           this.isSaved = false
@@ -103,11 +123,11 @@ export default {
         this.axios.get('bookings/' + response.data.id).then((response) => {
           this.close(response.data.items[0])
         })
-      }, (e) => {
+      } catch (e) {
         this.isError = true
-        this.errorMessage = e.response.data.message
+        this.errorMessage = e.response?.data?.message || e.message
         this.isLoading = false
-      })
+      }
     },
     toggleShow() {
       this.show = false

@@ -134,7 +134,7 @@ $ajaxEnabled = $plugin->getSettings()->isAjaxEnabled(); ?>
                 <?php if($ajaxEnabled): ?>
                     data-salon-data="<?php echo "sln_step_page=".$salon->getPrevStep() ?>" data-salon-toggle="direct"
                 <?php endif?>
-                href="<?php echo $backUrl ?> ">
+                href="<?php echo esc_url($backUrl) ?> ">
                 <i class="glyphicon glyphicon-chevron-left"></i> <?php esc_html_e('Back', 'salon-booking-system') ?>
                 <span id="start-over" class="hidden"><?php echo esc_html__('Start over', 'salon-booking-system'); ?></span>
             </a> 

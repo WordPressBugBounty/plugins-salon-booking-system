@@ -4,7 +4,7 @@ Tags: salon, hairdresser, barber, beauty salon, appointment booking
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4.8
-Stable tag: 10.31.14
+Stable tag: 10.31.15
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -370,8 +370,17 @@ PHP 7.4 and above.
 == Changelog ==
 
 
+06.11.2026 - 10.31.15
+
+* Security fix: a crafted link to the booking page could run JavaScript in the visitor's browser (reflected XSS in the booking form steps). Thanks to Patchstack for the report
+* Fixed: a booking paid with package credits could use up more than one credit for the same service
+* Improved: the AI assistant now uses openai/gpt-5.6-luna by default, as openai/gpt-4o-mini is retired on January 14, 2027
+
 03.11.2026 - 10.31.14
 
+* Improved: a booking that puts an assistant on two appointments at the same time is no longer refused, as staff can always book. In the back-end the booking is saved and a warning lists the conflicts; in the Mobile Web App the conflicts are shown and the booking can be saved with "Save anyway" (new bookings, edits and duration changes in the calendar)
+* Improved: the bookings CSV export for one assistant now shows only that assistant's part of each booking: their services, and their amount in place of the booking total. A service shared by several assistants is marked (1/2), (1/3)… and split evenly
+* Fixed: assistant revenue (Reports dashboard assistant filter, assistants table and the assistant CSV export) could show 0 or a wrong amount when the services' stored prices didn't match the booking total, for example bookings edited in the back-end. Each assistant now gets their part of the booking total (without tips), split by service price; services with no stored price use the current service price, a service booked twice counts twice and services booked in a quantity of 2 or more count fully. The assistant filter lists assistants alphabetically
 * New: weekly class schedule. The [salon_booking_weekly_schedule] shortcode and the "Weekly schedule" Elementor widget show the week's classes from the services' availability rules, with assistant, duration, category color and remaining spots; "Book" opens the booking form with service, assistant, date and time already selected. Holidays and closures hide the classes, full or past classes can't be booked
 * New: optional color for service categories, used by the weekly schedule
 * Fixed: with the 12-hour time format, saving a booking after changing its time in the Mobile Web App failed with "Invalid parameter(s): time", and calendar slots couldn't be locked or unlocked

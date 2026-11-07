@@ -1429,8 +1429,8 @@ class SLN_Helper_Availability
     /**
      * Assistants of $bookingServices that are already booked by another booking at
      * the same time. Only occupancy is checked (no opening hours, holidays or booking
-     * window), so staff tools can still book outside those rules but never put an
-     * assistant on two bookings at once. Uses the same day model as the booking
+     * window). Staff tools (booking editor, Mobile Web App) report these conflicts as
+     * warnings and still let the booking be saved. Uses the same day model as the booking
      * form, so service breaks, buffers, multi-assistant services and bookings of
      * other shops are all taken into account. Assistants allowed to serve multiple
      * customers at once are skipped.

@@ -9073,11 +9073,11 @@ msgid "Local assistant"
 msgstr ""
 
 #: src/SLN/Admin/AISetup.php:89
-msgid "Connected via Salon staging LLM (OpenRouter gpt-4o-mini by default)."
+msgid "Connected via Salon staging LLM (OpenRouter gpt-5.6-luna by default)."
 msgstr ""
 
 #: src/SLN/Admin/AISetup.php:90
-msgid "Using the Salon Booking cloud AI (gpt-4o-mini). No site-side API key required."
+msgid "Using the Salon Booking cloud AI (gpt-5.6-luna). No site-side API key required."
 msgstr ""
 
 #: src/SLN/Admin/AISetup.php:91
