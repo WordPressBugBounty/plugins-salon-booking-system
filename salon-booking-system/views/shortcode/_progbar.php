@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
         foreach ($steps as $step) {
             echo ' <span>';
             if ($step == $salon->getCurrentStep()) {
-                echo $sommaA . '/' . $stepstotal;
+                echo esc_html($sommaA . '/' . $stepstotal);
             }
             echo '</span>';
             $sommaA++;
@@ -33,7 +33,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
             if ($step == $salon->getCurrentStep()) {
                 echo 'sln-progbar__item--current';
             }
-            echo ' sln-progbar__item--' . $step . '" data-zindex="' . $sommaB . '"><span class="sr-only">' . $step . '</span></div>';
+            echo ' sln-progbar__item--' . esc_attr($step) . '" data-zindex="' . esc_attr($sommaB) . '"><span class="sr-only">' . esc_html($step) . '</span></div>';
             $sommaB++;
         }
         ?>

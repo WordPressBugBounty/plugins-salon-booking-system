@@ -16,9 +16,18 @@
       <div class="customer-info">
         <div class="customer-info-header">
           <span class="customer-name">{{ customer }}</span>
+          <span
+              v-if="forcedRulesText"
+              class="forced-badge"
+              role="img"
+              :title="forcedRulesText"
+              :aria-label="forcedRulesText"
+              @click.stop="showForcedRules = !showForcedRules"
+          >!</span>
           <span class="status-badge" :style="statusBadgeStyle">{{ statusLabel }}</span>
         </div>
         <span class="booking-id">{{ id }}</span>
+        <span v-if="showForcedRules && forcedRulesText" class="forced-rules" @click.stop>{{ forcedRulesText }}</span>
       </div>
       <div class="services-list">
         <div
@@ -151,6 +160,7 @@ export default {
   data() {
     return {
       isDelete: false,
+      showForcedRules: false,
       showActionsMenu: false,
       isResizing: false,
       displayDuration: '',
@@ -165,6 +175,16 @@ export default {
     }
   },
   computed: {
+    // The rules this booking breaks since it was saved anyway ("Save anyway").
+    forcedRulesText() {
+      const rules = Array.isArray(this.booking.availability_violations) ? this.booking.availability_violations : [];
+      if (!rules.length) {
+        return '';
+      }
+      const label = this.getLabel('availabilityOverrideForcedBadge');
+      const title = label && label !== 'availabilityOverrideForcedBadge' ? label : 'Saved over availability rules';
+      return title + '\n' + rules.map((rule) => '• ' + rule.message).join('\n');
+    },
     customer() {
       return `${this.booking.customer_first_name} ${this.booking.customer_last_name}`
     },
@@ -879,6 +899,34 @@ export default {
   font-size: 12px;
   color: #94A3B8;
   font-weight: 500;
+}
+
+.forced-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #f0b849;
+  color: #1d2327;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.forced-rules {
+  display: block;
+  margin-top: 4px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: #fcf3dc;
+  color: #5c3c00;
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: pre-line;
 }
 
 .services-list {

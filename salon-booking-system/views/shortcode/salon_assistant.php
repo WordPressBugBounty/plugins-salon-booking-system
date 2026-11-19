@@ -9,7 +9,7 @@ $all_service = $service_repo->getAll($service_repo);
 <section class="sln-datashortcode sln-datashortcode--assistants">	
 	<div class="sln-datalist <?php 
 	if(isset($data['styled'])) echo 'sln-datalist--styled '; 
-	if(isset($data['columns'])) echo 'sln-datalist--'.$data['columns'].'cols '; 	
+	if(isset($data['columns'])) echo esc_attr('sln-datalist--'.$data['columns'].'cols '); 	
 	?>">
 	<?php foreach ($data['attendants'] as $attendant) {
 		$thumb     = has_post_thumbnail($attendant->getId()) ?get_the_post_thumbnail(
@@ -20,7 +20,7 @@ $all_service = $service_repo->getAll($service_repo);
 	?>
 		<div class="sln-datalist__item">
 			<?php if(!$display || in_array('name',$display)){ ?>
-			<h3 class="sln-datalist__item__name"><?php echo $attendant->getName(); ?></h3>
+			<h3 class="sln-datalist__item__name"><?php echo esc_html($attendant->getName()); ?></h3>
 			<?php } ?>
 			<?php if(!$display || in_array('photo',$display)){ ?>
 			<div class="sln-datalist__item__image">
@@ -29,7 +29,7 @@ $all_service = $service_repo->getAll($service_repo);
 			<?php } ?>
 			<?php if(!$display || in_array('description',$display)){ ?>
 			<p class="sln-datalist__item__description">
-				<?php echo $attendant->getContent() ?>
+				<?php echo wp_kses_post($attendant->getContent()) ?>
 			</p>
 			<?php } ?>
 			<?php 
@@ -42,13 +42,13 @@ $all_service = $service_repo->getAll($service_repo);
 
 				<ul>
 					<?php foreach ($services as $service) { 						
-						echo '<li>'.$service->getTitle().'</li>';
+						echo '<li>'.esc_html($service->getTitle()).'</li>';
 					}?>					
 				</ul>
 			</div>
 			<?php }} ?>
 			<div class="sln-datalist__item__actions">
-				<a href="<?php 	echo $data['booking_url']; ?>" class="sln-datalist__item__cta"><?php esc_html_e('Book now','salon-booking-system'); ?></a>
+				<a href="<?php echo esc_url($data['booking_url']); ?>" class="sln-datalist__item__cta"><?php esc_html_e('Book now','salon-booking-system'); ?></a>
 			</div>
 		</div>
 	<?php } ?>

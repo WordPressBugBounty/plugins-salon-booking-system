@@ -941,8 +941,8 @@ class Bookings_Controller extends REST_Controller
      */
     public function create_item_permissions_check( $request )
     {
-        // If user is logged in and has proper capabilities, allow
-        if (is_user_logged_in() && current_user_can('edit_posts')) {
+        // Salon managers / staff may create bookings for any customer.
+        if (is_user_logged_in() && $this->current_user_can_manage_bookings()) {
             return true;
         }
 
@@ -994,6 +994,20 @@ class Bookings_Controller extends REST_Controller
         try {
 
 	    do_action('sln_api_bookings_create_item_before_create_post', $request);
+
+	    // SECURITY: only salon managers / staff may book for another customer or
+	    // set back-office fields. Anyone else books as themselves, with the
+	    // default status and no transaction id / admin note.
+	    if ( ! $this->current_user_can_manage_bookings() ) {
+		foreach ( array( 'status', 'transaction_id', 'admin_note' ) as $restricted_param ) {
+		    $request->set_param( $restricted_param, null );
+		}
+		if ( is_user_logged_in() ) {
+		    $request->set_param( 'customer_id', get_current_user_id() );
+		} else {
+		    $request->set_param( 'customer_id', null );
+		}
+	    }
 
 	    $customer_id = $request->get_param('customer_id');
 
@@ -1128,6 +1142,17 @@ class Bookings_Controller extends REST_Controller
      * @param bool  $allowOwner Whether a plain customer may access their own booking.
      * @return bool
      */
+    /**
+     * Whether the current user manages bookings for others (admins, salon staff
+     * and workers, shop managers) rather than booking only for themselves.
+     *
+     * @return bool
+     */
+    protected function current_user_can_manage_bookings()
+    {
+        return current_user_can('manage_options') || current_user_can('manage_salon') || $this->is_shop_manager();
+    }
+
     protected function current_user_can_access_booking($booking, $allowOwner = true)
     {
         if (current_user_can('manage_options') || current_user_can('manage_salon') || $this->is_shop_manager()) {

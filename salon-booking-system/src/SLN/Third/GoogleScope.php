@@ -280,23 +280,41 @@ class SLN_GoogleScope {
         $now = new SLN_DateTime();
         $booking_handler = new SLN_Bookings_Handle($now);
         $bookings = $booking_handler->getBookings();
-        foreach ($bookings as $k => $post) {
-            $event_id = get_post_meta($post->ID, '_sln_calendar_event_id', true);
-            if (!empty($event_id)) {
-                $this->delete_event_from_booking($event_id);
-                // Clear the meta immediately after deletion so the Google Calendar
-                // import cron cannot match this deleted event to the booking and
-                // incorrectly mark it as Cancelled before the event is re-created.
-                update_post_meta($post->ID, '_sln_calendar_event_id', '');
-            }
-        }
+        $failed   = array();
 
+        // One booking at a time: delete its event and re-create it straight away, so a
+        // booking that fails can't stop the others or leave them off the calendar (deleting
+        // every event first meant one fatal error emptied the rest of the calendar).
         foreach ($bookings as $k => $post) {
-            synch_a_booking($booking_handler->createBooking($post->ID), true);
+            try {
+                $event_id = get_post_meta($post->ID, '_sln_calendar_event_id', true);
+                if (!empty($event_id)) {
+                    $this->delete_event_from_booking($event_id);
+                    // Clear the meta immediately after deletion so the Google Calendar
+                    // import cron cannot match this deleted event to the booking and
+                    // incorrectly mark it as Cancelled before the event is re-created.
+                    update_post_meta($post->ID, '_sln_calendar_event_id', '');
+                }
+            } catch (Throwable $e) {
+                sln_my_wp_log($e);
+            }
+
+            if (!synch_a_booking($booking_handler->createBooking($post->ID), true)) {
+                $failed[] = $post->ID;
+            }
         }
 
         // Allow extensions to piggyback on the manual sync (e.g. slot locker refresh)
         do_action('sln.google_calendar.synch_complete', $this);
+
+        if (!empty($failed)) {
+            echo "KO|" . esc_html(sprintf(
+                // translators: %s will be replaced by a comma-separated list of booking IDs
+                __('Some bookings could not be synchronized: #%s', 'salon-booking-system'),
+                implode(', #', $failed)
+            ));
+            die();
+        }
 
         echo "OK";
         die();
@@ -1228,7 +1246,42 @@ class SLN_GoogleCalendarEventFactory extends Google_Service_Calendar_Event {
 
 }
 
+/**
+ * Push a booking to Google Calendar. Never throws: a failure is logged and reported
+ * through the return value, so it can't break the booking request that triggered it
+ * or stop the manual "Synchronize Bookings" loop.
+ *
+ * @param SLN_Wrapper_Booking|int $booking
+ * @param bool $sync
+ * @return bool false if the sync failed with an error
+ */
 function synch_a_booking($booking, $sync = false) {
+    $scope         = isset($GLOBALS['sln_googlescope']) ? $GLOBALS['sln_googlescope'] : null;
+    $main_calendar = $scope ? $scope->google_client_calendar : null;
+
+    try {
+        _sln_synch_a_booking($booking, $sync);
+        return true;
+    } catch (Throwable $e) {
+        $booking_id = is_object($booking) && method_exists($booking, 'getId') ? $booking->getId() : (int) $booking;
+        // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+        error_log('[Salon Booking System] Google Calendar sync failed for booking ' . $booking_id . ': ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+        sln_my_wp_log($e);
+        return false;
+    } finally {
+        // The assistants loop switches the calendar ID; put the main one back even on failure,
+        // otherwise every later booking in this request would go to an assistant's calendar.
+        if ($scope) {
+            $scope->google_client_calendar = $main_calendar;
+        }
+    }
+}
+
+function _sln_synch_a_booking($booking, $sync = false) {
+    // First event that couldn't be created: the other calendars are still processed,
+    // then it is rethrown at the end so synch_a_booking() reports the failure.
+    $sync_error = null;
+
     if (!$sync)
         remove_action('save_post', 'test_booking', 12, 2);
 
@@ -1261,7 +1314,7 @@ function synch_a_booking($booking, $sync = false) {
             try {
                 $GLOBALS['sln_googlescope']->delete_event_from_booking($b_event_id);
                 update_post_meta($booking->getId(), '_sln_calendar_event_id', '');
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 sln_my_wp_log($e);
             }
         } else {
@@ -1271,7 +1324,7 @@ function synch_a_booking($booking, $sync = false) {
 		$error = '';
 		try {
 		    $GLOBALS['sln_googlescope']->validate_booking_services($booking);
-		} catch (Exception $ex) {
+		} catch (Throwable $ex) {
 		    $error = $ex->getMessage();
 		}
         if (isset($b_event_id) && !empty($b_event_id)) {
@@ -1285,7 +1338,7 @@ function synch_a_booking($booking, $sync = false) {
             }
             try {
 			    $event_id = $GLOBALS['sln_googlescope']->update_event_from_booking($booking, $b_event_id, false, $error);
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 $b_event_id = "";
                 update_post_meta($booking->getId(), '_sln_calendar_event_id', '');
             }
@@ -1302,8 +1355,9 @@ function synch_a_booking($booking, $sync = false) {
             try {
                 $event_id = $GLOBALS['sln_googlescope']->create_event_from_booking($booking, false, $error);
                 update_post_meta($booking->getId(), '_sln_calendar_event_id', $event_id);
-            } catch (Exception $e) {
+            } catch (Throwable $e) {
                 sln_my_wp_log($e);
+                $sync_error = $sync_error ?: $e;
             }
         }
                 sln_my_wp_log($event_id);
@@ -1332,7 +1386,7 @@ function synch_a_booking($booking, $sync = false) {
                 try {
                     $GLOBALS['sln_googlescope']->delete_event_from_booking($events[$att_id]);
                     unset($events[$att_id]);
-                } catch (Exception $e) {
+                } catch (Throwable $e) {
                     sln_my_wp_log($e);
                 }
             }
@@ -1343,7 +1397,7 @@ function synch_a_booking($booking, $sync = false) {
                     try {
                         $GLOBALS['sln_googlescope']->delete_event_from_booking($events[$att_id]);
                         unset($events[$att_id]);
-                    } catch (Exception $e) {
+                    } catch (Throwable $e) {
                         sln_my_wp_log($e);
                     }
                 }
@@ -1351,14 +1405,14 @@ function synch_a_booking($booking, $sync = false) {
                 $error = '';
                 try {
                     $GLOBALS['sln_googlescope']->validate_booking_services($booking);
-                } catch (Exception $ex) {
+                } catch (Throwable $ex) {
                     $error = $ex->getMessage();
                 }
                 if (isset($events[$att_id]) && !empty($events[$att_id])) {
                     sln_my_wp_log("update");
                     try {
                         $events[$att_id] = $GLOBALS['sln_googlescope']->update_event_from_booking($booking, $events[$att_id], false, $error);
-                    } catch (Exception $e) {
+                    } catch (Throwable $e) {
                         $events[$att_id] = "";
                     }
                 }
@@ -1366,16 +1420,19 @@ function synch_a_booking($booking, $sync = false) {
                     sln_my_wp_log("create");
                     try {
                         $events[$att_id] = $GLOBALS['sln_googlescope']->create_event_from_booking($booking, false, $error);
-                    } catch (Exception $e) {
+                    } catch (Throwable $e) {
                         sln_my_wp_log($e);
+                        $sync_error = $sync_error ?: $e;
                     }
                 }
                 sln_my_wp_log($events[$att_id]);
-                $events = update_post_meta($booking->getId(), '_sln_calendar_attendants_events_id', $events);
-
             }
         }
     }
+    // Persist once after the loop: update_post_meta() returns bool|int, so it must never be
+    // assigned back to $events (that turned it into a scalar and the next attendant crashed
+    // with "Cannot use a scalar value as an array").
+    update_post_meta($booking->getId(), '_sln_calendar_attendants_events_id', $events);
 
 
 
@@ -1383,6 +1440,10 @@ function synch_a_booking($booking, $sync = false) {
         do_action('sln.google_calendar.synch_a_booking', $booking, $statusForPublish);
     }
     $GLOBALS['sln_googlescope']->google_client_calendar = $main_calendar;
+
+    if ($sync_error) {
+        throw $sync_error;
+    }
 }
 
 add_action('sln.booking_builder.create.booking_created', 'synch_a_booking', 12, 2);

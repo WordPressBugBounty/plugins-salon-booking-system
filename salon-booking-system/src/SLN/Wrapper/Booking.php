@@ -165,6 +165,48 @@ class SLN_Wrapper_Booking extends SLN_Wrapper_Abstract
         return (float) $service->getPrice();
     }
 
+    /**
+     * Undiscounted unit price of a service in this booking: the assistant's price
+     * when variable pricing is on, then the 'sln.booking_builder.service_price'
+     * filter (e.g. Dynamic Pricing) for this booking's start time.
+     *
+     * Same rule SLN_Wrapper_Booking_Services::build() uses for a line without a
+     * stored price. Discount code must reset lines to this price, not to
+     * $service->getPrice(), or it drops assistant and dynamic prices.
+     *
+     * @param SLN_Wrapper_ServiceInterface $service
+     * @param mixed $attendant Attendant ID, attendant object, or an array of either (first is used).
+     * @return float
+     */
+    public function getServiceListPrice(SLN_Wrapper_ServiceInterface $service, $attendant = null)
+    {
+        if (is_array($attendant)) {
+            // A services-meta item ('service' => ..., 'attendant' => ...) or a list of attendants.
+            $attendant = array_key_exists('service', $attendant) || array_key_exists('attendant', $attendant)
+                ? (isset($attendant['attendant']) ? $attendant['attendant'] : null)
+                : reset($attendant);
+            if (is_array($attendant)) {
+                $attendant = reset($attendant);
+            }
+        }
+        if (is_object($attendant) && method_exists($attendant, 'getId')) {
+            $attendant = $attendant->getId();
+        }
+        $atId = $attendant ? intval($attendant) : null;
+
+        $price = $service->getVariablePriceEnabled() && $atId && $service->getVariablePrice($atId) !== ''
+            ? $service->getVariablePrice($atId)
+            : $service->getPrice();
+
+        $builder  = SLN_Plugin::getInstance()->getBookingBuilder();
+        $startsAt = $this->getStartsAt();
+        if ($builder && $startsAt) {
+            $price = apply_filters('sln.booking_builder.service_price', $price, $service, $atId, $builder, clone $startsAt);
+        }
+
+        return (float) $price;
+    }
+
     function getDeposit($include_fee=false)
     {
         $ret = $this->getMeta('deposit');

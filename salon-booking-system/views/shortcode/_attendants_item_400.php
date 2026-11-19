@@ -3,14 +3,14 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 $isMulti = $plugin->getSettings()->isMultipleAttendantsEnabled(); ?>
-<label for="<?php echo $elemId ?>" class="sln-list__item <?php if ($isMulti) { echo 'sln-list--multiple__item'; } ?> sln-attendant">
+<label for="<?php echo esc_attr($elemId) ?>" class="sln-list__item <?php if ($isMulti) { echo 'sln-list--multiple__item'; } ?> sln-attendant">
     <?php if ($thumb): ?>
         <div class="sln-list__item__thumb">
             <?php echo $thumb ?>
         </div>
     <?php endif ?>
     <div class="sln-list__item__content">
-        <h3 class="sln-steps-name sln-attendant-name sln-list__item__name"><?php echo $attendant->getName(); ?></h3>
+        <h3 class="sln-steps-name sln-attendant-name sln-list__item__name"><?php echo esc_html($attendant->getName()); ?></h3>
         <?php
             $string = $attendant->getContent();
             $incipit = array_shift(explode("\n", wordwrap($string, 50)));
@@ -18,9 +18,9 @@ $isMulti = $plugin->getSettings()->isMultipleAttendantsEnabled(); ?>
         ?>
         <p class="sln-steps-description sln-attendant-description sln-list__item__description <?php if (!empty($more)) { echo "sln-list__item__description__toggle"; } ?>">
             <?php
-            echo $incipit;
+            echo wp_kses_post($incipit);
             if (!empty($more) && !$isMulti) {
-                echo ' <span class="sln-list__item__description__breakdots">...</span> <span class="sln-list__item__description__more">' . $more . '</span>';
+                echo ' <span class="sln-list__item__description__breakdots">...</span> <span class="sln-list__item__description__more">' . wp_kses_post($more) . '</span>';
             } else if (!empty($more) && $isMulti)  {
                 echo ' <span class="sln-list__item__description__breakdots">...</span>';
             }
@@ -44,7 +44,7 @@ $isMulti = $plugin->getSettings()->isMultipleAttendantsEnabled(); ?>
         <?php if ($isMulti) : ?>
         <span class="sln-list__item__content--add">
             <p class="sln-steps-description sln-attendant-description sln-list__item__description sln-list__item__description__toggle">
-                <?php echo $string; ?>
+                <?php echo wp_kses_post($string); ?>
             </p>
         </span>
         <?php endif ?>

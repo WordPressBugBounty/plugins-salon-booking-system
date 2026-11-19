@@ -35,20 +35,20 @@ $plugin = SLN_Plugin::getInstance();
 			<?php } ?>
 			<?php if(!$display || in_array('description',$display)){ ?>
 			<p class="sln-datalist__item__description">
-				<?php echo $service->getContent(); ?>
+				<?php echo wp_kses_post($service->getContent()); ?>
 			</p>
 			<?php } ?>
 			<div class="sln-datalist__item__info">
 				<?php if(!$display || in_array('duration',$display)){ ?>
 				<p class="sln-datalist__item__duration">
 					<span><?php echo esc_html__('Duration', 'salon-booking-system')?>: </span>
-					<strong><?php echo $service->getTotalDuration()->format('H:i') ?></strong>
+					<strong><?php echo esc_html($service->getTotalDuration()->format('H:i')) ?></strong>
 				</p>
 				<?php } ?>
 				<?php if(!$display || in_array('price',$display)){ ?>
 				<p class="sln-datalist__item__price">
 					<span><?php esc_html_e('Price','salon-booking-system');?>: </span>
-					<strong><?php echo $plugin->format()->moneyFormatted($service->getPrice()) ?></strong>
+					<strong><?php echo wp_kses_post($plugin->format()->moneyFormatted($service->getPrice())) ?></strong>
 				</p>
 				<?php } ?>
 			</div>

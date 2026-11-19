@@ -20,11 +20,11 @@ foreach($fields as $key => $field){
     }
     ?>
 
-    <div class="<?php echo $style_class ?> field-<?php echo $key ?> sln-<?php echo $type ?> <?php echo $type !== 'checkbox'?'sln-input sln-input--simple':''?> <?php echo $field->isCustomer() && $field->isAdditional()? 'sln-customer-fields':''?>">
+    <div class="<?php echo esc_attr($style_class) ?> field-<?php echo esc_attr($key) ?> sln-<?php echo esc_attr($type) ?> <?php echo $type !== 'checkbox'?'sln-input sln-input--simple':''?> <?php echo $field->isCustomer() && $field->isAdditional()? 'sln-customer-fields':''?>">
         <?php if($type == 'html'){
             echo $field['default_value'];
         }else{ ?>
-            <label for="<?php echo SLN_Form::makeID("sln[{$key}]")?>"><?php
+            <label for="<?php echo esc_attr(SLN_Form::makeID("sln[{$key}]"))?>"><?php
                 // Allow safe inline HTML (e.g. GDPR consent links) inside custom field labels.
                 echo wp_kses(
                     __(sprintf('%s', $field['label']), 'salon-booking-system'),

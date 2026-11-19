@@ -26,7 +26,7 @@ ob_start();?>
 </div>
 
 
-<input type="hidden" name="sln[customer_timezone]" value="<?php echo $bb->get('customer_timezone') ?>">
+<input type="hidden" name="sln[customer_timezone]" value="<?php echo esc_attr($bb->get('customer_timezone')) ?>">
 <?php if((bool)SLN_Plugin::getInstance()->getSettings()->get('debug') && current_user_can( 'administrator' ) ): ?>
                 <div id="sln-debug-div">
                     <div id="sln-debug-sticky-panel" style="width: 100%">
@@ -35,16 +35,16 @@ ob_start();?>
                         <div id="disable-debug-table"><?php esc_html_e( 'Disable', 'salon-booking-system' ) ?></div>
                         <nav class="sln-inpage_navbar_inner">
                             <ul id="sln-settings-links" class="nav nav-pills sln-inpage_navbar">
-                                <li class="nav-item sln-inpage_navbaritem"><a href=<?php echo get_admin_url(). '/admin.php?page=salon-settings&tab=booking'; ?> class="nav-link nav-link1 sln-inpage_navbarlink" target="_blank"><?php esc_html_e( 'Booking rules', 'salon-booking-system' ) ?></a></li>
-                                <li class="nav-item sln-inpage_navbaritem"><a href=<?php echo get_admin_url(). '/edit.php?post_type=sln_attendant' ?> class="nav-link nav-link1 sln-inpage_navbarlink" target="_blank"><?php esc_html_e( 'Assistants', 'salon-booking-system' ) ?></a></li>
-                                <li class="nav-item sln-inpage_navbaritem"><a href=<?php echo get_admin_url(). '/edit.php?post_type=sln_service' ?> class="nav-link nav-link1 sln-inpage_navbarlink" target="_blank"><?php esc_html_e( 'Services', 'salon-booking-system') ?></a></li>
+                                <li class="nav-item sln-inpage_navbaritem"><a href="<?php echo esc_url(get_admin_url(). '/admin.php?page=salon-settings&tab=booking'); ?>" class="nav-link nav-link1 sln-inpage_navbarlink" target="_blank"><?php esc_html_e( 'Booking rules', 'salon-booking-system' ) ?></a></li>
+                                <li class="nav-item sln-inpage_navbaritem"><a href="<?php echo esc_url(get_admin_url(). '/edit.php?post_type=sln_attendant') ?>" class="nav-link nav-link1 sln-inpage_navbarlink" target="_blank"><?php esc_html_e( 'Assistants', 'salon-booking-system' ) ?></a></li>
+                                <li class="nav-item sln-inpage_navbaritem"><a href="<?php echo esc_url(get_admin_url(). '/edit.php?post_type=sln_service') ?>" class="nav-link nav-link1 sln-inpage_navbarlink" target="_blank"><?php esc_html_e( 'Services', 'salon-booking-system') ?></a></li>
                             </ul>
                         </nav>
                         <div class="sln-debug-move"><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
                     </div>
                     <div id="sln-debug-attendants" class="sln-row">
                         <?php foreach(SLN_Helper_Availability_AdminRuleLog::getInstance()->getAttendats() as $attendant_deb): ?>
-                            <div class=sln-debug-time-slote><?php echo $attendant_deb->getName(); ?></div>
+                            <div class=sln-debug-time-slote><?php echo esc_html($attendant_deb->getName()); ?></div>
                         <?php endforeach; ?>
                     </div>
                     <div id="sln-debug-table">
@@ -53,14 +53,14 @@ ob_start();?>
                                 <div class="sln-debug-popup">
                                     <?php $failedRule = '';
                                         foreach( $rules as $ruleName => $ruleValue ){
-                                        echo '<p class="'. ( (!$ruleValue) ? 'sln-debug--failed"':'"' ).'>'. $ruleName. '</p>';
+                                        echo '<p class="'. ( (!$ruleValue) ? 'sln-debug--failed"':'"' ).'>'. esc_html($ruleName). '</p>';
                                         if( !(bool)$ruleValue && empty( $failedRule ) ){
                                             $failedRule = $ruleName;
                                         }
                                     } ?>
                                 </div>
                                 <div class="sln-debug-time <?php echo ( !empty($failedRule) ) ? 'sln-debug--failed"' : '"' ; ?>">
-                                    <?php echo "<p title=\"$failedRule\">". $time. '</p>'; ?>
+                                    <?php echo '<p title="' . esc_attr($failedRule) . '">' . esc_html($time) . '</p>'; ?>
                                 </div>
                             </div>
                         <?php endforeach; ?>

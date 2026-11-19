@@ -1,7 +1,7 @@
 <?php
 if ( ! defined( 'ABSPATH' ) ) { exit; }
  // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-<div class="sln-list__item sln-service sln-service--<?php echo $service->getId(); ?>">
+<div class="sln-list__item sln-service sln-service--<?php echo esc_attr($service->getId()); ?>">
     
         <?php
             $thumb = has_post_thumbnail($service->getId()) ? get_the_post_thumbnail(
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
         </div>
     <?php endif ?>
 <div class="sln-list__item__content">
-        <h3 class="sln-steps-name sln-service-name sln-list__item__name"><?php echo $service->getName(); ?></h3>
+        <h3 class="sln-steps-name sln-service-name sln-list__item__name"><?php echo esc_html($service->getName()); ?></h3>
         <?php
             $string = $service->getContent();
             $incipit = explode("\n", wordwrap($string, 50));
@@ -24,27 +24,27 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
         ?>
         <p class="sln-service-description sln-list__item__description <?php if (!empty($more)) { echo "sln-list__item__description__toggle"; } ?>">
             <?php
-            echo $incipit;
+            echo wp_kses_post($incipit);
             if (!empty($more)) {
-                echo ' <span class="sln-list__item__description__breakdots">...</span> <span class="sln-list__item__description__more">' . $more . '</span>';
+                echo ' <span class="sln-list__item__description__breakdots">...</span> <span class="sln-list__item__description__more">' . wp_kses_post($more) . '</span>';
             }
             ?>
         </p>
         <div class="sln-service__info sln-list__item__info">
                <?php if($showPrices): ?>
                 <?php $basePriceFormatted = $plugin->format()->moneyFormatted($service->getPrice()); ?>
-                <h3 class="sln-steps-price sln-service-price sln-list__item__price" data-service-id="<?php echo $service->getId(); ?>" data-base-price="<?php echo esc_attr($basePriceFormatted); ?>">
+                <h3 class="sln-steps-price sln-service-price sln-list__item__price" data-service-id="<?php echo esc_attr($service->getId()); ?>" data-base-price="<?php echo esc_attr($basePriceFormatted); ?>">
                     <?php if ($service->getVariablePriceEnabled()): ?>
                         <?php esc_html_e('from', 'salon-booking-system') ?>
                     <?php endif; ?>
-                    <span class="sln-service-price-value sln-list__item__proce__value"><?php echo $basePriceFormatted; ?></span>
+                    <span class="sln-service-price-value sln-list__item__proce__value"><?php echo wp_kses_post($basePriceFormatted); ?></span>
                     <!-- .sln-service-price // END -->
                 </h3>
             <?php endif ?>
             <?php if ($service->getDuration()->format('H:i') != '00:00' && !$plugin->getSettings()->get('hide_service_duration')):
                         $duration = $service->getTotalDuration(); ?>
                    <h3><span class="sln-steps-duration sln-service-duration sln-list__item__duration">
-                        <?php echo $duration->format('H:i'); ?>
+                        <?php echo esc_html($duration->format('H:i')); ?>
                     </span></h3>
                 <?php endif ?>
         </div>
@@ -57,11 +57,11 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
             $bb->hasService($service),
             $settings
         ) ?>
-        <label for="<?php echo SLN_Form::makeID('sln[services][' . $service->getId() . ']') ?>"></label>
+        <label for="<?php echo esc_attr(SLN_Form::makeID('sln[services][' . $service->getId() . ']')) ?>"></label>
     </div>
      <?php include 'service_variable_duration.php'; ?>   
 </div>
-<span class="sln-service__errors sln-list__item__errors errors-area" data-class="sln-alert sln-alert-medium sln-alert--problem"><?php if ($serviceErrors) foreach ($serviceErrors as $error): ?><div class="sln-alert sln-alert-medium sln-alert--problem"><?php echo $error ?></div><?php endforeach ?></span>
+<span class="sln-service__errors sln-list__item__errors errors-area" data-class="sln-alert sln-alert-medium sln-alert--problem"><?php if ($serviceErrors) foreach ($serviceErrors as $error): ?><div class="sln-alert sln-alert-medium sln-alert--problem"><?php echo wp_kses_post($error) ?></div><?php endforeach ?></span>
     <div class="sln-alert sln-alert-medium sln-alert--problem" style="display: none" id="availabilityerror"><?php esc_html_e('Not enough time for this service','salon-booking-system') ?></div>
     <div class="sln-list__item__fkbkg"></div>
     <?php

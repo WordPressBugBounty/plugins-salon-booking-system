@@ -1604,23 +1604,29 @@ if (!String.prototype.formatNum) {
       }
 
       if (validateBooking()) {
-        setTimeout(function () {
-          $editor
-            .off("load.hide_modal")
-            .on("load.hide_modal", onLoadAfterSubmit);
-          $("#sln-booking-editor-modal").modal("hide");
-        }, 2000);
-
-        if (!$editor.contents().find("#save-post").attr("disabled")) {
-          launchLoadingSpinnerSaving();
-        } else {
+        if ($editor.contents().find("#save-post").attr("disabled")) {
+          // Nothing can be submitted: keep the editor open and show why.
           $editor
             .contents()
             .scrollTop(
               $editor.contents().find("#sln_booking_services").offset().top,
             );
           $editor.contents().find("#sln-alert-noservices").fadeIn();
+          return;
         }
+
+        // The editor may first ask to confirm broken availability rules: the
+        // spinner and the closing of the modal wait until it really submits.
+        window.sln_onBookingEditorSubmitting = function () {
+          window.sln_onBookingEditorSubmitting = null;
+          launchLoadingSpinnerSaving();
+          setTimeout(function () {
+            $editor
+              .off("load.hide_modal")
+              .on("load.hide_modal", onLoadAfterSubmit);
+            $("#sln-booking-editor-modal").modal("hide");
+          }, 2000);
+        };
         $editor.contents().find("#save-post").trigger("click");
       }
     }

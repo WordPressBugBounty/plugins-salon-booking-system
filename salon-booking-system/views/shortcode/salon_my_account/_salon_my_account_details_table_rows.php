@@ -195,20 +195,20 @@ $sln_status_class = array(
 
                         <?php ob_start(); ?>
                         <?php SLN_Form::fieldJSDate('_sln_booking_date', $date, array('inline' => true)) ?>
-                        <input name="_sln_booking_date" type="hidden" value="<?php echo $plugin->format()->date($date) ?>">
+                        <input name="_sln_booking_date" type="hidden" value="<?php echo esc_attr($plugin->format()->date($date)) ?>">
                         <?php $datepicker = ob_get_clean();
                         
                         ob_start(); ?>
                         <?php SLN_Form::fieldJSTime('_sln_booking_time', $date, array('inline' => true, 'interval' => $plugin->getSettings()->get('interval'),)); ?>
-                        <input name="_sln_booking_time" type="hidden" value="<?php echo $plugin->format()->time($date); ?>">
+                        <input name="_sln_booking_time" type="hidden" value="<?php echo esc_attr($plugin->format()->time($date)); ?>">
                         <?php $timepicker = ob_get_clean(); ?>
                         
                         <form class="sln-reschedule-form hide">
                             <?php do_action('sln.salon_my_accout.reschedule-form', $booking);
                             SLN_Form::fieldText('_sln_booking_id', $item['id'], array('type'=> 'hidden'));
                             SLN_Form::fieldText('customer_timezone', $data['customer_timezone'], array('type' => 'hidden')); ?>
-                            <input class="sln_booking_default_date" type="hidden" value="<?php echo $plugin->format()->date($date); ?>">
-                            <input class="sln_booking_default_time" type="hidden" value="<?php echo $plugin->format()->time($date); ?>">
+                            <input class="sln_booking_default_date" type="hidden" value="<?php echo esc_attr($plugin->format()->date($date)); ?>">
+                            <input class="sln_booking_default_time" type="hidden" value="<?php echo esc_attr($plugin->format()->time($date)); ?>">
                             <?php
                             foreach($booking->getBookingServices()->getItems() as $bookingService){
                                 $serviceId = $bookingService->getService()->getId();
@@ -231,7 +231,7 @@ $sln_status_class = array(
                                         <div class="sln-input sln-input--datepicker sln-input--datepicker--date">
                                             <?php echo $datepicker; ?>
                                         </div>
-                                        <div class="sln-input sln-input--datepicker sln-input--datepicker--time" id="sln-booking-id-resch-<?php echo $booking->getId();?>">
+                                        <div class="sln-input sln-input--datepicker sln-input--datepicker--time" id="sln-booking-id-resch-<?php echo esc_attr($booking->getId());?>">
                                             <?php echo $timepicker; ?>
                                         </div>
                                         <div class="sln-notifications"></div>
@@ -256,14 +256,14 @@ $sln_status_class = array(
                         </button>
                     <?php else: ?>
                         <div class="sln-accout__feedback">
-                            <div class="feedback sln-accout__feedback__text"><?php echo $item['feedback'] ?></div>
-                            <input type="hidden" name="sln-rating" value="<?php echo $item['rating']; ?>">
-                            <div class="rating sln-accout__feedback__rating" id="<?php echo $item['id']; ?>" style="display: none;"></div>
+                            <div class="feedback sln-accout__feedback__text"><?php echo esc_html($item['feedback']) ?></div>
+                            <input type="hidden" name="sln-rating" value="<?php echo esc_attr($item['rating']); ?>">
+                            <div class="rating sln-accout__feedback__rating" id="<?php echo esc_attr($item['id']); ?>" style="display: none;"></div>
                         </div>
                     <?php endif; ?>
             <?php endif; ?>
         </footer>
-        <div id="sln-account__card__action_notification_<?php echo $item['id']?>" class="sln-account__card__action_notification sln-account__card__action_notification--hide">
+        <div id="sln-account__card__action_notification_<?php echo esc_attr($item['id'])?>" class="sln-account__card__action_notification sln-account__card__action_notification--hide">
             <div class="sln-account__notification_action__text">
                 <span class="sln-account__notification_action_name"></span>
             </div>

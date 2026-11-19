@@ -46,6 +46,20 @@ class Bookings_Controller extends REST_Controller
      */
     protected $conflicts = array();
 
+    /**
+     * Availability rules broken by the last create/update, returned with the 409.
+     *
+     * @var array[]
+     */
+    protected $violations = array();
+
+    /**
+     * "Customer · weekday date · from → to · assistants" of the refused booking.
+     *
+     * @var string
+     */
+    protected $conflict_summary = '';
+
     public function register_routes() {
 
         register_rest_route( $this->namespace, '/' . $this->rest_base, array(
@@ -1029,6 +1043,10 @@ class Bookings_Controller extends REST_Controller
             'note'                => $booking->getNote(),
             'admin_note'          => $booking->getAdminNote(),
             'no_show'             => get_post_meta($booking->getId(), 'no_show', true) == 1,
+            // Rules the booking breaks since it was saved anyway (empty when it breaks none).
+            'availability_violations' => array_map(function ($violation) {
+                return array('title' => $violation['title'], 'message' => $violation['message']);
+            }, \SLN_Helper_AvailabilityViolations::getForcedViolations($booking->getId())),
             'rating'              => $booking->getRating(),
             'feedback'            => $this->get_booking_feedback($booking->getId()),
             'custom_fields'       => $custom_fields,
@@ -1471,7 +1489,7 @@ class Bookings_Controller extends REST_Controller
 
 	do_action('sln_api_bookings_create_item_post_before_valid', $bb, $request);
 
-        $this->validate_assistants_not_double_booked($bb, null, array(), $request);
+        $availability_violations = $this->validate_availability($bb, null, array(), $request);
 
 	$this->request	   = $request;
 	$this->customer_id = $customer_id;
@@ -1487,6 +1505,10 @@ class Bookings_Controller extends REST_Controller
 	remove_filter( 'sln.booking_builder.create.getPostArgs', array( $this, 'get_booking_create_get_post_args' ));
 
 	$booking = $bb->getLastBooking();
+
+        if (is_array($availability_violations)) {
+            \SLN_Helper_AvailabilityViolations::recordOverride($booking->getId(), $availability_violations);
+        }
 
         if ($request->get_param('customer_personal_note') !== null && $customer = $booking->getCustomer()) {
             $customer->setMeta('personal_note', sanitize_textarea_field($request->get_param('customer_personal_note')));
@@ -1549,7 +1571,7 @@ class Bookings_Controller extends REST_Controller
 
 	do_action('sln_api_bookings_update_item_post_before_valid', $bb, $request);
 
-        $this->validate_assistants_not_double_booked($bb, new SLN_Wrapper_Booking($id), $services_durations, $request);
+        $availability_violations = $this->validate_availability($bb, new SLN_Wrapper_Booking($id), $services_durations, $request);
 
         $this->booking_id = $id;
 
@@ -1632,6 +1654,10 @@ class Bookings_Controller extends REST_Controller
 
         $this->persist_booking_phone_meta($id, $request);
         $this->sync_customer_contact_meta($customer_id, $request);
+
+        if (is_array($availability_violations)) {
+            \SLN_Helper_AvailabilityViolations::recordOverride($id, $availability_violations);
+        }
 
         // Track the last editor and edit time, same as back-end saves (SLN_Metabox_Booking)
         $current_user_id = get_current_user_id();
@@ -1721,25 +1747,33 @@ class Bookings_Controller extends REST_Controller
     }
 
     /**
-     * Warn about a create/update that puts an assistant on two bookings at the same time.
+     * Check a create/update against every availability rule (opening hours, holidays,
+     * calendar locks, Google Calendar events, assistant schedule and bookings, service
+     * and resource availability, booking limits).
      *
-     * The conflicting save is refused with a 409 (code salon_rest_booking_conflict,
-     * data.conflicts = messages) so the PWA can tell the user. Like the back-end, the
-     * salon staff always have the last word: resending the request with
-     * ignore_conflicts=true saves the booking anyway. Public (non-staff) requests
-     * cannot skip the check.
-     * See SLN_Helper_Availability::getAttendantOverlapErrors() for what is checked.
+     * A booking that breaks rules is refused with a 409 (code salon_rest_booking_conflict)
+     * listing them, so the PWA can show them in its "Save anyway" modal. Administrators,
+     * salon staff and shop managers then resend the same request with availability_override set to the
+     * signature of the list they confirmed, and the booking is saved and flagged.
+     * ignore_conflicts=true is still accepted from those users, for older app versions.
+     * Other users cannot skip the check.
+     *
+     * When an existing booking keeps its date, time, services and assistants (editing
+     * notes or customer data), nothing is checked and its flag stays as it is.
      *
      * @param SLN_Wrapper_Booking_Builder $bb
      * @param SLN_Wrapper_Booking|null    $current_booking    Booking being edited, excluded from the check.
      * @param array                       $services_durations service_id => 'HH:MM' full line span from PWA drag-to-resize.
      * @param WP_REST_Request|null        $request
      *
-     * @throws \Exception When an assistant is already busy and the conflict was not confirmed.
+     * @return array[]|null The rules the saved booking breaks (to record), or null when not checked.
+     *
+     * @throws \Exception When rules are broken and the user did not confirm them (or cannot).
      */
-    protected function validate_assistants_not_double_booked($bb, $current_booking = null, $services_durations = array(), $request = null)
+    protected function validate_availability($bb, $current_booking = null, $services_durations = array(), $request = null)
     {
-        $this->conflicts = array();
+        $this->conflicts  = array();
+        $this->violations = array();
 
         $bookingServices = $bb->getBookingServices();
         if (!empty($services_durations)) {
@@ -1762,27 +1796,121 @@ class Bookings_Controller extends REST_Controller
             $bookingServices = \SLN_Wrapper_Booking_Services::build($items, $bb->getDateTime(), 0, $counts);
         }
 
-        $errors = \SLN_Helper_Availability::getAttendantOverlapErrors($bookingServices, $current_booking);
-        if (empty($errors)) {
-            return;
+        if ($current_booking && $current_booking->getId() && $this->is_same_booking_time($current_booking, $bookingServices)) {
+            return null;
         }
 
-        if ($request && rest_sanitize_boolean($request->get_param('ignore_conflicts')) && $this->current_user_can_list_bookings()) {
-            SLN_Plugin::addLog(sprintf(
-                '[Mobile API] Booking %s saved over assistant conflicts by user #%d: %s',
-                $current_booking ? '#' . $current_booking->getId() : '(new)',
-                get_current_user_id(),
-                implode(' ', $errors)
-            ));
-            return;
+        // Hold the start time until this request ends (the booking is saved by then), so a
+        // concurrent front-end checkout or editor save for the slot runs its check after it.
+        if (!\SLN_Helper_SlotLock::acquire(\SLN_Helper_SlotLock::key($bb->getDateTime()))) {
+            throw new \Exception(esc_html__('Another booking for this time is being saved right now. Please try again.', 'salon-booking-system'), 409);
         }
 
-        $this->conflicts = array_values(array_map('wp_strip_all_tags', $errors));
-        throw new \Exception(esc_html(reset($errors)), 409);
+        $checker    = new \SLN_Helper_AvailabilityViolations();
+        $violations = $checker->check($bookingServices, $current_booking);
+        if (empty($violations)) {
+            return array();
+        }
+
+        $canForce = \SLN_Helper_AvailabilityViolations::currentUserCanForce();
+        if ($canForce && $request) {
+            $token = (string) $request->get_param('availability_override');
+            if (
+                \SLN_Helper_AvailabilityViolations::isConfirmed($violations, $token)
+                || rest_sanitize_boolean($request->get_param('ignore_conflicts'))
+            ) {
+                return $violations;
+            }
+        }
+
+        $this->violations       = $violations;
+        $this->conflict_summary = $this->get_conflict_summary($bookingServices, $request);
+        $this->conflicts        = array_values(array_map(function ($violation) {
+            return wp_strip_all_tags($violation['message']);
+        }, $violations));
+        throw new \Exception(esc_html(reset($this->conflicts)), 409);
     }
 
     /**
-     * The 409 returned when the booking conflicts with other bookings.
+     * @param \SLN_Wrapper_Booking_Services $bookingServices
+     * @param WP_REST_Request|null          $request
+     *
+     * @return string
+     */
+    protected function get_conflict_summary($bookingServices, $request = null)
+    {
+        $items = $bookingServices->getItems();
+        if (empty($items)) {
+            return '';
+        }
+        $start = null;
+        $end   = null;
+        $names = array();
+        foreach ($items as $bs) {
+            if (!$start || $bs->getStartsAt() < $start) {
+                $start = $bs->getStartsAt();
+            }
+            if (!$end || $bs->getEndsAt() > $end) {
+                $end = $bs->getEndsAt();
+            }
+            $attendants = $bs->getAttendant();
+            foreach (is_array($attendants) ? $attendants : array($attendants) as $attendant) {
+                if ($attendant instanceof \SLN_Wrapper_AttendantInterface) {
+                    $names[$attendant->getId()] = $attendant->getName();
+                }
+            }
+        }
+        $format   = SLN_Plugin::getInstance()->format();
+        $customer = $request ? trim($request->get_param('customer_first_name').' '.$request->get_param('customer_last_name')) : '';
+
+        return implode(' · ', array_filter(array(
+            $customer,
+            \SLN_TimeFunc::translateDate('l', $start->getTimestamp(), $start->getTimezone()).' '.$format->date($start),
+            $format->time($start).' → '.$format->time($end),
+            implode(', ', $names),
+        )));
+    }
+
+    /**
+     * Whether the booking keeps its stored date, time, services, assistants and durations.
+     *
+     * @param SLN_Wrapper_Booking          $current_booking
+     * @param SLN_Wrapper_Booking_Services $bookingServices
+     *
+     * @return bool
+     */
+    protected function is_same_booking_time($current_booking, $bookingServices)
+    {
+        $signature = function ($items) {
+            $ret = array();
+            foreach ($items as $bs) {
+                $attendants = $bs->getAttendant();
+                $ids = array();
+                foreach (is_array($attendants) ? $attendants : array($attendants) as $attendant) {
+                    if ($attendant instanceof \SLN_Wrapper_AttendantInterface) {
+                        $ids[] = (int) $attendant->getId();
+                    }
+                }
+                sort($ids);
+                $ret[] = array(
+                    'service' => $bs->getService() ? (int) $bs->getService()->getId() : 0,
+                    'att'     => $ids,
+                    'start'   => $bs->getStartsAt()->format('Y-m-d H:i'),
+                    'end'     => $bs->getEndsAt()->format('Y-m-d H:i'),
+                );
+            }
+
+            return $ret;
+        };
+
+        return $signature($current_booking->getBookingServices()->getItems()) == $signature($bookingServices->getItems());
+    }
+
+    /**
+     * The 409 returned when the booking breaks availability rules.
+     *
+     * data.conflicts keeps the plain messages older app versions show; data.violations,
+     * data.signature and data.summary feed the "Save anyway" modal.
      *
      * @return WP_Error
      */
@@ -1792,9 +1920,12 @@ class Bookings_Controller extends REST_Controller
             'salon_rest_booking_conflict',
             implode(' ', $this->conflicts),
             array(
-                'status'    => 409,
-                'conflicts' => $this->conflicts,
-                'can_force' => $this->current_user_can_list_bookings(),
+                'status'     => 409,
+                'conflicts'  => $this->conflicts,
+                'violations' => $this->violations,
+                'signature'  => \SLN_Helper_AvailabilityViolations::signature($this->violations),
+                'summary'    => $this->conflict_summary,
+                'can_force'  => \SLN_Helper_AvailabilityViolations::currentUserCanForce(),
             )
         );
     }

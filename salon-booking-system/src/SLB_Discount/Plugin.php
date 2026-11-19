@@ -170,8 +170,11 @@ class SLB_Discount_Plugin {
             }
 			$this->delete_all_per_coupon_discount_meta_keys($booking->getId());
 	    	foreach($items as $sId => &$atId) {
-	    		$service = new SLN_Wrapper_Service($sId);
-				$price       = $service->getPrice();
+				// Admin-submitted items are a list (0, 1, ...): the key is not the service ID.
+				$serviceId = is_array($atId) && isset($atId['service']) ? (int) $atId['service'] : (int) $sId;
+	    		$service = new SLN_Wrapper_Service($serviceId);
+				// Undiscounted price incl. assistant and dynamic price, not the base price.
+				$price       = $booking->getServiceListPrice($service, $atId);
 				if( is_array( $atId ) ){
 					$items[$sId] = array_merge($atId,array(
 						'price'     => $price
@@ -196,7 +199,7 @@ class SLB_Discount_Plugin {
 		$bookingServices = $booking->getBookingServices();
 		foreach ($bookingServices->getItems() as $bookingService) {
 		    $service = new SLN_Wrapper_Service($bookingService->getService()->getId());
-		    $price   = $service->getPrice();
+		    $price   = $booking->getServiceListPrice($service, $bookingService->getAttendant());
 		    $bookingService->setPrice($price);
 		}
 		$data["discounts"] = array();
@@ -246,11 +249,13 @@ class SLB_Discount_Plugin {
             $data["discount_score"] = array_merge(isset($data["discount_score"]) ? $data["discount_score"] : array(), $discountScores);
 
 			foreach($items as $sId => $atId) {
+				// Admin-submitted items are a list (0, 1, ...): the key is not the service ID.
+				$serviceId = is_array($atId) && isset($atId['service']) ? (int) $atId['service'] : (int) $sId;
 				if($first){
-					$service = new SLN_Wrapper_Service($sId);
-					$price       = $service->getPrice();
+					$service = new SLN_Wrapper_Service($serviceId);
+					$price       = $booking->getServiceListPrice($service, $atId);
 				}
-				else $price      = isset($items[$sId]['price']) ? $items[$sId]['price'] : ($bookingServices->findByService($sId) ? $bookingServices->findByService($sId)->getPrice() : '');
+				else $price      = isset($items[$sId]['price']) ? $items[$sId]['price'] : ($bookingServices->findByService($serviceId) ? $bookingServices->findByService($serviceId)->getPrice() : '');
 
 				if( is_array( $atId ) ){
 					$items[$sId] = array_merge($atId,array(
@@ -261,8 +266,8 @@ class SLB_Discount_Plugin {
 										  'attendant' => $atId,
 										  'price' => $price );
 				}
-                                if ($bookingServices->findByService($sId)) {
-                                    $bookingServices->findByService($sId)->setPrice($items[$sId]['price']);
+                                if ($bookingServices->findByService($serviceId)) {
+                                    $bookingServices->findByService($serviceId)->setPrice($items[$sId]['price']);
                                 }
 			}
 			if(in_array($discountId,$discounts_to_increment)){
@@ -441,7 +446,10 @@ class SLB_Discount_Plugin {
 		$amount = 0;
 		foreach($bookingServices->getItems() as $bookingService){
 			$service = $bookingService->getService();
-			$price = $service->getPrice() * $bookingService->getCountServices();
+			// Undiscounted price incl. assistant and dynamic price, not the base price:
+			// resetting to $service->getPrice() made a coupon on a £32 dynamic-price
+			// service discount and charge £30 instead.
+			$price = $booking->getServiceListPrice($service, $bookingService->getAttendant()) * $bookingService->getCountServices();
 			$amount += $price;
 			$bookingService->setPrice($price);
 		}

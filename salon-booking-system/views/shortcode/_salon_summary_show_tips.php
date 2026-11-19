@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 ?>
 <div class="sln-summary-row sln-summary-row--tips sln-list__item sln-list__item--db <?php echo !$tipsValue ? 'hide' : '' ?>">
 	<div class="sln-data-val">
-		<span id="sln_tips_value"><?php echo $plugin->format()->money($tipsValue, false, false, true); ?></span>
+		<span id="sln_tips_value"><?php echo esc_html($plugin->format()->money($tipsValue, false, false, true)); ?></span>
 	</div>
 	<div class="sln-data-desc">
 		<?php

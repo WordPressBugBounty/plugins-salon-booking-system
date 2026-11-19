@@ -60,6 +60,13 @@ class LabelProvider
             'bookingConflictText' => __('Do you want to save the booking anyway?', 'salon-booking-system'),
             'bookingConflictConfirmButtonLabel' => __('Save anyway', 'salon-booking-system'),
             'bookingConflictCancelButtonLabel' => __('Cancel', 'salon-booking-system'),
+            'availabilityOverrideTitleOne' => __('This booking breaks 1 availability rule', 'salon-booking-system'),
+            // translators: %d number of broken rules
+            'availabilityOverrideTitleMany' => __('This booking breaks %d availability rules', 'salon-booking-system'),
+            'availabilityOverrideHistory' => __('If you save, these exceptions are recorded in the booking history with your name.', 'salon-booking-system'),
+            'availabilityOverrideCannotForce' => __('You can\'t save a booking that breaks these rules. Change the booking or ask an administrator.', 'salon-booking-system'),
+            'availabilityOverrideBack' => __('Go back and edit', 'salon-booking-system'),
+            'availabilityOverrideForcedBadge' => __('Saved over availability rules', 'salon-booking-system'),
             'customerFirstnamePlaceholder' => __('firstname', 'salon-booking-system'),
             'customerLastnamePlaceholder' => __('lastname', 'salon-booking-system'),
             'customerEmailPlaceholder' => __('email', 'salon-booking-system'),

@@ -918,7 +918,8 @@ class SLN_Shortcode_Salon_SummaryStep extends SLN_Shortcode_Salon_Step
             SLN_Plugin::addLog('[SummaryStep] WARNING: getSlotLockKey — booking has no valid start time, skipping lock');
             return null;
         }
-        return 'sln_' . md5($startsAt->format('Y-m-d H:i'));
+        // Same lock as the back-end editor and the PWA (SLN_Helper_SlotLock).
+        return SLN_Helper_SlotLock::key($startsAt);
     }
 
     /**

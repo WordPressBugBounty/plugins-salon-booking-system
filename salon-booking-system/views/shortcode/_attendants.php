@@ -92,7 +92,7 @@ $decimalSeparator = $plugin->getSettings()->getDecimalSeparator();
 $thousandSeparator = $plugin->getSettings()->getThousandSeparator();
 
 ?>
-<div class="sln-attendant-list sln-list sln-list--<?php echo $size; ?>">
+<div class="sln-attendant-list sln-list sln-list--<?php echo esc_attr($size); ?>">
     <?php if($i > 1): ?>
     <div class="sln-list__item sln-list__item--icons">
         <?php $icons = $step->renderSortIcon();
@@ -103,10 +103,10 @@ $thousandSeparator = $plugin->getSettings()->getThousandSeparator();
         <?php echo $tmp ?>
     <?php else: ?>
         <div class="alert alert-warning">
-            <p><?php echo apply_filters('sln.template.shortcode.attendant.emptyAttendantsList', __(
+            <p><?php echo wp_kses_post(apply_filters('sln.template.shortcode.attendant.emptyAttendantsList', __(
                     'No assistants available for the selected time/slot - please choose another one',
                     'salon-booking-system'
-                )) ?></p>
+                ))) ?></p>
         </div>
     <?php endif ?>
 </div>

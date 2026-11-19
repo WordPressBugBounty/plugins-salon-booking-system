@@ -37,12 +37,11 @@
         @error-state="handleErrorState"
         @save="save"
     />
-    <ConfirmModal
+    <AvailabilityOverrideModal
         v-model="bookingConflictConfirm.visible"
-        :title="getLabel('bookingConflictTitle') || 'Possible conflict'"
-        :message="bookingConflictConfirm.message"
-        :confirm-label="getLabel('bookingConflictConfirmButtonLabel') || 'Save anyway'"
-        :cancel-label="getLabel('bookingConflictCancelButtonLabel') || 'Cancel'"
+        :violations="bookingConflictConfirm.violations"
+        :summary="bookingConflictConfirm.summary"
+        :can-force="bookingConflictConfirm.canForce"
         @confirm="resolveBookingConflictConfirm(true)"
         @cancel="resolveBookingConflictConfirm(false)"
     />
@@ -51,7 +50,7 @@
 
 <script>
 import EditBooking from './EditBooking.vue'
-import ConfirmModal from '../../ConfirmModal.vue'
+import AvailabilityOverrideModal from '../../AvailabilityOverrideModal.vue'
 import mixins from '@/mixin'
 import { bookingConflictMixin } from '@/utils/bookingConflicts'
 
@@ -72,7 +71,7 @@ export default {
   },
   components: {
     EditBooking,
-    ConfirmModal,
+    AvailabilityOverrideModal,
   },
   mounted() {
     this.toggleShow()

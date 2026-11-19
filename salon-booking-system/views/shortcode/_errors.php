@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 <div class="row sln-box--main--flattop">
     <div class="col-xs-12">
         <?php foreach ($errors as $error): ?>
-            <div class="sln-alert sln-alert--general sln-alert--problem"><?php echo $error ?></div>
+            <div class="sln-alert sln-alert--general sln-alert--problem"><?php echo wp_kses_post($error) ?></div>
         <?php endforeach ?>
     </div>
 </div>

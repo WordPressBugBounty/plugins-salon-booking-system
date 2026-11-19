@@ -1171,17 +1171,13 @@ function sln_initSalonCalendar(
   // calendar.setLanguage(window.salon_calendar.locale);
   //calendar.view();
 
-  // Rows locked manually from the day calendar stay clickable so staff can still
-  // add a booking on them. Rows closed by a holiday rule remain inert. Assistant
-  // mode is left alone: there .blocked-daily also covers per-assistant locks,
-  // which the save path still rejects.
+  // Every row stays clickable, blocked ones included (manual lock, holiday rule,
+  // Google Calendar event, assistant availability): staff can add a booking on
+  // them and confirm the broken rules in the "Save anyway" modal. click() keeps
+  // blocked rows out of a lock selection.
   $("body").on(
     "click",
-    [
-      " .cal-day-hour-part:not(.blocked)",
-      ".att-time-slot:not(.blocked)",
-      ".cal-day-hour-part.blocked-daily:not(.blocked-system):not(.blocked-gcal)",
-    ].join(", "),
+    ".cal-day-hour-part, .att-time-slot",
     DayCalendarHolydays.click,
   );
   $("body").on("click", " .block_date", DayCalendarHolydays.startSelection);

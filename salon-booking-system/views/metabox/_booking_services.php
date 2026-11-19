@@ -73,8 +73,6 @@ $bookingServices = $booking->getBookingServices()->getItems();
                 class="sln-alert sln-alert--warning sln-alert--inline <?php echo $bookingServices ? 'hide' : '' ?>"><?php echo esc_html__('No services addded yet', 'salon-booking-system') ?></span>
             <span id="sln-alert-no-duration"
                 class="sln-alert sln-alert--error sln-alert--inline hide"><?php echo esc_html__('This service has no duration, change it or add another one!', 'salon-booking-system') ?></span>
-            <span id="sln-alert-duration-exceeded"
-                class="sln-alert sln-alert--error sln-alert--inline hide"><?php echo esc_html__('Total services duration exceeded, change or remove one!', 'salon-booking-system') ?></span>
         </div>
     </div>
 

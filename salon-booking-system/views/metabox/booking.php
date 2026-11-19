@@ -106,6 +106,40 @@ if ($plugin->getSettings()->get('confirmation') && $booking->getStatus() == SLN_
             </div>
         </div>
     </div><!-- sln-booking__header // END -->
+    <?php
+    // History of saves forced over availability rules ("Save anyway"), newest first.
+    $slnOverrideHistory = array_reverse(SLN_Helper_AvailabilityViolations::getOverrideHistory($booking->getId()));
+    if ($slnOverrideHistory):
+        $slnStillForced = (bool) SLN_Helper_AvailabilityViolations::getForcedViolations($booking->getId());
+        ?>
+        <details class="sln-availability-override-history" <?php echo $slnStillForced ? 'open' : ''; ?>
+                 style="margin:12px 0;padding:10px 14px;border-radius:8px;background:#fcf3dc;color:#5c3c00;font-size:13px;">
+            <summary style="cursor:pointer;font-weight:600;">
+                <?php echo esc_html($slnStillForced
+                    ? __('This booking was saved over availability rules', 'salon-booking-system')
+                    : __('This booking was saved over availability rules in the past', 'salon-booking-system')); ?>
+            </summary>
+            <?php foreach ($slnOverrideHistory as $slnOverride): ?>
+                <div style="margin-top:8px;">
+                    <div style="font-size:12px;opacity:.85;">
+                        <?php
+                        echo esc_html(sprintf(
+                            // translators: %1$s date and time, %2$s user name
+                            __('%1$s by %2$s', 'salon-booking-system'),
+                            SLN_Plugin::getInstance()->format()->datetime(new SLN_DateTime($slnOverride['time'])),
+                            !empty($slnOverride['user_name']) ? $slnOverride['user_name'] : __('unknown user', 'salon-booking-system')
+                        ));
+                        ?>
+                    </div>
+                    <ul style="margin:4px 0 0 18px;list-style:disc;">
+                        <?php foreach ((array) $slnOverride['violations'] as $slnViolation): ?>
+                            <li><strong><?php echo esc_html($slnViolation['title']); ?>:</strong> <?php echo esc_html($slnViolation['message']); ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            <?php endforeach; ?>
+        </details>
+    <?php endif; ?>
     <!-- <div class="sln-box sln-box--main sln-box--main--transp sln_bookingeditor_view__wrapper">
                 <div class="row">
                     <div class="col-xs-12 col-sm-4 col-sm-offset-8-">

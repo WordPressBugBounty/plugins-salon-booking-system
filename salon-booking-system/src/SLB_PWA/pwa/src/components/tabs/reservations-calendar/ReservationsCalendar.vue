@@ -192,12 +192,11 @@
       @cancel="resolveResizeConfirm(false)"
     />
 
-    <ConfirmModal
+    <AvailabilityOverrideModal
       v-model="bookingConflictConfirm.visible"
-      :title="getLabel('bookingConflictTitle') || 'Possible conflict'"
-      :message="bookingConflictConfirm.message"
-      :confirm-label="getLabel('bookingConflictConfirmButtonLabel') || 'Save anyway'"
-      :cancel-label="getLabel('bookingConflictCancelButtonLabel') || 'Cancel'"
+      :violations="bookingConflictConfirm.violations"
+      :summary="bookingConflictConfirm.summary"
+      :can-force="bookingConflictConfirm.canForce"
       @confirm="resolveBookingConflictConfirm(true)"
       @cancel="resolveBookingConflictConfirm(false)"
     />
@@ -219,6 +218,7 @@ import CalendarBottomSheet from './CalendarBottomSheet.vue';
 import BookingCard from "./BookingCard.vue";
 import AttendantTimeSlots from './AttendantTimeSlots.vue';
 import ConfirmModal from '../../ConfirmModal.vue';
+import AvailabilityOverrideModal from '../../AvailabilityOverrideModal.vue';
 import mixins from '@/mixin';
 import { bookingConflictMixin } from '@/utils/bookingConflicts';
 
@@ -241,6 +241,7 @@ export default {
     BookingCard,
     AttendantTimeSlots,
     ConfirmModal,
+    AvailabilityOverrideModal,
   },
   props: {
     modelValue: {

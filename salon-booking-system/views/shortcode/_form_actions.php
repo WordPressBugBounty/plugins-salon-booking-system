@@ -49,11 +49,11 @@ foreach ($steps as $step_iter) {
 }
 $ajaxEnabled = $plugin->getSettings()->isAjaxEnabled(); ?>
 <?php if($size == '900'): ?>
-    <div id="sln-box__bottombar" class="col-xs-12 col-md-4 sln-box__bottombar sln-box__bottombar--l sln-box__bottombar--<?php echo $current; ?>">
+    <div id="sln-box__bottombar" class="col-xs-12 col-md-4 sln-box__bottombar sln-box__bottombar--l sln-box__bottombar--<?php echo esc_attr($current); ?>">
     <!-- <div class="sln-box__bottombar__fkbg"></div> -->
     <div class="sln-box__bottombar__fkbg--customcolors"></div>
 <?php else: ?>
-<div id="sln-box__bottombar" class="row sln-box__bottombar sln-box__bottombar--<?php echo $current; ?>">
+<div id="sln-box__bottombar" class="row sln-box__bottombar sln-box__bottombar--<?php echo esc_attr($current); ?>">
     <!-- <div class="sln-box__bottombar__fkbg"></div> -->
     <div class="sln-box__bottombar__fkbg--customcolors"></div>
     <div class="col-xs-12">
@@ -67,33 +67,33 @@ $ajaxEnabled = $plugin->getSettings()->isAjaxEnabled(); ?>
                         <?php esc_html_e('Subtotal', 'salon-booking-system') ?>
                     </h3>
                     <h3 class="col-xs-6 col-sm-6 col-md-6 sln-total-price" id="services-total"
-                        data-symbol-left="<?php echo $symbolLeft ?>"
-                        data-symbol-right="<?php echo $symbolRight ?>"
-                        data-symbol-decimal="<?php echo $decimalSeparator ?>"
-                        data-symbol-thousand="<?php echo $thousandSeparator ?>">
-                        <?php echo $plugin->format()->money(0, false) ?>
+                        data-symbol-left="<?php echo esc_attr($symbolLeft) ?>"
+                        data-symbol-right="<?php echo esc_attr($symbolRight) ?>"
+                        data-symbol-decimal="<?php echo esc_attr($decimalSeparator) ?>"
+                        data-symbol-thousand="<?php echo esc_attr($thousandSeparator) ?>">
+                        <?php echo esc_html($plugin->format()->money(0, false)) ?>
                     </h3>
                 <?php elseif ($size == '600'): ?>
                     <h3 class="sln-total-label">
                         <?php esc_html_e('Subtotal', 'salon-booking-system') ?>
                     </h3>
                     <h3 class="sln-total-price" id="services-total"
-                        data-symbol-left="<?php echo $symbolLeft ?>"
-                        data-symbol-right="<?php echo $symbolRight ?>"
-                        data-symbol-decimal="<?php echo $decimalSeparator ?>"
-                        data-symbol-thousand="<?php echo $thousandSeparator ?>">
-                        <?php echo $plugin->format()->money(0, false) ?>
+                        data-symbol-left="<?php echo esc_attr($symbolLeft) ?>"
+                        data-symbol-right="<?php echo esc_attr($symbolRight) ?>"
+                        data-symbol-decimal="<?php echo esc_attr($decimalSeparator) ?>"
+                        data-symbol-thousand="<?php echo esc_attr($thousandSeparator) ?>">
+                        <?php echo esc_html($plugin->format()->money(0, false)) ?>
                     </h3>
                 <?php elseif ($size == '400'): ?>
                     <h3 class="sln-total-label">
                         <?php esc_html_e('Subtotal', 'salon-booking-system') ?>
                     </h3>
                     <h3 class="sln-total-price" id="services-total"
-                        data-symbol-left="<?php echo $symbolLeft ?>"
-                        data-symbol-right="<?php echo $symbolRight ?>"
-                        data-symbol-decimal="<?php echo $decimalSeparator ?>"
-                        data-symbol-thousand="<?php echo $thousandSeparator ?>">
-                        <?php echo $plugin->format()->money(0, false) ?>
+                        data-symbol-left="<?php echo esc_attr($symbolLeft) ?>"
+                        data-symbol-right="<?php echo esc_attr($symbolRight) ?>"
+                        data-symbol-decimal="<?php echo esc_attr($decimalSeparator) ?>"
+                        data-symbol-thousand="<?php echo esc_attr($thousandSeparator) ?>">
+                        <?php echo esc_html($plugin->format()->money(0, false)) ?>
                     </h3>
                 <?php else: throw new Exception('size not supported'); ?>
                 <?php endif ?>
@@ -107,14 +107,14 @@ $ajaxEnabled = $plugin->getSettings()->isAjaxEnabled(); ?>
         ?>
         <button
             <?php if($ajaxEnabled): ?>
-                data-salon-data="<?php echo "sln_step_page=$current&$submitName=next" ?>" data-salon-toggle="next"
+                data-salon-data="<?php echo esc_attr("sln_step_page=$current&$submitName=next") ?>" data-salon-toggle="next"
             <?php endif?>
-            id="sln-step-submit" type="submit" name="<?php echo $submitName ?>" value="next">
-            <?php echo $nextLabel ?> <i class="glyphicon glyphicon-chevron-right"></i>
+            id="sln-step-submit" type="submit" name="<?php echo esc_attr($submitName) ?>" value="next">
+            <?php echo esc_html($nextLabel) ?> <i class="glyphicon glyphicon-chevron-right"></i>
         </button>
         <button
                 id="sln-step-submit-complete" value="next" class="hidden">
-            <?php echo __('Complete', 'salon-booking-system') ?>
+            <?php esc_html_e('Complete', 'salon-booking-system') ?>
         </button>
         <?php
         }
@@ -123,16 +123,16 @@ $ajaxEnabled = $plugin->getSettings()->isAjaxEnabled(); ?>
         ob_start();
         if(!empty($paymentMethod) && $paymentMethod && !empty($payLater) && $payLater):
         ?>
-            <a href="<?php echo $laterUrl; ?>" class="sln-btn sln-btn--fullwidth sln-btn--borderonly sln-btn--medium"
+            <a href="<?php echo esc_url($laterUrl); ?>" class="sln-btn sln-btn--fullwidth sln-btn--borderonly sln-btn--medium"
             <?php if($ajaxEnabled): ?>
-                data-salon-data="<?php echo $ajaxData. '&mode=later'; ?>" data-salon-toggle="direct"
+                data-salon-data="<?php echo esc_attr($ajaxData. '&mode=later'); ?>" data-salon-toggle="direct"
             <?php endif ?>>
                 <?php esc_html_e('Pay later', 'salon-booking-system'); ?>
             </a>
         <?php elseif(($backUrl && $currentNum > 1)): ?>
             <a class="sln-btn sln-btn--fullwidth sln-btn--borderonly sln-btn--medium"
                 <?php if($ajaxEnabled): ?>
-                    data-salon-data="<?php echo "sln_step_page=".$salon->getPrevStep() ?>" data-salon-toggle="direct"
+                    data-salon-data="<?php echo esc_attr("sln_step_page=".$salon->getPrevStep()) ?>" data-salon-toggle="direct"
                 <?php endif?>
                 href="<?php echo esc_url($backUrl) ?> ">
                 <i class="glyphicon glyphicon-chevron-left"></i> <?php esc_html_e('Back', 'salon-booking-system') ?>
@@ -170,7 +170,7 @@ $ajaxEnabled = $plugin->getSettings()->isAjaxEnabled(); ?>
         $depositCaptionHtml = ob_get_clean();
         ?>
         <?php if ($size == '900') { ?>
-            <div class="sln-box--formactions sln-box--formactions--<?php echo $current; ?> form-actions">
+            <div class="sln-box--formactions sln-box--formactions--<?php echo esc_attr($current); ?> form-actions">
                 <div class="sln-btn sln-btn--emphasis sln-btn--medium sln-btn--fullwidth sln-btn--nextstep">
                     <?php echo $nextBtn ?>
                 </div>
@@ -180,7 +180,7 @@ $ajaxEnabled = $plugin->getSettings()->isAjaxEnabled(); ?>
                 <?php endif ?>
             </div>
         <?php } else if ($size == '600') {      // IF SIZE == 900 // END ?>
-            <div class="sln-box--formactions sln-box--formactions--<?php echo $current; ?> form-actions">
+            <div class="sln-box--formactions sln-box--formactions--<?php echo esc_attr($current); ?> form-actions">
                 <div class="sln-btn sln-btn--emphasis sln-btn--medium sln-btn--fullwidth sln-btn--nextstep">
                     <?php echo $nextBtn ?>
                 </div>
@@ -190,7 +190,7 @@ $ajaxEnabled = $plugin->getSettings()->isAjaxEnabled(); ?>
                 <?php endif ?>
             </div>
         <?php } else if ($size == '400') {        // IF SIZE == 900 // END ?>
-            <div class="sln-box--formactions sln-box--formactions--<?php echo $current; ?> form-actions">
+            <div class="sln-box--formactions sln-box--formactions--<?php echo esc_attr($current); ?> form-actions">
                 <div class="sln-btn sln-btn--emphasis sln-btn--medium sln-btn--fullwidth sln-btn--nextstep">
                     <?php echo $nextBtn ?>
                 </div>

@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 /*
 Plugin Name: Salon Booking System - Free Version
 Description: Let your customers book you services through your website. Perfect for hairdressing salons, barber shops and beauty centers.
-Version: 10.31.15
+Version: 10.31.17
 Requires at least: 6.0
 Requires PHP: 7.4.8
 Plugin URI: http://salonbookingsystem.com/
@@ -49,7 +49,7 @@ if (defined('SLN_PLUGIN_BASENAME')) {
 define('SLN_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('SLN_PLUGIN_DIR', untrailingslashit(dirname(__FILE__)));
 define('SLN_PLUGIN_URL', untrailingslashit(plugins_url('', __FILE__)));
-define('SLN_VERSION', '10.31.15');
+define('SLN_VERSION', '10.31.17');
 define('SLN_STORE_URL', 'https://salonbookingsystem.com');
 define('SLN_PRICING_URL', 'https://www.salonbookingsystem.com/plugin-pricing-2/');
 define('SLN_AUTHOR', 'Salon Booking');
@@ -185,6 +185,24 @@ add_action(
 		);
 
 		load_plugin_textdomain( 'salon-booking-system', false, basename( SLN_PLUGIN_DIR ) . '/languages' );
+
+		// WordPress prefers the language pack in wp-content/languages/plugins/ (from
+		// translate.wordpress.org) and only falls back to the plugin's languages/
+		// folder when there is none. That pack lags behind the plugin, so new strings
+		// stayed in English. Load the bundled translation first, so it wins, and the
+		// language pack after it, so it still fills any string the bundled file lacks.
+		$sln_locale  = apply_filters( 'plugin_locale', determine_locale(), 'salon-booking-system' );
+		$sln_bundled = SLN_PLUGIN_DIR . '/languages/salon-booking-system-' . $sln_locale . '.mo';
+		if ( is_readable( $sln_bundled ) ) {
+			if ( is_textdomain_loaded( 'salon-booking-system' ) ) {
+				unload_textdomain( 'salon-booking-system' );
+			}
+			load_textdomain( 'salon-booking-system', $sln_bundled );
+			$sln_pack = WP_LANG_DIR . '/plugins/salon-booking-system-' . $sln_locale . '.mo';
+			if ( is_readable( $sln_pack ) ) {
+				load_textdomain( 'salon-booking-system', $sln_pack );
+			}
+		}
 	},
 	0
 );

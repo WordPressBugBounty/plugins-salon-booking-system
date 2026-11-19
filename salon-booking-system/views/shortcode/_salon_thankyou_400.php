@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
                 <p><?php echo sprintf(
                         // translators: %s will be replaced by the number of seconds
 		                esc_html__('You\'ll be redirected in %s seconds', 'salon-booking-system'), '<span class="sln-go-to-thankyou-number"></span>') ?></p>
-                <a id="sln-go-to-thankyou"  href="<?php echo $goToThankyou ?>" class="sln-btn sln-btn--emphasis sln-btn--medium sln-btn--fullwidth hide"></a>
+                <a id="sln-go-to-thankyou"  href="<?php echo esc_url($goToThankyou) ?>" class="sln-btn sln-btn--emphasis sln-btn--medium sln-btn--fullwidth hide"></a>
             </div>
             <?php endif; ?>
             <?php

@@ -12,7 +12,7 @@ $transactionFee = SLN_Helper_TransactionFee::getFee($booking->getToPayAmount(fal
 	<?php echo sprintf(
         // translators: %s will be replaced by the number of transaction fee
         esc_html__('A transaction fee of %s will be applied', 'salon-booking-system'),
-	    '<strong>'.$plugin->format()->money($transactionFee, false, false, true).'</strong>'
+	    '<strong>'.esc_html($plugin->format()->money($transactionFee, false, false, true)).'</strong>'
 	) ?>
     </div>
 <?php endif; ?>

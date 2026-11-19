@@ -50,6 +50,34 @@ class SLN_Action_Update
         return $rollbacks;
     }
 
+    const AVAILABILITY_CACHE_VERSION_OPTION = 'sln_availability_cache_version';
+
+    /**
+     * Rebuild the saved availability (salon_cache free_slots / full days) once
+     * after the plugin is updated.
+     *
+     * A saved day is otherwise only rebuilt when one of its bookings or a rule
+     * changes, so days written by an older version with a cache bug keep offering
+     * booked hours forever after the fix ships. Runs on shutdown so the admin page
+     * that triggers it is not delayed.
+     */
+    private function maybeRebuildAvailabilityCache()
+    {
+        if (!defined('SLN_VERSION') || get_option(self::AVAILABILITY_CACHE_VERSION_OPTION) === SLN_VERSION) {
+            return;
+        }
+        update_option(self::AVAILABILITY_CACHE_VERSION_OPTION, SLN_VERSION, false);
+
+        $plugin = $this->plugin;
+        add_action('shutdown', function () use ($plugin) {
+            try {
+                $plugin->getBookingCache()->refreshAll();
+            } catch (Exception $e) {
+                SLN_Plugin::addLog('[Cache Invalidation] post-update availability rebuild failed: ' . $e->getMessage());
+            }
+        });
+    }
+
     public function __construct(SLN_Plugin $plugin)
     {
         $this->plugin = $plugin;
@@ -65,6 +93,8 @@ class SLN_Action_Update
             $this->rollback();
         }
         
+        $this->maybeRebuildAvailabilityCache();
+
         $s = $this->plugin->getSettings();
         $max = max(array_keys(self::getDbUpdates()));
         $version = $s->getDbVersion();

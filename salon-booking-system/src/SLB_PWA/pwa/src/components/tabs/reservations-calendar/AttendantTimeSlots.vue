@@ -33,10 +33,15 @@
 
             <template v-else>
               <template v-if="isSlotLockedForAttendant(timeslot, getNextTimeslot(index), attendant.id)">
-                <div
-                    class="slot-actions slot-actions--locked"
-                    v-if="isSlotCenterOfLock(timeslot, attendant.id) && isSlotManuallyLockable(timeslot, attendant.id)">
-                  <button @click.stop="unlockSlot(timeslot, attendant, index)" class="unlock-button">
+                <!-- Locked slots keep "+": the broken rules are confirmed when saving. -->
+                <div class="slot-actions slot-actions--locked">
+                  <button @click.stop="addBooking(timeslot, attendant)"
+                          class="add-button">
+                    <font-awesome-icon icon="fa-solid fa-circle-plus"/>
+                  </button>
+                  <button
+                      v-if="isSlotCenterOfLock(timeslot, attendant.id) && isSlotManuallyLockable(timeslot, attendant.id)"
+                      @click.stop="unlockSlot(timeslot, attendant, index)" class="unlock-button">
                     <font-awesome-icon icon="fa-solid fa-lock"/>
                   </button>
                 </div>
@@ -435,18 +440,10 @@ export default {
         this.processingSlots.delete(slotKey);
       }
     },
+    // eslint-disable-next-line no-unused-vars
     handleSlotClick(timeslot, attendant, index) {
-      // check if slot can be clicked
-      const slotLocked = this.isSlotLockedForAttendant(timeslot, this.getNextTimeslot(index), attendant.id);
-      const lockedByAssistant = this.lockedTimeslots.some(slot =>
-          slot.assistant_id === attendant.id &&
-          slot.from_date === this.getFormattedDate() &&
-          this.getTimeInMinutes(timeslot) >= this.getTimeInMinutes(slot.from_time) &&
-          this.getTimeInMinutes(timeslot) < this.getTimeInMinutes(slot.to_time)
-      );
-
-      // if locked by salon but not assistant, do nothing
-      if (slotLocked && !lockedByAssistant) return;
+      // Locked slots can be selected too, to add a booking over the lock: the
+      // broken rules are confirmed in the "Save anyway" modal when saving.
 
       // toggle active slot
       const slotId = `${attendant.id}-${timeslot}`;
@@ -894,6 +891,17 @@ export default {
 
 .time-slot--active .slot-actions,
 .slot-actions--locked {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* On a locked slot the unlock button is always shown, "+" only once the slot is selected. */
+.slot-actions--locked .add-button {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.time-slot--active .slot-actions--locked .add-button {
   opacity: 1;
   pointer-events: auto;
 }

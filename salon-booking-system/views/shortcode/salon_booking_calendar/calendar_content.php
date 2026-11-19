@@ -80,19 +80,19 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
                             $count  = count($events);
                         ?>
                         <div class="sbc-day<?php echo $dayIndex >= $data['page_size'] ? ' sbc-day--hidden' : ''; ?>"
-                             data-day-index="<?php echo $dayIndex; ?>"
+                             data-day-index="<?php echo esc_attr($dayIndex); ?>"
                         >
                             <div class="sbc-day-header">
                                 <div class="sbc-day-name-row">
                                     <span class="sbc-day-name">
-                                        <?php echo SLN_TimeFunc::translateDate('l', $datetime->getTimestamp(), $datetime->getTimezone()); ?>
+                                        <?php echo esc_html(SLN_TimeFunc::translateDate('l', $datetime->getTimestamp(), $datetime->getTimezone())); ?>
                                     </span>
                                     <span class="sbc-count<?php echo $count === 0 ? ' sbc-count--zero' : ''; ?>">
-                                        <?php echo $count; ?>
+                                        <?php echo esc_html($count); ?>
                                     </span>
                                 </div>
                                 <span class="sbc-day-date">
-                                    <?php echo SLN_TimeFunc::translateDate('F d, Y', $datetime->getTimestamp(), $datetime->getTimezone()); ?>
+                                    <?php echo esc_html(SLN_TimeFunc::translateDate('F d, Y', $datetime->getTimestamp(), $datetime->getTimezone())); ?>
                                 </span>
                             </div>
 

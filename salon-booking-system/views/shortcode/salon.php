@@ -32,7 +32,7 @@ window.SLN_BOOKING_CLIENT = {
 };
 </script>
 
-<div id="sln-salon-booking" class="sln-shortcode sln-is-initializing <?php echo $class_salon ?>"
+<div id="sln-salon-booking" class="sln-shortcode sln-is-initializing <?php echo esc_attr($class_salon) ?>"
      data-client-id="<?php echo esc_attr($clientId); ?>"
      data-storage="<?php echo esc_attr($storageStrategy); ?>">
     <div class="sln-init-loader" aria-hidden="true">
@@ -40,7 +40,7 @@ window.SLN_BOOKING_CLIENT = {
             <div class="sln-loader">Loading...</div>
         </div>
     </div>
-    <div id="sln-salon-booking__content" class="<?php echo $class_salon_content ?>">
+    <div id="sln-salon-booking__content" class="<?php echo esc_attr($class_salon_content) ?>">
         <?php
         if ($bookingMyAccountPageId && !$plugin->getSettings()->get('enabled_force_guest_checkout')) {
             $accountUrl  = get_permalink($bookingMyAccountPageId);

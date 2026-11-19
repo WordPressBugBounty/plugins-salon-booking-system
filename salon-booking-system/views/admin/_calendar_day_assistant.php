@@ -16,6 +16,7 @@ $minutes = ($hoursParts[0] * 60) + $hoursParts[1];
 <div class="day-event-item__calendar-day__header"  style="display: flex;" data-checkserv="<?php echo $borderbtn; ?>">
 	<span class="day-event-item__booking_id"  style="margin-right: 0.5rem;" ><?php echo $booking->getId() ?></span>
 	<span class="day-event-item__customer" ><div class="day-event-item__customer-name"><?php echo $booking->getDisplayName() ?></div>
+	<?php include SLN_PLUGIN_DIR . '/views/admin/_calendar_forced_badge.php'; ?>
 	<i class="sln-btn--icon sln-icon--checkmark <?php if (!$booking->getOnProcess()) { echo "hide"; }?>" ></i>
 	</span>
 	<span class="sln-event-header-more-icon sln-event-header-more-icon-vertical" style="margin-left: auto;" data-tooltip-id='<?php echo $booking->getId() ?>' ></span>

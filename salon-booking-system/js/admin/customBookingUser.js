@@ -4,6 +4,7 @@ var sln_customer_fields;
 jQuery(function ($) {
 	if ($(".sln-booking-user-field").length) {
 		sln_prepareToValidatingBooking($);
+		sln_initAvailabilityOverride($);
 	}
 	if ($("#sln_booking-details").length) {
 		sln_adminDate($);
@@ -310,6 +311,210 @@ function sln_validateEmail(email) {
 function sln_prepareToValidatingBooking($) {
 	var form = $(".sln-booking-user-field").closest("form");
 	$(form).on("submit", sln_validateBooking);
+}
+
+/**
+ * Availability override: before the editor submits, ask the server which
+ * availability rules the booking breaks. If any, show them in a modal; the user
+ * saves anyway (administrators and salon staff) or goes back to edit. The
+ * confirmation sent with the form is the signature of the list shown.
+ */
+var sln_availabilityConfirmed = false;
+var sln_availabilitySubmitter = null;
+
+function sln_initAvailabilityOverride($) {
+	var $form = $(".sln-booking-user-field").closest("form");
+	var cfg =
+		typeof salonCustomBookingUser !== "undefined"
+			? salonCustomBookingUser.availability_override
+			: null;
+	if (!$form.length || !cfg) {
+		return;
+	}
+
+	var $field = $form.find('input[name="' + cfg.field + '"]');
+	if (!$field.length) {
+		$field = $('<input type="hidden">').attr("name", cfg.field).appendTo($form);
+	}
+
+	$form.on("click", ':submit', function () {
+		sln_availabilitySubmitter = this;
+	});
+
+	$form.on("submit", function (e) {
+		if (e.isDefaultPrevented()) {
+			return;
+		}
+		if (sln_availabilityConfirmed) {
+			sln_availabilityConfirmed = false;
+			sln_notifyParentSubmitting();
+			return;
+		}
+		e.preventDefault();
+
+		var submitter = sln_availabilitySubmitter;
+		var proceed = function (signature) {
+			$field.val(signature || "");
+			sln_availabilityConfirmed = true;
+			if (submitter && document.body.contains(submitter)) {
+				$(submitter).trigger("click");
+			} else {
+				$form.trigger("submit");
+			}
+		};
+
+		$.ajax({
+			url: salon.ajax_url,
+			method: "POST",
+			dataType: "json",
+			data:
+				$form.serialize() +
+				"&action=salon&method=CheckBookingAvailability&security=" +
+				salon.ajax_nonce,
+		})
+			.done(function (data) {
+				if (!data || !data.success || !data.violations || !data.violations.length) {
+					proceed("");
+					return;
+				}
+				sln_showAvailabilityModal($, data, cfg, function () {
+					proceed(data.signature);
+				});
+			})
+			.fail(function () {
+				// The server checks again on save and refuses rules nobody confirmed.
+				proceed("");
+			});
+	});
+}
+
+function sln_notifyParentSubmitting() {
+	try {
+		if (
+			window.parent &&
+			window.parent !== window &&
+			typeof window.parent.sln_onBookingEditorSubmitting === "function"
+		) {
+			window.parent.sln_onBookingEditorSubmitting();
+		}
+	} catch (e) {}
+}
+
+function sln_escapeHtml(text) {
+	return String(text === undefined || text === null ? "" : text)
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#039;");
+}
+
+function sln_showAvailabilityModal($, data, cfg, onConfirm) {
+	sln_injectAvailabilityModalStyles();
+	$(".sln-avo").remove();
+
+	var count = data.violations.length;
+	var title =
+		count === 1 ? cfg.title_one : cfg.title_many.replace("%d", count);
+	var items = data.violations
+		.map(function (v) {
+			return (
+				'<li class="sln-avo__item sln-avo__item--' +
+				sln_escapeHtml(v.code) +
+				'"><span class="sln-avo__rule">' +
+				sln_escapeHtml(v.title) +
+				'</span><span class="sln-avo__msg">' +
+				sln_escapeHtml(v.message) +
+				"</span></li>"
+			);
+		})
+		.join("");
+
+	var footer = data.can_force
+		? '<p class="sln-avo__note">' +
+		  sln_escapeHtml(cfg.history) +
+		  '</p><div class="sln-avo__actions"><button type="button" class="sln-btn sln-btn--nu sln-btn--nu--lowhemph sln-btn--big" data-avo="back">' +
+		  sln_escapeHtml(cfg.back) +
+		  '</button><button type="button" class="sln-btn sln-btn--nu sln-btn--big sln-avo__force" data-avo="save">' +
+		  sln_escapeHtml(cfg.save) +
+		  "</button></div>"
+		: '<p class="sln-avo__note sln-avo__note--block">' +
+		  sln_escapeHtml(cfg.cannot_force) +
+		  '</p><div class="sln-avo__actions"><button type="button" class="sln-btn sln-btn--nu sln-btn--nu--highemph sln-btn--big" data-avo="back">' +
+		  sln_escapeHtml(cfg.back) +
+		  "</button></div>";
+
+	var $modal = $(
+		'<div class="sln-avo" role="dialog" aria-modal="true" aria-labelledby="sln-avo-title">' +
+			'<div class="sln-avo__box">' +
+			'<div class="sln-avo__head"><span class="sln-avo__icon" aria-hidden="true">!</span><div>' +
+			'<h2 class="sln-avo__title" id="sln-avo-title">' +
+			sln_escapeHtml(title) +
+			"</h2>" +
+			(data.summary
+				? '<p class="sln-avo__summary">' + sln_escapeHtml(data.summary) + "</p>"
+				: "") +
+			'</div><button type="button" class="sln-avo__close" data-avo="back" aria-label="' +
+			sln_escapeHtml(cfg.close) +
+			'">&times;</button></div>' +
+			'<ul class="sln-avo__list">' +
+			items +
+			"</ul>" +
+			footer +
+			"</div></div>"
+	);
+
+	var close = function () {
+		$(document).off("keydown.slnavo");
+		$modal.remove();
+	};
+	$modal.on("click", '[data-avo="back"]', close);
+	$modal.on("click", '[data-avo="save"]', function () {
+		close();
+		onConfirm();
+	});
+	$modal.on("click", function (e) {
+		if (e.target === this) {
+			close();
+		}
+	});
+	$(document).on("keydown.slnavo", function (e) {
+		if (e.key === "Escape") {
+			close();
+		}
+	});
+
+	$("body").append($modal);
+	$modal.find('[data-avo="back"]').last().trigger("focus");
+}
+
+function sln_injectAvailabilityModalStyles() {
+	if (document.getElementById("sln-avo-styles")) {
+		return;
+	}
+	var css =
+		".sln-avo{position:fixed;inset:0;z-index:200000;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px}" +
+		".sln-avo__box{background:#fff;border-radius:12px;max-width:560px;width:100%;max-height:90vh;overflow:auto;padding:20px 24px;box-sizing:border-box;font-size:14px;color:#1d2327}" +
+		".sln-avo__head{display:flex;gap:12px;align-items:flex-start;margin-bottom:8px}" +
+		".sln-avo__head>div{flex:1}" +
+		".sln-avo__icon{flex:0 0 36px;height:36px;border-radius:50%;background:#fcf3dc;color:#8a5a00;font-weight:700;font-size:20px;display:flex;align-items:center;justify-content:center}" +
+		".sln-avo__title{font-size:17px;font-weight:600;margin:6px 0 0;padding:0;line-height:1.3}" +
+		".sln-avo__summary{margin:4px 0 0;color:#50575e;font-size:13px}" +
+		".sln-avo__close{background:none;border:0;font-size:22px;line-height:1;color:#8c8f94;cursor:pointer;padding:4px}" +
+		".sln-avo__list{list-style:none;margin:8px 0 0;padding:0}" +
+		".sln-avo__item{display:flex;flex-direction:column;gap:2px;padding:12px 0 12px 14px;border-top:1px solid #e5e5e5;position:relative}" +
+		".sln-avo__item:before{content:'';position:absolute;left:0;top:18px;width:6px;height:6px;border-radius:50%;background:#d98e04}" +
+		".sln-avo__rule{font-size:12px;font-weight:600;color:#8a5a00}" +
+		".sln-avo__msg{line-height:1.5}" +
+		".sln-avo__note{margin:8px 0 0;padding:10px 12px;background:#f6f7f7;border-radius:8px;color:#50575e;font-size:12px}" +
+		".sln-avo__note--block{background:#fcf0f1;color:#8a2424}" +
+		".sln-avo__actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;flex-wrap:wrap}" +
+		".sln-avo__actions .sln-btn{margin:0}" +
+		".sln-avo__force{background:#f0b849 !important;border-color:#f0b849 !important;color:#1d2327 !important}";
+	var style = document.createElement("style");
+	style.id = "sln-avo-styles";
+	style.appendChild(document.createTextNode(css));
+	document.head.appendChild(style);
 }
 
 function sln_validateBooking() {
@@ -797,11 +1002,11 @@ function sln_adminDate($) {
 			method: "POST",
 			dataType: "json",
 			success: function (data) {
+			// An unavailable date or time never disables SAVE: the broken rules are
+			// listed in the "Save anyway" modal when the booking is saved.
 			if (firstValidate) {
 				firstValidate = false;
-				if (data.success) {
-					window.parent.show_btn_save();
-				}
+				window.parent.show_btn_save();
 				$("#sln-notifications").html("").fadeIn(500);
 			} else if (!data.success) {
 					// Show validation errors
@@ -813,14 +1018,7 @@ function sln_adminDate($) {
 						.html("")
 						.append(alertBox)
 						.fadeIn(500);
-					
-					// For admin/staff: show warnings but keep SAVE button active
-					// For others: disable SAVE button
-					if (!data.can_override_validation) {
-						window.parent.close_btn_save();
-					} else {
-						window.parent.show_btn_save();
-					}
+					window.parent.show_btn_save();
 				} else {
 					window.parent.show_btn_save();
 					$("#sln-notifications")
@@ -2080,11 +2278,6 @@ function sln_getServicesTotalDuration() {
 }
 
 function sln_checkServicesTotalDuration() {
-	const intervals = $("#salon-step-date").data("intervals");
-	const interval = intervals["interval"];
-	const workTimes = intervals["workTimes"];
-	const workTimesTotalDurationMinutes =
-		Object.values(workTimes).length * interval;
 	const servicesTotalDurationMinutes = sln_getServicesTotalDuration();
 
 	if (servicesTotalDurationMinutes <= 0) {
@@ -2094,12 +2287,8 @@ function sln_checkServicesTotalDuration() {
 		$("#sln-alert-no-duration").addClass("hide");
 	}
 
-	if (servicesTotalDurationMinutes > workTimesTotalDurationMinutes) {
-		sln_toggleSavePost(true);
-		$("#sln-alert-duration-exceeded").removeClass("hide");
-	} else {
-		$("#sln-alert-duration-exceeded").addClass("hide");
-	}
+	// Services longer than the working hours are not blocked here: the booking is
+	// saved after confirming the "Not enough time" rule in the availability modal.
 }
 
 function sln_toggleSavePost(isDisabled) {

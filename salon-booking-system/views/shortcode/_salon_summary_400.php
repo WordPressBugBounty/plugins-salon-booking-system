@@ -8,7 +8,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
                 <div class="sln-summary__recap sln-list">
                     <div class="sln-summary-row sln-list__item sln-list__item--db">
                         <div class="sln-data-val">
-                            <strong><?php echo $plugin->format()->date($datetime); ?> / <?php echo $plugin->format()->time($datetime) ?></strong>
+                            <strong><?php echo esc_html($plugin->format()->date($datetime)); ?> / <?php echo esc_html($plugin->format()->time($datetime)) ?></strong>
                         </div>
                         <div class="sln-data-desc">
                             <?php
@@ -46,27 +46,27 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
                                         <?php if($showPrices){?>
                                             <div class="sln-summary__list__price">
                                                 <?php $servicePrice = $bookingService->getPrice() ?>
-                                                <?php echo $plugin->format()->moneyFormatted($servicePrice) ?>
+                                                <?php echo wp_kses_post($plugin->format()->moneyFormatted($servicePrice)) ?>
                                             </div>
                                         <?php } ?>
                                         <div class="sln-summary__list__info">
                                             <?php
-                                                echo ' <span class="sln-summary__list__name">' . $service->getName() . '</span>';
+                                                echo ' <span class="sln-summary__list__name">' . esc_html($service->getName()) . '</span>';
                                                 if (!empty($service->getServiceCategory())) {
-                                                    echo ' <span class="sln-summary__list__secondary">(' . $service->getServiceCategory()->getName() . ')</span>';
+                                                    echo ' <span class="sln-summary__list__secondary">(' . esc_html($service->getServiceCategory()->getName()) . ')</span>';
                                                 }
                                             ?>
                                             <?php if (isset($bb->getCountServices()[$service->getId()]) && $bb->getCountServices()[$service->getId()] > 1): ?>
-                                                 <?php echo ' <span class="sln-summary__list__secondary">x ' . $bb->getCountServices()[$service->getId()] . '</span>' ?>
+                                                 <?php echo ' <span class="sln-summary__list__secondary">x ' . esc_html($bb->getCountServices()[$service->getId()]) . '</span>' ?>
                                             <?php endif; ?>
                                          </div>
                                          <?php if(!empty($attendant)): ?>
                                         <div class="sln-summary__list__attendant">
                                             <?php if(!is_array($attendant)): ?>
-                                                <span><?php echo $attendant->getName() ?></span>
+                                                <span><?php echo esc_html($attendant->getName()) ?></span>
                                             <?php else:
                                                 foreach($attendant as $att):?>
-                                                    <span><?php echo $att->getName(). ' ' ?></span>
+                                                    <span><?php echo esc_html($att->getName()). ' ' ?></span>
                                                 <?php endforeach; ?>
                                             <?php endif; ?>
                                         </div>
@@ -106,7 +106,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
                                         $names = array_merge($names, SLN_Wrapper_Attendant::getArrayAttendantsValue('getName', $att));
                                     }
                                 }
-                                echo implode(', ', $names);?>
+                                echo esc_html(implode(', ', $names));?>
                             </div>
                             <div class="sln-data-desc">
                                 <?php
@@ -129,7 +129,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
                     <?php if($settings->get('pay_transaction_fee_amount')): ?>
                         <div class="sln-summary-row sln-summary-row--transaction-fee sln-list__item sln-list__item--db">
                             <div class="sln-data-val">
-                                <span id="sln_transaction_fee_value"><?php echo $plugin->format()->money(SLN_Helper_TransactionFee::getFee($bb->getDeposit() > 0 ? $bb->getDeposit() : $bb->getAmount()), false, false, true); ?></span>
+                                <span id="sln_transaction_fee_value"><?php echo esc_html($plugin->format()->money(SLN_Helper_TransactionFee::getFee($bb->getDeposit() > 0 ? $bb->getDeposit() : $bb->getAmount()), false, false, true)); ?></span>
                             </div>
                             <div class="sln-data-desc">
                                 <?php
@@ -158,7 +158,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
                     <?php if($showPrices){?>
                         <div class="sln-summary-row sln-list__item sln-list__item--db">
                             <div class="sln-data-val sln-total-price">
-                                <?php echo $plugin->format()->moneyFormatted($bb->getAmount(true)) ?>
+                                <?php echo wp_kses_post($plugin->format()->moneyFormatted($bb->getAmount(true))) ?>
                             </div>
                             <div class="sln-data-desc">
                                 <?php esc_html_e('Total amount', 'salon-booking-system') ?>
@@ -241,7 +241,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
     </div>
     <div class="sln-summary__terms">
          <h5><?php esc_html_e('Terms & Conditions','salon-booking-system')?></h5>
-        <p><?php echo $plugin->getSettings()->get('gen_timetable')
+        <p><?php echo wp_kses_post($plugin->getSettings()->get('gen_timetable'))
             /*_e(
                 'In case of delay of arrival. we will wait a maximum of 10 minutes from booking time. Then we will release your reservation',
                 'salon-booking-system'

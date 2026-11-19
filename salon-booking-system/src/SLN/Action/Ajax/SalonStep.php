@@ -83,6 +83,13 @@ class SLN_Action_Ajax_SalonStep extends SLN_Action_Ajax_Abstract
 
         SLN_Plugin::addLog(sprintf('[Wizard] Ajax SalonStep request step="%s" mode="%s"', $requestedStep ? $requestedStep : '(default)', $mode ? $mode : '(none)'));
 
+        // A customer can log in or register during this request (details step).
+        // wp_signon()/wp_set_auth_cookie() only send the cookie header, so
+        // wp_get_session_token() would still read the old $_COOKIE and the nonce
+        // returned below would be built for a session the browser no longer has.
+        // The next request (e.g. "Pay") would then fail with "session expired".
+        add_action('set_logged_in_cookie', array($this, 'syncLoggedInCookie'));
+
         try {
             $ret = do_shortcode('[' . SLN_Shortcode_Salon::NAME . '][/' . SLN_Shortcode_Salon::NAME . ']');
             
@@ -126,6 +133,17 @@ class SLN_Action_Ajax_SalonStep extends SLN_Action_Ajax_Abstract
         return $ret;
     }
     
+    /**
+     * Keep $_COOKIE in sync with a login cookie set during this request, so
+     * wp_create_nonce() uses the new session token.
+     *
+     * @param string $loggedInCookie
+     */
+    public function syncLoggedInCookie($loggedInCookie)
+    {
+        $_COOKIE[LOGGED_IN_COOKIE] = $loggedInCookie;
+    }
+
     /**
      * Get debug information for troubleshooting
      * Only called when sln_debug=1 is in URL

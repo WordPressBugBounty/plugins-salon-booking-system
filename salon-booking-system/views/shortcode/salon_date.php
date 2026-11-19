@@ -11,7 +11,7 @@ if ($plugin->getSettings()->isDisabled()) {
     $message = $plugin->getSettings()->getDisabledMessage();
     ?>
     <div class="sln-alert sln-alert--paddingleft sln-alert--problem">
-        <?php echo empty($message) ? esc_html__('On-line booking is disabled', 'salon-booking-system') : $message ?>
+        <?php echo empty($message) ? esc_html__('On-line booking is disabled', 'salon-booking-system') : wp_kses_post($message) ?>
     </div>
     <?php
 } else {

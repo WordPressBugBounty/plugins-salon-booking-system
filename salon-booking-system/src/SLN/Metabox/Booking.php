@@ -2,11 +2,11 @@
 // phpcs:ignoreFile WordPress.Security.EscapeOutput.OutputNotEscaped
 class SLN_Metabox_Booking extends SLN_Metabox_Abstract
 {
-    /** Transient prefix for the "saved over a locked slot" admin warning. */
-    const LOCK_OVERRIDE_NOTICE_KEY = 'sln_booking_lock_override_';
-
-    /** Transient prefix for the "saved over an assistant conflict" admin warning. */
-    const ASSISTANT_CONFLICT_NOTICE_KEY = 'sln_booking_assistant_conflict_';
+    /**
+     * Editor field carrying the signature of the availability violations the user
+     * confirmed in the "Save anyway" modal (see SLN_Helper_AvailabilityViolations).
+     */
+    const AVAILABILITY_OVERRIDE_FIELD = '_sln_availability_override';
 
     /** @var  SLN_Wrapper_Booking */
     private $booking;
@@ -52,8 +52,6 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
         add_action('trashed_post', array($this, 'trashed_post'), 10, 1);
         add_filter('wp_untrash_post_status', array($this, 'wp_untrash_post_status'), 10, 3);
         add_action('admin_notices', array($this, 'show_booking_trashed_notice'));
-        add_action('admin_notices', array($this, 'show_daily_lock_override_notice'));
-        add_action('admin_notices', array($this, 'show_assistant_conflict_notice'));
         add_filter('redirect_post_location', array($this, 'redirect_post_location'), 10, 2);
 
 	if (!isset($_GET['mode']) || $_GET['mode'] !== 'sln_editor') {
@@ -227,21 +225,59 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
             $is_modified = true;
         }
 
-        // The salon staff can always book: an assistant already busy at that time is
-        // reported after the save, never a reason to refuse it.
-        $assistantConflicts = $this->getAssistantConflictsBeforeSave($post_id, $this->submittedServices);
-        if (!empty($assistantConflicts)) {
-            SLN_Plugin::addLog(sprintf(
-                '[Metabox_Booking] Booking #%d saved over assistant conflicts by user #%d: %s',
-                $post_id,
-                get_current_user_id(),
-                implode(' ', $assistantConflicts)
-            ));
-            set_transient(
-                self::ASSISTANT_CONFLICT_NOTICE_KEY . get_current_user_id(),
-                array_values($assistantConflicts),
-                MINUTE_IN_SECONDS
-            );
+        // Availability rules never stop the salon staff: the editor shows the broken
+        // rules in a modal before submitting and the user confirms them ("Save anyway").
+        // Here the save goes through for users who can force it, and the forced rules
+        // are recorded on the booking. Other users are refused with the same list.
+        // Only for the booking editor form: without its nonce the metabox fields are
+        // not saved at all (SLN_Metabox_Helper::isValidRequest).
+        $editorNonceField = $this->getPostType() . '_details_meta_nonce';
+        $isEditorRequest  = isset($_POST[$editorNonceField]) && wp_verify_nonce(
+            sanitize_text_field(wp_unslash($_POST[$editorNonceField])),
+            $this->getPostType()
+        );
+        // Lock the start time until the booking is saved: a front-end checkout (or a PWA
+        // save) for the same slot waits and then sees this booking, and this check sees
+        // any booking saved for the slot while the editor was open.
+        if ($isEditorRequest && !SLN_Helper_SlotLock::acquire(SLN_Helper_SlotLock::key(self::getEditorStartsAt($_POST)))) {
+            $this->addError(__('Another booking for this time is being saved right now, so your changes were not saved. Please try again.', 'salon-booking-system'));
+            $this->refuseAvailabilitySave($post_id);
+
+            return;
+        }
+        $availabilityViolations = $isEditorRequest
+            ? self::getEditorAvailabilityViolations($post_id, $this->submittedServices, $_POST)
+            : null;
+        if (!empty($availabilityViolations)) {
+            if (!SLN_Helper_AvailabilityViolations::currentUserCanForce()) {
+                $this->addError(__('This booking breaks these availability rules and you can\'t save it anyway:', 'salon-booking-system'));
+                foreach ($availabilityViolations as $violation) {
+                    $this->addError($violation['title'].': '.$violation['message']);
+                }
+                $this->refuseAvailabilitySave($post_id);
+
+                return;
+            }
+            $token = isset($_POST[self::AVAILABILITY_OVERRIDE_FIELD]) ? sanitize_text_field(wp_unslash($_POST[self::AVAILABILITY_OVERRIDE_FIELD])) : '';
+            if (!SLN_Helper_AvailabilityViolations::isConfirmed($availabilityViolations, $token)) {
+                // The rules broken now are not the ones the user confirmed (or the user saw
+                // none): availability changed after the pre-save check, e.g. a customer booked
+                // the last free spot in the meantime. Never force a booking over rules the
+                // user didn't see: refuse, list them, and let the user confirm on the next save.
+                SLN_Plugin::addLog(sprintf(
+                    '[Metabox_Booking] Booking #%d not saved: availability changed after the pre-save check (%s)',
+                    $post_id,
+                    implode(', ', wp_list_pluck($availabilityViolations, 'code'))
+                ));
+                $this->addError(__('Availability changed while you were editing this booking, so your changes were not saved. It now breaks these rules:', 'salon-booking-system'));
+                foreach ($availabilityViolations as $violation) {
+                    $this->addError($violation['title'].': '.$violation['message']);
+                }
+                $this->addError(__('Make your changes again and save: you will be asked to confirm these rules before the booking is saved.', 'salon-booking-system'));
+                $this->refuseAvailabilitySave($post_id);
+
+                return;
+            }
         }
 
         $old_booking = $this->getPlugin()->createFromPost($post_id);
@@ -281,6 +317,9 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
         if (isset($_SESSION['_sln_booking_user_errors'])) {
             $this->restoreStatusAfterRefusedSave($post_id);
             return;
+        }
+        if (is_array($availabilityViolations)) {
+            SLN_Helper_AvailabilityViolations::recordOverride($post_id, $availabilityViolations);
         }
         $createUser = isset($_POST['_sln_booking_createuser'])  ? boolval($_POST['_sln_booking_createuser']) : false;
         if ($createUser) {
@@ -524,7 +563,24 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
 
     private function processServicesSubmission($data)
     {
+        $services = self::buildServicesFromSubmission($data);
+        $this->submittedServices = $services;
+        return $services;
+    }
+
+    /**
+     * Service lines posted by the booking editor (_sln_booking), in the format
+     * SLN_Wrapper_Booking_Services::build() expects.
+     *
+     * @param array $data
+     *
+     * @return array
+     */
+    public static function buildServicesFromSubmission($data)
+    {
+        $plugin   = SLN_Plugin::getInstance();
         $services = array();
+        $data     = is_array($data) ? $data : array();
         $services_ids = array_map('intval', isset($data['services']) ? (array) $data['services'] : array());
         if($services_ids)
         foreach ($services_ids as $key => $serviceId) {
@@ -534,14 +590,15 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
             $duration      = SLN_Func::convertToHoursMins($data['duration'][$serviceId]);
             $breakDuration = SLN_Func::convertToHoursMins($data['break_duration'][$serviceId]);
 
+            $attendant = 0;
             if(isset($data['attendants'])){
                 $attendant = $data['attendants'][$serviceId];
             }elseif(isset($data['attendant'])){
                 $attendant = $data['attendant'];
             }
-            $service = $this->getPlugin()->getInstance()->createService($serviceId);
+            $service = $plugin->createService($serviceId);
             $service = apply_filters('sln.booking_services.buildService', $service);
-            if($attendant == 0 && $this->getPlugin()->getSettings()->isAttendantsEnabled() && $service->isAttendantsEnabled()){
+            if($attendant == 0 && $plugin->getSettings()->isAttendantsEnabled() && $service->isAttendantsEnabled()){
                 continue;
             }
             $services[] = array(
@@ -554,7 +611,6 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
                 'resource' => isset($data['services_resources'][$serviceId]) ? $data['services_resources'][$serviceId] : '',
             );
         }
-        $this->submittedServices = $services;
         return $services;
     }
 
@@ -633,6 +689,24 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
     }
 
     /**
+     * Refused save of the editor form: keep a new booking out of the calendar until
+     * it is saved for real, put the previous status back on an existing one.
+     *
+     * @param int $post_id
+     */
+    private function refuseAvailabilitySave($post_id)
+    {
+        if (empty($this->prevStatus) || $this->prevStatus === 'auto-draft') {
+            $this->disabledSavePost = true;
+            wp_update_post(array('ID' => $post_id, 'post_status' => 'auto-draft'));
+            $this->disabledSavePost = false;
+
+            return;
+        }
+        $this->restoreStatusAfterRefusedSave($post_id);
+    }
+
+    /**
      * WordPress has already written the editor's post_status ("publish") when
      * save_post runs; the booking status is only applied at the end of a full save.
      * When the save is refused, put the previous booking status back, otherwise the
@@ -684,57 +758,69 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
     }
 
     /**
-     * Assistants that the booking being saved puts on two bookings at the same time.
-     * Called before parent::save_post(), while the stored booking still holds the
-     * old date, time and services. The conflicts are only reported to the user:
-     * like opening hours, holidays and the booking window, they never block a save
-     * from the booking editor. The check is skipped when date, time and services are
-     * unchanged, so editing the notes or status of a booking doesn't warn again.
+     * Start of the booking posted by the editor (_sln_booking_date / _sln_booking_time,
+     * e.g. "13 Nov 2026", "10:20"), in the WordPress timezone.
      *
-     * @param int   $post_id      The booking post ID.
-     * @param array $servicesData Processed services from processServicesSubmission().
-     * @return string[]  Array of human-readable conflict messages (empty = no conflicts).
+     * @param array $request The editor form ($_POST).
+     *
+     * @return SLN_DateTime|null
      */
-    private function getAssistantConflictsBeforeSave($post_id, array $servicesData)
+    public static function getEditorStartsAt(array $request)
     {
-        // Without the editor's nonce the metabox fields are not saved at all
-        // (SLN_Metabox_Helper::isValidRequest), so there is nothing to guard.
-        $nonceField = $this->getPostType() . '_details_meta_nonce';
-        if (!isset($_POST[$nonceField]) || !wp_verify_nonce(
-                sanitize_text_field(wp_unslash($_POST[$nonceField])),
-                $this->getPostType()
-            )
-        ) {
-            return array();
-        }
-
-        if (empty($_POST['_sln_booking_status'])) {
-            return array();
-        }
-
-        $status = sanitize_text_field(wp_unslash($_POST['_sln_booking_status']));
-        if (in_array($status, SLN_Enum_BookingStatus::$noTimeStatuses, true)) {
-            return array();
-        }
-
-        // The editor posts _sln_booking_date / _sln_booking_time ("13 Nov 2026", "10:20").
-        $dateField = SLN_Metabox_Helper::getFieldName($this->getPostType(), 'date');
-        $timeField = SLN_Metabox_Helper::getFieldName($this->getPostType(), 'time');
-        if (empty($_POST[$dateField]) || empty($_POST[$timeField])) {
-            return array();
+        $postType  = SLN_Plugin::POST_TYPE_BOOKING;
+        $dateField = SLN_Metabox_Helper::getFieldName($postType, 'date');
+        $timeField = SLN_Metabox_Helper::getFieldName($postType, 'time');
+        if (empty($request[$dateField]) || empty($request[$timeField])) {
+            return null;
         }
 
         try {
-            $day  = SLN_Func::filter(sanitize_text_field(wp_unslash($_POST[$dateField])), 'date');
-            $time = SLN_Func::filter(sanitize_text_field(wp_unslash($_POST[$timeField])), 'time');
-            $date = new SLN_DateTime($day . ' ' . $time, SLN_TimeFunc::getWpTimezone());
+            $day  = SLN_Func::filter(sanitize_text_field(wp_unslash($request[$dateField])), 'date');
+            $time = SLN_Func::filter(sanitize_text_field(wp_unslash($request[$timeField])), 'time');
+
+            return new SLN_DateTime($day . ' ' . $time, SLN_TimeFunc::getWpTimezone());
         } catch (Exception $e) {
-            return array();
+            return null;
+        }
+    }
+
+    /**
+     * Availability rules broken by the booking the editor is saving, or null when
+     * there is nothing to check: no services, a status without a time (cancelled...),
+     * or an existing booking whose date, time and services didn't change (editing
+     * the notes or the status of a booking doesn't ask again).
+     *
+     * Used by save_post() and by the editor's pre-save check
+     * (SLN_Action_Ajax_CheckBookingAvailability), so both see the same list.
+     *
+     * @param int   $post_id      The booking post ID.
+     * @param array $servicesData Services as built by buildServicesFromSubmission().
+     * @param array $request      The editor form ($_POST).
+     *
+     * @return array[]|null
+     */
+    public static function getEditorAvailabilityViolations($post_id, array $servicesData, array $request)
+    {
+        $plugin   = SLN_Plugin::getInstance();
+        $postType = SLN_Plugin::POST_TYPE_BOOKING;
+
+        if (empty($servicesData)) {
+            return null;
+        }
+        $status = isset($request['_sln_booking_status']) ? sanitize_text_field(wp_unslash($request['_sln_booking_status'])) : '';
+        if ($status !== '' && in_array($status, SLN_Enum_BookingStatus::$noTimeStatuses, true)) {
+            return null;
         }
 
-        // When editing an existing booking, pass it so that its own occupied
-        // slots are excluded and edits don't block themselves.
-        $currentBooking = $this->getPlugin()->createBooking((int) $post_id);
+        $date = self::getEditorStartsAt($request);
+        if (!$date) {
+            return null;
+        }
+        $day  = $date->format('Y-m-d');
+        $time = $date->format('H:i');
+
+        // When editing an existing booking, pass it so that its own slots are left out.
+        $currentBooking = $plugin->createBooking((int) $post_id);
 
         $storedServices = array();
         foreach ((array) $currentBooking->getMeta('services') as $stored) {
@@ -755,7 +841,7 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
             && $currentBooking->getMeta('time') === $time
             && $storedServices == $submittedServices
         ) {
-            return array();
+            return null;
         }
 
         $bookingServices = SLN_Wrapper_Booking_Services::build(
@@ -765,145 +851,10 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
             $currentBooking->getCountServices()
         );
 
-        $errors = SLN_Helper_Availability::getAttendantOverlapErrors($bookingServices, $currentBooking);
+        $checker = new SLN_Helper_AvailabilityViolations($plugin);
 
-        if ($this->canOverrideDailyLocks()) {
-            $this->flagDailyLockOverride($date, $bookingServices);
-        }
-
-        return $errors;
+        return $checker->check($bookingServices, $currentBooking);
     }
-
-    /**
-     * Whether the current request may save a booking over a day-calendar lock.
-     *
-     * Gated on the booking editor's own nonce rather than is_admin(), which is
-     * also true for front-end admin-ajax submissions: only a form rendered by
-     * this metabox can carry it, so a staff account booking from the public form
-     * stays subject to the locks.
-     *
-     * @return bool
-     */
-    private function canOverrideDailyLocks()
-    {
-        if (!current_user_can('manage_salon')) {
-            return false;
-        }
-
-        $nonceField = $this->getPostType() . '_details_meta_nonce';
-        if (!isset($_POST[$nonceField])) {
-            return false;
-        }
-
-        return (bool) wp_verify_nonce(
-            sanitize_text_field(wp_unslash($_POST[$nonceField])),
-            $this->getPostType()
-        );
-    }
-
-    /**
-     * Queue the "saved over a locked slot" warning when the booking span touches a
-     * manual day-calendar lock. Purely informational — the save already succeeded.
-     *
-     * @param SLN_DateTime                 $date            Booking start.
-     * @param SLN_Wrapper_Booking_Services $bookingServices Services being saved.
-     */
-    private function flagDailyLockOverride(SLN_DateTime $date, SLN_Wrapper_Booking_Services $bookingServices)
-    {
-        $settings   = $this->getPlugin()->getSettings();
-        $dailyLocks = new SLN_Helper_HolidayItems($settings->getDailyHolidayItems());
-        if (!$dailyLocks->toArray()) {
-            return;
-        }
-
-        $endsAt = null;
-        foreach ($bookingServices->getItems() as $bookingService) {
-            $serviceEnd = $bookingService->getEndsAt();
-            if ($serviceEnd && (!$endsAt || $serviceEnd > $endsAt)) {
-                $endsAt = $serviceEnd;
-            }
-        }
-        if (!$endsAt) {
-            return;
-        }
-
-        $interval = max(1, (int) $settings->getInterval());
-        $cursor   = clone $date;
-        while ($cursor < $endsAt) {
-            if (!$dailyLocks->isValidTime($cursor->format('Y-m-d H:i'))) {
-                set_transient(
-                    self::LOCK_OVERRIDE_NOTICE_KEY . get_current_user_id(),
-                    array(
-                        'from' => $this->getPlugin()->format()->datetime($date),
-                        'to'   => $endsAt->format('H:i'),
-                    ),
-                    MINUTE_IN_SECONDS
-                );
-                return;
-            }
-            $cursor->modify('+' . $interval . ' minutes');
-        }
-    }
-
-    /**
-     * Warn staff that the booking they just saved overlaps a slot locked from the
-     * day calendar, so the lock is not silently ignored.
-     */
-    public function show_daily_lock_override_notice()
-    {
-        $screen = get_current_screen();
-        if (!$screen || $screen->id !== SLN_Plugin::POST_TYPE_BOOKING) {
-            return;
-        }
-
-        $transient_key = self::LOCK_OVERRIDE_NOTICE_KEY . get_current_user_id();
-        $notice_data   = get_transient($transient_key);
-        if (!$notice_data || !is_array($notice_data)) {
-            return;
-        }
-        delete_transient($transient_key);
-
-        echo '<div class="notice notice-warning is-dismissible">';
-        echo '<p>';
-        printf(
-            // translators: 1: booking start date and time, 2: booking end time
-            esc_html__('This booking was saved on %1$s - %2$s, over a time slot locked from the calendar.', 'salon-booking-system'),
-            '<strong>' . esc_html($notice_data['from']) . '</strong>',
-            '<strong>' . esc_html($notice_data['to']) . '</strong>'
-        );
-        echo '</p>';
-        echo '</div>';
-    }
-
-
-    /**
-     * Warn staff that the booking they just saved puts an assistant on two
-     * bookings at the same time. The save itself went through.
-     */
-    public function show_assistant_conflict_notice()
-    {
-        $screen = get_current_screen();
-        if (!$screen || $screen->id !== SLN_Plugin::POST_TYPE_BOOKING) {
-            return;
-        }
-
-        $transient_key = self::ASSISTANT_CONFLICT_NOTICE_KEY . get_current_user_id();
-        $conflicts     = get_transient($transient_key);
-        if (!$conflicts || !is_array($conflicts)) {
-            return;
-        }
-        delete_transient($transient_key);
-
-        echo '<div class="notice notice-warning is-dismissible">';
-        echo '<p><strong>' . esc_html__('Booking saved with a possible conflict:', 'salon-booking-system') . '</strong></p>';
-        echo '<ul style="list-style:disc;margin-left:1.5em">';
-        foreach ($conflicts as $conflict) {
-            echo '<li>' . esc_html($conflict) . '</li>';
-        }
-        echo '</ul>';
-        echo '</div>';
-    }
-
 
     protected function enqueueAssets()
     {
@@ -922,6 +873,17 @@ class SLN_Metabox_Booking extends SLN_Metabox_Abstract
             array(
 		'resend_notification_params' => apply_filters('sln_booking_resend_notification_params', array()),
 		'resend_payment_params'	     => apply_filters('sln_booking_resend_payment_params', array()),
+		'availability_override'	     => array(
+		    'field'       => self::AVAILABILITY_OVERRIDE_FIELD,
+		    'title_one'   => __('This booking breaks 1 availability rule', 'salon-booking-system'),
+		    // translators: %d number of broken rules
+		    'title_many'  => __('This booking breaks %d availability rules', 'salon-booking-system'),
+		    'history'     => __('If you save, these exceptions are recorded in the booking history with your name.', 'salon-booking-system'),
+		    'cannot_force'=> __('You can\'t save a booking that breaks these rules. Change the booking or ask an administrator.', 'salon-booking-system'),
+		    'back'        => __('Go back and edit', 'salon-booking-system'),
+		    'save'        => __('Save anyway', 'salon-booking-system'),
+		    'close'       => __('Close', 'salon-booking-system'),
+		),
 	    )
         );
     }

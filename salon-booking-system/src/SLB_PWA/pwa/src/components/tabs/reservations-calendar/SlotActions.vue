@@ -1,7 +1,7 @@
 <template>
   <div class="slot-actions">
+    <!-- Locked slots keep "+": the broken rules are confirmed when saving. -->
     <BookingAdd
-        v-if="!isLocked(timeSlot, getNextSlot())"
         :timeslot="timeSlot"
         :is-available="isAvailable(timeSlot)"
         @add="$emit('add', timeSlot)"

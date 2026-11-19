@@ -12,6 +12,8 @@ class SLN_Action_Ajax_CheckDate extends SLN_Action_Ajax_Abstract
     protected $errors = array();
     protected $duration;
     protected $booking;
+    /** @var bool the requested time failed the live per-hour booking count */
+    protected $rejectedByLiveCheck = false;
 
     public function setDuration(Time $duration){
         $this->duration = $duration;
@@ -88,6 +90,8 @@ class SLN_Action_Ajax_CheckDate extends SLN_Action_Ajax_Abstract
         $this->applyAdminBookingContext();
 
         $this->checkDateTime();
+        $isFromAdmin = isset($_POST['_sln_booking_date']);
+        $this->repairStaleDayCache($isFromAdmin);
         if ($errors = $this->getErrors()) {
             $ret = compact('errors');
         } else {
@@ -126,7 +130,6 @@ class SLN_Action_Ajax_CheckDate extends SLN_Action_Ajax_Abstract
             SLN_Helper_Availability::$perfEnabled = false;
         }
 
-        $isFromAdmin = isset($_POST['_sln_booking_date']);
         if (!$isFromAdmin) {
             $suggestedDate = isset($ret['intervals']['suggestedDate']) ? $ret['intervals']['suggestedDate'] : null;
             $suggestedTime = isset($ret['intervals']['suggestedTime']) ? $ret['intervals']['suggestedTime'] : null;
@@ -353,6 +356,7 @@ class SLN_Action_Ajax_CheckDate extends SLN_Action_Ajax_Abstract
                     )
                 );
             } elseif (!$ah->isValidTime($this->getDateTime())) {
+                $this->rejectedByLiveCheck = true;
                 $this->addError(
                     __(
                         'There are no time slots available for this period - Please select a  different hour',
@@ -361,6 +365,50 @@ class SLN_Action_Ajax_CheckDate extends SLN_Action_Ajax_Abstract
                 );
             }
         }
+    }
+
+    /**
+     * Rebuild the persisted day cache when it offers a time the live check rejects.
+     *
+     * For days after today the offered times come from the saved free_slots
+     * (SLN_Helper_Availability::getCachedTimes()), while checkDateTime() counts
+     * the bookings themselves. When the saved day is out of date (e.g. written by
+     * an older version and never rebuilt) a booked hour stays on offer, the
+     * customer picks it and gets "no time slots available" with the same busy
+     * hour suggested again. Rebuilding the day here lets the intervals returned
+     * by this request drop it and suggest a free time instead.
+     *
+     * Front-end only: the back-end editor computes times with its own booking
+     * context and never reads them from free_slots.
+     */
+    private function repairStaleDayCache($isFromAdmin)
+    {
+        if (!$this->rejectedByLiveCheck || $this->booking || $isFromAdmin) {
+            return;
+        }
+
+        $dateTime = $this->getDateTime();
+        $day      = Date::create($dateTime);
+        $bc       = $this->plugin->getBookingCache();
+        if (!$bc->hasDay($day)) {
+            return;
+        }
+
+        $cached = $bc->getDay($day);
+        $time   = $dateTime->format('H:i');
+        if (empty($cached['free_slots']) || !is_array($cached['free_slots']) || !in_array($time, $cached['free_slots'], true)) {
+            return;
+        }
+
+        SLN_Helper_Availability_Cache::clearDateCache($dateTime);
+        $bc->processDate($day);
+        $bc->save();
+
+        SLN_Plugin::addLog(sprintf(
+            '[Cache Invalidation] Rebuilt stale free_slots for %s: %s was offered but is fully booked',
+            $day->toString(),
+            $time
+        ));
     }
 
     protected function addError($err)

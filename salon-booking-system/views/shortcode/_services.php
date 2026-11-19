@@ -32,7 +32,7 @@ $size = SLN_Enum_ShortcodeStyle::getSize($style);
 ?>
 <?php SLN_Form::fieldText('sln[date]', $bb->getDate(), array('type' => 'hidden')) ?>
 <?php SLN_Form::fieldText('sln[time]', $bb->getTime(), array('type' => 'hidden')) ?>
-<div class="sln-service-list sln-list <?php if ($size == '400') { echo 'sln-list--s'; } ?> <?php echo 'sln-list--' . $size; ?> clearfix"> 
+<div class="sln-service-list sln-list <?php if ($size == '400') { echo 'sln-list--s'; } ?> <?php echo esc_attr('sln-list--' . $size); ?> clearfix"> 
     <?php foreach ($grouped as $group): ?>
         <?php if ($group['term'] !== false && count($group['services']) > 1): ?>
             <div class="row sln-panel">
@@ -51,14 +51,14 @@ $size = SLN_Enum_ShortcodeStyle::getSize($style);
         }
         ?>
         <a class="col-xs-12 sln-panel-heading <?php echo ($openGroup || count($group['services']) == 1) ? '' : ' collapsed ' ?>" role="button"
-               data-toggle="collapse" href="#collapse<?php echo $group['term']->getId() ?>"
-               aria-expanded="false" aria-controls="collapse<?php echo $group['term']->getId() ?>">
+               data-toggle="collapse" href="#collapse<?php echo esc_attr($group['term']->getId()) ?>"
+               aria-expanded="false" aria-controls="collapse<?php echo esc_attr($group['term']->getId()) ?>">
                 <h2 class="sln-btn sln-btn--icon sln-btn--fullwidth">
                     <?php echo esc_html__(sprintf('%s', $group['term']->getName()),'salon-booking-system') ?></h2>
             </a>
-            <div id="collapse<?php echo $group['term']->getId() ?>"
+            <div id="collapse<?php echo esc_attr($group['term']->getId()) ?>"
             class="col-xs-12 sln-panel-content panel-collapse collapse <?php echo ($openGroup || count($group['services']) == 1) ? ' in ' : '' ?>" role="tabpanel"
-            aria-labelledby="collapse<?php echo $group['term']->getId() ?>Heading"
+            aria-labelledby="collapse<?php echo esc_attr($group['term']->getId()) ?>Heading"
             aria-expanded="false" style="<?php echo ($openGroup || count($group['services']) == 1) ? '' : 'height: 0px;' ?>">
         <?php endif ?>
         <?php foreach ($group['services'] as $service) {

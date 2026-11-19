@@ -67,7 +67,7 @@ foreach ($bookingServices->getItems() as $bookingService) :
 
     ?>
     <div class="sln-attendant-list sln-attendant-list--multiple sln-list sln-list--multiple">
-                <h3 class="sln-steps-name sln-service-name"><?php echo $service->getName() ?></h3>
+                <h3 class="sln-steps-name sln-service-name"><?php echo esc_html($service->getName()) ?></h3>
         <?php if ($service->isAttendantsEnabled()) : ?>
             <?php if ($tmp) : ?>
                         <div class="sln-list__horscroller">
@@ -77,10 +77,10 @@ foreach ($bookingServices->getItems() as $bookingService) :
                         </div>
             <?php else: ?>
                 <div class="alert alert-warning">
-                    <p><?php echo apply_filters('sln.template.shortcode.attendant.emptyAttendantsList', __(
+                    <p><?php echo wp_kses_post(apply_filters('sln.template.shortcode.attendant.emptyAttendantsList', __(
                             'No assistants available for the selected time/slot - please choose another one',
                             'salon-booking-system'
-                        )) ?></p>
+                        ))) ?></p>
                 </div>
             <?php endif ?>
         <?php else: ?>

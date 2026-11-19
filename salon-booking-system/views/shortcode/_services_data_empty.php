@@ -26,7 +26,7 @@ ob_start();
 ?>
 <a class="sln-btn <?php echo $size == '900' ? 'sln-btn--nobkg' : 'sln-btn--borderonly'?> sln-btn--medium sln-btn--icon sln-btn--icon--left sln-icon--back"
     <?php if($ajaxEnabled): ?>
-        data-salon-data="<?php echo "sln_step_page=".$step ?>" data-salon-toggle="direct"
+        data-salon-data="<?php echo esc_attr("sln_step_page=".$step) ?>" data-salon-toggle="direct"
     <?php endif?>
    href="<?php echo esc_url($backUrl) ?> ">
     <i class="glyphicon glyphicon-chevron-left"></i> <?php esc_html_e('Back', 'salon-booking-system') ?>

@@ -4,7 +4,7 @@ Tags: salon, hairdresser, barber, beauty salon, appointment booking
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4.8
-Stable tag: 10.31.15
+Stable tag: 10.31.17
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -369,6 +369,29 @@ PHP 7.4 and above.
 
 == Changelog ==
 
+
+16.11.2026 - 10.31.17
+
+* Fixed: with the Dynamic Pricing add-on, bookings could be saved with the service's base price instead of the custom price of the matching availability rule, even though the booking summary showed the right price. Requires Dynamic Pricing 1.1.1
+* Fixed: applying a discount code recalculated the services from their base price, ignoring the assistant's price and the Dynamic Pricing price, so the discount and the total were wrong (e.g. a 10% code on a £32 service gave £3 off and a £28 total including a £1 transaction fee)
+* Fixed: saving a booking in the back-end with the discount system enabled could reset its service prices to 0, or its total to 0 when a discount was selected
+* Fixed: with the Multi-Shops add-on, the back-end booking editor checked the salon's global opening hours instead of the shop's, so bookings inside the shop's own hours were reported as breaking availability rules and could not be saved by users who aren't allowed to force them
+* Improved: Multi-Shops shop managers can now save bookings that break availability rules after confirming them, like administrators and salon staff (back-end and app)
+
+09.11.2026 - 10.31.16
+
+* Security fix: a logged-in customer could use the plugin's REST API to create bookings in another customer's name, or mark a booking as paid or confirmed without paying. The API is now limited to administrators, salon staff and shop managers, and customers can only book for themselves. Thanks to Francisco Reyes for the report
+* New: when a booking in the back-end calendar or the Mobile Web App breaks an availability rule (opening hours, holidays, locked slots, Google Calendar events, assistant or service not available, resource busy, too many bookings at the same time), a window lists each rule that is broken. Administrators and salon staff can still save it with "Save anyway"; other users can only go back. This also applies when moving or resizing a booking in the calendar
+* Improved: bookings saved with "Save anyway" are marked on the calendar, and the rules that were overridden are saved in the booking history with the user who saved it
+* Improved: the back-end booking editor no longer refuses a booking with "Total services duration exceeded", and the booking window no longer closes without saving
+* Fixed: the booking form could offer hours that were already booked on later days, and after one refused time the calendar stopped updating the selected date
+* Fixed: a booking edited in the back-end could overbook a time slot when a customer booked the same slot while the edit was open. The booking is now checked again when it is saved, and a slot taken in the meantime is reported instead of overbooked
+* Fixed: syncing a booking with more than one assistant to Google Calendar could fail with a "Cannot use a scalar value as an array" error
+* Improved: "Synchronize Bookings" in the Google Calendar settings re-creates each booking right after removing its old event, so a booking that fails no longer stops the sync or leaves the following bookings off the calendar. The bookings that couldn't be synchronized are listed, and a sync error can no longer interrupt the customer's booking
+* Improved: stricter output escaping in the booking form and My Account pages
+* Fixed: on translated sites some texts stayed in English, because the WordPress.org language pack took priority over the plugin's own, more recent translations
+* Fixed: customers who logged in or registered during the booking got "Your session has expired. Please refresh the page and try again." on the next step, for example when clicking "Pay"
+* Fixed: in the back-end booking editor the assistant and resource menus of a service could overlap each other. The service line now shows the service and "Remove" on the first row and start, end, assistant and resource in aligned columns on the second
 
 06.11.2026 - 10.31.15
 

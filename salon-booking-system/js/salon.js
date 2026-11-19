@@ -1895,6 +1895,50 @@ function sln_updateDebugDate($, debugLog) {
     }
 }
 
+/**
+ * Write the clicked calendar day into sln[date] and the date/time label.
+ */
+function sln_onDateStepDayClick($, cell) {
+    if ($(cell).hasClass("disabled")) {
+        return;
+    }
+    var datetimepicker = $(".sln_datepicker div").data("datetimepicker");
+    datetimepicker =
+        datetimepicker === undefined
+            ? $(".sln_datepicker input").data("datetimepicker")
+            : datetimepicker;
+    if (!datetimepicker) {
+        return;
+    }
+
+    var dateObj = $.fn.datetimepicker.DPGlobal.parseDate(
+        $(cell).attr("data-ymd"),
+        datetimepicker.format,
+        datetimepicker.language,
+        datetimepicker.formatType
+    );
+    var formattedDate = $.fn.datetimepicker.DPGlobal.formatDate(
+        dateObj,
+        datetimepicker.format,
+        datetimepicker.language,
+        datetimepicker.formatType
+    );
+    var dateString = dateObj.toLocaleDateString(
+        datetimepicker.language.replace("_", "-"),
+        {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            timeZone: "UTC",
+        }
+    );
+    $("input[name='sln[date]']").val(formattedDate);
+    dateString =
+        dateString + " |" + $("#sln_timepicker_viewdate").text().split("|")[1];
+    $("#sln_timepicker_viewdate").text(dateString);
+}
+
 function sln_stepDate($) {
     var isValid;
     var items = {
@@ -2053,54 +2097,25 @@ function sln_stepDate($) {
     // Namespaced + .off() first: sln_stepDate() re-runs on every AJAX date-step load, so a
     // plain .on() would stack duplicate handlers and fire checkDate multiple times per event.
     $("body").off("sln_date.slnDateFunc").on("sln_date.slnDateFunc", func);
-    $("body").off("sln_date.slnDateDayClick").on("sln_date.slnDateDayClick", function () {
-        setTimeout(function () {
-            $(".datetimepicker-days table tr td.day").on("click", function () {
-                if ($(this).hasClass("disabled")) {
-                    return;
-                }
-                var datetimepicker = $(".sln_datepicker div").data(
-                    "datetimepicker"
-                );
-                datetimepicker =
-                    datetimepicker === undefined
-                        ? $(".sln_datepicker input").data("datetimepicker")
-                        : datetimepicker;
-
-                var date = $(this).attr("data-ymd");
-
-                var dateObj = $.fn.datetimepicker.DPGlobal.parseDate(
-                    date,
-                    datetimepicker.format,
-                    datetimepicker.language,
-                    datetimepicker.formatType
-                );
-
-                var formattedDate = $.fn.datetimepicker.DPGlobal.formatDate(
-                    dateObj,
-                    datetimepicker.format,
-                    datetimepicker.language,
-                    datetimepicker.formatType
-                );
-                var dateString = dateObj.toLocaleDateString(
-                    datetimepicker.language.replace("_", "-"),
-                    {
-                        weekday: "long",
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                        timeZone: "UTC",
-                    }
-                );
-                $("input[name='sln[date]']").val(formattedDate);
-                dateString =
-                    dateString +
-                    " |" +
-                    $("#sln_timepicker_viewdate").text().split("|")[1];
-                $("#sln_timepicker_viewdate").text(dateString);
-            });
-        });
-    });
+    // Day clicks write the picked date into sln[date] and the "date | time" label.
+    // Bound once on document in the CAPTURE phase so it (a) survives the picker
+    // re-rendering its day cells on every click and (b) still runs before the
+    // picker's own handler detaches the clicked cell. It used to be bound to the
+    // cells on "sln_date", which only fires after a successful check: after one
+    // rejected slot the redrawn cells had no handler, sln[date] stopped changing
+    // and every later click re-checked the same rejected date, locking the
+    // calendar until the page was reloaded.
+    if (!window.slnDateDayClickBound) {
+        window.slnDateDayClickBound = true;
+        document.addEventListener("click", function (e) {
+            var cell = e.target && e.target.closest
+                ? e.target.closest("#salon-step-date .datetimepicker-days td.day")
+                : null;
+            if (cell) {
+                sln_onDateStepDayClick($, cell);
+            }
+        }, true);
+    }
 
     // Holds the in-flight validate() XHR so it can be aborted when a newer
     // request starts (e.g. user changes date while a check is in progress).

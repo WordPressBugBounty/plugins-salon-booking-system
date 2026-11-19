@@ -162,14 +162,14 @@ $sln_render_field = function ($key, $field) use ($plugin, $sln_autocomplete, $sl
         <p class="sln-account--last-update">
             <?php echo sprintf(
                 // translators: %1$s will be replaced by the last update date, %2$s will be replaced by the last update time
-                esc_html__('Last update on %1$s at %2$s', 'salon-booking-system'), $plugin->format()->date((new SLN_DateTime())->setTimestamp($last_update)), $plugin->format()->time((new SLN_DateTime())->setTimestamp($last_update))); ?>
+                esc_html__('Last update on %1$s at %2$s', 'salon-booking-system'), esc_html($plugin->format()->date((new SLN_DateTime())->setTimestamp($last_update))), esc_html($plugin->format()->time((new SLN_DateTime())->setTimestamp($last_update)))); ?>
         </p>
     <?php endif; ?>
     <div class="sln-account__status" <?php if(!$errors) echo 'style="display:none;"' ?>>
         <div class="statusContainer sln-notifications--fix--tr">
             <?php if ($errors): ?>
                 <?php foreach ($errors as $error): ?>
-                    <div class="sln-alert sln-alert--problem"><?php echo $error ?></div>
+                    <div class="sln-alert sln-alert--problem"><?php echo wp_kses_post($error) ?></div>
                 <?php endforeach ?>
             <?php endif ?>
         </div>

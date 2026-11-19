@@ -6,7 +6,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-11-02 16:10+0000\n"
+"POT-Creation-Date: 2026-11-10 10:48+0000\n"
 "X-Poedit-Basepath: ..\n"
 "X-Poedit-KeywordsList: __;_e;_ex:1,2c;_n:1,2;_n_noop:1,2;_nx:1,2,4c;_nx_noop:1,2,3c;_x:1,2c;esc_attr__;esc_attr_e;esc_attr_x:1,2c;esc_html__;esc_html_e;esc_html_x:1,2c\n"
 "X-Poedit-SearchPath-0: .\n"
@@ -58,11 +58,11 @@ msgstr ""
 msgid "Booking is cancelled"
 msgstr ""
 
-#: src/SLB_API/Plugin.php:138, src/SLB_API_Mobile/Plugin.php:164
+#: src/SLB_API/Plugin.php:150, src/SLB_API_Mobile/Plugin.php:164
 msgid "Sorry, you access token incorrect."
 msgstr ""
 
-#: src/SLB_API_Mobile/Plugin.php:179, src/SLB_PWA/Plugin.php:100, src/SLB_API_Mobile/Controller/Auth_Controller.php:73
+#: src/SLB_API/Plugin.php:186, src/SLB_API_Mobile/Plugin.php:179, src/SLB_PWA/Plugin.php:100, src/SLB_API_Mobile/Controller/Auth_Controller.php:73
 msgid "Sorry, your user role is not allowed."
 msgstr ""
 
@@ -174,7 +174,7 @@ msgstr ""
 msgid "Yes, delete"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:49, src/SLB_PWA/LabelProvider.php:115, src/SLB_PWA/LabelProvider.php:118
+#: src/SLB_PWA/LabelProvider.php:49, src/SLB_PWA/LabelProvider.php:126, src/SLB_PWA/LabelProvider.php:129
 msgid "Go back"
 msgstr ""
 
@@ -207,531 +207,568 @@ msgstr ""
 msgid "Change duration"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:58, src/SLB_PWA/LabelProvider.php:188, views/admin/calendar.php:222, views/admin/tools.php:234, views/admin/_calendar_tooltip_data_attributes.php:443, views/metabox/_clone_popover.php:53, src/SLN/Admin/AISetup.php:71, views/shortcode/salon_my_account/salon_my_account_details.php:162, views/shortcode/salon_my_account/_salon_my_account_details_table_rows.php:165, views/shortcode/salon_my_account/_salon_my_account_details_table_rows.php:243
+#: src/SLB_PWA/LabelProvider.php:58, src/SLB_PWA/LabelProvider.php:62, src/SLB_PWA/LabelProvider.php:199, views/admin/calendar.php:222, views/admin/tools.php:234, views/admin/_calendar_tooltip_data_attributes.php:443, views/metabox/_clone_popover.php:53, src/SLN/Admin/AISetup.php:71, views/shortcode/salon_my_account/salon_my_account_details.php:162, views/shortcode/salon_my_account/_salon_my_account_details_table_rows.php:165, views/shortcode/salon_my_account/_salon_my_account_details_table_rows.php:243
 msgid "Cancel"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:59
-msgid "firstname"
+msgid "Possible conflict"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:60
-msgid "lastname"
+msgid "Do you want to save the booking anyway?"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:61
-msgid "email"
+#: src/SLB_PWA/LabelProvider.php:61, src/SLN/Metabox/Booking.php:884
+msgid "Save anyway"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:62
-msgid "address"
+#: src/SLB_PWA/LabelProvider.php:63, src/SLN/Metabox/Booking.php:878
+msgid "This booking breaks 1 availability rule"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:63
-msgid "phone"
+#. translators: %d number of broken rules
+#: src/SLB_PWA/LabelProvider.php:65, src/SLN/Metabox/Booking.php:880
+msgid "This booking breaks %d availability rules"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:64
-msgid "notes"
+#: src/SLB_PWA/LabelProvider.php:66, src/SLN/Metabox/Booking.php:881
+msgid "If you save, these exceptions are recorded in the booking history with your name."
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:65
-msgid "customer personal notes"
+#: src/SLB_PWA/LabelProvider.php:67, src/SLN/Metabox/Booking.php:882
+msgid "You can't save a booking that breaks these rules. Change the booking or ask an administrator."
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:66
-msgid "Customer personal notes"
+#: src/SLB_PWA/LabelProvider.php:68, src/SLN/Metabox/Booking.php:883
+msgid "Go back and edit"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:67
-msgid "Email language"
-msgstr ""
-
-#: src/SLB_PWA/LabelProvider.php:68
-msgid "Language used for this customer's confirmation and reminder emails"
-msgstr ""
-
-#: src/SLB_PWA/LabelProvider.php:69
-msgid "Save this customer"
+#: src/SLB_PWA/LabelProvider.php:69, views/admin/_calendar_forced_badge.php:12
+msgid "Saved over availability rules"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:70
-msgid "Extra info"
+msgid "firstname"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:71
-msgid "Add and manage discount"
+msgid "lastname"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:72
-msgid "Select a discount"
+msgid "email"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:73
-msgid "Add a discount"
+msgid "address"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:74
-msgid "Save booking"
+msgid "phone"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:75
-msgid "Saved"
+msgid "notes"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:76
-msgid "Please fill the required fields"
+msgid "customer personal notes"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:77
-msgid "Select services"
+msgid "Customer personal notes"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:78, views/metabox/_booking_services.php:390
-msgid "Select an assistant"
+#: src/SLB_PWA/LabelProvider.php:78
+msgid "Email language"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:79, views/metabox/_attendant_availability_row.php:163, views/metabox/_booking_services.php:63
-msgid "Select a resource"
+#: src/SLB_PWA/LabelProvider.php:79
+msgid "Language used for this customer's confirmation and reminder emails"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:80
-msgid "Type service name"
+msgid "Save this customer"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:81
-msgid "Type assistant name"
+msgid "Extra info"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:82
-msgid "Type resource name"
+msgid "Add and manage discount"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:83
-msgid "Type discount name"
+msgid "Select a discount"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:84, views/metabox/_booking_services.php:385
-msgid "Add a service"
+#: src/SLB_PWA/LabelProvider.php:84
+msgid "Add a discount"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:85
-msgid "Please add services"
+msgid "Save booking"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:86
-msgid "Select existing client"
+msgid "Saved"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:87, src/SLN/Metabox/Booking.php:34
-msgid "Booking details"
+#: src/SLB_PWA/LabelProvider.php:87
+msgid "Please fill the required fields"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:88, views/shortcode/salon_my_account/_salon_my_account_details_table_rows.php:118, src/SLN/Admin/Reports/RevenuesReport.php:89
-msgid "Total"
+#: src/SLB_PWA/LabelProvider.php:88
+msgid "Select services"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:89, views/metabox/booking.php:811
-msgid "Transaction ID"
+#: src/SLB_PWA/LabelProvider.php:89, views/metabox/_booking_services.php:388
+msgid "Select an assistant"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:90, views/admin/_calendar_render_day.php:142, views/admin/_calendar_tooltip_data_attributes.php:420, views/metabox/booking.php:953, src/SLB_Discount/PostType/Discount.php:372, views/discount/shortcode/_salon_summary_before_total_amount.php:18, views/shortcode/salon_my_account/_salon_my_account_details_table_rows.php:113
-msgid "Discount"
+#: src/SLB_PWA/LabelProvider.php:90, views/metabox/_attendant_availability_row.php:163, views/metabox/_booking_services.php:63
+msgid "Select a resource"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:91, views/admin/_calendar_render_day.php:146, views/metabox/booking.php:858, views/settings/_tab_payments_pro_pay_deposit_advanced_rules.php:93
-msgid "Deposit"
+#: src/SLB_PWA/LabelProvider.php:91
+msgid "Type service name"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:92, views/admin/_calendar_render_day.php:150
-msgid "Due"
+#: src/SLB_PWA/LabelProvider.php:92
+msgid "Type assistant name"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:93, views/admin/_calendar_tooltip_data_attributes.php:427
-msgid "Edit booking"
+#: src/SLB_PWA/LabelProvider.php:93
+msgid "Type resource name"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:94
-msgid "Reservations calendar"
+msgid "Type discount name"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:95
-msgid "No timeslots ..."
+#: src/SLB_PWA/LabelProvider.php:95, views/metabox/_booking_services.php:383
+msgid "Add a service"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:96
-msgid "Add the reservation"
+msgid "Please add services"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:97, views/admin/customers.php:7, src/SLN/Admin/Customers.php:16, src/SLN/AI/Tools/ExplainSetting.php:139
-msgid "Customers"
+#: src/SLB_PWA/LabelProvider.php:97
+msgid "Select existing client"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:98
-msgid "GO BACK"
+#: src/SLB_PWA/LabelProvider.php:98, src/SLN/Metabox/Booking.php:39
+msgid "Booking details"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:99
-msgid "No customers found ..."
+#: src/SLB_PWA/LabelProvider.php:99, views/shortcode/salon_my_account/_salon_my_account_details_table_rows.php:118, src/SLN/Admin/Reports/RevenuesReport.php:89
+msgid "Total"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:100
-msgid "Add to home screen ?"
+#: src/SLB_PWA/LabelProvider.php:100, views/metabox/booking.php:845
+msgid "Transaction ID"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:102
-msgid "Install!"
+#: src/SLB_PWA/LabelProvider.php:101, views/admin/_calendar_render_day.php:142, views/admin/_calendar_tooltip_data_attributes.php:420, views/metabox/booking.php:987, src/SLB_Discount/PostType/Discount.php:372, views/discount/shortcode/_salon_summary_before_total_amount.php:18, views/shortcode/salon_my_account/_salon_my_account_details_table_rows.php:113
+msgid "Discount"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:103
-msgid "No, thanks"
+#: src/SLB_PWA/LabelProvider.php:102, views/admin/_calendar_render_day.php:146, views/metabox/booking.php:892, views/settings/_tab_payments_pro_pay_deposit_advanced_rules.php:93
+msgid "Deposit"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:104
-msgid "Install this app on your IPhone=> __( tap menu and then Add to homescreen"
+#: src/SLB_PWA/LabelProvider.php:103, views/admin/_calendar_render_day.php:150
+msgid "Due"
+msgstr ""
+
+#: src/SLB_PWA/LabelProvider.php:104, views/admin/_calendar_tooltip_data_attributes.php:427
+msgid "Edit booking"
+msgstr ""
+
+#: src/SLB_PWA/LabelProvider.php:105
+msgid "Reservations calendar"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:106
-msgid "Select a shop"
+msgid "No timeslots ..."
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:107
-msgid "No shops ..."
+msgid "Add the reservation"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:108, views/admin/_calendar_tooltip_data_attributes.php:419
-msgid "Shop"
+#: src/SLB_PWA/LabelProvider.php:108, views/admin/customers.php:7, src/SLN/Admin/Customers.php:16, src/SLN/AI/Tools/ExplainSetting.php:139
+msgid "Customers"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:109
-msgid "Please select a shop first to edit booking"
+msgid "GO BACK"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:110
-msgid "Select shop"
+msgid "No customers found ..."
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:111
-msgid "Email sent"
-msgstr ""
-
-#: src/SLB_PWA/LabelProvider.php:112
-msgid "Error, email not sent"
+msgid "Add to home screen ?"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:113
-msgid "Take Photo"
+msgid "Install!"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:114
-msgid "Select from phone"
+msgid "No, thanks"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:116
-msgid "Photo"
+#: src/SLB_PWA/LabelProvider.php:115
+msgid "Install this app on your IPhone=> __( tap menu and then Add to homescreen"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:117
-msgid "Update customer"
+msgid "Select a shop"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:119
-msgid "Assistant is busy"
+#: src/SLB_PWA/LabelProvider.php:118
+msgid "No shops ..."
+msgstr ""
+
+#: src/SLB_PWA/LabelProvider.php:119, views/admin/_calendar_tooltip_data_attributes.php:419
+msgid "Shop"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:120
-msgid "is busy from %s to %s. Please select another time or assistant."
+msgid "Please select a shop first to edit booking"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:121, views/admin/calendar.php:928
-msgid "Assistants view"
+#: src/SLB_PWA/LabelProvider.php:121
+msgid "Select shop"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:122, views/admin/calendar.php:221, src/SLN/Admin/Customers/List.php:222
-msgid "Edit"
+#: src/SLB_PWA/LabelProvider.php:122
+msgid "Email sent"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:123, src/SLN/Form.php:298, views/admin/calendar.php:1083, views/metabox/booking.php:1376
-msgid "Delete"
+#: src/SLB_PWA/LabelProvider.php:123
+msgid "Error, email not sent"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:124
-msgid "Cancel booking"
+msgid "Take Photo"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:125
-msgid "Cancel this booking? The customer and the salon will receive a cancellation notification."
-msgstr ""
-
-#: src/SLB_PWA/LabelProvider.php:126
-msgid "Call customer"
+msgid "Select from phone"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:127
-msgid "Whatsapp customer"
+msgid "Photo"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:128
-msgid "Open customer profile"
-msgstr ""
-
-#: src/SLB_PWA/LabelProvider.php:129
-msgid "PRO feature"
+msgid "Update customer"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:130
-msgid "The calendar and customers directory are available in Salon Booking System PRO. Upgrade to unlock them in the mobile app."
+msgid "Assistant is busy"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:131, src/SLB_PWA/LabelProvider.php:136, src/SLN/Admin/AISetup.php:118
-msgid "View PRO plans"
+#: src/SLB_PWA/LabelProvider.php:131
+msgid "is busy from %s to %s. Please select another time or assistant."
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:132, views/admin/calendar.php:827
-msgid "Not now"
+#: src/SLB_PWA/LabelProvider.php:132, views/admin/calendar.php:928
+msgid "Assistants view"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:133
-msgid "Opening a booking to view or edit details is available in Salon Booking System PRO. Upgrade to unlock full mobile booking management."
+#: src/SLB_PWA/LabelProvider.php:133, views/admin/calendar.php:221, src/SLN/Admin/Customers/List.php:222
+msgid "Edit"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:134
-msgid "Unlock Salon Booking PRO"
+#: src/SLB_PWA/LabelProvider.php:134, src/SLN/Form.php:298, views/admin/calendar.php:1083, views/metabox/booking.php:1410
+msgid "Delete"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:135
-msgid "Payments, deposits, SMS, advanced calendar, and the full mobile app workflow — upgrade to a PRO license on our website."
+msgid "Cancel booking"
+msgstr ""
+
+#: src/SLB_PWA/LabelProvider.php:136
+msgid "Cancel this booking? The customer and the salon will receive a cancellation notification."
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:137
-msgid "Upgrade to Business Plan"
+msgid "Call customer"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:138
-msgid "Your Basic plan is active. Move up to Business for more included add-ons, higher limits, and advanced features for growing salons."
+msgid "Whatsapp customer"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:139
-msgid "Compare plans"
+msgid "Open customer profile"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:140, views/metabox/booking.php:150
-msgid "SOAP Notes"
+#: src/SLB_PWA/LabelProvider.php:140
+msgid "PRO feature"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:141
-msgid "No SOAP notes yet"
+msgid "The calendar and customers directory are available in Salon Booking System PRO. Upgrade to unlock them in the mobile app."
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:142
-msgid "Fill SOAP notes"
+#: src/SLB_PWA/LabelProvider.php:142, src/SLB_PWA/LabelProvider.php:147, src/SLN/Admin/AISetup.php:118
+msgid "View PRO plans"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:143
-msgid "Edit SOAP notes"
+#: src/SLB_PWA/LabelProvider.php:143, views/admin/calendar.php:827
+msgid "Not now"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:144
-msgid "Save notes"
+msgid "Opening a booking to view or edit details is available in Salon Booking System PRO. Upgrade to unlock full mobile booking management."
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:145
-msgid "SOAP notes saved"
+msgid "Unlock Salon Booking PRO"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:146
-msgid "Could not save SOAP notes"
-msgstr ""
-
-#: src/SLB_PWA/LabelProvider.php:147
-msgid "Could not load SOAP notes"
+msgid "Payments, deposits, SMS, advanced calendar, and the full mobile app workflow — upgrade to a PRO license on our website."
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:148
-msgid "Add note"
+msgid "Upgrade to Business Plan"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:149
-msgid "Clear all notes"
+msgid "Your Basic plan is active. Move up to Business for more included add-ons, higher limits, and advanced features for growing salons."
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:150
-msgid "New note"
+msgid "Compare plans"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:151, src/SLN/WeeklySchedule/Elementor/Widget.php:121
-msgid "Note"
+#: src/SLB_PWA/LabelProvider.php:151, views/metabox/booking.php:184
+msgid "SOAP Notes"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:152
-msgid "SOAP notes"
+msgid "No SOAP notes yet"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:153
-msgid "Speak"
+msgid "Fill SOAP notes"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:154
-msgid "Stop"
+msgid "Edit SOAP notes"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:155
-msgid "Listening… tap Stop when you are done"
+msgid "Save notes"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:156
-msgid "Voice input is not supported in this browser. Try Chrome or Safari."
+msgid "SOAP notes saved"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:157, src/SLB_PWA/LabelProvider.php:196
-msgid "Microphone permission was denied."
+#: src/SLB_PWA/LabelProvider.php:157
+msgid "Could not save SOAP notes"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:158
-msgid "Voice input needs a network connection in this browser."
+msgid "Could not load SOAP notes"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:159, src/SLB_PWA/LabelProvider.php:197
-msgid "Could not start voice input."
+#: src/SLB_PWA/LabelProvider.php:159
+msgid "Add note"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:160
-msgid "Visit photos"
+msgid "Clear all notes"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:161
-msgid "Saved immediately — you do not need to tap Save notes"
+msgid "New note"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:162
-msgid "Take photo"
+#: src/SLB_PWA/LabelProvider.php:162, src/SLN/WeeklySchedule/Elementor/Widget.php:121
+msgid "Note"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:163
-msgid "Choose from library"
+msgid "SOAP notes"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:164
-msgid "Caption"
+msgid "Speak"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:165
-msgid "Delete photo"
+msgid "Stop"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:166
-msgid "Could not upload photo"
+msgid "Listening… tap Stop when you are done"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:167
-msgid "No photos yet"
+msgid "Voice input is not supported in this browser. Try Chrome or Safari."
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:168
-msgid "Standing notes"
+#: src/SLB_PWA/LabelProvider.php:168, src/SLB_PWA/LabelProvider.php:207
+msgid "Microphone permission was denied."
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:169
-msgid "Saved on this customer and shown on every visit"
+msgid "Voice input needs a network connection in this browser."
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:170
-msgid "Every visit"
+#: src/SLB_PWA/LabelProvider.php:170, src/SLB_PWA/LabelProvider.php:208
+msgid "Could not start voice input."
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:171
-msgid "Allergies, contraindications, ongoing plan…"
+msgid "Visit photos"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:172
-msgid "Standing notes saved"
+msgid "Saved immediately — you do not need to tap Save notes"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:173
-msgid "Copy from last visit"
+msgid "Take photo"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:174
-msgid "Copy from last visit ({date})"
+msgid "Choose from library"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:175
-msgid "Fills this visit only. Does not copy photos or standing notes."
+msgid "Caption"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:176
-msgid "Replace this visit’s SOAP notes with the notes from {date}?"
+msgid "Delete photo"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:177
-msgid "Could not copy previous notes"
+msgid "Could not upload photo"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:178, views/admin/_ai_calendar_assistant.php:26, src/SLN/Admin/AISetup.php:84
-msgid "AI Assistant"
+#: src/SLB_PWA/LabelProvider.php:178
+msgid "No photos yet"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:179, views/admin/_ai_calendar_assistant.php:94, src/SLN/Admin/AISetup.php:92
-msgid "Open AI assistant"
+#: src/SLB_PWA/LabelProvider.php:179
+msgid "Standing notes"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:180, views/admin/_ai_calendar_assistant.php:32, src/SLN/Admin/AISetup.php:93
-msgid "Close AI assistant"
+#: src/SLB_PWA/LabelProvider.php:180
+msgid "Saved on this customer and shown on every visit"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:181, src/SLN/Admin/AISetup.php:67
-msgid "Ask about this calendar..."
+#: src/SLB_PWA/LabelProvider.php:181
+msgid "Every visit"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:182, views/metabox/booking_actions.php:20, views/metabox/booking_actions.php:29, src/SLN/Admin/AISetup.php:69
-msgid "Send"
+#: src/SLB_PWA/LabelProvider.php:182
+msgid "Allergies, contraindications, ongoing plan…"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:183, src/SLN/Admin/AISetup.php:75
-msgid "Thinking…"
+#: src/SLB_PWA/LabelProvider.php:183
+msgid "Standing notes saved"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:184, src/SLN/Admin/AISetup.php:76, src/SLN/Admin/Onboarding.php:185
-msgid "Something went wrong. Please try again."
+#: src/SLB_PWA/LabelProvider.php:184
+msgid "Copy from last visit"
 msgstr ""
 
 #: src/SLB_PWA/LabelProvider.php:185
+msgid "Copy from last visit ({date})"
+msgstr ""
+
+#: src/SLB_PWA/LabelProvider.php:186
+msgid "Fills this visit only. Does not copy photos or standing notes."
+msgstr ""
+
+#: src/SLB_PWA/LabelProvider.php:187
+msgid "Replace this visit’s SOAP notes with the notes from {date}?"
+msgstr ""
+
+#: src/SLB_PWA/LabelProvider.php:188
+msgid "Could not copy previous notes"
+msgstr ""
+
+#: src/SLB_PWA/LabelProvider.php:189, views/admin/_ai_calendar_assistant.php:26, src/SLN/Admin/AISetup.php:84
+msgid "AI Assistant"
+msgstr ""
+
+#: src/SLB_PWA/LabelProvider.php:190, views/admin/_ai_calendar_assistant.php:94, src/SLN/Admin/AISetup.php:92
+msgid "Open AI assistant"
+msgstr ""
+
+#: src/SLB_PWA/LabelProvider.php:191, views/admin/_ai_calendar_assistant.php:32, src/SLN/Admin/AISetup.php:93
+msgid "Close AI assistant"
+msgstr ""
+
+#: src/SLB_PWA/LabelProvider.php:192, src/SLN/Admin/AISetup.php:67
+msgid "Ask about this calendar..."
+msgstr ""
+
+#: src/SLB_PWA/LabelProvider.php:193, views/metabox/booking_actions.php:20, views/metabox/booking_actions.php:29, src/SLN/Admin/AISetup.php:69
+msgid "Send"
+msgstr ""
+
+#: src/SLB_PWA/LabelProvider.php:194, src/SLN/Admin/AISetup.php:75
+msgid "Thinking…"
+msgstr ""
+
+#: src/SLB_PWA/LabelProvider.php:195, src/SLN/Admin/AISetup.php:76, src/SLN/Admin/Onboarding.php:185
+msgid "Something went wrong. Please try again."
+msgstr ""
+
+#: src/SLB_PWA/LabelProvider.php:196
 msgid "You are offline. The AI assistant needs a connection."
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:186, src/SLN/Admin/AISetup.php:77
+#: src/SLB_PWA/LabelProvider.php:197, src/SLN/Admin/AISetup.php:77
 msgid "Proposed change"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:187, src/SLN/Admin/AISetup.php:70
+#: src/SLB_PWA/LabelProvider.php:198, src/SLN/Admin/AISetup.php:70
 msgid "Confirm & apply"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:189, src/SLN/Admin/AISetup.php:73
+#: src/SLB_PWA/LabelProvider.php:200, src/SLN/Admin/AISetup.php:73
 msgid "Undo this change"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:190
+#: src/SLB_PWA/LabelProvider.php:201
 msgid "No AI queries left this month. Buy credits from the AI Setup page in your WordPress admin."
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:191, views/admin/_ai_calendar_assistant.php:82
+#: src/SLB_PWA/LabelProvider.php:202, views/admin/_ai_calendar_assistant.php:82
 msgid "Open full AI Setup"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:192
+#: src/SLB_PWA/LabelProvider.php:203
 msgid "Open AI Setup"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:193, src/SLN/Admin/AISetup.php:119, src/SLN/AI/Tools/ContactSupport.php:62
+#: src/SLB_PWA/LabelProvider.php:204, src/SLN/Admin/AISetup.php:119, src/SLN/AI/Tools/ContactSupport.php:62
 msgid "Contact support"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:194, views/admin/ai_setup.php:100, views/admin/_ai_calendar_assistant.php:71, src/SLN/Admin/AISetup.php:94
+#: src/SLB_PWA/LabelProvider.php:205, views/admin/ai_setup.php:100, views/admin/_ai_calendar_assistant.php:71, src/SLN/Admin/AISetup.php:94
 msgid "Start voice input"
 msgstr ""
 
-#: src/SLB_PWA/LabelProvider.php:195, src/SLN/Admin/AISetup.php:95
+#: src/SLB_PWA/LabelProvider.php:206, src/SLN/Admin/AISetup.php:95
 msgid "Stop voice input"
 msgstr ""
 
@@ -775,7 +812,7 @@ msgstr ""
 msgid "Drag and drop files here"
 msgstr ""
 
-#: src/SLN/Form.php:289, views/admin/calendar.php:1158
+#: src/SLN/Form.php:289, views/admin/calendar.php:1183
 msgid "or"
 msgstr ""
 
@@ -837,7 +874,7 @@ msgid_plural "days"
 msgstr[0] ""
 msgstr[1] ""
 
-#: src/SLN/Func.php:189, src/SLN/Func.php:190, src/SLN/Func.php:191, views/settings/tab_general.php:380, views/settings/tab_general.php:381, views/settings/tab_general.php:382, views/settings/tab_general.php:383, views/settings/_tab_booking_rescheduling.php:38, views/settings/_tab_booking_rescheduling.php:39, src/SLN/Action/InitEnvatoAutomaticPluginUpdate.php:396, src/SLN/Wrapper/Booking.php:964
+#: src/SLN/Func.php:189, src/SLN/Func.php:190, src/SLN/Func.php:191, views/settings/tab_general.php:380, views/settings/tab_general.php:381, views/settings/tab_general.php:382, views/settings/tab_general.php:383, views/settings/_tab_booking_rescheduling.php:38, views/settings/_tab_booking_rescheduling.php:39, src/SLN/Action/InitEnvatoAutomaticPluginUpdate.php:396, src/SLN/Wrapper/Booking.php:973
 msgid "days"
 msgstr ""
 
@@ -1085,7 +1122,7 @@ msgstr ""
 msgid "Assistant users are users with the Salon staff role. With restricted customer data they cannot search customers or see customer email and phone."
 msgstr ""
 
-#: views/admin/ai_setup.php:132, views/admin/calendar.php:1069, views/admin/_customer.php:447, views/metabox/booking.php:1369
+#: views/admin/ai_setup.php:132, views/admin/calendar.php:1069, views/admin/_customer.php:447, views/metabox/booking.php:1403
 msgid "Save"
 msgstr ""
 
@@ -1197,7 +1234,7 @@ msgstr ""
 msgid "Premium features carousel"
 msgstr ""
 
-#: views/admin/calendar.php:255, views/admin/calendar.php:818, views/admin/calendar.php:820, views/admin/calendar.php:791, views/admin/calendar.php:793, views/admin/calendar.php:1084, views/admin/extensions.php:513, views/admin/tools.php:219, views/admin/tools.php:249, views/metabox/booking.php:1379, views/metabox/_clone_popover.php:17, views/shortcode/_salon_date_pickers.php:33, src/SLN/Action/InitScripts.php:100, views/revenue_guard/admin/queue-modal.php:209, views/shortcode/salon_my_account/salon_my_account_details.php:138
+#: views/admin/calendar.php:255, views/admin/calendar.php:818, views/admin/calendar.php:820, views/admin/calendar.php:791, views/admin/calendar.php:793, views/admin/calendar.php:1084, views/admin/extensions.php:513, views/admin/tools.php:219, views/admin/tools.php:249, views/metabox/booking.php:1413, views/metabox/_clone_popover.php:17, views/shortcode/_salon_date_pickers.php:33, src/SLN/Action/InitScripts.php:100, src/SLN/Metabox/Booking.php:885, views/revenue_guard/admin/queue-modal.php:209, views/shortcode/salon_my_account/salon_my_account_details.php:138
 msgid "Close"
 msgstr ""
 
@@ -1413,7 +1450,7 @@ msgstr ""
 msgid "Open the Web App"
 msgstr ""
 
-#: views/admin/calendar.php:828, views/admin/onboarding.php:226, views/admin/reports-dashboard.php:270, views/admin/reports-dashboard.php:355, views/admin/reports-dashboard.php:423, views/admin/reports-dashboard.php:544, views/admin/reports-dashboard.php:564, views/admin/reports-dashboard.php:606
+#: views/admin/calendar.php:828, views/admin/onboarding.php:226, views/admin/reports-dashboard.php:279, views/admin/reports-dashboard.php:364, views/admin/reports-dashboard.php:432, views/admin/reports-dashboard.php:553, views/admin/reports-dashboard.php:573, views/admin/reports-dashboard.php:615
 msgid "Upgrade to PRO"
 msgstr ""
 
@@ -1493,7 +1530,7 @@ msgstr ""
 msgid "Booking Saved"
 msgstr ""
 
-#: views/admin/calendar.php:1079, views/metabox/booking.php:1372, views/metabox/_clone_popover.php:54
+#: views/admin/calendar.php:1079, views/metabox/booking.php:1406, views/metabox/_clone_popover.php:54
 msgid "Clone"
 msgstr ""
 
@@ -1505,23 +1542,31 @@ msgstr ""
 msgid "Export reservations into a CSV file"
 msgstr ""
 
-#: views/admin/calendar.php:1131, views/admin/_calendar_render_day.php:130, views/shortcode/_services_item_400.php:38, views/shortcode/_services_item_600.php:38, views/shortcode/_services_item_900.php:38, src/SLN/Admin/Tools.php:215, src/SLN/Helper/Availability.php:564
+#: views/admin/calendar.php:1131, views/admin/_calendar_render_day.php:130, views/shortcode/_services_item_400.php:38, views/shortcode/_services_item_600.php:38, views/shortcode/_services_item_900.php:38, src/SLN/Admin/Tools.php:239, src/SLN/Helper/Availability.php:564
 msgid "from"
 msgstr ""
 
-#: views/admin/calendar.php:1141, views/admin/_calendar_render_day.php:131, src/SLN/Admin/Tools.php:216, src/SLN/Helper/Availability.php:565, src/SLN/Helper/Availability.php:582
+#: views/admin/calendar.php:1141, views/admin/_calendar_render_day.php:131, src/SLN/Admin/Tools.php:240, src/SLN/Helper/Availability.php:565, src/SLN/Helper/Availability.php:582
 msgid "to"
 msgstr ""
 
-#: views/admin/calendar.php:1146
+#: views/admin/calendar.php:1160
+msgid "All assistants"
+msgstr ""
+
+#: views/admin/calendar.php:1165
+msgid "assistant"
+msgstr ""
+
+#: views/admin/calendar.php:1171
 msgid "Export bookings to a CSV file"
 msgstr ""
 
-#: views/admin/calendar.php:1155
+#: views/admin/calendar.php:1180
 msgid "Bookings status legend"
 msgstr ""
 
-#: views/admin/calendar.php:1168, views/admin/calendar.php:1169, views/admin/utilities/settings-sidebar.php:34, views/admin/utilities/settings-sidebar.php:35
+#: views/admin/calendar.php:1193, views/admin/calendar.php:1194, views/admin/utilities/settings-sidebar.php:34, views/admin/utilities/settings-sidebar.php:35
 msgid "Do you need help ?"
 msgstr ""
 
@@ -1929,283 +1974,291 @@ msgstr ""
 msgid "All Shops"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:89
-msgid "Refresh"
+#: views/admin/reports-dashboard.php:88
+msgid "Assistant:"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:93
-msgid "Export"
+#: views/admin/reports-dashboard.php:90
+msgid "All Assistants"
 msgstr ""
 
 #: views/admin/reports-dashboard.php:98
-msgid "Send weekly report"
+msgid "Refresh"
+msgstr ""
+
+#: views/admin/reports-dashboard.php:102
+msgid "Export"
 msgstr ""
 
 #: views/admin/reports-dashboard.php:107
+msgid "Send weekly report"
+msgstr ""
+
+#: views/admin/reports-dashboard.php:116
 msgid "Please contact your administrator to assign you to a shop."
 msgstr ""
 
-#: views/admin/reports-dashboard.php:117
+#: views/admin/reports-dashboard.php:126
 msgid "Loading dashboard data..."
 msgstr ""
 
-#: views/admin/reports-dashboard.php:132
+#: views/admin/reports-dashboard.php:141
 msgid "Total Revenue"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:138
+#: views/admin/reports-dashboard.php:147
 msgid "Avg. Booking Value"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:151, views/mail/weekly_report/template.php:514
+#: views/admin/reports-dashboard.php:160, views/mail/weekly_report/template.php:514
 msgid "Total Bookings"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:156
+#: views/admin/reports-dashboard.php:165
 msgid "Cancellation Rate:"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:160
+#: views/admin/reports-dashboard.php:169
 msgid "Lost Revenue:"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:177, views/admin/reports-dashboard.php:242
+#: views/admin/reports-dashboard.php:186, views/admin/reports-dashboard.php:251
 msgid "Unique Customers"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:186
+#: views/admin/reports-dashboard.php:195
 msgid "Rebooking Rate (60d)"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:202
+#: views/admin/reports-dashboard.php:211
 msgid "One-click Booking Forecast"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:203
+#: views/admin/reports-dashboard.php:212
 msgid "selected date range"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:212
+#: views/admin/reports-dashboard.php:221
 msgid "Forecast Bookings"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:213
+#: views/admin/reports-dashboard.php:222
 msgid "Booked via one-click"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:222
+#: views/admin/reports-dashboard.php:231
 msgid "Adoption Rate"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:223
+#: views/admin/reports-dashboard.php:232
 msgid "Of front-end bookings"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:232
+#: views/admin/reports-dashboard.php:241
 msgid "Email Opt-ins"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:233
+#: views/admin/reports-dashboard.php:242
 msgid "Notification subscribers"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:243
+#: views/admin/reports-dashboard.php:252
 msgid "Who ever used forecast"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:251
+#: views/admin/reports-dashboard.php:260
 msgid "Revenue & Bookings Trend"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:253
+#: views/admin/reports-dashboard.php:262
 msgid "Chart visualization will be implemented with Chart.js"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:259
+#: views/admin/reports-dashboard.php:268
 msgid "Booking Patterns - Peak Times Heatmap"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:261
+#: views/admin/reports-dashboard.php:270
 msgid "Loading heatmap..."
 msgstr ""
 
-#: views/admin/reports-dashboard.php:267, views/admin/reports-dashboard.php:352, views/admin/reports-dashboard.php:420, views/admin/reports-dashboard.php:541, views/admin/reports-dashboard.php:561, views/admin/reports-dashboard.php:603
+#: views/admin/reports-dashboard.php:276, views/admin/reports-dashboard.php:361, views/admin/reports-dashboard.php:429, views/admin/reports-dashboard.php:550, views/admin/reports-dashboard.php:570, views/admin/reports-dashboard.php:612
 msgid "PRO Feature"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:268
+#: views/admin/reports-dashboard.php:277
 msgid "Unlock advanced booking pattern analysis"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:280
+#: views/admin/reports-dashboard.php:289
 msgid "Capacity & Peak Times"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:290
+#: views/admin/reports-dashboard.php:299
 msgid "Utilization Rate"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:303
+#: views/admin/reports-dashboard.php:312
 msgid "Peak Day"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:314
+#: views/admin/reports-dashboard.php:323
 msgid "Peak Hour"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:325
+#: views/admin/reports-dashboard.php:334
 msgid "Avg. Daily Bookings"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:327
+#: views/admin/reports-dashboard.php:336
 msgid "per working day"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:335
+#: views/admin/reports-dashboard.php:344
 msgid "Bookings by Day of Week"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:342
+#: views/admin/reports-dashboard.php:351
 msgid "Bookings by Hour"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:353
+#: views/admin/reports-dashboard.php:362
 msgid "Unlock capacity utilization and peak time insights"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:365
+#: views/admin/reports-dashboard.php:374
 msgid "No-Show Tracking"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:366
+#: views/admin/reports-dashboard.php:375
 msgid "Track and analyze customer no-show patterns"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:376
+#: views/admin/reports-dashboard.php:385
 msgid "Total No-Shows"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:385
+#: views/admin/reports-dashboard.php:394
 msgid "No-Show Rate"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:394
+#: views/admin/reports-dashboard.php:403
 msgid "Affected Bookings"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:403
+#: views/admin/reports-dashboard.php:412
 msgid "No-Show Rate Trend"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:410
+#: views/admin/reports-dashboard.php:419
 msgid "Recent No-Shows"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:412, views/admin/reports-dashboard.php:464, views/admin/reports-dashboard.php:502, views/admin/reports-dashboard.php:575, views/admin/reports-dashboard.php:595, views/revenue_guard/admin/queue-modal.php:213
+#: views/admin/reports-dashboard.php:421, views/admin/reports-dashboard.php:473, views/admin/reports-dashboard.php:511, views/admin/reports-dashboard.php:584, views/admin/reports-dashboard.php:604, views/revenue_guard/admin/queue-modal.php:213
 msgid "Loading..."
 msgstr ""
 
-#: views/admin/reports-dashboard.php:421
+#: views/admin/reports-dashboard.php:430
 msgid "Unlock no-show tracking and analytics"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:435, views/mail/weekly_report/template.php:333
+#: views/admin/reports-dashboard.php:444, views/mail/weekly_report/template.php:333
 msgid "Top Services"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:440
+#: views/admin/reports-dashboard.php:449
 msgid "Performance by Bookings"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:446, views/admin/reports-dashboard.php:483
+#: views/admin/reports-dashboard.php:455, views/admin/reports-dashboard.php:492
 msgid "Performance by Revenue"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:456, views/metabox/booking.php:133, views/metabox/booking.php:131, views/metabox/booking.php:725, views/metabox/_booking_services.php:107, views/metabox/_booking_services.php:254, src/SLN/Admin/Onboarding.php:731, src/SLN/PostType/Service.php:256
+#: views/admin/reports-dashboard.php:465, views/metabox/booking.php:167, views/metabox/booking.php:165, views/metabox/booking.php:759, views/metabox/_booking_services.php:105, views/metabox/_booking_services.php:252, src/SLN/Admin/Onboarding.php:730, src/SLN/PostType/Service.php:256
 msgid "Service"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:457, views/admin/reports-dashboard.php:494, views/admin/reports-dashboard.php:590, src/SLN/PostType/Booking.php:694, src/SLN/PostType/Booking.php:698, src/SLN/Admin/Reports/RevenuesByServicesReport.php:36, src/SLN/Admin/Reports/RevenuesReport.php:40, src/SLN/Admin/Reports/TopCustomersReport.php:37
+#: views/admin/reports-dashboard.php:466, views/admin/reports-dashboard.php:503, views/admin/reports-dashboard.php:599, src/SLN/PostType/Booking.php:694, src/SLN/PostType/Booking.php:698, src/SLN/Admin/Reports/RevenuesByServicesReport.php:36, src/SLN/Admin/Reports/RevenuesReport.php:40, src/SLN/Admin/Reports/TopCustomersReport.php:37
 msgid "Bookings"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:458, views/admin/reports-dashboard.php:495
+#: views/admin/reports-dashboard.php:467, views/admin/reports-dashboard.php:504
 msgid "Revenue"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:459
+#: views/admin/reports-dashboard.php:468
 msgid "Avg. Price"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:472
+#: views/admin/reports-dashboard.php:481
 msgid "Assistant Performance"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:477
+#: views/admin/reports-dashboard.php:486
 msgid "Performance by Hours"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:493, views/metabox/service.php:512, src/SLN/PostType/Attendant.php:250
+#: views/admin/reports-dashboard.php:502, views/metabox/service.php:512, src/SLN/Admin/Tools.php:244, src/SLN/PostType/Attendant.php:250
 msgid "Assistant"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:496
+#: views/admin/reports-dashboard.php:505
 msgid "Hours"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:497
+#: views/admin/reports-dashboard.php:506
 msgid "Utilization"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:517
+#: views/admin/reports-dashboard.php:526
 msgid "Avg. Customer Lifetime Value"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:530
+#: views/admin/reports-dashboard.php:539
 msgid "Avg. Visit Frequency"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:542
+#: views/admin/reports-dashboard.php:551
 msgid "Unlock customer lifetime value and frequency insights"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:553
+#: views/admin/reports-dashboard.php:562
 msgid "Customer Lifetime Value Distribution"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:562
+#: views/admin/reports-dashboard.php:571
 msgid "Unlock customer lifetime value distribution analysis"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:573, views/mail/weekly_report/template.php:461
+#: views/admin/reports-dashboard.php:582, views/mail/weekly_report/template.php:461
 msgid "Top Customers"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:581
+#: views/admin/reports-dashboard.php:590
 msgid "At-risk Customers"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:582
+#: views/admin/reports-dashboard.php:591
 msgid "High-value customers who haven't returned in 60+ days"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:586, src/SLB_Discount/Admin/DiscountsHistoryList.php:124
+#: views/admin/reports-dashboard.php:595, src/SLB_Discount/Admin/DiscountsHistoryList.php:124
 msgid "Customer"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:587
+#: views/admin/reports-dashboard.php:596
 msgid "Last Visit"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:588
+#: views/admin/reports-dashboard.php:597
 msgid "Days Since"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:589
+#: views/admin/reports-dashboard.php:598
 msgid "Total Spent"
 msgstr ""
 
-#: views/admin/reports-dashboard.php:604
+#: views/admin/reports-dashboard.php:613
 msgid "Unlock at-risk customer tracking and retention insights"
 msgstr ""
 
@@ -2333,7 +2386,7 @@ msgstr ""
 msgid "records could not be imported. Review the reasons below and re-import them after fixing your file."
 msgstr ""
 
-#: views/admin/tools.php:256, views/admin/_calendar_tooltip_data_attributes.php:414, views/admin/_tools_booking_discount_diagnostics.php:95, src/SLN/Admin/Tools.php:165, src/SLN/TaxonomyType/ServiceCategory.php:201, views/shortcode/salon_my_account/_salon_my_account_details_table.php:9
+#: views/admin/tools.php:256, views/admin/_calendar_tooltip_data_attributes.php:414, views/admin/_tools_booking_discount_diagnostics.php:95, src/SLN/Admin/Tools.php:186, src/SLN/TaxonomyType/ServiceCategory.php:201, views/shortcode/salon_my_account/_salon_my_account_details_table.php:9
 msgid "ID"
 msgstr ""
 
@@ -2361,7 +2414,7 @@ msgstr ""
 msgid "Done"
 msgstr ""
 
-#: views/admin/_calendar_day.php:68, views/admin/_calendar_day_assistant_common.php:43
+#: views/admin/_calendar_day.php:69, views/admin/_calendar_day_assistant_common.php:43
 msgid "Walk-In"
 msgstr ""
 
@@ -2385,7 +2438,7 @@ msgstr ""
 msgid "Click to diagnose why this slot is unavailable"
 msgstr ""
 
-#: views/admin/_calendar_render_day.php:138, views/admin/_calendar_tooltip_data_attributes.php:413, views/shortcode/_salon_summary_400.php:164, views/shortcode/_salon_summary_600.php:162, views/shortcode/_salon_summary_900.php:161, src/SLN/Third/GoogleScope.php:1169
+#: views/admin/_calendar_render_day.php:138, views/admin/_calendar_tooltip_data_attributes.php:413, views/shortcode/_salon_summary_400.php:164, views/shortcode/_salon_summary_600.php:162, views/shortcode/_salon_summary_900.php:161, src/SLN/Third/GoogleScope.php:1187
 msgid "Total amount"
 msgstr ""
 
@@ -2475,7 +2528,7 @@ msgstr ""
 msgid "Transaction fee"
 msgstr ""
 
-#: views/admin/_calendar_tooltip_data_attributes.php:428, views/metabox/booking.php:508
+#: views/admin/_calendar_tooltip_data_attributes.php:428, views/metabox/booking.php:542
 msgid "Toggle no-show status"
 msgstr ""
 
@@ -2495,7 +2548,7 @@ msgstr ""
 msgid "Duplicate booking (Pro feature)"
 msgstr ""
 
-#: views/admin/_calendar_tooltip_data_attributes.php:435, views/metabox/booking.php:779, views/metabox/service.php:34, views/shortcode/salon_booking_services.php:44, src/SLN/PostType/Booking.php:329, src/SLN/PostType/Service.php:148
+#: views/admin/_calendar_tooltip_data_attributes.php:435, views/metabox/booking.php:813, views/metabox/service.php:34, views/shortcode/salon_booking_services.php:44, src/SLN/PostType/Booking.php:329, src/SLN/PostType/Service.php:148
 msgid "Duration"
 msgstr ""
 
@@ -2591,7 +2644,7 @@ msgstr ""
 msgid "Marked on:"
 msgstr ""
 
-#: views/admin/_customer.php:369, views/metabox/booking.php:650
+#: views/admin/_customer.php:369, views/metabox/booking.php:684
 msgid "by"
 msgstr ""
 
@@ -3032,11 +3085,11 @@ msgstr ""
 msgid "Ready to repair"
 msgstr ""
 
-#: views/admin/_tools_staff_bookings_repair.php:59, views/admin/_tools_staff_bookings_repair.php:101, src/SLN/PostType/Booking.php:695, src/SLN/PostType/Booking.php:1071
+#: views/admin/_tools_staff_bookings_repair.php:59, views/admin/_tools_staff_bookings_repair.php:101, src/SLN/PostType/Booking.php:695, src/SLN/PostType/Booking.php:1064
 msgid "Booking"
 msgstr ""
 
-#: views/admin/_tools_staff_bookings_repair.php:60, views/admin/_tools_staff_bookings_repair.php:102, views/metabox/booking.php:125, views/metabox/booking.php:646
+#: views/admin/_tools_staff_bookings_repair.php:60, views/admin/_tools_staff_bookings_repair.php:102, views/metabox/booking.php:159, views/metabox/booking.php:680
 msgid "Date"
 msgstr ""
 
@@ -3200,7 +3253,7 @@ msgstr ""
 msgid "DATE & TIME"
 msgstr ""
 
-#: views/mail/_booking_info.php:77, src/SLN/Admin/Tools.php:168, src/SLN/Action/Ajax/ImportBookings.php:20, src/SLN/Action/Ajax/ImportBookings.php:31
+#: views/mail/_booking_info.php:77, src/SLN/Admin/Tools.php:189, src/SLN/Action/Ajax/ImportBookings.php:20, src/SLN/Action/Ajax/ImportBookings.php:31
 msgid "SERVICES"
 msgstr ""
 
@@ -3342,7 +3395,7 @@ msgstr ""
 msgid "E-mail"
 msgstr ""
 
-#: views/metabox/attendant.php:30, views/metabox/booking.php:203
+#: views/metabox/attendant.php:30, views/metabox/booking.php:237
 msgid "no users found"
 msgstr ""
 
@@ -3442,235 +3495,252 @@ msgstr ""
 msgid "Please set a new date and time"
 msgstr ""
 
-#: views/metabox/booking.php:120, views/metabox/booking.php:198
+#: views/metabox/booking.php:119
+msgid "This booking was saved over availability rules"
+msgstr ""
+
+#: views/metabox/booking.php:120
+msgid "This booking was saved over availability rules in the past"
+msgstr ""
+
+#. translators: %1$s date and time, %2$s user name
+#: views/metabox/booking.php:128
+msgid "%1$s by %2$s"
+msgstr ""
+
+#: views/metabox/booking.php:130
+msgid "unknown user"
+msgstr ""
+
+#: views/metabox/booking.php:154, views/metabox/booking.php:232
 msgid "Client"
 msgstr ""
 
-#: views/metabox/booking.php:139, views/metabox/booking.php:730
+#: views/metabox/booking.php:173, views/metabox/booking.php:764
 msgid "Totals"
 msgstr ""
 
-#: views/metabox/booking.php:144, views/metabox/booking.php:1088
+#: views/metabox/booking.php:178, views/metabox/booking.php:1122
 msgid "Notes"
 msgstr ""
 
-#: views/metabox/booking.php:161
+#: views/metabox/booking.php:195
 msgid "List view on"
 msgstr ""
 
-#: views/metabox/booking.php:162
+#: views/metabox/booking.php:196
 msgid "List view off"
 msgstr ""
 
-#: views/metabox/booking.php:204
+#: views/metabox/booking.php:238
 msgid "Search for a user"
 msgstr ""
 
-#: views/metabox/booking.php:207
+#: views/metabox/booking.php:241
 msgid "Just start typing a name, email, or phone number in the search field to quickly find the user you need!"
 msgstr ""
 
-#: views/metabox/booking.php:212
+#: views/metabox/booking.php:246
 msgid "Open customer file"
 msgstr ""
 
-#: views/metabox/booking.php:216
+#: views/metabox/booking.php:250
 msgid "Reset"
 msgstr ""
 
-#: views/metabox/booking.php:340
+#: views/metabox/booking.php:374
 msgid "Fidelity score"
 msgstr ""
 
-#: views/metabox/booking.php:352, src/SLN/Action/InitComments.php:32
+#: views/metabox/booking.php:386, src/SLN/Action/InitComments.php:32
 msgid "Rating"
 msgstr ""
 
 #. translators: 1: customer name, 2: date time
-#: views/metabox/booking.php:422
+#: views/metabox/booking.php:456
 msgid "Rated by %1$s on %2$s"
 msgstr ""
 
-#: views/metabox/booking.php:376
+#: views/metabox/booking.php:410
 msgid "Upgrade to PRO edition to use this feature"
 msgstr ""
 
-#: views/metabox/booking.php:377, views/metabox/booking.php:374
+#: views/metabox/booking.php:411, views/metabox/booking.php:408
 msgid "Request a feedback from customer by email"
 msgstr ""
 
-#: views/metabox/booking.php:392
+#: views/metabox/booking.php:426
 msgid "Feedback request sent."
 msgstr ""
 
-#: views/metabox/booking.php:394
+#: views/metabox/booking.php:428
 msgid "Could not send feedback request."
 msgstr ""
 
-#: views/metabox/booking.php:494
+#: views/metabox/booking.php:528
 msgid "No-show count"
 msgstr ""
 
-#: views/metabox/booking.php:599
+#: views/metabox/booking.php:633
 msgid "Save as new customer"
 msgstr ""
 
-#: views/metabox/booking.php:617
+#: views/metabox/booking.php:651
 msgid "Do not notify customer"
 msgstr ""
 
-#: views/metabox/booking.php:650
+#: views/metabox/booking.php:684
 msgid "Last edit"
 msgstr ""
 
-#: views/metabox/booking.php:663
+#: views/metabox/booking.php:697
 msgid "Select a day"
 msgstr ""
 
-#: views/metabox/booking.php:676
+#: views/metabox/booking.php:710
 msgid "Select an hour"
 msgstr ""
 
-#: views/metabox/booking.php:703
+#: views/metabox/booking.php:737
 msgid "OK! the date and time slot you selected is available"
 msgstr ""
 
-#: views/metabox/booking.php:749
+#: views/metabox/booking.php:783
 msgid "Payment Gateway"
 msgstr ""
 
-#: views/metabox/booking.php:763
+#: views/metabox/booking.php:797
 msgid "Open session in Stripe Dashboard"
 msgstr ""
 
-#: views/metabox/booking.php:764
+#: views/metabox/booking.php:798
 msgid "View Session ↗"
 msgstr ""
 
-#: views/metabox/booking.php:786, views/settings/tab_payments_pro.php:216, views/settings/tab_payments_pro.php:278, views/settings/_tab_payments_pro_pay_deposit_advanced_rules.php:78, src/SLB_Discount/PostType/Discount.php:255, views/discount/metabox/_discount_details.php:21
+#: views/metabox/booking.php:820, views/settings/tab_payments_pro.php:216, views/settings/tab_payments_pro.php:278, views/settings/_tab_payments_pro_pay_deposit_advanced_rules.php:78, src/SLB_Discount/PostType/Discount.php:255, views/discount/metabox/_discount_details.php:21
 msgid "Amount"
 msgstr ""
 
-#: views/metabox/booking.php:814
+#: views/metabox/booking.php:848
 msgid "Open in payment dashboard"
 msgstr ""
 
-#: views/metabox/booking.php:831
+#: views/metabox/booking.php:865
 msgid "Booking Device"
 msgstr ""
 
-#: views/metabox/booking.php:841
+#: views/metabox/booking.php:875
 msgid "Customer IP at booking time"
 msgstr ""
 
-#: views/metabox/booking.php:850
+#: views/metabox/booking.php:884
 msgid "Tip"
 msgstr ""
 
-#: views/metabox/booking.php:868, views/shortcode/_salon_thankyou_okbox.php:30
+#: views/metabox/booking.php:902, views/shortcode/_salon_thankyou_okbox.php:30
 msgid "Amount to be paid"
 msgstr ""
 
 #. translators: %d: discount coupon post ID
-#: views/metabox/booking.php:942
+#: views/metabox/booking.php:976
 msgid "Discount #%d"
 msgstr ""
 
 #. translators: %s will be replaced by the "Update booking"
-#: views/metabox/booking.php:965
+#: views/metabox/booking.php:999
 msgid "Please click on \"%s\" button to see the updated prices"
 msgstr ""
 
-#: views/metabox/booking.php:966
+#: views/metabox/booking.php:1000
 msgid "Update booking"
 msgstr ""
 
-#: views/metabox/booking.php:974
+#: views/metabox/booking.php:1008
 msgid "Update totals"
 msgstr ""
 
-#: views/metabox/booking.php:979
+#: views/metabox/booking.php:1013
 msgid "Stripe"
 msgstr ""
 
-#: views/metabox/booking.php:979
+#: views/metabox/booking.php:1013
 msgid "PayPal"
 msgstr ""
 
 #. translators: %s: Payment gateway name
-#: views/metabox/booking.php:991
+#: views/metabox/booking.php:1025
 msgid "Refresh %s Payment Status"
 msgstr ""
 
-#: views/metabox/booking.php:1022
+#: views/metabox/booking.php:1056
 msgid "Payment Details"
 msgstr ""
 
-#: views/metabox/booking.php:1026
+#: views/metabox/booking.php:1060
 msgid "Card"
 msgstr ""
 
-#: views/metabox/booking.php:1037
+#: views/metabox/booking.php:1071
 msgid "Paid via"
 msgstr ""
 
-#: views/metabox/booking.php:1043
+#: views/metabox/booking.php:1077
 msgid "Card Country"
 msgstr ""
 
-#: views/metabox/booking.php:1049
+#: views/metabox/booking.php:1083
 msgid "Charged On"
 msgstr ""
 
-#: views/metabox/booking.php:1055
+#: views/metabox/booking.php:1089
 msgid "Refund"
 msgstr ""
 
-#: views/metabox/booking.php:1061, src/SLN/Helper/CalendarLink.php:203, src/SLN/Third/GoogleScope.php:1151
+#: views/metabox/booking.php:1095, src/SLN/Helper/CalendarLink.php:203, src/SLN/Third/GoogleScope.php:1169
 msgid "None"
 msgstr ""
 
-#: views/metabox/booking.php:1059
+#: views/metabox/booking.php:1093
 msgid "Refunded (%s)"
 msgstr ""
 
-#: views/metabox/booking.php:1059
+#: views/metabox/booking.php:1093
 msgid "Refunded"
 msgstr ""
 
-#: views/metabox/booking.php:1068
+#: views/metabox/booking.php:1102
 msgid "Receipt"
 msgstr ""
 
-#: views/metabox/booking.php:1071
+#: views/metabox/booking.php:1105
 msgid "View Receipt ↗"
 msgstr ""
 
-#: views/metabox/booking.php:1095
+#: views/metabox/booking.php:1129
 msgid "Current booking - customer message"
 msgstr ""
 
-#: views/metabox/booking.php:1104
+#: views/metabox/booking.php:1138
 msgid "Current booking - administration note"
 msgstr ""
 
-#: views/metabox/booking.php:1133
+#: views/metabox/booking.php:1167
 msgid "Customer record - personal note"
 msgstr ""
 
-#: views/metabox/booking.php:1136, views/metabox/booking.php:1152
+#: views/metabox/booking.php:1170, views/metabox/booking.php:1186
 msgid "edit this field"
 msgstr ""
 
-#: views/metabox/booking.php:1142, views/metabox/booking.php:1158
+#: views/metabox/booking.php:1176, views/metabox/booking.php:1192
 msgid "Read only field"
 msgstr ""
 
-#: views/metabox/booking.php:1149
+#: views/metabox/booking.php:1183
 msgid "Customer record - administration note"
 msgstr ""
 
-#: views/metabox/booking.php:1186
+#: views/metabox/booking.php:1220
 msgid "Show more details"
 msgstr ""
 
@@ -3818,7 +3888,7 @@ msgstr ""
 msgid "Consider that this option will affect the availability of your staff members that you have associated with this service."
 msgstr ""
 
-#: views/metabox/service.php:172, views/metabox/service.php:173, views/metabox/_booking_services.php:173, views/metabox/_booking_services.php:342
+#: views/metabox/service.php:172, views/metabox/service.php:173, views/metabox/_booking_services.php:171, views/metabox/_booking_services.php:340
 msgid "No assistant required"
 msgstr ""
 
@@ -4018,39 +4088,35 @@ msgstr ""
 msgid "This service has no duration, change it or add another one!"
 msgstr ""
 
-#: views/metabox/_booking_services.php:77
-msgid "Total services duration exceeded, change or remove one!"
-msgstr ""
-
-#: views/metabox/_booking_services.php:97, views/metabox/_booking_services.php:243
+#: views/metabox/_booking_services.php:95, views/metabox/_booking_services.php:241
 msgid "Start at"
 msgstr ""
 
-#: views/metabox/_booking_services.php:101, views/metabox/_booking_services.php:247
+#: views/metabox/_booking_services.php:99, views/metabox/_booking_services.php:245
 msgid "End at"
 msgstr ""
 
-#: views/metabox/_booking_services.php:151, views/metabox/_booking_services.php:317, src/SLN/PostType/Resource.php:208
+#: views/metabox/_booking_services.php:149, views/metabox/_booking_services.php:315, src/SLN/PostType/Resource.php:208
 msgid "Resource"
 msgstr ""
 
-#: views/metabox/_booking_services.php:152, views/metabox/_booking_services.php:318
+#: views/metabox/_booking_services.php:150, views/metabox/_booking_services.php:316
 msgid "No resources"
 msgstr ""
 
-#: views/metabox/_booking_services.php:171, views/metabox/_booking_services.php:340, src/SLN/PostType/Booking.php:328, src/SLN/Admin/Customers/BookingsList.php:32
+#: views/metabox/_booking_services.php:169, views/metabox/_booking_services.php:338, src/SLN/PostType/Booking.php:328, src/SLN/Admin/Customers/BookingsList.php:32
 msgid "Attendant"
 msgstr ""
 
-#: views/metabox/_booking_services.php:187, views/metabox/_booking_services.php:368
+#: views/metabox/_booking_services.php:185, views/metabox/_booking_services.php:366
 msgid "Service addded"
 msgstr ""
 
-#: views/metabox/_booking_services.php:188, views/metabox/_booking_services.php:369, views/settings/tab_general.php:86, views/settings/_holiday_row.php:266
+#: views/metabox/_booking_services.php:186, views/metabox/_booking_services.php:367, views/settings/tab_general.php:86, views/settings/_holiday_row.php:266
 msgid "Remove"
 msgstr ""
 
-#: views/metabox/_booking_services.php:263
+#: views/metabox/_booking_services.php:261
 msgid "Quantity booked:"
 msgstr ""
 
@@ -4275,7 +4341,7 @@ msgstr ""
 msgid "Services selection limit"
 msgstr ""
 
-#: views/settings/tab_checkout.php:14, views/settings/tab_checkout.php:362, src/SLN/Helper/CalendarLink.php:203, src/SLN/Third/GoogleScope.php:1151
+#: views/settings/tab_checkout.php:14, views/settings/tab_checkout.php:362, src/SLN/Helper/CalendarLink.php:203, src/SLN/Third/GoogleScope.php:1169
 msgid "Booking notes"
 msgstr ""
 
@@ -6540,35 +6606,35 @@ msgstr ""
 msgid "Duration time equale:"
 msgstr ""
 
-#: src/SLB_API/Controller/Assistants_Controller.php:33, src/SLB_API/Controller/Assistants_Controller.php:126, src/SLB_API/Controller/Bookings_Controller.php:79, src/SLB_API/Controller/Services_Controller.php:40, src/SLB_API/Controller/Services_Controller.php:133, src/SLB_API_Mobile/Controller/Assistants_Controller.php:68, src/SLB_API_Mobile/Controller/Bookings_Controller.php:108, src/SLB_API_Mobile/Controller/Resources_Controller.php:31, src/SLB_API_Mobile/Controller/Services_Controller.php:39
+#: src/SLB_API/Controller/Assistants_Controller.php:33, src/SLB_API/Controller/Assistants_Controller.php:126, src/SLB_API/Controller/Bookings_Controller.php:79, src/SLB_API/Controller/Services_Controller.php:40, src/SLB_API/Controller/Services_Controller.php:133, src/SLB_API_Mobile/Controller/Assistants_Controller.php:68, src/SLB_API_Mobile/Controller/Bookings_Controller.php:129, src/SLB_API_Mobile/Controller/Resources_Controller.php:31, src/SLB_API_Mobile/Controller/Services_Controller.php:39
 msgid "Order."
 msgstr ""
 
-#: src/SLB_API/Controller/Assistants_Controller.php:39, src/SLB_API/Controller/Assistants_Controller.php:120, src/SLB_API/Controller/Bookings_Controller.php:85, src/SLB_API/Controller/Services_Controller.php:46, src/SLB_API/Controller/Services_Controller.php:127, src/SLB_API_Mobile/Controller/Assistants_Controller.php:74, src/SLB_API_Mobile/Controller/Bookings_Controller.php:114, src/SLB_API_Mobile/Controller/Resources_Controller.php:37, src/SLB_API_Mobile/Controller/Services_Controller.php:45
+#: src/SLB_API/Controller/Assistants_Controller.php:39, src/SLB_API/Controller/Assistants_Controller.php:120, src/SLB_API/Controller/Bookings_Controller.php:85, src/SLB_API/Controller/Services_Controller.php:46, src/SLB_API/Controller/Services_Controller.php:127, src/SLB_API_Mobile/Controller/Assistants_Controller.php:74, src/SLB_API_Mobile/Controller/Bookings_Controller.php:135, src/SLB_API_Mobile/Controller/Resources_Controller.php:37, src/SLB_API_Mobile/Controller/Services_Controller.php:45
 msgid "Order by."
 msgstr ""
 
-#: src/SLB_API/Controller/Assistants_Controller.php:45, src/SLB_API/Controller/Bookings_Controller.php:91, src/SLB_API/Controller/Services_Controller.php:52, src/SLB_API_Mobile/Controller/Assistants_Controller.php:80, src/SLB_API_Mobile/Controller/Bookings_Controller.php:120, src/SLB_API_Mobile/Controller/Resources_Controller.php:43, src/SLB_API_Mobile/Controller/Services_Controller.php:51
+#: src/SLB_API/Controller/Assistants_Controller.php:45, src/SLB_API/Controller/Bookings_Controller.php:91, src/SLB_API/Controller/Services_Controller.php:52, src/SLB_API_Mobile/Controller/Assistants_Controller.php:80, src/SLB_API_Mobile/Controller/Bookings_Controller.php:141, src/SLB_API_Mobile/Controller/Resources_Controller.php:43, src/SLB_API_Mobile/Controller/Services_Controller.php:51
 msgid "Per page."
 msgstr ""
 
-#: src/SLB_API/Controller/Assistants_Controller.php:50, src/SLB_API/Controller/Bookings_Controller.php:96, src/SLB_API/Controller/Services_Controller.php:57, src/SLB_API_Mobile/Controller/Assistants_Controller.php:85, src/SLB_API_Mobile/Controller/Bookings_Controller.php:125, src/SLB_API_Mobile/Controller/Resources_Controller.php:48, src/SLB_API_Mobile/Controller/Services_Controller.php:56
+#: src/SLB_API/Controller/Assistants_Controller.php:50, src/SLB_API/Controller/Bookings_Controller.php:96, src/SLB_API/Controller/Services_Controller.php:57, src/SLB_API_Mobile/Controller/Assistants_Controller.php:85, src/SLB_API_Mobile/Controller/Bookings_Controller.php:146, src/SLB_API_Mobile/Controller/Resources_Controller.php:48, src/SLB_API_Mobile/Controller/Services_Controller.php:56
 msgid "Page."
 msgstr ""
 
-#: src/SLB_API/Controller/Assistants_Controller.php:55, src/SLB_API/Controller/Bookings_Controller.php:101, src/SLB_API/Controller/Services_Controller.php:62, src/SLB_API_Mobile/Controller/Assistants_Controller.php:90, src/SLB_API_Mobile/Controller/Bookings_Controller.php:130, src/SLB_API_Mobile/Controller/Resources_Controller.php:53, src/SLB_API_Mobile/Controller/Services_Controller.php:61
+#: src/SLB_API/Controller/Assistants_Controller.php:55, src/SLB_API/Controller/Bookings_Controller.php:101, src/SLB_API/Controller/Services_Controller.php:62, src/SLB_API_Mobile/Controller/Assistants_Controller.php:90, src/SLB_API_Mobile/Controller/Bookings_Controller.php:151, src/SLB_API_Mobile/Controller/Resources_Controller.php:53, src/SLB_API_Mobile/Controller/Services_Controller.php:61
 msgid "Offset."
 msgstr ""
 
-#: src/SLB_API/Controller/Assistants_Controller.php:72, src/SLB_API/Controller/Assistants_Controller.php:464, src/SLB_API/Controller/Bookings_Controller.php:336, src/SLB_API/Controller/Bookings_Controller.php:366, src/SLB_API/Controller/Bookings_Controller.php:1636, src/SLB_API/Controller/Customers_Controller.php:64, src/SLB_API/Controller/Customers_Controller.php:666, src/SLB_API/Controller/Discounts_Controller.php:44, src/SLB_API/Controller/Discounts_Controller.php:342, src/SLB_API/Controller/ServicesCategories_Controller.php:42, src/SLB_API/Controller/ServicesCategories_Controller.php:299, src/SLB_API/Controller/Services_Controller.php:79, src/SLB_API/Controller/Services_Controller.php:514, src/SLB_API_Mobile/Controller/Assistants_Controller.php:112, src/SLB_API_Mobile/Controller/Assistants_Controller.php:531, src/SLB_API_Mobile/Controller/Bookings_Controller.php:221, src/SLB_API_Mobile/Controller/Bookings_Controller.php:251, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1840, src/SLB_API_Mobile/Controller/Customers_Controller.php:66, src/SLB_API_Mobile/Controller/Customers_Controller.php:96, src/SLB_API_Mobile/Controller/Customers_Controller.php:118, src/SLB_API_Mobile/Controller/Customers_Controller.php:152, src/SLB_API_Mobile/Controller/Customers_Controller.php:774, src/SLB_API_Mobile/Controller/CustomFields_Controller.php:100, src/SLB_API_Mobile/Controller/Discounts_Controller.php:44, src/SLB_API_Mobile/Controller/Discounts_Controller.php:361, src/SLB_API_Mobile/Controller/Resources_Controller.php:70, src/SLB_API_Mobile/Controller/Resources_Controller.php:322, src/SLB_API_Mobile/Controller/ServicesCategories_Controller.php:42, src/SLB_API_Mobile/Controller/ServicesCategories_Controller.php:297, src/SLB_API_Mobile/Controller/Services_Controller.php:78, src/SLB_API_Mobile/Controller/Services_Controller.php:468
+#: src/SLB_API/Controller/Assistants_Controller.php:72, src/SLB_API/Controller/Assistants_Controller.php:464, src/SLB_API/Controller/Bookings_Controller.php:336, src/SLB_API/Controller/Bookings_Controller.php:366, src/SLB_API/Controller/Bookings_Controller.php:1661, src/SLB_API/Controller/Customers_Controller.php:64, src/SLB_API/Controller/Customers_Controller.php:666, src/SLB_API/Controller/Discounts_Controller.php:44, src/SLB_API/Controller/Discounts_Controller.php:342, src/SLB_API/Controller/ServicesCategories_Controller.php:42, src/SLB_API/Controller/ServicesCategories_Controller.php:299, src/SLB_API/Controller/Services_Controller.php:79, src/SLB_API/Controller/Services_Controller.php:514, src/SLB_API_Mobile/Controller/Assistants_Controller.php:112, src/SLB_API_Mobile/Controller/Assistants_Controller.php:531, src/SLB_API_Mobile/Controller/Bookings_Controller.php:242, src/SLB_API_Mobile/Controller/Bookings_Controller.php:272, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2021, src/SLB_API_Mobile/Controller/Customers_Controller.php:66, src/SLB_API_Mobile/Controller/Customers_Controller.php:96, src/SLB_API_Mobile/Controller/Customers_Controller.php:118, src/SLB_API_Mobile/Controller/Customers_Controller.php:152, src/SLB_API_Mobile/Controller/Customers_Controller.php:774, src/SLB_API_Mobile/Controller/CustomFields_Controller.php:100, src/SLB_API_Mobile/Controller/Discounts_Controller.php:44, src/SLB_API_Mobile/Controller/Discounts_Controller.php:361, src/SLB_API_Mobile/Controller/Resources_Controller.php:70, src/SLB_API_Mobile/Controller/Resources_Controller.php:322, src/SLB_API_Mobile/Controller/ServicesCategories_Controller.php:42, src/SLB_API_Mobile/Controller/ServicesCategories_Controller.php:297, src/SLB_API_Mobile/Controller/Services_Controller.php:78, src/SLB_API_Mobile/Controller/Services_Controller.php:468
 msgid "Unique identifier for the resource."
 msgstr ""
 
-#: src/SLB_API/Controller/Assistants_Controller.php:106, src/SLB_API/Controller/Bookings_Controller.php:67, src/SLB_API/Controller/Bookings_Controller.php:141, src/SLB_API/Controller/Bookings_Controller.php:174, src/SLB_API/Controller/Bookings_Controller.php:229, src/SLB_API/Controller/Bookings_Controller.php:258, src/SLB_API/Controller/Bookings_Controller.php:287, src/SLB_API/Controller/Bookings_Controller.php:316, src/SLB_API/Controller/Customers_Controller.php:98, src/SLB_API/Controller/Customers_Controller.php:137, src/SLB_API/Controller/Customers_Controller.php:166, src/SLB_API/Controller/Services_Controller.php:113, src/SLB_API_Mobile/Controller/Bookings_Controller.php:74, src/SLB_API_Mobile/Controller/Bookings_Controller.php:192
+#: src/SLB_API/Controller/Assistants_Controller.php:106, src/SLB_API/Controller/Bookings_Controller.php:67, src/SLB_API/Controller/Bookings_Controller.php:141, src/SLB_API/Controller/Bookings_Controller.php:174, src/SLB_API/Controller/Bookings_Controller.php:229, src/SLB_API/Controller/Bookings_Controller.php:258, src/SLB_API/Controller/Bookings_Controller.php:287, src/SLB_API/Controller/Bookings_Controller.php:316, src/SLB_API/Controller/Customers_Controller.php:98, src/SLB_API/Controller/Customers_Controller.php:137, src/SLB_API/Controller/Customers_Controller.php:166, src/SLB_API/Controller/Services_Controller.php:113, src/SLB_API_Mobile/Controller/Bookings_Controller.php:95, src/SLB_API_Mobile/Controller/Bookings_Controller.php:213
 msgid "Start date."
 msgstr ""
 
-#: src/SLB_API/Controller/Assistants_Controller.php:113, src/SLB_API/Controller/Bookings_Controller.php:73, src/SLB_API/Controller/Bookings_Controller.php:149, src/SLB_API/Controller/Bookings_Controller.php:181, src/SLB_API/Controller/Bookings_Controller.php:236, src/SLB_API/Controller/Bookings_Controller.php:265, src/SLB_API/Controller/Bookings_Controller.php:294, src/SLB_API/Controller/Bookings_Controller.php:323, src/SLB_API/Controller/Customers_Controller.php:105, src/SLB_API/Controller/Customers_Controller.php:144, src/SLB_API/Controller/Customers_Controller.php:173, src/SLB_API/Controller/Services_Controller.php:120, src/SLB_API_Mobile/Controller/Bookings_Controller.php:80, src/SLB_API_Mobile/Controller/Bookings_Controller.php:200
+#: src/SLB_API/Controller/Assistants_Controller.php:113, src/SLB_API/Controller/Bookings_Controller.php:73, src/SLB_API/Controller/Bookings_Controller.php:149, src/SLB_API/Controller/Bookings_Controller.php:181, src/SLB_API/Controller/Bookings_Controller.php:236, src/SLB_API/Controller/Bookings_Controller.php:265, src/SLB_API/Controller/Bookings_Controller.php:294, src/SLB_API/Controller/Bookings_Controller.php:323, src/SLB_API/Controller/Customers_Controller.php:105, src/SLB_API/Controller/Customers_Controller.php:144, src/SLB_API/Controller/Customers_Controller.php:173, src/SLB_API/Controller/Services_Controller.php:120, src/SLB_API_Mobile/Controller/Bookings_Controller.php:101, src/SLB_API_Mobile/Controller/Bookings_Controller.php:221
 msgid "End date."
 msgstr ""
 
@@ -6576,15 +6642,15 @@ msgstr ""
 msgid "Shop ID for multi-shop filtering (0 = all shops)."
 msgstr ""
 
-#: src/SLB_API/Controller/Assistants_Controller.php:300, src/SLB_API/Controller/Bookings_Controller.php:990, src/SLB_API/Controller/Customers_Controller.php:514, src/SLB_API/Controller/Discounts_Controller.php:202, src/SLB_API/Controller/ServicesCategories_Controller.php:205, src/SLB_API/Controller/Services_Controller.php:349, src/SLB_API_Mobile/Controller/Assistants_Controller.php:367, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1106, src/SLB_API_Mobile/Controller/Customers_Controller.php:473, src/SLB_API_Mobile/Controller/Discounts_Controller.php:221, src/SLB_API_Mobile/Controller/Resources_Controller.php:208, src/SLB_API_Mobile/Controller/ServicesCategories_Controller.php:203, src/SLB_API_Mobile/Controller/Services_Controller.php:303
+#: src/SLB_API/Controller/Assistants_Controller.php:300, src/SLB_API/Controller/Bookings_Controller.php:990, src/SLB_API/Controller/Customers_Controller.php:514, src/SLB_API/Controller/Discounts_Controller.php:202, src/SLB_API/Controller/ServicesCategories_Controller.php:205, src/SLB_API/Controller/Services_Controller.php:349, src/SLB_API_Mobile/Controller/Assistants_Controller.php:367, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1131, src/SLB_API_Mobile/Controller/Customers_Controller.php:473, src/SLB_API_Mobile/Controller/Discounts_Controller.php:221, src/SLB_API_Mobile/Controller/Resources_Controller.php:208, src/SLB_API_Mobile/Controller/ServicesCategories_Controller.php:203, src/SLB_API_Mobile/Controller/Services_Controller.php:303
 msgid "Sorry, resource already exists."
 msgstr ""
 
-#: src/SLB_API/Controller/Assistants_Controller.php:325, src/SLB_API/Controller/Assistants_Controller.php:342, src/SLB_API/Controller/Assistants_Controller.php:367, src/SLB_API/Controller/Bookings_Controller.php:1179, src/SLB_API/Controller/Bookings_Controller.php:1205, src/SLB_API/Controller/Bookings_Controller.php:1265, src/SLB_API/Controller/Bookings_Controller.php:1284, src/SLB_API/Controller/Customers_Controller.php:556, src/SLB_API/Controller/Customers_Controller.php:578, src/SLB_API/Controller/Customers_Controller.php:608, src/SLB_API/Controller/Discounts_Controller.php:227, src/SLB_API/Controller/Discounts_Controller.php:248, src/SLB_API/Controller/Discounts_Controller.php:277, src/SLB_API/Controller/ServicesCategories_Controller.php:227, src/SLB_API/Controller/ServicesCategories_Controller.php:240, src/SLB_API/Controller/ServicesCategories_Controller.php:261, src/SLB_API/Controller/Services_Controller.php:374, src/SLB_API/Controller/Services_Controller.php:395, src/SLB_API/Controller/Services_Controller.php:420, src/SLB_API_Mobile/Controller/Assistants_Controller.php:392, src/SLB_API_Mobile/Controller/Assistants_Controller.php:409, src/SLB_API_Mobile/Controller/Assistants_Controller.php:434, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1240, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1259, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1278, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1333, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1350, src/SLB_API_Mobile/Controller/Customers_Controller.php:499, src/SLB_API_Mobile/Controller/Customers_Controller.php:521, src/SLB_API_Mobile/Controller/Customers_Controller.php:551, src/SLB_API_Mobile/Controller/Customers_Controller.php:618, src/SLB_API_Mobile/Controller/Customers_Controller.php:700, src/SLB_API_Mobile/Controller/Customers_Controller.php:736, src/SLB_API_Mobile/Controller/Discounts_Controller.php:246, src/SLB_API_Mobile/Controller/Discounts_Controller.php:267, src/SLB_API_Mobile/Controller/Discounts_Controller.php:296, src/SLB_API_Mobile/Controller/Resources_Controller.php:235, src/SLB_API_Mobile/Controller/Resources_Controller.php:253, src/SLB_API_Mobile/Controller/Resources_Controller.php:281, src/SLB_API_Mobile/Controller/ServicesCategories_Controller.php:225, src/SLB_API_Mobile/Controller/ServicesCategories_Controller.php:238, src/SLB_API_Mobile/Controller/ServicesCategories_Controller.php:259, src/SLB_API_Mobile/Controller/Services_Controller.php:328, src/SLB_API_Mobile/Controller/Services_Controller.php:349, src/SLB_API_Mobile/Controller/Services_Controller.php:374
+#: src/SLB_API/Controller/Assistants_Controller.php:325, src/SLB_API/Controller/Assistants_Controller.php:342, src/SLB_API/Controller/Assistants_Controller.php:367, src/SLB_API/Controller/Bookings_Controller.php:1204, src/SLB_API/Controller/Bookings_Controller.php:1230, src/SLB_API/Controller/Bookings_Controller.php:1290, src/SLB_API/Controller/Bookings_Controller.php:1309, src/SLB_API/Controller/Customers_Controller.php:556, src/SLB_API/Controller/Customers_Controller.php:578, src/SLB_API/Controller/Customers_Controller.php:608, src/SLB_API/Controller/Discounts_Controller.php:227, src/SLB_API/Controller/Discounts_Controller.php:248, src/SLB_API/Controller/Discounts_Controller.php:277, src/SLB_API/Controller/ServicesCategories_Controller.php:227, src/SLB_API/Controller/ServicesCategories_Controller.php:240, src/SLB_API/Controller/ServicesCategories_Controller.php:261, src/SLB_API/Controller/Services_Controller.php:374, src/SLB_API/Controller/Services_Controller.php:395, src/SLB_API/Controller/Services_Controller.php:420, src/SLB_API_Mobile/Controller/Assistants_Controller.php:392, src/SLB_API_Mobile/Controller/Assistants_Controller.php:409, src/SLB_API_Mobile/Controller/Assistants_Controller.php:434, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1268, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1287, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1306, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1364, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1381, src/SLB_API_Mobile/Controller/Customers_Controller.php:499, src/SLB_API_Mobile/Controller/Customers_Controller.php:521, src/SLB_API_Mobile/Controller/Customers_Controller.php:551, src/SLB_API_Mobile/Controller/Customers_Controller.php:618, src/SLB_API_Mobile/Controller/Customers_Controller.php:700, src/SLB_API_Mobile/Controller/Customers_Controller.php:736, src/SLB_API_Mobile/Controller/Discounts_Controller.php:246, src/SLB_API_Mobile/Controller/Discounts_Controller.php:267, src/SLB_API_Mobile/Controller/Discounts_Controller.php:296, src/SLB_API_Mobile/Controller/Resources_Controller.php:235, src/SLB_API_Mobile/Controller/Resources_Controller.php:253, src/SLB_API_Mobile/Controller/Resources_Controller.php:281, src/SLB_API_Mobile/Controller/ServicesCategories_Controller.php:225, src/SLB_API_Mobile/Controller/ServicesCategories_Controller.php:238, src/SLB_API_Mobile/Controller/ServicesCategories_Controller.php:259, src/SLB_API_Mobile/Controller/Services_Controller.php:328, src/SLB_API_Mobile/Controller/Services_Controller.php:349, src/SLB_API_Mobile/Controller/Services_Controller.php:374
 msgid "Sorry, resource not found."
 msgstr ""
 
-#: src/SLB_API/Controller/Assistants_Controller.php:446, src/SLB_API/Controller/Bookings_Controller.php:1449, src/SLB_API/Controller/Discounts_Controller.php:328, src/SLB_API/Controller/Services_Controller.php:496, src/SLB_API_Mobile/Controller/Assistants_Controller.php:513, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1610, src/SLB_API_Mobile/Controller/Discounts_Controller.php:347, src/SLB_API_Mobile/Controller/Resources_Controller.php:306, src/SLB_API_Mobile/Controller/Services_Controller.php:450
+#: src/SLB_API/Controller/Assistants_Controller.php:446, src/SLB_API/Controller/Bookings_Controller.php:1474, src/SLB_API/Controller/Discounts_Controller.php:328, src/SLB_API/Controller/Services_Controller.php:496, src/SLB_API_Mobile/Controller/Assistants_Controller.php:513, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1645, src/SLB_API_Mobile/Controller/Discounts_Controller.php:347, src/SLB_API_Mobile/Controller/Resources_Controller.php:306, src/SLB_API_Mobile/Controller/Services_Controller.php:450
 msgid "Save post error."
 msgstr ""
 
@@ -6604,7 +6670,7 @@ msgstr ""
 msgid "The phone number for the resource."
 msgstr ""
 
-#: src/SLB_API/Controller/Assistants_Controller.php:510, src/SLB_API/Controller/Bookings_Controller.php:1897, src/SLB_API/Controller/ServicesCategories_Controller.php:327, src/SLB_API/Controller/Services_Controller.php:629, src/SLB_API_Mobile/Controller/Assistants_Controller.php:577, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2150, src/SLB_API_Mobile/Controller/ServicesCategories_Controller.php:325, src/SLB_API_Mobile/Controller/Services_Controller.php:583
+#: src/SLB_API/Controller/Assistants_Controller.php:510, src/SLB_API/Controller/Bookings_Controller.php:1922, src/SLB_API/Controller/ServicesCategories_Controller.php:327, src/SLB_API/Controller/Services_Controller.php:629, src/SLB_API_Mobile/Controller/Assistants_Controller.php:577, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2331, src/SLB_API_Mobile/Controller/ServicesCategories_Controller.php:325, src/SLB_API_Mobile/Controller/Services_Controller.php:583
 msgid "The description for the resource."
 msgstr ""
 
@@ -6749,23 +6815,23 @@ msgstr ""
 msgid "Selected secondary services."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:48, src/SLB_API/Controller/Customers_Controller.php:34, src/SLB_API_Mobile/Controller/Bookings_Controller.php:51, src/SLB_API_Mobile/Controller/Customers_Controller.php:36
+#: src/SLB_API/Controller/Bookings_Controller.php:48, src/SLB_API/Controller/Customers_Controller.php:34, src/SLB_API_Mobile/Controller/Bookings_Controller.php:72, src/SLB_API_Mobile/Controller/Customers_Controller.php:36
 msgid "Search string."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:53, src/SLB_API_Mobile/Controller/Bookings_Controller.php:56
+#: src/SLB_API/Controller/Bookings_Controller.php:53, src/SLB_API_Mobile/Controller/Bookings_Controller.php:77
 msgid "Services ids."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:60, src/SLB_API_Mobile/Controller/Bookings_Controller.php:63
+#: src/SLB_API/Controller/Bookings_Controller.php:60, src/SLB_API_Mobile/Controller/Bookings_Controller.php:84
 msgid "Customers ids."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:122, src/SLB_API_Mobile/Controller/Bookings_Controller.php:151
+#: src/SLB_API/Controller/Bookings_Controller.php:122, src/SLB_API_Mobile/Controller/Bookings_Controller.php:172
 msgid "Hours."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:157, src/SLB_API/Controller/Bookings_Controller.php:188, src/SLB_API_Mobile/Controller/Bookings_Controller.php:208
+#: src/SLB_API/Controller/Bookings_Controller.php:157, src/SLB_API/Controller/Bookings_Controller.php:188, src/SLB_API_Mobile/Controller/Bookings_Controller.php:229
 msgid "Group by."
 msgstr ""
 
@@ -6785,175 +6851,175 @@ msgstr ""
 msgid "Filter by booking statuses."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:388, src/SLB_API/Controller/REST_Controller.php:173, src/SLB_API_Mobile/Controller/Bookings_Controller.php:292, src/SLB_API_Mobile/Controller/REST_Controller.php:140
+#: src/SLB_API/Controller/Bookings_Controller.php:388, src/SLB_API/Controller/REST_Controller.php:173, src/SLB_API_Mobile/Controller/Bookings_Controller.php:313, src/SLB_API_Mobile/Controller/REST_Controller.php:140
 msgid "Sorry, you cannot list resources."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:402, src/SLB_API/Controller/Bookings_Controller.php:1187, src/SLB_API/Controller/REST_Controller.php:191, src/SLB_API_Mobile/Controller/Bookings_Controller.php:305, src/SLB_API_Mobile/Controller/REST_Controller.php:158
+#: src/SLB_API/Controller/Bookings_Controller.php:402, src/SLB_API/Controller/Bookings_Controller.php:1212, src/SLB_API/Controller/REST_Controller.php:191, src/SLB_API_Mobile/Controller/Bookings_Controller.php:326, src/SLB_API_Mobile/Controller/REST_Controller.php:158
 msgid "Sorry, you cannot view resource."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:955, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1071, src/SLN/Action/Ajax/SalonStep.php:36
+#: src/SLB_API/Controller/Bookings_Controller.php:955, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1096, src/SLN/Action/Ajax/SalonStep.php:36
 msgid "Too many booking attempts. Please try again in a few minutes."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:969, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1085, src/SLN/Helper/RecaptchaVerifier.php:220
+#: src/SLB_API/Controller/Bookings_Controller.php:969, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1110, src/SLN/Helper/RecaptchaVerifier.php:220
 msgid "Bot verification failed. Please try again."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1043, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1159
+#: src/SLB_API/Controller/Bookings_Controller.php:1057, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1187
 msgid "A staff account cannot be set as the booking customer."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1052, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1168
+#: src/SLB_API/Controller/Bookings_Controller.php:1066, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1196
 msgid "Customer doesn't exists."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1070, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1187
+#: src/SLB_API/Controller/Bookings_Controller.php:1084, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1215
 msgid "Customer email empty."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1082, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1199
+#: src/SLB_API/Controller/Bookings_Controller.php:1096, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1227
 msgid "Create new customer error."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1094, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1211
+#: src/SLB_API/Controller/Bookings_Controller.php:1108, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1239
 msgid "Save new customer error."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1215, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1284
+#: src/SLB_API/Controller/Bookings_Controller.php:1240, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1312
 msgid "Sorry, you cannot edit resource."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1271, src/SLB_API/Controller/Customers_Controller.php:270, src/SLB_API/Controller/REST_Controller.php:209, src/SLB_API/Controller/ServicesCategories_Controller.php:99, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1337, src/SLB_API_Mobile/Controller/Customers_Controller.php:202, src/SLB_API_Mobile/Controller/REST_Controller.php:176, src/SLB_API_Mobile/Controller/ServicesCategories_Controller.php:99
+#: src/SLB_API/Controller/Bookings_Controller.php:1296, src/SLB_API/Controller/Customers_Controller.php:270, src/SLB_API/Controller/REST_Controller.php:209, src/SLB_API/Controller/ServicesCategories_Controller.php:99, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1368, src/SLB_API_Mobile/Controller/Customers_Controller.php:202, src/SLB_API_Mobile/Controller/REST_Controller.php:176, src/SLB_API_Mobile/Controller/ServicesCategories_Controller.php:99
 msgid "Sorry, you cannot delete resource."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1290, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1354
+#: src/SLB_API/Controller/Bookings_Controller.php:1315, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1385
 msgid "Sorry, you cannot access resource."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1302, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1366, src/SLN/Action/Ajax/ResendNotification.php:22, src/SLN/Action/Ajax/ResendPaymentNotification.php:20
+#: src/SLB_API/Controller/Bookings_Controller.php:1327, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1397, src/SLN/Action/Ajax/ResendNotification.php:22, src/SLN/Action/Ajax/ResendPaymentNotification.php:20
 msgid "Please specify an email"
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1644, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1848
+#: src/SLB_API/Controller/Bookings_Controller.php:1669, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2029
 msgid "Created timestamp for the resource."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1652, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1856
+#: src/SLB_API/Controller/Bookings_Controller.php:1677, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2037
 msgid "The date for the resource."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1663, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1866
+#: src/SLB_API/Controller/Bookings_Controller.php:1688, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2047
 msgid "The time for the resource."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1674, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1876
+#: src/SLB_API/Controller/Bookings_Controller.php:1699, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2057
 msgid "The status for the resource."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1685, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1887
+#: src/SLB_API/Controller/Bookings_Controller.php:1710, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2068
 msgid "The customer id for the resource."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1693, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1895
+#: src/SLB_API/Controller/Bookings_Controller.php:1718, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2076
 msgid "The customer first name for the resource."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1702, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1904
+#: src/SLB_API/Controller/Bookings_Controller.php:1727, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2085
 msgid "The customer last name for the resource."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1711, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1913
+#: src/SLB_API/Controller/Bookings_Controller.php:1736, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2094
 msgid "The customer email for the resource."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1722, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1924
+#: src/SLB_API/Controller/Bookings_Controller.php:1747, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2105
 msgid "The customer phone for the resource."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1731, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1933
+#: src/SLB_API/Controller/Bookings_Controller.php:1756, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2114
 msgid "The customer phone country code for the resource."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1740, src/SLB_API_Mobile/Controller/Bookings_Controller.php:1942
+#: src/SLB_API/Controller/Bookings_Controller.php:1765, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2123
 msgid "The customer address for the resource."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1749, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2004
+#: src/SLB_API/Controller/Bookings_Controller.php:1774, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2185
 msgid "The services for the resource."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1753, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2008
+#: src/SLB_API/Controller/Bookings_Controller.php:1778, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2189
 msgid "The service item."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1759, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2014
+#: src/SLB_API/Controller/Bookings_Controller.php:1784, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2195
 msgid "The start at."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1769, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2024
+#: src/SLB_API/Controller/Bookings_Controller.php:1794, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2205
 msgid "The end at."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1779, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2034
+#: src/SLB_API/Controller/Bookings_Controller.php:1804, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2215
 msgid "The service id."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1787, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2042
+#: src/SLB_API/Controller/Bookings_Controller.php:1812, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2223
 msgid "The service name."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1792, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2047
+#: src/SLB_API/Controller/Bookings_Controller.php:1817, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2228
 msgid "The service price."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1797, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2052
+#: src/SLB_API/Controller/Bookings_Controller.php:1822, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2233
 msgid "The assistant id."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1806, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2061
+#: src/SLB_API/Controller/Bookings_Controller.php:1831, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2242
 msgid "The assistant name."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1811, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2066
+#: src/SLB_API/Controller/Bookings_Controller.php:1836, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2247
 msgid "The resource id."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1819, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2074
+#: src/SLB_API/Controller/Bookings_Controller.php:1844, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2255
 msgid "The resource name."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1831, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2086
+#: src/SLB_API/Controller/Bookings_Controller.php:1856, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2267
 msgid "The discounts ids for the resource."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1842, src/SLB_API/Controller/Services_Controller.php:556, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2097, src/SLB_API_Mobile/Controller/Services_Controller.php:510
+#: src/SLB_API/Controller/Bookings_Controller.php:1867, src/SLB_API/Controller/Services_Controller.php:556, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2278, src/SLB_API_Mobile/Controller/Services_Controller.php:510
 msgid "The duration for the resource."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1852, src/SLB_API/Controller/Discounts_Controller.php:359, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2107, src/SLB_API_Mobile/Controller/Discounts_Controller.php:378
+#: src/SLB_API/Controller/Bookings_Controller.php:1877, src/SLB_API/Controller/Discounts_Controller.php:359, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2288, src/SLB_API_Mobile/Controller/Discounts_Controller.php:378
 msgid "The amount for the resource."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1860, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2115
+#: src/SLB_API/Controller/Bookings_Controller.php:1885, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2296
 msgid "The deposit for the resource."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1868, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2123
+#: src/SLB_API/Controller/Bookings_Controller.php:1893, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2304
 msgid "The paid remained amount for the resource."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1876, src/SLB_API/Controller/Discounts_Controller.php:376, src/SLB_API/Controller/Services_Controller.php:539, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2131, src/SLB_API_Mobile/Controller/Discounts_Controller.php:395, src/SLB_API_Mobile/Controller/Services_Controller.php:493
+#: src/SLB_API/Controller/Bookings_Controller.php:1901, src/SLB_API/Controller/Discounts_Controller.php:376, src/SLB_API/Controller/Services_Controller.php:539, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2312, src/SLB_API_Mobile/Controller/Discounts_Controller.php:395, src/SLB_API_Mobile/Controller/Services_Controller.php:493
 msgid "The currency symbol the resource."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1884, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2139
+#: src/SLB_API/Controller/Bookings_Controller.php:1909, src/SLB_API_Mobile/Controller/Bookings_Controller.php:2320
 msgid "The transaction id for the resource."
 msgstr ""
 
-#: src/SLB_API/Controller/Bookings_Controller.php:1906
+#: src/SLB_API/Controller/Bookings_Controller.php:1931
 msgid "The admin description for the resource."
 msgstr ""
 
@@ -7041,7 +7107,7 @@ msgstr ""
 msgid "The total amount of reservations."
 msgstr ""
 
-#: src/SLB_API/Controller/Customers_Controller.php:1305
+#: src/SLB_API/Controller/Customers_Controller.php:1306
 msgid "Customer not found"
 msgstr ""
 
@@ -7189,7 +7255,7 @@ msgstr ""
 msgid "To date."
 msgstr ""
 
-#: src/SLB_API_Mobile/Controller/AvailabilityStats_Controller.php:40, src/SLB_API_Mobile/Controller/Bookings_Controller.php:70
+#: src/SLB_API_Mobile/Controller/AvailabilityStats_Controller.php:40, src/SLB_API_Mobile/Controller/Bookings_Controller.php:91
 msgid "Shop id."
 msgstr ""
 
@@ -7209,87 +7275,91 @@ msgstr ""
 msgid "Booking Rule"
 msgstr ""
 
-#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:86, src/SLB_API_Mobile/Controller/Bookings_Controller.php:159
+#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:107, src/SLB_API_Mobile/Controller/Bookings_Controller.php:180
 msgid "Booking statuses."
 msgstr ""
 
-#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:270
+#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:291
 msgid "Booking ID."
 msgstr ""
 
-#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:275
+#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:296
 msgid "No-show status (0 or 1)."
 msgstr ""
 
-#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:1386
+#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:1417
 msgid "Date and time are required for the booking."
 msgstr ""
 
-#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:1436
+#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:1467
 msgid "At least one service is required for the booking."
 msgstr ""
 
-#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:1453
+#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:1484
 msgid "At least one service with a valid service ID is required."
 msgstr ""
 
-#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:1951
+#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:1806
+msgid "Another booking for this time is being saved right now. Please try again."
+msgstr ""
+
+#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:2132
 msgid "Customer notification language (WPML/Polylang code)."
 msgstr ""
 
-#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:1959
+#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:2140
 msgid "Photos of the customer."
 msgstr ""
 
-#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:1965, src/SLB_API_Mobile/Controller/Customers_Controller.php:863
+#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:2146, src/SLB_API_Mobile/Controller/Customers_Controller.php:863
 msgid "Unique identifier for the photo."
 msgstr ""
 
-#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:1973, src/SLB_API_Mobile/Controller/Customers_Controller.php:871
+#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:2154, src/SLB_API_Mobile/Controller/Customers_Controller.php:871
 msgid "Url file for the photo."
 msgstr ""
 
-#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:1981, src/SLB_API_Mobile/Controller/Customers_Controller.php:879
+#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:2162, src/SLB_API_Mobile/Controller/Customers_Controller.php:879
 msgid "Is default of the photo."
 msgstr ""
 
-#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:1989, src/SLB_API_Mobile/Controller/Customers_Controller.php:887
+#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:2170, src/SLB_API_Mobile/Controller/Customers_Controller.php:887
 msgid "Created timestamp of the photo."
 msgstr ""
 
-#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:2159
+#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:2340
 msgid "The admin note for the booking."
 msgstr ""
 
-#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:2168
+#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:2349
 msgid "The custom fields for the resource."
 msgstr ""
 
-#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:2172
+#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:2353
 msgid "The custom field item."
 msgstr ""
 
-#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:2178
+#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:2359
 msgid "The key"
 msgstr ""
 
-#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:2186, src/SLB_API_Mobile/Controller/CustomFields_Controller.php:155
+#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:2367, src/SLB_API_Mobile/Controller/CustomFields_Controller.php:155
 msgid "The value"
 msgstr ""
 
-#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:2194, src/SLB_API_Mobile/Controller/CustomFields_Controller.php:163
+#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:2375, src/SLB_API_Mobile/Controller/CustomFields_Controller.php:163
 msgid "The label"
 msgstr ""
 
-#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:2199
+#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:2380
 msgid "The type"
 msgstr ""
 
-#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:2227
+#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:2408
 msgid "This feature requires Salon Booking System PRO."
 msgstr ""
 
-#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:2241, src/SLN/Action/Ajax/OnNoShow.php:39
+#: src/SLB_API_Mobile/Controller/Bookings_Controller.php:2422, src/SLN/Action/Ajax/OnNoShow.php:39
 msgid "Booking not found"
 msgstr ""
 
@@ -8316,7 +8386,7 @@ msgstr ""
 msgid "Open in Settings"
 msgstr ""
 
-#: src/SLN/Admin/Onboarding.php:585
+#: src/SLN/Admin/Onboarding.php:584
 msgid "Please complete the required setup steps before finishing."
 msgstr ""
 
@@ -8380,67 +8450,75 @@ msgstr ""
 msgid "You do not have permission to run this diagnostic."
 msgstr ""
 
-#: src/SLN/Admin/Tools.php:166, src/SLN/Action/Ajax/ImportBookings.php:14
+#: src/SLN/Admin/Tools.php:187, src/SLN/Action/Ajax/ImportBookings.php:14
 msgid "DATE/TIME"
 msgstr ""
 
-#: src/SLN/Admin/Tools.php:167
+#: src/SLN/Admin/Tools.php:188
 msgid "CREATED"
 msgstr ""
 
-#: src/SLN/Admin/Tools.php:169, src/SLN/Action/Ajax/ImportBookings.php:21
+#: src/SLN/Admin/Tools.php:190, src/SLN/Action/Ajax/ImportBookings.php:21
 msgid "ASSISTANTS"
 msgstr ""
 
-#: src/SLN/Admin/Tools.php:170, src/SLN/Action/Ajax/ImportBookings.php:22, src/SLN/Action/Ajax/ImportBookings.php:34
+#: src/SLN/Admin/Tools.php:191, src/SLN/Action/Ajax/ImportBookings.php:22, src/SLN/Action/Ajax/ImportBookings.php:34
 msgid "NUMBER OF FOR EACH SERVICE"
 msgstr ""
 
-#: src/SLN/Admin/Tools.php:171, src/SLN/Action/Ajax/ImportBookings.php:23, src/SLN/Action/Ajax/ImportBookings.php:32
+#: src/SLN/Admin/Tools.php:192, src/SLN/Action/Ajax/ImportBookings.php:23, src/SLN/Action/Ajax/ImportBookings.php:32
 msgid "TOTAL PRICE"
 msgstr ""
 
-#: src/SLN/Admin/Tools.php:172, src/SLN/Action/Ajax/ImportBookings.php:24, src/SLN/Action/Ajax/ImportBookings.php:33
+#: src/SLN/Admin/Tools.php:193, src/SLN/Action/Ajax/ImportBookings.php:24, src/SLN/Action/Ajax/ImportBookings.php:33
 msgid "STATUS"
 msgstr ""
 
-#: src/SLN/Admin/Tools.php:176, src/SLN/Action/Ajax/ImportBookings.php:27
+#: src/SLN/Admin/Tools.php:198
+msgid "ASSISTANT SHARE"
+msgstr ""
+
+#: src/SLN/Admin/Tools.php:202, src/SLN/Action/Ajax/ImportBookings.php:27
 msgid "SHOP"
 msgstr ""
 
-#: src/SLN/Admin/Tools.php:183, src/SLN/Action/Ajax/ImportBookings.php:15
+#: src/SLN/Admin/Tools.php:209, src/SLN/Action/Ajax/ImportBookings.php:15
 msgid "CUSTOMER FIRST NAME"
 msgstr ""
 
-#: src/SLN/Admin/Tools.php:186, src/SLN/Action/Ajax/ImportBookings.php:16
+#: src/SLN/Admin/Tools.php:212, src/SLN/Action/Ajax/ImportBookings.php:16
 msgid "CUSTOMER LAST NAME"
 msgstr ""
 
-#: src/SLN/Admin/Tools.php:189, src/SLN/Action/Ajax/ImportBookings.php:17, src/SLN/Action/Ajax/ImportBookings.php:30
+#: src/SLN/Admin/Tools.php:215, src/SLN/Action/Ajax/ImportBookings.php:17, src/SLN/Action/Ajax/ImportBookings.php:30
 msgid "CUSTOMER EMAIL"
 msgstr ""
 
-#: src/SLN/Admin/Tools.php:192, src/SLN/Action/Ajax/ImportBookings.php:18
+#: src/SLN/Admin/Tools.php:218, src/SLN/Action/Ajax/ImportBookings.php:18
 msgid "CUSTOMER PHONE"
 msgstr ""
 
-#: src/SLN/Admin/Tools.php:195, src/SLN/Action/Ajax/ImportBookings.php:19
+#: src/SLN/Admin/Tools.php:221, src/SLN/Action/Ajax/ImportBookings.php:19
 msgid "CUSTOMER ADDRESS"
 msgstr ""
 
-#: src/SLN/Admin/Tools.php:214
+#: src/SLN/Admin/Tools.php:238
 msgid "Reservations"
 msgstr ""
 
-#: src/SLN/Admin/Tools.php:236, src/SLN/Shortcode/SalonMyAccount/Details.php:161
+#: src/SLN/Admin/Tools.php:273, src/SLN/Shortcode/SalonMyAccount/Details.php:161
 msgid "already paid as deposit"
 msgstr ""
 
-#: src/SLN/Admin/Tools.php:344
+#: src/SLN/Admin/Tools.php:322
+msgid "Total assistant share (paid, confirmed and pay later bookings)"
+msgstr ""
+
+#: src/SLN/Admin/Tools.php:447
 msgid "Settings updated successfully!"
 msgstr ""
 
-#: src/SLN/Admin/Tools.php:353
+#: src/SLN/Admin/Tools.php:456
 msgid "You have entered the wrong data"
 msgstr ""
 
@@ -8674,7 +8752,7 @@ msgid "Reply with the shop name (for example: “for shop Downtown”)."
 msgstr ""
 
 #. translators: %s: shop name
-#: src/SLN/AI/Multishop.php:430
+#: src/SLN/AI/Multishop.php:429
 msgid "Shop: %s"
 msgstr ""
 
@@ -9200,7 +9278,7 @@ msgstr ""
 #. translators: %s will be replaced by the secondary services count
 #. translators: %s will be replaced by the count primary services
 #. translators: %s will be replaced by the count secondary services
-#: src/SLN/Helper/Availability.php:1310, src/SLN/Helper/Availability.php:1323, src/SLN/Third/GoogleCalendarImport.php:476, src/SLN/Third/GoogleCalendarImport.php:489, src/SLN/Third/GoogleScope.php:1038, src/SLN/Third/GoogleScope.php:1052, src/SLN/Action/Ajax/CheckServices.php:207, src/SLN/Action/Ajax/CheckServices.php:226
+#: src/SLN/Helper/Availability.php:1310, src/SLN/Helper/Availability.php:1323, src/SLN/Third/GoogleCalendarImport.php:476, src/SLN/Third/GoogleCalendarImport.php:489, src/SLN/Third/GoogleScope.php:1056, src/SLN/Third/GoogleScope.php:1070, src/SLN/Action/Ajax/CheckServices.php:207, src/SLN/Action/Ajax/CheckServices.php:226
 msgid "You can select up to %d items"
 msgstr ""
 
@@ -9255,6 +9333,176 @@ msgstr ""
 msgid "All days"
 msgstr ""
 
+#: src/SLN/Helper/AvailabilityViolations.php:272, src/SLN/Helper/AvailabilityViolations.php:317
+msgid "Salon closed"
+msgstr ""
+
+#. translators: %1$s weekday, %2$s date
+#: src/SLN/Helper/AvailabilityViolations.php:275
+msgid "The salon is closed on %1$s %2$s."
+msgstr ""
+
+#: src/SLN/Helper/AvailabilityViolations.php:301
+msgid "Not enough time"
+msgstr ""
+
+#. translators: %1$s total duration, %2$s booking end time, %3$s minutes after closing, %4$s closing time
+#: src/SLN/Helper/AvailabilityViolations.php:304
+msgid "The services take %1$s, so the booking ends at %2$s, %3$s after closing time (%4$s)."
+msgstr ""
+
+#. translators: %1$s time, %2$s weekday, %3$s opening hours list
+#: src/SLN/Helper/AvailabilityViolations.php:320
+msgid "The salon is closed at %1$s on %2$s. Opening hours that day: %3$s."
+msgstr ""
+
+#: src/SLN/Helper/AvailabilityViolations.php:340
+msgid "Salon holiday"
+msgstr ""
+
+#. translators: %s holiday period
+#: src/SLN/Helper/AvailabilityViolations.php:343
+msgid "The salon is closed for a holiday rule: %s."
+msgstr ""
+
+#: src/SLN/Helper/AvailabilityViolations.php:417, src/SLN/Helper/AvailabilityViolations.php:406
+msgid "Locked time"
+msgstr ""
+
+#. translators: %s time range
+#: src/SLN/Helper/AvailabilityViolations.php:420
+msgid "%s is locked in the salon calendar."
+msgstr ""
+
+#: src/SLN/Helper/AvailabilityViolations.php:409
+msgid "%1$s is locked in %2$s's calendar."
+msgstr ""
+
+#: src/SLN/Helper/AvailabilityViolations.php:396
+msgid "Google Calendar event"
+msgstr ""
+
+#: src/SLN/Helper/AvailabilityViolations.php:399
+msgid "A Google Calendar event blocks %s."
+msgstr ""
+
+#: src/SLN/Helper/AvailabilityViolations.php:435
+msgid "Daily booking limit"
+msgstr ""
+
+#. translators: %1$d max bookings per day, %2$s date
+#: src/SLN/Helper/AvailabilityViolations.php:438
+msgid "The limit of %1$d bookings per day is already reached on %2$s."
+msgstr ""
+
+#: src/SLN/Helper/AvailabilityViolations.php:458
+msgid "Too many bookings at the same time"
+msgstr ""
+
+#. translators: %1$d max parallel bookings, %2$d bookings already there, %3$s time
+#: src/SLN/Helper/AvailabilityViolations.php:461
+msgid "Only %1$d bookings at the same time are allowed and %2$d are already booked at %3$s."
+msgstr ""
+
+#: src/SLN/Helper/AvailabilityViolations.php:484
+msgid "Assistant can't do this service"
+msgstr ""
+
+#. translators: %1$s service name, %2$s assistant name
+#: src/SLN/Helper/AvailabilityViolations.php:487
+msgid "%1$s isn't one of %2$s's services."
+msgstr ""
+
+#: src/SLN/Helper/AvailabilityViolations.php:516, src/SLN/Helper/AvailabilityViolations.php:502
+msgid "Assistant not working"
+msgstr ""
+
+#. translators: %1$s assistant name, %2$s working hours, %3$s weekday
+#: src/SLN/Helper/AvailabilityViolations.php:519
+msgid "%1$s works %2$s on %3$s."
+msgstr ""
+
+#: src/SLN/Helper/AvailabilityViolations.php:505
+msgid "%1$s doesn't work on %2$s %3$s."
+msgstr ""
+
+#: src/SLN/Helper/AvailabilityViolations.php:537
+msgid "Assistant on holiday"
+msgstr ""
+
+#. translators: %1$s assistant name, %2$s holiday period
+#: src/SLN/Helper/AvailabilityViolations.php:540
+msgid "%1$s is on holiday: %2$s."
+msgstr ""
+
+#: src/SLN/Helper/AvailabilityViolations.php:570
+msgid "Assistant already booked"
+msgstr ""
+
+#. translators: %1$s assistant name, %2$s booking id, %3$s customer name, %4$s service name, %5$s start time, %6$s end time
+#: src/SLN/Helper/AvailabilityViolations.php:573
+msgid "%1$s already has booking #%2$s (%3$s, %4$s) from %5$s to %6$s."
+msgstr ""
+
+#: src/SLN/Helper/AvailabilityViolations.php:593
+msgid "Service not available"
+msgstr ""
+
+#. translators: %1$s service name, %2$s weekday, %3$s time, %4$s service availability
+#: src/SLN/Helper/AvailabilityViolations.php:597
+msgid "%1$s isn't available on %2$s at %3$s. Its availability: %4$s."
+msgstr ""
+
+#. translators: %1$s service name, %2$s weekday, %3$s time
+#: src/SLN/Helper/AvailabilityViolations.php:605
+msgid "%1$s isn't available on %2$s at %3$s."
+msgstr ""
+
+#: src/SLN/Helper/AvailabilityViolations.php:622
+msgid "Service fully booked"
+msgstr ""
+
+#. translators: %1$s service name, %2$s time, %3$d max bookings at the same time
+#: src/SLN/Helper/AvailabilityViolations.php:625
+msgid "%1$s is fully booked at %2$s (maximum %3$d at the same time)."
+msgstr ""
+
+#: src/SLN/Helper/AvailabilityViolations.php:649
+msgid "Resource in use"
+msgstr ""
+
+#. translators: %1$s resource name, %2$s time
+#: src/SLN/Helper/AvailabilityViolations.php:652
+msgid "%1$s is already in use at %2$s."
+msgstr ""
+
+#: src/SLN/Helper/AvailabilityViolations.php:778
+msgid "all day"
+msgstr ""
+
+#. translators: %1$s start date, %2$s end date
+#. translators: %1$s start date and time, %2$s end date and time
+#: src/SLN/Helper/AvailabilityViolations.php:838, src/SLN/Helper/AvailabilityViolations.php:846, src/SLN/AI/Tools/CountBookings.php:363
+msgid "from %1$s to %2$s"
+msgstr ""
+
+#. translators: %1$d hours, %2$d minutes
+#: src/SLN/Helper/AvailabilityViolations.php:892
+msgid "%1$dh %2$dm"
+msgstr ""
+
+#. translators: %d hours
+#: src/SLN/Helper/AvailabilityViolations.php:896
+msgid "%dh"
+msgstr ""
+
+#. translators: %d minutes
+#: src/SLN/Helper/AvailabilityViolations.php:900
+msgid "%d minute"
+msgid_plural "%d minutes"
+msgstr[0] ""
+msgstr[1] ""
+
 #: src/SLN/Helper/BookingForecaster.php:688, views/shortcode/salon_my_account/_salon_my_account_details_table_rows.php:44
 msgid "Tomorrow"
 msgstr ""
@@ -9281,15 +9529,15 @@ msgstr ""
 msgid "Salon email"
 msgstr ""
 
-#: src/SLN/Helper/CalendarLink.php:191, src/SLN/Third/GoogleScope.php:1134
+#: src/SLN/Helper/CalendarLink.php:191, src/SLN/Third/GoogleScope.php:1152
 msgid "Booked services"
 msgstr ""
 
-#: src/SLN/Helper/CalendarLink.php:204, src/SLN/Third/GoogleScope.php:1128, src/SLN/Update/Page.php:263
+#: src/SLN/Helper/CalendarLink.php:204, src/SLN/Third/GoogleScope.php:1146, src/SLN/Update/Page.php:263
 msgid "Customer name"
 msgstr ""
 
-#: src/SLN/Helper/CalendarLink.php:205, src/SLN/Third/GoogleScope.php:1152
+#: src/SLN/Helper/CalendarLink.php:205, src/SLN/Third/GoogleScope.php:1170
 msgid "Booking status"
 msgstr ""
 
@@ -9353,37 +9601,48 @@ msgstr ""
 msgid "Assistant description"
 msgstr ""
 
-#: src/SLN/Metabox/Booking.php:198
+#: src/SLN/Metabox/Booking.php:202
 msgid "No service was submitted for this booking, so your changes were not saved. Select at least one service, or move the booking to the trash to remove it."
 msgstr ""
 
-#: src/SLN/Metabox/Booking.php:298, src/SLN/Metabox/Booking.php:598, src/SLN/Shortcode/Salon/DetailsStep.php:294, src/SLN/Shortcode/SalonMyAccount/ProfileUpdater.php:103
+#: src/SLN/Metabox/Booking.php:243
+msgid "Another booking for this time is being saved right now, so your changes were not saved. Please try again."
+msgstr ""
+
+#: src/SLN/Metabox/Booking.php:253
+msgid "This booking breaks these availability rules and you can't save it anyway:"
+msgstr ""
+
+#: src/SLN/Metabox/Booking.php:272
+msgid "Availability changed while you were editing this booking, so your changes were not saved. It now breaks these rules:"
+msgstr ""
+
+#: src/SLN/Metabox/Booking.php:276
+msgid "Make your changes again and save: you will be asked to confirm these rules before the booking is saved."
+msgstr ""
+
+#: src/SLN/Metabox/Booking.php:351, src/SLN/Metabox/Booking.php:669, src/SLN/Shortcode/Salon/DetailsStep.php:294, src/SLN/Shortcode/SalonMyAccount/ProfileUpdater.php:103
 msgid "e-mail is not valid"
 msgstr ""
 
-#: src/SLN/Metabox/Booking.php:582
+#: src/SLN/Metabox/Booking.php:653
 msgid "First name can't be empty"
 msgstr ""
 
-#: src/SLN/Metabox/Booking.php:585
+#: src/SLN/Metabox/Booking.php:656
 msgid "Last name can't be empty"
 msgstr ""
 
-#: src/SLN/Metabox/Booking.php:589
+#: src/SLN/Metabox/Booking.php:660
 msgid "e-mail can't be empty"
 msgstr ""
 
-#. translators: 1: booking start date and time, 2: booking end time
-#: src/SLN/Metabox/Booking.php:856
-msgid "This booking was saved on %1$s - %2$s, over a time slot locked from the calendar."
-msgstr ""
-
 #. translators: %s is the booking customer name
-#: src/SLN/Metabox/Booking.php:928
+#: src/SLN/Metabox/Booking.php:933
 msgid "Booking for %s has been moved to trash."
 msgstr ""
 
-#: src/SLN/Metabox/Booking.php:932
+#: src/SLN/Metabox/Booking.php:937
 msgid "Restore booking"
 msgstr ""
 
@@ -9687,19 +9946,19 @@ msgstr ""
 msgid "Booking Archive"
 msgstr ""
 
-#: src/SLN/PostType/Booking.php:1219
+#: src/SLN/PostType/Booking.php:1212
 msgid "All Statuses"
 msgstr ""
 
-#: src/SLN/PostType/Booking.php:1228
+#: src/SLN/PostType/Booking.php:1221
 msgid "All users name"
 msgstr ""
 
-#: src/SLN/PostType/Booking.php:1236
+#: src/SLN/PostType/Booking.php:1229
 msgid "All services"
 msgstr ""
 
-#: src/SLN/PostType/Booking.php:1244
+#: src/SLN/PostType/Booking.php:1237
 msgid "All attendants"
 msgstr ""
 
@@ -9938,7 +10197,7 @@ msgstr ""
 msgid "Remove this image"
 msgstr ""
 
-#: src/SLN/Third/GoogleCalendarImport.php:527, src/SLN/Third/GoogleScope.php:1090, src/SLN/Action/Ajax/CheckDateAlt.php:446, src/SLN/Action/Ajax/CheckServices.php:251
+#: src/SLN/Third/GoogleCalendarImport.php:527, src/SLN/Third/GoogleScope.php:1108, src/SLN/Action/Ajax/CheckDateAlt.php:446, src/SLN/Action/Ajax/CheckServices.php:251
 msgid "Multiple attendants selection is disabled. You must select one attendant for all services."
 msgstr ""
 
@@ -9966,35 +10225,40 @@ msgstr ""
 msgid "Google Client is not connected!"
 msgstr ""
 
-#: src/SLN/Third/GoogleScope.php:482
+#. translators: %s will be replaced by a comma-separated list of booking IDs
+#: src/SLN/Third/GoogleScope.php:313
+msgid "Some bookings could not be synchronized: #%s"
+msgstr ""
+
+#: src/SLN/Third/GoogleScope.php:500
 msgid "You are not allowed to perform this action."
 msgstr ""
 
-#: src/SLN/Third/GoogleScope.php:483
+#: src/SLN/Third/GoogleScope.php:501
 msgid "Forbidden"
 msgstr ""
 
-#: src/SLN/Third/GoogleScope.php:506
+#: src/SLN/Third/GoogleScope.php:524
 msgid "Invalid or expired Google authorization request. Please start the connection again from the settings page."
 msgstr ""
 
-#: src/SLN/Third/GoogleScope.php:507, src/SLN/Action/Ajax/PreviewBulkFeedback.php:14, src/SLN/Action/Ajax/SendBulkFeedback.php:16, src/SLN/Action/Ajax/SendFeedback.php:15
+#: src/SLN/Third/GoogleScope.php:525, src/SLN/Action/Ajax/PreviewBulkFeedback.php:14, src/SLN/Action/Ajax/SendBulkFeedback.php:16, src/SLN/Action/Ajax/SendFeedback.php:15
 msgid "Invalid request"
 msgstr ""
 
-#: src/SLN/Third/GoogleScope.php:686
+#: src/SLN/Third/GoogleScope.php:704
 msgid "Choose among your Calendars"
 msgstr ""
 
-#: src/SLN/Third/GoogleScope.php:1156, src/SLN/Third/GoogleScope.php:1154
+#: src/SLN/Third/GoogleScope.php:1174, src/SLN/Third/GoogleScope.php:1172
 msgid "Booking URL"
 msgstr ""
 
-#: src/SLN/Third/GoogleScope.php:1170
+#: src/SLN/Third/GoogleScope.php:1188
 msgid "Discount amount"
 msgstr ""
 
-#: src/SLN/Third/GoogleScope.php:1171
+#: src/SLN/Third/GoogleScope.php:1189
 msgid "Net total amount"
 msgstr ""
 
@@ -10007,7 +10271,7 @@ msgstr ""
 msgid "The license server did not deactivate the license (response: %s), so it is still active on this site."
 msgstr ""
 
-#: src/SLN/Update/Manager.php:349, src/SLN/Action/Ajax/CalcBookingTotal.php:11, src/SLN/Action/Ajax/DismissPerformanceIndexesNotice.php:11, src/SLN/Action/Ajax/DuplicateClone.php:29, src/SLN/Action/Ajax/InstallPerformanceIndexes.php:13, src/SLN/Action/Ajax/SetBookingOnProcess.php:8, src/SLN/Action/Ajax/SetBookingStatus.php:18, src/SLN/Action/Ajax/SetDefaultBookingStatus.php:18
+#: src/SLN/Update/Manager.php:349, src/SLN/Action/Ajax/CalcBookingTotal.php:11, src/SLN/Action/Ajax/CheckBookingAvailability.php:21, src/SLN/Action/Ajax/DismissPerformanceIndexesNotice.php:11, src/SLN/Action/Ajax/DuplicateClone.php:29, src/SLN/Action/Ajax/InstallPerformanceIndexes.php:13, src/SLN/Action/Ajax/SetBookingOnProcess.php:8, src/SLN/Action/Ajax/SetBookingStatus.php:18, src/SLN/Action/Ajax/SetDefaultBookingStatus.php:18
 msgid "You do not have permission to perform this action."
 msgstr ""
 
@@ -10545,11 +10809,11 @@ msgstr ""
 msgid "Loading…"
 msgstr ""
 
-#: src/SLN/WeeklySchedule/BookRedirect.php:94
+#: src/SLN/WeeklySchedule/BookRedirect.php:100
 msgid "Sorry, this class is now full. Please choose another time."
 msgstr ""
 
-#: src/SLN/WeeklySchedule/BookRedirect.php:95
+#: src/SLN/WeeklySchedule/BookRedirect.php:101
 msgid "Sorry, this class can no longer be booked. Please choose another time."
 msgstr ""
 
@@ -10581,15 +10845,15 @@ msgid "Use this color"
 msgstr ""
 
 #. translators: %1$d will be replaced by the left hours, %2$d will be replaced by the left minutes
-#: src/SLN/Wrapper/Booking.php:878
+#: src/SLN/Wrapper/Booking.php:887
 msgid "%1$d hours and %2$d minutes"
 msgstr ""
 
-#: src/SLN/Wrapper/Booking.php:963
+#: src/SLN/Wrapper/Booking.php:972
 msgid " hours"
 msgstr ""
 
-#: src/SLN/Wrapper/Booking.php:964
+#: src/SLN/Wrapper/Booking.php:973
 msgid "1 day"
 msgstr ""
 
@@ -11492,31 +11756,31 @@ msgstr ""
 msgid "%s more assistant"
 msgstr ""
 
-#: src/SLN/Action/Ajax/CheckDate.php:76
+#: src/SLN/Action/Ajax/CheckDate.php:78
 msgid "Please select a date before proceeding."
 msgstr ""
 
-#: src/SLN/Action/Ajax/CheckDate.php:324
+#: src/SLN/Action/Ajax/CheckDate.php:327
 msgid "The selected time is not valid. Please choose one of the available time slots."
 msgstr ""
 
-#: src/SLN/Action/Ajax/CheckDate.php:357
+#: src/SLN/Action/Ajax/CheckDate.php:361
 msgid "There are no time slots available for this period - Please select a  different hour"
 msgstr ""
 
-#: src/SLN/Action/Ajax/CheckDate.php:350
+#: src/SLN/Action/Ajax/CheckDate.php:353
 msgid "There are no time slots available today - Please select a different day"
 msgstr ""
 
-#: src/SLN/Action/Ajax/CheckDate.php:345
+#: src/SLN/Action/Ajax/CheckDate.php:348
 msgid "We are unavailable at:"
 msgstr ""
 
-#: src/SLN/Action/Ajax/CheckDate.php:342
+#: src/SLN/Action/Ajax/CheckDate.php:345
 msgid "The date is too far, the maximum allowed is:"
 msgstr ""
 
-#: src/SLN/Action/Ajax/CheckDate.php:339
+#: src/SLN/Action/Ajax/CheckDate.php:342
 msgid "The date is too near, the minimum allowed is:"
 msgstr ""
 
@@ -12245,7 +12509,7 @@ msgstr ""
 msgid "Nothing to undo."
 msgstr ""
 
-#: src/SLN/AI/Tools/Abstract.php:104
+#: src/SLN/AI/Tools/Abstract.php:103
 msgid "No changes detected."
 msgstr ""
 
@@ -12580,10 +12844,6 @@ msgstr ""
 
 #: src/SLN/AI/Tools/CountBookings.php:355
 msgid "on %s"
-msgstr ""
-
-#: src/SLN/AI/Tools/CountBookings.php:363
-msgid "from %1$s to %2$s"
 msgstr ""
 
 #: src/SLN/AI/Tools/CountBookings.php:371

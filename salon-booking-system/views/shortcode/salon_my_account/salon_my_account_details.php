@@ -12,7 +12,7 @@ $sln_upcoming_count = count($data['new']['items']);
 		</div>
 		<?php if ($data['customer_fidelity_score_enabled']): ?>
 			<span class="sln-account__score">
-				<?php echo $data['customer_fidelity_score'] ?>
+				<?php echo esc_html($data['customer_fidelity_score']) ?>
 				<span class="sr-only"><?php esc_html_e('Current Score', 'salon-booking-system') ?></span>
 			</span>
 		<?php endif ?>

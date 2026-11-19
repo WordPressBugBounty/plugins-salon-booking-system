@@ -14,7 +14,7 @@ if('exclusive' == $settings->get('enter_tax_price')):
 ?>
 <div class="sln-summary-row sln-summary-row--tax sln-list__item sln-list__item--db">
 	<div class="sln-data-val">
-		<span id="sln_amount_exclude_tax_value"><?php echo $plugin->format()->money($bb->getAmount() - $taxValue, false, false, true); ?></span>
+		<span id="sln_amount_exclude_tax_value"><?php echo esc_html($plugin->format()->money($bb->getAmount() - $taxValue, false, false, true)); ?></span>
 	</div>
 	<div class="sln-data-desc">
 		<?php
@@ -33,7 +33,7 @@ if('exclusive' == $settings->get('enter_tax_price')):
 <?php endif; ?>
 <div class="sln-summary-row sln-summary-row--tax sln-list__item sln-list__item--db">
 	<div class="sln-data-val">
-		<span id="sln_tax_value"><?php echo $plugin->format()->money($taxValue, false, false, true); ?></span>
+		<span id="sln_tax_value"><?php echo esc_html($plugin->format()->money($taxValue, false, false, true)); ?></span>
 	</div>
 	<div class="sln-data-desc">
 		<?php
