@@ -7,6 +7,7 @@ abstract class SLN_Action_Ajax_AbstractImport extends SLN_Action_Ajax_Abstract
     protected $fields   = array();
     protected $required = array();
     protected $errors   = array();
+    protected $options  = array();
 
     public function execute()
     {
@@ -125,6 +126,7 @@ abstract class SLN_Action_Ajax_AbstractImport extends SLN_Action_Ajax_Abstract
         $matching = $form['import_matching'];
 
         $import['mapping'] = is_array($matching) ? array_map('sanitize_text_field', $matching) : $matching;
+        $import['options'] = $this->getImportOptions($form);
 
         file_put_contents($filename, $this->jsonEncodePartialOnError($import));
 
@@ -169,6 +171,7 @@ abstract class SLN_Action_Ajax_AbstractImport extends SLN_Action_Ajax_Abstract
                 $item[$field] = '';
             }
         }
+        $this->options = isset($import['options']) && is_array($import['options']) ? $import['options'] : array();
         $imported = $this->processRow($item);
 
         // if ($imported === true) {
@@ -195,6 +198,18 @@ abstract class SLN_Action_Ajax_AbstractImport extends SLN_Action_Ajax_Abstract
 	protected function prepareRows($rows)
 	{
 		return $rows;
+	}
+
+	/**
+	 * Import-wide options read from the tools form at the matching step.
+	 *
+	 * @param array $form
+	 *
+	 * @return array
+	 */
+	protected function getImportOptions($form)
+	{
+		return array();
 	}
 
     protected function getItemsForPreview($items)

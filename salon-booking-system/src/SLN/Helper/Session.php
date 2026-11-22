@@ -49,7 +49,13 @@ class SLN_Helper_Session
         }
 
         self::configure();
-        session_start();
+
+        try {
+            session_start();
+        } catch (\Throwable $e) {
+            self::logFailure('session_start', $e);
+            return false;
+        }
 
         if (SLN_Plugin::isDebugEnabled()) {
             SLN_Plugin::addLog(sprintf(
@@ -207,10 +213,19 @@ class SLN_Helper_Session
      */
     private static function configure()
     {
-        session_name(self::SESSION_NAME);
+        // Some hosts run PHP builds that refuse any runtime change of session ini settings
+        // (e.g. "Session ini settings cannot be changed at runtime when
+        // session.upload_progress.enabled is On") and throw an Error instead of a warning.
+        // Configuration is best-effort: on failure we keep PHP's defaults and still start the
+        // session, rather than fatally breaking every request that needs it.
+        try {
+            session_name(self::SESSION_NAME);
+        } catch (\Throwable $e) {
+            self::logFailure('session_name', $e);
+        }
 
-        // Configure session cookie parameters for better browser compatibility (especially Edge).
-        if (PHP_VERSION_ID >= 70300) {
+        try {
+            // Configure session cookie parameters for better browser compatibility (especially Edge).
             session_set_cookie_params(
                 array(
                     'lifetime' => 0,
@@ -221,14 +236,20 @@ class SLN_Helper_Session
                     'samesite' => 'Lax',
                 )
             );
-        } else {
-            session_set_cookie_params(
-                0,
-                COOKIEPATH ? COOKIEPATH . '; SameSite=Lax' : '/; SameSite=Lax',
-                COOKIE_DOMAIN ? COOKIE_DOMAIN : '',
-                is_ssl(),
-                true
-            );
+        } catch (\Throwable $e) {
+            self::logFailure('session_set_cookie_params', $e);
+        }
+    }
+
+    /**
+     * @param string     $step
+     * @param \Throwable $e
+     * @return void
+     */
+    private static function logFailure($step, $e)
+    {
+        if (class_exists('SLN_Plugin') && SLN_Plugin::isDebugEnabled()) {
+            SLN_Plugin::addLog(sprintf('[Session] %s failed: %s', $step, $e->getMessage()));
         }
     }
 

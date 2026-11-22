@@ -4042,9 +4042,13 @@ function sln_getClientState() {
  * Uses progressive enhancement: localStorage -> cookie -> DOM
  * This ensures compatibility with Safari ITP and private browsing modes
  */
+function sln_isValidClientId(id) {
+    return typeof id === "string" && /^[a-f0-9]{32}$/i.test(id);
+}
+
 function sln_setClientState(id, storage) {
     var state = sln_getClientState();
-    state.id = id || null;
+    state.id = sln_isValidClientId(id) ? id.toLowerCase() : null;
     state.storage = storage || state.storage || "session";
 
     // MODERN BEST PRACTICE: Multi-layered storage with progressive enhancement
@@ -4143,7 +4147,14 @@ function sln_initializeClientState($) {
     // 2. Current state (already in memory)
     // 3. localStorage (fast, but may be blocked)
     // 4. Cookie (Safari fallback)
-    var resolvedId = idFromDom || currentState.id || idFromStorage || idFromCookie;
+    var candidates = [idFromDom, currentState.id, idFromStorage, idFromCookie];
+    var resolvedId = null;
+    for (var i = 0; i < candidates.length; i++) {
+        if (sln_isValidClientId(candidates[i])) {
+            resolvedId = candidates[i];
+            break;
+        }
+    }
 
     sln_setClientState(resolvedId, storage);
     sln_syncClientIdFields($);
@@ -4223,6 +4234,10 @@ function sln_ensureClientIdInData(data) {
  * Activated with ?sln_debug=1 in URL
  */
 function sln_isDebugMode() {
+    // Server-side gate: debug setting enabled AND current user can manage the salon.
+    if (typeof salon === "undefined" || !salon || salon.debug_panel !== '1') {
+        return false;
+    }
     var urlParams = new URLSearchParams(window.location.search);
     return urlParams.get('sln_debug') === '1';
 }
@@ -4319,19 +4334,18 @@ function sln_debugLog(message, data) {
         return; // Panel not initialized
     }
     
-    var logHtml = '<div style="margin-bottom: 10px; padding: 8px; background: #0a0a0a; border-left: 3px solid #00ff00;">';
-    logHtml += '<div style="color: #888; font-size: 10px; margin-bottom: 4px;">' + timestamp + '</div>';
-    logHtml += '<div style="color: #fff; margin-bottom: 4px;"><strong>' + message + '</strong></div>';
-    
+    var $entry = jQuery('<div style="margin-bottom: 10px; padding: 8px; background: #0a0a0a; border-left: 3px solid #00ff00;"></div>');
+    $entry.append(jQuery('<div style="color: #888; font-size: 10px; margin-bottom: 4px;"></div>').text(timestamp));
+    $entry.append(jQuery('<div style="color: #fff; margin-bottom: 4px;"></div>').append(jQuery('<strong></strong>').text(String(message))));
+
     if (data) {
-        logHtml += '<pre style="margin: 0; color: #00ff00; font-size: 10px; white-space: pre-wrap; word-wrap: break-word;">';
-        logHtml += JSON.stringify(data, null, 2);
-        logHtml += '</pre>';
+        $entry.append(
+            jQuery('<pre style="margin: 0; color: #00ff00; font-size: 10px; white-space: pre-wrap; word-wrap: break-word;"></pre>')
+                .text(JSON.stringify(data, null, 2))
+        );
     }
-    
-    logHtml += '</div>';
-    
-    $content.append(logHtml);
+
+    $content.append($entry);
     
     // Auto-scroll to bottom
     var panel = document.getElementById("sln-debug-panel");

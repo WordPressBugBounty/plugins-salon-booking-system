@@ -822,6 +822,7 @@ function sln_initImporter($item, mode) {
         data.append("step", "start");
         data.append('_wpnonce', jQuery('input#_wpnonce').val());
         data.append("file", $importArea.file);
+        var fileName = $importArea.file.name || "";
 
         jQuery.ajax({
             url: ajaxurl,
@@ -844,17 +845,39 @@ function sln_initImporter($item, mode) {
                     );
                     $modalBtn.button("reset");
 
-                    $modal.find("table").html(response.data.matching);
+                    var headers = jQuery.grep(response.data.headers || [], function (h) {
+                        return h !== null && String(h) !== "";
+                    });
+                    $modal.data("importTotal", parseInt(response.data.total, 10) || 0);
+                    $modal.find("[data-import-file-name]").text(fileName);
+                    $modal.find("[data-import-rows]").text(
+                        sln_importPlural($modal, "rows", $modal.data("importTotal"))
+                    );
+                    $modal.find("[data-import-cols]").text(
+                        sln_importPlural($modal, "cols", headers.length)
+                    );
+                    $modal.find("[data-import-map]").html(response.data.matching);
+                    // Import-specific options (e.g. "update existing customers"): show only for
+                    // their import and start unticked, so a hidden option is never sent.
+                    $modal.find("[data-import-only]").each(function () {
+                        var $opt = jQuery(this);
+                        var active = $opt.attr("data-import-only") === mode;
+                        $opt.prop("hidden", !active);
+                        $opt.find("input").prop("checked", false).prop("disabled", !active);
+                    });
                     jQuery("#wpwrap").css("z-index", "auto");
                     $modal.modal({
-                        keyboard: false,
-                        backdrop: true,
+                        keyboard: true,
+                        backdrop: "static",
                     });
-                    sln_createSelect2Full(jQuery);
                     sln_validImportMatching();
                     $modal
                         .find("[data-action=sln_import_matching_select]")
                         .on("change", sln_changeImportMatching);
+                    $modal.one("shown.bs.modal", function () {
+                        var $first = $modal.find(".sln-import-map__row--missing select").first();
+                        ($first.length ? $first : $modal.find("[data-action=sln_import_matching]")).trigger("focus");
+                    });
 
                     jQuery("[data-action=sln_import_matching]")
                         .off("click")
@@ -926,15 +949,14 @@ function sln_initImporter($item, mode) {
         if(skipped !== true){
             jQuery('.alert.alert-success .alert-skipped').removeClass('hide');
             let skipped_list = jQuery('#import-skipped-booking-modal .alert-skipped .skipped-bookings');
-            skipped_list.append(
-                '<li><span class="skipped-booking--id">' + skipped.id + '</span>' +
-                    '<span class="skipped-booking--datetime">' + skipped.datetime + '</span>' +
-                    '<span class="skipped-booking--first-name">' + skipped.first_name + '</span>' +
-                    '<span class="skipped-booking--last-name">' + skipped.last_name + '</span>' +
-                    '<span class="skipped-booking--email">' + skipped.email + '</span>' +
-                    '<span class="skipped-booking--error">' + skipped.error + '</span>' +
-                '</li>'
-            );
+            let $li = jQuery('<li></li>');
+            ['id', 'datetime', 'first_name', 'last_name', 'email', 'error'].forEach(function (key) {
+                jQuery('<span></span>')
+                    .addClass('skipped-booking--' + key.replace('_', '-'))
+                    .text(skipped[key] !== undefined && skipped[key] !== null ? skipped[key] : '')
+                    .appendTo($li);
+            });
+            skipped_list.append($li);
         }
 
         if (left != 0) {
@@ -1036,33 +1058,46 @@ function sln_initImporter($item, mode) {
 
 function sln_changeImportMatching() {
 	var $select = jQuery(this);
-	var field = $select.val();
-	var col = $select.attr("data-col");
+	var header = $select.val();
+	var $row = $select.closest(".sln-import-map__row");
+	var $sample = $row.find("[data-import-sample]").empty();
+	var $modal = jQuery("#import-matching-modal");
 
-	$select
-		.closest("table")
-		.find("tr.import_matching")
-		.each(function (index, v) {
-			var $cell = jQuery(this).find("td[data-col=" + col + "] span");
-
-			var text;
-			if (
-				sln_importRows[index] !== undefined &&
-				sln_importRows[index][field] !== undefined
-			) {
-				$cell
-					.addClass("pull-left")
-					.removeClass("half-opacity")
-					.html(sln_importRows[index][field]);
-			} else {
-				$cell
-					.removeClass("pull-left")
-					.addClass("half-opacity")
-					.html($cell.closest("td").attr("placeholder"));
+	// Values come from the uploaded file: always insert them as text.
+	var values = [];
+	if (header) {
+		jQuery.each(sln_importRows || [], function (i, item) {
+			if (item && item[header] !== undefined && item[header] !== null && String(item[header]).trim() !== "") {
+				values.push(String(item[header]).trim());
 			}
 		});
+	}
+
+	if (values.length) {
+		values.slice(0, 3).forEach(function (value) {
+			jQuery("<span class='sln-import-map__value'></span>").attr("title", value).text(value).appendTo($sample);
+		});
+	} else {
+		jQuery("<span class='sln-import-map__empty'></span>")
+			.text(header ? $modal.attr("data-i18n-empty") : "—")
+			.appendTo($sample);
+	}
 
 	sln_validImportMatching();
+}
+
+function sln_importFormat(template, values) {
+	var i = 0;
+	return String(template || "").replace(/%(\d+\$)?s/g, function (match, pos) {
+		var index = pos ? parseInt(pos, 10) - 1 : i++;
+		return values[index] !== undefined ? values[index] : "";
+	});
+}
+
+function sln_importPlural($modal, key, count) {
+	return count === 1
+		? $modal.attr("data-i18n-" + key + "-one")
+		: sln_importFormat($modal.attr("data-i18n-" + key + "-many"), [count]);
 }
 
 function show_btn_save() {
@@ -1086,24 +1121,47 @@ function close_btn_save() {
 function sln_validImportMatching() {
 	var $modal = jQuery("#import-matching-modal");
 
-	var valid = true;
-	$modal.find("select").each(function () {
-		if (jQuery(this).prop("required") && jQuery(this).val() == "") {
-			valid = false;
-		}
+	var $rows = $modal.find(".sln-import-map__row");
+	var matched = 0;
+	var missing = 0;
+
+	$rows.each(function () {
+		var $row = jQuery(this);
+		var hasColumn = $row.find("select").val() !== "";
+		var isRequired = $row.attr("data-required") === "1";
+		var state = hasColumn ? "matched" : (isRequired ? "missing" : "skipped");
+
+		$row
+			.removeClass("sln-import-map__row--matched sln-import-map__row--missing sln-import-map__row--skipped")
+			.addClass("sln-import-map__row--" + state);
+		$row.find("select").attr("aria-invalid", state === "missing" ? "true" : "false");
+
+		if (hasColumn) { matched++; }
+		if (state === "missing") { missing++; }
 	});
 
-	if (valid) {
-		$modal.find(".alert").addClass("hide");
-		$modal
-			.find("[data-action=sln_import_matching]")
-			.prop("disabled", false);
-	} else {
-		$modal.find(".alert").removeClass("hide");
-		$modal
-			.find("[data-action=sln_import_matching]")
-			.prop("disabled", "disabled");
-	}
+	var valid = missing === 0;
+	var total = $modal.data("importTotal") || 0;
+
+	$modal.find("[data-import-meter]").css("width", ($rows.length ? (matched / $rows.length) * 100 : 0) + "%");
+	$modal.find("[data-import-summary]").text(
+		sln_importFormat($modal.attr("data-i18n-matched"), [matched, $rows.length])
+	);
+	$modal.find("[data-import-hint]")
+		.text(valid
+			? $modal.attr("data-i18n-ready")
+			: (missing === 1
+				? $modal.attr("data-i18n-missing-one")
+				: sln_importFormat($modal.attr("data-i18n-missing-many"), [missing])))
+		.toggleClass("is-error", !valid)
+		.toggleClass("is-ready", valid);
+	$modal.find(".sln-import-modal__summary").toggleClass("is-ready", valid);
+
+	var $btn = $modal.find("[data-action=sln_import_matching]");
+	$btn.text(total > 1
+		? sln_importFormat($modal.attr("data-i18n-start-rows"), [total])
+		: $modal.attr("data-i18n-start"));
+	$btn.prop("disabled", !valid);
 
 	return valid;
 }

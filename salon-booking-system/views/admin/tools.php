@@ -97,7 +97,6 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 									</div>
 								</div>
                                 <a class="sln-item-csv" href="<?php echo SLN_PLUGIN_URL . '/csv-import-samples/salon_import_sample_customers.csv'; ?>"><?php esc_html_e('Download sample CSV file', 'salon-booking-system') ?></a>
-                            
                             </div>
                         </div>
                     </div>
@@ -212,29 +211,55 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 				</div>
 			</div>
 
-			<div id="import-matching-modal" class="modal sln-import-modal" role="dialog" aria-labelledby="import-matching-title">
+			<div id="import-matching-modal" class="modal sln-import-modal sln-import-modal--map" role="dialog" aria-modal="true" aria-labelledby="import-matching-title"
+			     data-i18n-matched="<?php /* translators: 1: matched fields, 2: total fields */ esc_attr_e('%1$s of %2$s fields matched', 'salon-booking-system') ?>"
+			     data-i18n-missing-one="<?php esc_attr_e('1 required field still needs a column', 'salon-booking-system') ?>"
+			     data-i18n-missing-many="<?php /* translators: %s: number of required fields */ esc_attr_e('%s required fields still need a column', 'salon-booking-system') ?>"
+			     data-i18n-ready="<?php esc_attr_e('Ready to import', 'salon-booking-system') ?>"
+			     data-i18n-rows-one="<?php esc_attr_e('1 row', 'salon-booking-system') ?>"
+			     data-i18n-rows-many="<?php /* translators: %s: number of rows */ esc_attr_e('%s rows', 'salon-booking-system') ?>"
+			     data-i18n-cols-one="<?php esc_attr_e('1 column', 'salon-booking-system') ?>"
+			     data-i18n-cols-many="<?php /* translators: %s: number of columns */ esc_attr_e('%s columns', 'salon-booking-system') ?>"
+			     data-i18n-start="<?php esc_attr_e('Import', 'salon-booking-system') ?>"
+			     data-i18n-start-rows="<?php /* translators: %s: number of rows */ esc_attr_e('Import %s rows', 'salon-booking-system') ?>"
+			     data-i18n-empty="<?php esc_attr_e('Empty in the first rows', 'salon-booking-system') ?>">
 				<div class="modal-dialog modal-dialog--import">
 					<div class="modal-content">
 						<div class="modal-header sln-import-modal__header">
 							<button type="button" class="sln-import-modal__close" data-dismiss="modal" aria-label="<?php esc_attr_e('Close', 'salon-booking-system') ?>">&times;</button>
 							<h2 id="import-matching-title" class="sln-box-title"><?php esc_html_e('Match your CSV columns','salon-booking-system') ?></h2>
-							<h6 class="sln-fake-label"><?php esc_html_e('For each Salon Booking field, pick the matching column from your file. Fields marked with * are required. A live preview of your first rows is shown below.','salon-booking-system')?></h6>
-						</div>
-						<div class="modal-body sln-import-modal__body">
-							<div class="sln-import-table__scroll">
-								<table class="table sln-import-table" cellspacing="0"><tbody></tbody></table>
+							<p class="sln-import-modal__lead"><?php esc_html_e('We matched the columns we recognised. Check each field, pick a column from your file where needed, and compare with the samples on the right.','salon-booking-system')?></p>
+							<div class="sln-import-modal__file">
+								<span class="sln-import-modal__file-icon" aria-hidden="true">CSV</span>
+								<span class="sln-import-modal__file-name" data-import-file-name></span>
+								<span class="sln-import-modal__chip" data-import-rows></span>
+								<span class="sln-import-modal__chip" data-import-cols></span>
 							</div>
 						</div>
+						<div class="modal-body sln-import-modal__body">
+							<div class="sln-import-map" data-import-map></div>
+						</div>
+						<div class="sln-import-modal__options" data-import-only="Customers" hidden>
+							<label class="sln-import-option" for="import_customers_update_existing">
+								<input type="checkbox" class="sln-import-option__input" name="import_customers_update_existing" id="import_customers_update_existing" value="1">
+								<span class="sln-import-option__switch" aria-hidden="true"></span>
+								<span class="sln-import-option__text">
+									<span class="sln-import-option__title"><?php esc_html_e('Update customers who already exist', 'salon-booking-system') ?></span>
+									<span class="sln-import-option__desc"><?php esc_html_e('When an email in the file belongs to an existing customer, replace their mobile phone and address with the values in the file and fill in empty notes. Leave off to skip existing customers. Names, passwords and bookings are never changed, and no email is sent.', 'salon-booking-system') ?></span>
+								</span>
+							</label>
+						</div>
 						<div class="modal-footer sln-import-modal__footer">
-							<div class="alert alert-danger sln-import-modal__alert hide" role="alert">
-								<span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
-								<?php esc_html_e('Please match all required columns before continuing.', 'salon-booking-system') ?>
+							<div class="sln-import-modal__summary" aria-live="polite">
+								<div class="sln-import-modal__meter" aria-hidden="true"><span data-import-meter></span></div>
+								<span class="sln-import-modal__summary-text" data-import-summary></span>
+								<span class="sln-import-modal__summary-hint" data-import-hint></span>
 							</div>
 							<div class="sln-import-modal__actions">
 								<button type="button" class="sln-btn sln-btn--borderonly sln-btn--big" data-dismiss="modal"><?php esc_html_e('Cancel', 'salon-booking-system') ?></button>
 								<button type="button" class="sln-btn sln-btn--main sln-btn--big sln-file__btn" data-action="sln_import_matching"
-								        data-loading-text="<span class='glyphicon glyphicon-repeat sln-import-loader' aria-hidden='true'></span> <?php esc_html_e('loading', 'salon-booking-system') ?>">
-									<?php esc_html_e('Start import', 'salon-booking-system') ?>
+								        data-loading-text="<span class='glyphicon glyphicon-repeat sln-import-loader' aria-hidden='true'></span> <?php esc_attr_e('Starting…', 'salon-booking-system') ?>">
+									<?php esc_html_e('Import', 'salon-booking-system') ?>
 								</button>
 							</div>
 						</div>

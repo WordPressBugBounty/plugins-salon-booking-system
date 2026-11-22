@@ -3,7 +3,7 @@
 
 class SLN_Action_InitScripts
 {
-    const ASSETS_VERSION = SLN_VERSION . '-20261019-stripe-note';
+    const ASSETS_VERSION = SLN_VERSION . '-20261122-client-id-xss';
 	private static $isInclude = false;
 	private $isAdmin;
 	private $plugin;
@@ -101,6 +101,9 @@ class SLN_Action_InitScripts
 			'txt_overbooking' => __('This slot is already booked. Please choose a different time.', 'salon-booking-system'),
 			'txt_no_slots_for_day' => __('No available time slots for this day. Please choose another date.', 'salon-booking-system'),
 			'debug' => $s->get('debug') ? '1' : '0',
+			// The on-page debug panel (?sln_debug=1) is only available to salon managers
+			// when debug mode is enabled in the settings.
+			'debug_panel' => ($s->get('debug') && current_user_can('manage_salon')) ? '1' : '0',
 			// Frontend performance guard: when the date step is rendered via AJAX
 			// (wizard navigation), its intervals are already freshly computed
 			// server-side, so the redundant init-time validate() call can be

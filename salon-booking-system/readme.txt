@@ -4,7 +4,7 @@ Tags: salon, hairdresser, barber, beauty salon, appointment booking
 Requires at least: 6.0
 Tested up to: 7.1
 Requires PHP: 7.4.8
-Stable tag: 10.31.17
+Stable tag: 10.31.18
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -368,6 +368,15 @@ PHP 7.4 and above.
 
 
 == Changelog ==
+
+
+22.11.2026 - 10.31.18
+
+* Security fix: the booking page accepted any value as the booking client ID, which allowed a crafted link to inject scripts through the on-page debug panel (reflected XSS). Client IDs are now strictly validated and the debug panel is only available to salon managers when debug mode is enabled in the settings
+* Fixed: on hosts whose PHP doesn't allow session settings to be changed at runtime ("Session ini settings cannot be changed at runtime when session.upload_progress.enabled is On"), the plugin stopped with a fatal error on AJAX requests; it now falls back to the server's default session settings
+* New: the customer CSV import has an "Update customers who already exist" option in the column matching window. When a row's email matches an existing customer, their mobile phone and address are replaced with the values in the file and empty notes are filled in; names, passwords and bookings are not changed and no email is sent
+* Improved: redesigned the column matching window of the CSV imports. Columns are matched automatically from common header names, each field shows sample values from the file and whether it is matched, and the window now works on phones
+* Security fix: column names and values from an imported CSV file are now always shown as plain text in the import windows
 
 
 16.11.2026 - 10.31.17

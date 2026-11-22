@@ -232,7 +232,7 @@ class SLN_Wrapper_Booking_Builder
             return null;
         }
 
-        return substr($clientId, 0, 64);
+        return $clientId;
     }
 
     private function sanitizeClientId($value)
@@ -241,13 +241,15 @@ class SLN_Wrapper_Booking_Builder
             $value = wp_unslash($value);
         }
 
-        if (function_exists('sanitize_text_field')) {
-            $value = sanitize_text_field($value);
-        } else {
-            $value = preg_replace('/[^a-zA-Z0-9_-]/', '', $value);
+        // Client IDs are always generated as 32 hex chars (see
+        // SLN_Service_BookingPersistence::generateClientId()). Reject anything else:
+        // the value is echoed into the booking page markup and JS state.
+        if (!is_string($value)) {
+            return '';
         }
+        $value = strtolower(trim($value));
 
-        return $value;
+        return preg_match('/^[a-f0-9]{32}$/', $value) ? $value : '';
     }
 
     /**
